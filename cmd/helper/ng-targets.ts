@@ -1131,7 +1131,7 @@ export const targets: Target[] = [
     name: "base",
     kind: "staticlib",
     // PerfLog.cpp: the profiler's hooks must not be instrumented themselves
-    sources: ["src/ng/base/*.cpp", "src/ng/gui/Dpi*.cpp", "src/ng/PerfLog.cpp"],
+    sources: ["src/ng/base/*.cpp", "src/ng/base/*.mm", "src/ng/gui/Dpi*.cpp", "src/ng/PerfLog.cpp"],
     exclude: [
       // not in orig's base project: the app links one of CrashHandler.cpp /
       // CrashHandlerNoOp.cpp and one of SumatraLog.cpp / LogNoOp.cpp

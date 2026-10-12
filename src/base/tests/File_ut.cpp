@@ -4,9 +4,35 @@
 #include "base/Base.h"
 #include "base/File.h"
 #include "base/Win.h"
+#if OS_DARWIN
+#include <sys/stat.h>
+#include <unistd.h>
+#endif
 
 // must be last due to assert() over-write
 #include "base/tests/UtAssert.h"
+
+#if OS_DARWIN
+// The app deletes without asking because DeleteFileToTrash() is undoable. A
+// second hard link tells moved (the file lives on in the Trash) from deleted.
+// CI only: it leaves the file in the Trash of whoever runs it.
+static void DeleteFileToTrashTest() {
+    if (!getenv("CI")) {
+        return;
+    }
+    TempStr path = GetTempFilePathTemp(StrL("sumatra-trash-test-"));
+    utassert(len(path) > 0);
+    utassert(file::WriteFile(path, StrL("x")));
+    TempStr link2 = str::JoinTemp(path, StrL(".link"));
+    utassert(link(CStrTemp(path), CStrTemp(link2)) == 0);
+    utassert(file::DeleteFileToTrash(path));
+    utassert(!file::Exists(path));
+    struct stat st{};
+    utassert(stat(CStrTemp(link2), &st) == 0);
+    utassert(st.st_nlink == 2);
+    file::Delete(link2);
+}
+#endif
 
 void FileUtilTest() {
     FILETIME epoch = FileTimeFromU64(kFileTimeUnixEpoch);
@@ -323,5 +349,8 @@ void DirRemoveAllTest() {
         utassert(workers[i].ok);
         str::Free(workers[i].root);
     }
+#endif
+#if OS_DARWIN
+    DeleteFileToTrashTest();
 #endif
 }

@@ -464,9 +464,12 @@ bool Delete(Str path) {
     return errno == ENOENT;
 }
 
+#if !OS_DARWIN
+// no Trash API here; macOS has one (File_mac.mm)
 bool DeleteFileToTrash(Str path) {
     return Delete(path);
 }
+#endif
 
 bool Copy(Str dst, Str src, bool dontOverwrite) {
     return Copy(dst, src, dontOverwrite, {});

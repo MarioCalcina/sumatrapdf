@@ -38,6 +38,7 @@ export const sharedFiles = [
   "src/base/FileWatcher.cpp",
   "src/base/FileWatcher.h",
   "src/base/FileWatcher_mac.cpp",
+  "src/base/File_mac.mm",
   "src/base/File_posix.cpp",
   "src/base/FoldDiacriticsData.inc",
   "src/base/GdiPlusUtil.cpp",
