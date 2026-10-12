@@ -43,7 +43,9 @@
 #if OS_WIN
 #define kCrashSubmitUrl kCrashServer "/app/sumatrapdfng-win/uploadminidump"
 #elif OS_DARWIN
-#define kCrashSubmitUrl kCrashServer "/app/sumatrapdfng-mac/uploadcrash"
+// this macOS fork has no crash server: reports stay in crashinfo/, they must
+// not reach upstream's server, which did not make the build
+#define kCrashSubmitUrl ""
 #else
 #define kCrashSubmitUrl ""
 #endif

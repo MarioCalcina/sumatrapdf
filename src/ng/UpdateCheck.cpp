@@ -86,6 +86,8 @@ static const Str updateInfoURLs[] = {
 #ifndef kWebisteDownloadPageURL
 #define kWebisteDownloadPageURL "https://www.sumatrapdfreader.org/download-free-pdf-viewer"
 #endif
+// where this macOS fork's builds are made
+#define kForkBuildsURL "https://github.com/MarioCalcina/sumatrapdf/actions/workflows/mac-app.yml"
 // clang-format on
 
 // prevent multiple update tasks from happening simultaneously
@@ -761,6 +763,13 @@ static void UpdateCheckAsync(UpdateCheckAsyncData* data) {
 // start auto-update check by downloading auto-update information from url
 // on a background thread and processing the retrieved data on ui thread
 void StartAsyncUpdateCheck(MainWindow* win, UpdateCheck updateCheckType) {
+#if OS_DARWIN
+    // upstream's update info would offer a build without this fork's changes
+    if (updateCheckType == UpdateCheck::UserInitiated) {
+        OpenWebPage(StrL(kForkBuildsURL));
+    }
+    return;
+#endif
     if (!ShouldCheckForUpdate(updateCheckType)) {
         return;
     }

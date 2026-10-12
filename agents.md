@@ -126,12 +126,13 @@ and the build passes it as defines (`SUMATRA_VER`, `GIT_COMMIT_ID`) to
 
 Ng on macOS has no minidumps. A crash writes a text report (every thread's
 stack as module + offset, Mach-O UUIDs, log, settings) to
-`crashinfo/sumatrapdfcrash.txt` in the app data dir and uploads it on the
-next start (`src/base/CrashHandler_posix.cpp`, `CrashHandler_mac.cpp`).
-`bun cmd/ng-crashes.ts` lists, downloads and symbolicates them with `atos`
-and the build's `.dSYM` (downloaded from R2 for an uploaded build); `-file
-<path>` symbolicates a local report. ASan
-builds and `-for-testing` runs don't upload.
+`crashinfo/sumatrapdfcrash.txt` in the app data dir
+(`src/base/CrashHandler_posix.cpp`, `CrashHandler_mac.cpp`). This fork uploads
+nothing: upstream's server must not get reports of builds it did not make
+(`kCrashSubmitUrl` is empty). Symbolicate a report with
+`bun cmd/ng-crashes.ts -file <path>` and the build's `.dSYM`.
+Nor does the fork ask upstream for updates: Check for Updates opens the
+`mac-app` workflow page (`kForkBuildsURL`).
 
 The app embeds one LzSA archive (`cmd/helper/embedded.ts`):
 `.work/translations.txt`, `ext/marked.min.js`, `ext/mermaid.min.js`, the
