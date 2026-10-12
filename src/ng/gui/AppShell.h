@@ -159,7 +159,12 @@ void AppShellWatchMacEvents();
 void AppShellMacClientTitleBar(MainWindow* win, bool on);
 void AppShellNoteRecentDoc(Str path);
 bool AppShellSystemIsDark();
-bool AppShellPrintPdf(MainWindow* win, Str path, Str jobTitle);
+// what the print panel does with the PDF once it closes
+enum class PrintedPdf {
+    Delete,
+    Keep
+};
+bool AppShellPrintPdf(MainWindow* win, Str path, Str jobTitle, PrintedPdf after);
 #endif
 // presentation mode's auto-hidden cursor (orig hides it with SetCursor(null))
 void AppShellShowCursor(MainWindow* win, bool show);

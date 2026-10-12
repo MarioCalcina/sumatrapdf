@@ -500,10 +500,18 @@ void PrintCurrentFile(MainWindow* win, bool waitForCompletion, bool selectionByD
     return;
 #endif
 #if OS_DARWIN
-    // the macOS print panel prints a temporary PDF; it deletes the file when done
+    // a PDF as saved prints as vectors at the printer's resolution; a
+    // selection, a rotation or unsaved annotations need the rendered pages
+    TempStr jobTitle = path::GetBaseNameTemp(engine->FilePath());
+    bool asSaved = !selection && rotation == 0 && EngineMupdfIsPdf(engine) && !EngineHasUnsavedAnnotations(engine);
+    if (asSaved && AppShellPrintPdf(win, engine->FilePath(), jobTitle, PrintedPdf::Keep)) {
+        return;
+    }
+
+    // otherwise a temporary PDF of the rendered pages, deleted when done
     TempStr printPath = GetTempFilePathTemp(StrL("sumatra-print-"));
     bool printed = PrintEngineToPdf(engine, printPath, selection, rotation) &&
-                   AppShellPrintPdf(win, printPath, path::GetBaseNameTemp(engine->FilePath()));
+                   AppShellPrintPdf(win, printPath, jobTitle, PrintedPdf::Delete);
     delete selection;
     if (!printed) {
         file::Delete(printPath);

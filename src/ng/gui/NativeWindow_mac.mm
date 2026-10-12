@@ -254,11 +254,11 @@ void AppShellWatchMacEvents() {
 // --- printing ----------------------------------------------------------------
 
 // keeps the document alive while the print sheet is up, then deletes the
-// temporary PDF it was made from
+// PDF it was made from when that was a temporary one
 @interface SumatraPrintJob : NSObject {
   @public
     PDFDocument* doc;
-    NSString* path;
+    NSString* deletePath;
 }
 @end
 
@@ -266,15 +266,18 @@ void AppShellWatchMacEvents() {
 - (void)printOperationDidRun:(NSPrintOperation*)op success:(MacObjcBool)success contextInfo:(void*)ctx {
     (void)op;
     (void)success;
-    [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
+    if (deletePath) {
+        [[NSFileManager defaultManager] removeItemAtPath:deletePath error:nil];
+    }
     // balances the retain in AppShellPrintPdf
     (void)CFBridgingRelease(ctx);
 }
 @end
 
-// the macOS print panel for a PDF file, as a sheet on the window. On success
+// the macOS print panel for a PDF file, as a sheet on the window. False when
+// PDFKit can't print it (locked, printing not allowed). With PrintedPdf::Delete
 // the file is deleted once the panel closes.
-bool AppShellPrintPdf(MainWindow* win, Str path, Str jobTitle) {
+bool AppShellPrintPdf(MainWindow* win, Str path, Str jobTitle, PrintedPdf after) {
     NSView* view = win ? (__bridge NSView*)gp::PlatWindowHandle(win->gpuiWin) : nil;
     NSWindow* window = view.window;
     NSString* nsPath = ToNSString(path);
@@ -282,7 +285,7 @@ bool AppShellPrintPdf(MainWindow* win, Str path, Str jobTitle) {
         return false;
     }
     PDFDocument* doc = [[PDFDocument alloc] initWithURL:[NSURL fileURLWithPath:nsPath]];
-    if (!doc) {
+    if (!doc || doc.isLocked || !doc.allowsPrinting) {
         return false;
     }
     NSPrintInfo* info = [[NSPrintInfo sharedPrintInfo] copy];
@@ -298,7 +301,7 @@ bool AppShellPrintPdf(MainWindow* win, Str path, Str jobTitle) {
 
     SumatraPrintJob* job = [[SumatraPrintJob alloc] init];
     job->doc = doc;
-    job->path = nsPath;
+    job->deletePath = after == PrintedPdf::Delete ? nsPath : nil;
     [op runOperationModalForWindow:window
                           delegate:job
                     didRunSelector:@selector(printOperationDidRun:success:contextInfo:)
