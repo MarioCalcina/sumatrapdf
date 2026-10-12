@@ -652,7 +652,7 @@ static bool TranslateToolOnCaptureKey(MainWindow*, gp::Ctx* cx, const gp::KeyEve
     }
     bool isEsc = ev->vk == VK_ESCAPE && !IsTrackedPopupOpen(cx) && !gTranslate.ddSrcLang.comboOpen &&
                  !gTranslate.ddDstLang.comboOpen;
-    bool isCtrlW = ev->vk == 'W' && ev->ctrl && !ev->alt;
+    bool isCtrlW = ev->vk == 'W' && CtrlOrCmd(ev) && !ev->alt;
     if (!isEsc && !isCtrlW) {
         return false;
     }
@@ -663,7 +663,7 @@ static bool TranslateToolOnCaptureKey(MainWindow*, gp::Ctx* cx, const gp::KeyEve
 // Enter is the default button's; a multi-line edit keeps it
 // (WindowBase::ActivateOnEnter)
 static bool TranslateToolOnKey(MainWindow*, gp::Ctx*, const gp::KeyEvent* ev) {
-    if (!gTranslate.visible || ev->vk != VK_RETURN || ev->ctrl || ev->alt) {
+    if (!gTranslate.visible || ev->vk != VK_RETURN || CtrlOrCmd(ev) || ev->alt) {
         return false;
     }
     StartTranslation();

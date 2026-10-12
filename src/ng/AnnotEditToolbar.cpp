@@ -1477,7 +1477,7 @@ void AnnotEditView::OnPopupSlider(AnnotEditView* self, gp::Ctx* cx, const gp::Sl
 // runs in the capture phase
 void AnnotEditView::OnContentsKey(AnnotEditView* self, gp::Ctx* cx, const gp::KeyEvent* ev) {
     // The text box takes Enter and Escape before the shell sees them.
-    bool accept = ev->vk == VK_RETURN && ev->ctrl;
+    bool accept = ev->vk == VK_RETURN && CtrlOrCmd(ev);
     bool cancel = ev->vk == VK_ESCAPE;
     if (!accept && !cancel) {
         return;
@@ -1492,7 +1492,7 @@ void AnnotEditView::OnContentsKey(AnnotEditView* self, gp::Ctx* cx, const gp::Ke
 // orig's WndProcFreeTextInPlaceEdit: Esc cancels, Ctrl+Enter is "done"
 void AnnotEditView::OnInPlaceKey(AnnotEditView* self, gp::Ctx* cx, const gp::KeyEvent* ev) {
     bool cancel = ev->vk == VK_ESCAPE;
-    bool accept = ev->vk == VK_RETURN && ev->ctrl;
+    bool accept = ev->vk == VK_RETURN && CtrlOrCmd(ev);
     if (!cancel && !accept) {
         return;
     }

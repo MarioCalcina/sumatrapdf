@@ -154,7 +154,7 @@ bool ToolWindowDialogKey(gp::Ctx* cx, const gp::KeyEvent* ev, void (*close)()) {
         close();
         return true;
     }
-    if (ev->vk != VK_RETURN || ev->ctrl || ev->alt) {
+    if (ev->vk != VK_RETURN || CtrlOrCmd(ev) || ev->alt) {
         return false;
     }
     bool editFocused = cx->win->input && cx->win->input->focused;
@@ -1298,7 +1298,7 @@ void ToolRootView::OnKeyDown(ToolRootView* self, gp::Ctx* cx, const gp::KeyEvent
         // orig's IsDialogMessage: Alt + letter, and the bare letter while no
         // text field has the focus
         bool editFocused = cx->win->input && cx->win->input->focused;
-        handled = DlgAccelOnKey(cx, ev->vk, ev->alt, ev->ctrl, editFocused);
+        handled = DlgAccelOnKey(cx, ev->vk, ev->alt, CtrlOrCmd(ev), editFocused);
     }
     if (!handled) {
         return;
@@ -1383,7 +1383,7 @@ void ToolRootView::OnCaptureKey(ToolRootView* self, gp::Ctx* cx, const gp::KeyEv
         return;
     }
     // a message box in this window is modal to it
-    bool handled = MsgBoxOnKeyInToolWindow(tw, ev->vk, ev->ctrl);
+    bool handled = MsgBoxOnKeyInToolWindow(tw, ev->vk, CtrlOrCmd(ev));
     if (!handled && tw->desc.onCaptureKey) {
         handled = tw->desc.onCaptureKey(tw->owner, cx, ev);
     }

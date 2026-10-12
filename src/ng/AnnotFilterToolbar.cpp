@@ -893,7 +893,7 @@ void AnnotFilterView::OnRow(AnnotFilterView* self, gp::Ctx* cx, const gp::ClickE
     if (!f) {
         return;
     }
-    ListRowClick(f, (int)idx, ev->modifiers.control, ev->modifiers.shift, ev->clickCount);
+    ListRowClick(f, (int)idx, ev->modifiers.control || ev->modifiers.platform, ev->modifiers.shift, ev->clickCount);
     AnnotFilterNotify(self, cx);
 }
 
@@ -922,7 +922,7 @@ void AnnotFilterView::OnCaptureKey(AnnotFilterView* self, gp::Ctx* cx, const gp:
     if (!f || !FilterHasHostFocus(f)) {
         return;
     }
-    if (!AnnotFilterKey(f, ev->vk, ev->ctrl, ev->shift, ev->alt, AnnotListFocus::Filter)) {
+    if (!AnnotFilterKey(f, ev->vk, CtrlOrCmd(ev), ev->shift, ev->alt, AnnotListFocus::Filter)) {
         return;
     }
     const_cast<gp::KeyEvent*>(ev)->propagate = false;
@@ -1065,7 +1065,7 @@ static bool AnnotFilterToolOnKey(MainWindow* win, gp::Ctx* cx, const gp::KeyEven
     if (cx->win->input && cx->win->input->focused) {
         return false;
     }
-    return AnnotFilterKey(f, ev->vk, ev->ctrl, ev->shift, ev->alt, AnnotListFocus::List);
+    return AnnotFilterKey(f, ev->vk, CtrlOrCmd(ev), ev->shift, ev->alt, AnnotListFocus::List);
 }
 
 // the caption's close box (orig hides the window) or the frame went away

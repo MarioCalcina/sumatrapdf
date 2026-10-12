@@ -333,7 +333,7 @@ static bool DlgWindowOnKey(MainWindow*, gp::Ctx* cx, const gp::KeyEvent* ev) {
     }
     DlgWindowCurrentScope current(e->tw);
     // with nothing focused gpui has no capture phase: the key comes here
-    if (e->spec.onKey && e->spec.onKey(e->win, (int)ev->vk, ev->ctrl, ev->shift, ev->alt)) {
+    if (e->spec.onKey && e->spec.onKey(e->win, (int)ev->vk, CtrlOrCmd(ev), ev->shift, ev->alt)) {
         return true;
     }
     if (ev->vk == VK_ESCAPE && !e->spec.closeOnEsc) {
@@ -343,7 +343,7 @@ static bool DlgWindowOnKey(MainWindow*, gp::Ctx* cx, const gp::KeyEvent* ev) {
         return true;
     }
     bool editFocused = cx->win->input && cx->win->input->focused;
-    if (ev->vk == VK_RETURN && !ev->ctrl && !ev->alt && !editFocused && e->spec.onEnter) {
+    if (ev->vk == VK_RETURN && !CtrlOrCmd(ev) && !ev->alt && !editFocused && e->spec.onEnter) {
         e->spec.onEnter();
         return true;
     }
@@ -354,10 +354,10 @@ static bool DlgWindowOnKey(MainWindow*, gp::Ctx* cx, const gp::KeyEvent* ev) {
 static bool DlgWindowOnCaptureKey(MainWindow*, gp::Ctx* cx, const gp::KeyEvent* ev) {
     DlgWindowEntry* e = DlgWindowEntryOf(cx->win);
     DlgWindowCurrentScope current(e ? e->tw : nullptr);
-    if (e && e->spec.onKey && e->spec.onKey(e->win, (int)ev->vk, ev->ctrl, ev->shift, ev->alt)) {
+    if (e && e->spec.onKey && e->spec.onKey(e->win, (int)ev->vk, CtrlOrCmd(ev), ev->shift, ev->alt)) {
         return true;
     }
-    if (!e || !e->spec.onArrow || ev->ctrl || ev->alt || ev->shift || IsTrackedPopupOpen(cx)) {
+    if (!e || !e->spec.onArrow || CtrlOrCmd(ev) || ev->alt || ev->shift || IsTrackedPopupOpen(cx)) {
         return false;
     }
     if (ev->vk != VK_UP && ev->vk != VK_DOWN) {
@@ -371,7 +371,7 @@ static void DlgWindowOnKeyUp(MainWindow*, gp::Ctx* cx, const gp::KeyEvent* ev) {
     DlgWindowEntry* e = DlgWindowEntryOf(cx->win);
     DlgWindowCurrentScope current(e ? e->tw : nullptr);
     if (e && e->spec.onKeyUp) {
-        e->spec.onKeyUp(e->win, (int)ev->vk, ev->ctrl, ev->shift, ev->alt);
+        e->spec.onKeyUp(e->win, (int)ev->vk, CtrlOrCmd(ev), ev->shift, ev->alt);
     }
 }
 

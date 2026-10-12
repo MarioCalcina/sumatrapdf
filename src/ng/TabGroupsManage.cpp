@@ -491,7 +491,7 @@ static bool TabGroupsToolOnKey(MainWindow*, gp::Ctx* cx, const gp::KeyEvent* ev)
         CloseCurrentDlg();
         return true;
     }
-    if (ev->ctrl || ev->alt) {
+    if (CtrlOrCmd(ev) || ev->alt) {
         return false;
     }
     if (ev->vk == VK_RETURN) {

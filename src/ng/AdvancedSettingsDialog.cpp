@@ -932,7 +932,7 @@ static bool AdvToolOnCaptureKey(MainWindow*, gp::Ctx*, const gp::KeyEvent* ev) {
         }
         return AdvRestoreDefault();
     }
-    if (ev->ctrl || ev->alt || ev->shift) {
+    if (CtrlOrCmd(ev) || ev->alt || ev->shift) {
         return false;
     }
     if (ev->vk != VK_UP && ev->vk != VK_DOWN) {

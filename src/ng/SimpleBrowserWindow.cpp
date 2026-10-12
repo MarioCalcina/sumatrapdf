@@ -278,8 +278,8 @@ static gp::El* SimpleBrowserToolBuild(MainWindow*, gp::Ctx* cx) {
 // orig's closeOnCtrlW and the manual's closeOnF1; no closeOnEsc (the page
 // uses Esc for its own UI)
 static bool SimpleBrowserToolOnKey(MainWindow*, gp::Ctx*, const gp::KeyEvent* ev) {
-    bool isCtrlW = ev->vk == 'W' && ev->ctrl && !ev->alt;
-    bool isF1 = ev->vk == VK_F1 && !ev->ctrl && !ev->shift && !ev->alt;
+    bool isCtrlW = ev->vk == 'W' && CtrlOrCmd(ev) && !ev->alt;
+    bool isF1 = ev->vk == VK_F1 && !CtrlOrCmd(ev) && !ev->shift && !ev->alt;
     if (!isCtrlW && !isF1) {
         return false;
     }

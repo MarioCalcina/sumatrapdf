@@ -385,7 +385,7 @@ static bool ChangeThemeToolOnKey(MainWindow*, gp::Ctx*, const gp::KeyEvent* ev) 
         ChangeThemeOk();
         return true;
     }
-    if (gChangeTheme.documentColorsFollowThemeOnly || ev->ctrl || ev->alt) {
+    if (gChangeTheme.documentColorsFollowThemeOnly || CtrlOrCmd(ev) || ev->alt) {
         return false;
     }
     int n = ThemeGetCount() + 1;

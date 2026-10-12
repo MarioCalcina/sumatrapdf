@@ -92,6 +92,16 @@ inline Rect FromGpui(gp::Bounds b) {
     return Rect{(int)b.x, (int)b.y, (int)b.w, (int)b.h};
 }
 
+// the modifier of a key combo the app handles itself, which orig spells Ctrl:
+// Command on macOS (⌘C copies, ⌘W closes), so Cmd + key is never a plain key
+inline bool CtrlOrCmd(const gp::KeyEvent* ev) {
+#if OS_DARWIN
+    return ev->ctrl || ev->platform;
+#else
+    return ev->ctrl;
+#endif
+}
+
 // ng: gpui's Listen() needs the listener's owner entity type, so it can't be
 // wrapped generically. This is the one shape the shell repeats: a handler on
 // the root view entity.

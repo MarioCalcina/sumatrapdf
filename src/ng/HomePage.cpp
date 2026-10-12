@@ -615,7 +615,7 @@ static void OpenHomeEntry(MainWindow* win, int idx, bool ctrl) {
 
 void HomeView::OnEntryClick(HomeView* self, gp::Ctx* cx, const gp::ClickEvent* ev, int64_t idx) {
     Ui(self->win)->selIdx = (int)idx;
-    OpenHomeEntry(self->win, (int)idx, ev->modifiers.control);
+    OpenHomeEntry(self->win, (int)idx, ev->modifiers.control || ev->modifiers.platform);
     HomeNotify(self->win, cx);
 }
 
@@ -1214,7 +1214,7 @@ static bool AboutToolOnKey(MainWindow* win, gp::Ctx*, const gp::KeyEvent* ev) {
         CloseAboutWindow();
         return true;
     }
-    if (ev->vk == 'C' && ev->ctrl) {
+    if (ev->vk == 'C' && CtrlOrCmd(ev)) {
         CopyAboutInfoToClipboard(win);
         return true;
     }

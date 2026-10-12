@@ -653,10 +653,10 @@ static bool PagesEditFocused(MainWindow* win) {
 // Keys for this window. PageUp/PageDown page the results list when neither
 // edit is focused. The frame only borrows those keys from the search edit.
 static bool FindToolOnCaptureKey(MainWindow* win, gp::Ctx*, const gp::KeyEvent* ev) {
-    if (FindWindowOnKeyDown(win, ev->vk, ev->ctrl, ev->shift, ev->alt)) {
+    if (FindWindowOnKeyDown(win, ev->vk, CtrlOrCmd(ev), ev->shift, ev->alt)) {
         return true;
     }
-    if (ev->ctrl || ev->alt || IsFindEditFocused(win) || PagesEditFocused(win)) {
+    if (CtrlOrCmd(ev) || ev->alt || IsFindEditFocused(win) || PagesEditFocused(win)) {
         return false;
     }
     switch (ev->vk) {
@@ -682,7 +682,7 @@ static bool FindToolOnKey(MainWindow* win, gp::Ctx*, const gp::KeyEvent* ev) {
         HideFindBar(win);
         return true;
     }
-    if (ev->vk == 'F' && ev->ctrl && !ev->alt) {
+    if (ev->vk == 'F' && CtrlOrCmd(ev) && !ev->alt) {
         w->wantFocus = true;
         w->wantSelectAll = true;
         AppShellInvalidate(win);

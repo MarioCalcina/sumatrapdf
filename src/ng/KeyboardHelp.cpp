@@ -284,7 +284,7 @@ static Str KbHelpToolTitle() {
 
 // orig's closeOnEsc, OnHelpWndProc ('?' closes it) and OnHelpKeyDown
 static bool KbHelpToolOnKey(MainWindow*, gp::Ctx*, const gp::KeyEvent* ev) {
-    bool questionMark = ev->vk == VK_OEM_2 && ev->shift && !ev->ctrl && !ev->alt;
+    bool questionMark = ev->vk == VK_OEM_2 && ev->shift && !CtrlOrCmd(ev) && !ev->alt;
     if (ev->vk == VK_ESCAPE || questionMark) {
         CloseKeyboardHelp();
         return true;

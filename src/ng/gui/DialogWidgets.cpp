@@ -459,10 +459,10 @@ void DialogComboView::OnKey(DialogComboView* self, gp::Ctx* cx, const gp::KeyEve
         return;
     }
     bool isArrow = ev->vk == gp::KeyDown || ev->vk == gp::KeyUp;
-    bool toggles = (ev->vk == 0x73 /* F4 */ && !ev->alt && !ev->ctrl) || (isArrow && ev->alt);
+    bool toggles = (ev->vk == 0x73 /* F4 */ && !ev->alt && !CtrlOrCmd(ev)) || (isArrow && ev->alt);
     if (toggles) {
         ComboSetOpen(dd, !dd->comboOpen);
-    } else if (isArrow && !ev->ctrl && !ev->shift) {
+    } else if (isArrow && !CtrlOrCmd(ev) && !ev->shift) {
         int n = len(dd->titles);
         if (n == 0) {
             return;

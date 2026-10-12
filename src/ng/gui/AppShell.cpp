@@ -2307,7 +2307,7 @@ void ShellView::OnKeyDown(ShellView* self, gp::Ctx* cx, const gp::KeyEvent* ev) 
     auto* mut = const_cast<gp::KeyEvent*>(ev);
     gChordKey = 0;
     if (gIgnoreRepeatKey && ev->vk == gIgnoreRepeatKey) {
-        if (ev->held && !ev->ctrl && !ev->alt) {
+        if (ev->held && !CtrlOrCmd(ev) && !ev->alt) {
             mut->propagate = false;
             return;
         }
@@ -2339,7 +2339,7 @@ void ShellView::OnKeyDown(ShellView* self, gp::Ctx* cx, const gp::KeyEvent* ev) 
         gp::Notify(cx);
         return;
     }
-    bool isMenuKey = !ev->ctrl && !ev->shift && (ev->vk == VK_MENU || (ev->vk == VK_F10 && !ev->alt));
+    bool isMenuKey = !CtrlOrCmd(ev) && !ev->shift && (ev->vk == VK_MENU || (ev->vk == VK_F10 && !ev->alt));
     if (isMenuKey) {
         if (!ev->held) {
             self->menuKey = ev->vk;
@@ -2373,7 +2373,7 @@ void ShellView::OnKeyDown(ShellView* self, gp::Ctx* cx, const gp::KeyEvent* ev) 
             }
             return;
         }
-        if (!ev->alt && !ev->ctrl && MenuOnAccessKey(self, cx, (u16)ev->vk)) {
+        if (!ev->alt && !CtrlOrCmd(ev) && MenuOnAccessKey(self, cx, (u16)ev->vk)) {
             mut->propagate = false;
             gp::Notify(cx);
         }
@@ -2398,7 +2398,7 @@ void ShellView::OnKeyDown(ShellView* self, gp::Ctx* cx, const gp::KeyEvent* ev) 
         paletteVk = VK_DELETE;
     }
 #endif
-    if (CommandPaletteOnKeyDown(win, paletteVk, ev->ctrl, ev->shift)) {
+    if (CommandPaletteOnKeyDown(win, paletteVk, CtrlOrCmd(ev), ev->shift)) {
         mut->propagate = false;
         gp::Notify(cx);
         return;
@@ -2409,27 +2409,27 @@ void ShellView::OnKeyDown(ShellView* self, gp::Ctx* cx, const gp::KeyEvent* ev) 
         gp::Notify(cx);
         return;
     }
-    if (self->dialogUp && DialogsOnKeyDown(win, (int)ev->vk, ev->ctrl, ev->shift, ev->alt)) {
+    if (self->dialogUp && DialogsOnKeyDown(win, (int)ev->vk, CtrlOrCmd(ev), ev->shift, ev->alt)) {
         mut->propagate = false;
         gp::Notify(cx);
         return;
     }
     // orig's dialogs are modal: a letter that is a dialog's access key goes to
     // the dialog, with Alt or (outside a text field) without
-    if (!ev->shift && DlgAccelOnKey(cx, (int)ev->vk, ev->alt, ev->ctrl, editFocused)) {
+    if (!ev->shift && DlgAccelOnKey(cx, (int)ev->vk, ev->alt, CtrlOrCmd(ev), editFocused)) {
         mut->propagate = false;
         gp::Notify(cx);
         return;
     }
     // the Merge PDF dialog's page grid: arrows, Delete, Ctrl + A
-    if (!editFocused && PdfToolDialogOnKeyDown(win, (int)ev->vk, ev->ctrl, ev->shift)) {
+    if (!editFocused && PdfToolDialogOnKeyDown(win, (int)ev->vk, CtrlOrCmd(ev), ev->shift)) {
         mut->propagate = false;
         gp::Notify(cx);
         return;
     }
     // the folder picker eats the keys it drives while it has the keyboard
     // (orig gives it its own top-level window, which takes the focus)
-    NavKeyResult navRes = NavFilesOnKeyDown(win, ev->vk, ev->ctrl, ev->alt);
+    NavKeyResult navRes = NavFilesOnKeyDown(win, ev->vk, CtrlOrCmd(ev), ev->alt);
     if (navRes == NavKeyResult::Handled) {
         mut->propagate = false;
         gp::Notify(cx);
@@ -2443,7 +2443,7 @@ void ShellView::OnKeyDown(ShellView* self, gp::Ctx* cx, const gp::KeyEvent* ev) 
         return;
     }
     // so does the annotation list, another window of its own in orig
-    if (AnnotFilterOnKeyDown(win, ev->vk, ev->ctrl, ev->shift, ev->alt)) {
+    if (AnnotFilterOnKeyDown(win, ev->vk, CtrlOrCmd(ev), ev->shift, ev->alt)) {
         mut->propagate = false;
         gp::Notify(cx);
         return;
@@ -2452,7 +2452,7 @@ void ShellView::OnKeyDown(ShellView* self, gp::Ctx* cx, const gp::KeyEvent* ev) 
     // in DefWindowProc from the key-down, which gpui does not pass on, so the
     // keys are answered here (the message itself, as a mouse driver or a
     // remote control sends it, is answered in NativeWindow.cpp)
-    if (!self->overlayUp && !ev->ctrl && !ev->alt) {
+    if (!self->overlayUp && !CtrlOrCmd(ev) && !ev->alt) {
         int appCmd = 0;
         switch (ev->vk) {
             case 0xA6: // VK_BROWSER_BACK
@@ -2480,7 +2480,7 @@ void ShellView::OnKeyDown(ShellView* self, gp::Ctx* cx, const gp::KeyEvent* ev) 
     }
     // orig's WM_CONTEXTMENU from the keyboard (the Apps key, Shift + F10): the
     // frame forwards it to the canvas, which opens its menu at the cursor
-    bool isCtxMenuKey = ev->vk == VK_APPS || (ev->vk == VK_F10 && ev->shift && !ev->ctrl && !ev->alt);
+    bool isCtxMenuKey = ev->vk == VK_APPS || (ev->vk == VK_F10 && ev->shift && !CtrlOrCmd(ev) && !ev->alt);
     if (ev->vk == VK_APPS && !editFocused && PdfToolDialogContextMenuFromKey(win, cx)) {
         mut->propagate = false;
         gp::Notify(cx);
@@ -2501,7 +2501,7 @@ void ShellView::OnKeyDown(ShellView* self, gp::Ctx* cx, const gp::KeyEvent* ev) 
     // orig's AdvanceFocus, from FrameOnChar, TocTreeKeyDown2 and
     // OnLocationEditChar: Tab in the frame, a sidebar tree or the page / chapter
     // box cycles between them. Elsewhere (a dialog, the find bar) Tab is gpui's
-    if (ev->vk == VK_TAB && !ev->ctrl && !ev->alt && !self->overlayUp) {
+    if (ev->vk == VK_TAB && !CtrlOrCmd(ev) && !ev->alt && !self->overlayUp) {
         bool inTabOrder = AppShellIsFrameFocused(win) || IsToolbarPageBoxFocused(win) ||
                           SidebarPanelHasFocus(win, true) || SidebarPanelHasFocus(win, false);
         if (inTabOrder) {
@@ -2511,17 +2511,17 @@ void ShellView::OnKeyDown(ShellView* self, gp::Ctx* cx, const gp::KeyEvent* ev) 
             return;
         }
     }
-    if (SidebarOnKeyDown(win, ev->vk, ev->ctrl, ev->shift, ev->alt)) {
+    if (SidebarOnKeyDown(win, ev->vk, CtrlOrCmd(ev), ev->shift, ev->alt)) {
         mut->propagate = false;
         gp::Notify(cx);
         return;
     }
-    if (ev->alt && !ev->ctrl && !ev->shift && MenuBarOnAltKey(self, cx, (u16)ev->vk)) {
+    if (ev->alt && !CtrlOrCmd(ev) && !ev->shift && MenuBarOnAltKey(self, cx, (u16)ev->vk)) {
         mut->propagate = false;
         gp::Notify(cx);
         return;
     }
-    if (!ev->alt && !ev->ctrl && MenuOnAccessKey(self, cx, (u16)ev->vk)) {
+    if (!ev->alt && !CtrlOrCmd(ev) && MenuOnAccessKey(self, cx, (u16)ev->vk)) {
         mut->propagate = false;
         gp::Notify(cx);
         return;
@@ -2540,12 +2540,12 @@ void ShellView::OnKeyDown(ShellView* self, gp::Ctx* cx, const gp::KeyEvent* ev) 
     bool isCaretKey = ev->vk == VK_LEFT || ev->vk == VK_RIGHT || ev->vk == VK_UP || ev->vk == VK_DOWN ||
                       ev->vk == VK_HOME || ev->vk == VK_END || ev->vk == VK_PRIOR || ev->vk == VK_NEXT;
     if (!editFocused && !ev->alt && isCaretKey && SelectTextWithKeyboardActive(win) &&
-        SelectTextWithKeyboardOnKeyDown(win, ev->vk, ev->ctrl, ev->shift, ev->alt)) {
+        SelectTextWithKeyboardOnKeyDown(win, ev->vk, CtrlOrCmd(ev), ev->shift, ev->alt)) {
         mut->propagate = false;
         gp::Notify(cx);
         return;
     }
-    if (!editFocused && !ev->ctrl && !ev->alt && NudgeSelectedAnnotation(win, (int)ev->vk, ev->shift)) {
+    if (!editFocused && !CtrlOrCmd(ev) && !ev->alt && NudgeSelectedAnnotation(win, (int)ev->vk, ev->shift)) {
         mut->propagate = false;
         gp::Notify(cx);
         return;
@@ -2556,7 +2556,7 @@ void ShellView::OnKeyDown(ShellView* self, gp::Ctx* cx, const gp::KeyEvent* ev) 
         gp::Notify(cx);
         return;
     }
-    if (!ev->ctrl && !ev->alt && !ev->shift && IsFormFieldEditActive() && FormFieldEditOnKeyDown((int)ev->vk)) {
+    if (!CtrlOrCmd(ev) && !ev->alt && !ev->shift && IsFormFieldEditActive() && FormFieldEditOnKeyDown((int)ev->vk)) {
         mut->propagate = false;
         gp::Notify(cx);
         return;
@@ -2566,7 +2566,7 @@ void ShellView::OnKeyDown(ShellView* self, gp::Ctx* cx, const gp::KeyEvent* ev) 
         gp::Notify(cx);
         return;
     }
-    if (ExplorerQuickLookOnKeyDown(win, (int)ev->vk, ev->ctrl || ev->shift || ev->alt)) {
+    if (ExplorerQuickLookOnKeyDown(win, (int)ev->vk, CtrlOrCmd(ev) || ev->shift || ev->alt)) {
         mut->propagate = false;
         gp::Notify(cx);
         return;
@@ -2670,15 +2670,15 @@ void ShellView::OnKeyDown(ShellView* self, gp::Ctx* cx, const gp::KeyEvent* ev) 
     // orig's ActivateOnEnter: Enter clicks the focused button (gpui does that
     // for a focused control of its own), or the dialog's default button
     bool noCtrlFocused = cx->win->focusId <= 0 || IsDialogTrapFocused(cx->win);
-    if (ev->vk == VK_RETURN && !ev->ctrl && !ev->alt && self->dialogUp && noCtrlFocused &&
+    if (ev->vk == VK_RETURN && !CtrlOrCmd(ev) && !ev->alt && self->dialogUp && noCtrlFocused &&
         DlgDefaultOnEnter(cx, false)) {
         mut->propagate = false;
         gp::Notify(cx);
         return;
     }
     // orig runs these two in its PreTranslate, before the accelerators
-    if (ReadingAutoScrollOnKey(win, ev->vk, ev->ctrl, ev->shift, ev->alt) ||
-        ReadingBarOnKey(win, ev->vk, ev->ctrl, ev->shift, ev->alt)) {
+    if (ReadingAutoScrollOnKey(win, ev->vk, CtrlOrCmd(ev), ev->shift, ev->alt) ||
+        ReadingBarOnKey(win, ev->vk, CtrlOrCmd(ev), ev->shift, ev->alt)) {
         mut->propagate = false;
         gp::Notify(cx);
         return;
@@ -2687,13 +2687,13 @@ void ShellView::OnKeyDown(ShellView* self, gp::Ctx* cx, const gp::KeyEvent* ev) 
     // list instead of scrolling (issue #1136)
     // only without modifiers: Shift + Up, Alt + Left &c stay accelerators.
     // Ctrl + Enter is no accelerator and reaches orig's canvas as a key
-    bool homeKey = !ev->shift && !ev->alt && (!ev->ctrl || ev->vk == VK_RETURN);
-    if (homeKey && win->IsCurrentTabAbout() && HomePageOnKeyDown(win, ev->vk, ev->ctrl)) {
+    bool homeKey = !ev->shift && !ev->alt && (!CtrlOrCmd(ev) || ev->vk == VK_RETURN);
+    if (homeKey && win->IsCurrentTabAbout() && HomePageOnKeyDown(win, ev->vk, CtrlOrCmd(ev))) {
         mut->propagate = false;
         gp::Notify(cx);
         return;
     }
-    if (SelectTextWithKeyboardOnKeyDown(win, ev->vk, ev->ctrl, ev->shift, ev->alt)) {
+    if (SelectTextWithKeyboardOnKeyDown(win, ev->vk, CtrlOrCmd(ev), ev->shift, ev->alt)) {
         mut->propagate = false;
         gp::Notify(cx);
         return;
@@ -2712,13 +2712,13 @@ void ShellView::OnKeyDown(ShellView* self, gp::Ctx* cx, const gp::KeyEvent* ev) 
         }
     }
 #endif
-    if (frameKeys && FrameOnKeydown(win, (int)ev->vk, ev->ctrl, ev->shift, ev->alt)) {
+    if (frameKeys && FrameOnKeydown(win, (int)ev->vk, CtrlOrCmd(ev), ev->shift, ev->alt)) {
         mut->propagate = false;
         gp::Notify(cx);
         return;
     }
     // orig's FrameOnSysChar: Alt + 1..9 select a tab
-    if (ev->alt && !ev->ctrl && FrameOnSysChar(win, (int)ev->vk)) {
+    if (ev->alt && !CtrlOrCmd(ev) && FrameOnSysChar(win, (int)ev->vk)) {
         mut->propagate = false;
         gp::Notify(cx);
         return;
@@ -2769,7 +2769,7 @@ void ShellView::OnCaptureKey(ShellView* self, gp::Ctx* cx, const gp::KeyEvent* e
     }
     // orig's FindWindowWnd::OnKeyDown: the floating find window walks its
     // results with F3 and with the keys it borrows from the search edit
-    if (!self->dialogUp && FindWindowOnKeyDown(win, ev->vk, ev->ctrl, ev->shift, ev->alt)) {
+    if (!self->dialogUp && FindWindowOnKeyDown(win, ev->vk, CtrlOrCmd(ev), ev->shift, ev->alt)) {
         const_cast<gp::KeyEvent*>(ev)->propagate = false;
         gp::Notify(cx);
         return;
@@ -2777,7 +2777,7 @@ void ShellView::OnCaptureKey(ShellView* self, gp::Ctx* cx, const gp::KeyEvent* e
     if (!self->dialogUp) {
         return;
     }
-    if (ev->vk != VK_RETURN || ev->ctrl || ev->alt || ev->shift || !IsTextFieldFocused(cx)) {
+    if (ev->vk != VK_RETURN || CtrlOrCmd(ev) || ev->alt || ev->shift || !IsTextFieldFocused(cx)) {
         return;
     }
     if (gp::InputIsMultiLine(cx->win->input) || IsTrackedPopupOpen(cx)) {

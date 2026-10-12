@@ -3379,7 +3379,7 @@ static bool MergeToolOnKey(MainWindow* win, gp::Ctx* cx, const gp::KeyEvent* ev)
     if (ev->vk == VK_APPS) {
         return MergeContextMenuFromKey(win, cx);
     }
-    return MergeOnKeyDown(win, ev->vk, ev->ctrl, ev->shift);
+    return MergeOnKeyDown(win, ev->vk, CtrlOrCmd(ev), ev->shift);
 }
 
 // the caption's close box, or the frame went away

@@ -48,6 +48,12 @@ macOS: `Ctrl` in a default becomes `Cmd`, except for switching tabs
 The Windows default keeps working where its key is still free (`F3`, `F11`,
 `Cmd + B`, `Cmd + 1`). Shortcuts are shown as the menu bar writes them (`⇧⌘G`).
 
+Keys the app handles itself (dialogs, the command palette, lists) take `Cmd`
+where Windows takes `Ctrl` (`CtrlOrCmd()` in `gui/GpuiBridge.h`), and so do
+Ctrl-clicks (open in new tab, multi-select). The folder list adds Finder's
+`Cmd + Up`, `Cmd + [` and `Cmd + ]`. Key hints use the macOS glyphs
+(`MacKeyCapTemp()`): `⌘↩`, `⌃Tab`, `⌦`.
+
 Ng scripts use the `cmd/ng-` prefix, with build helpers under `cmd/helper/ng-`.
 Use `ng-gen-commands.ts` and `ng-gen-settings.ts` for ng generated headers;
 the original generators still write the original app's files. Format ng

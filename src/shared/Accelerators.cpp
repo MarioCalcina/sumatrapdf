@@ -349,6 +349,28 @@ TempStr WithShortcutHintTemp(Str text, int cmdId) {
     return str::DupTemp(before);
 }
 
+// A key cap the UI writes the Windows way, as macOS writes it: "Ctrl + Enter"
+// is Command + Return, Del is Forward Delete, Ctrl alone is the Control that
+// switches tabs ("Release Ctrl"). Translations keep key names in English.
+TempStr MacKeyCapTemp(Str key) {
+    static const struct {
+        const char* win;
+        const char* mac;
+    } kMacKeyCaps[] = {
+        {"Ctrl + Enter", "\u2318\u21a9"},
+        {"Ctrl+Enter", "\u2318\u21a9"},
+        {"Ctrl+Tab", "\u2303Tab"},
+        {"Enter", "\u21a9"},
+        {"Del", "\u2326"},
+    };
+    for (const auto& k : kMacKeyCaps) {
+        if (str::Eq(key, Str(k.win))) {
+            return str::DupTemp(Str(k.mac));
+        }
+    }
+    return str::ReplaceTemp(key, StrL("Ctrl"), StrL("\u2303"));
+}
+
 static bool sameAccelKey(const Accel& a1, const Accel& a2) {
     return a1.sc.SameKey(a2.sc);
 }

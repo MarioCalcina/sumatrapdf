@@ -1714,7 +1714,7 @@ static bool ImageEditToolOnCaptureKey(MainWindow* win, gp::Ctx* cx, const gp::Ke
         return false;
     }
     bool isArrow = ev->vk == VK_LEFT || ev->vk == VK_RIGHT || ev->vk == VK_UP || ev->vk == VK_DOWN;
-    if (isArrow && !ev->ctrl && !ev->alt) {
+    if (isArrow && !CtrlOrCmd(ev) && !ev->alt) {
         return ImageEditOnArrowKey(win, ev->vk, ev->shift);
     }
     return false;
@@ -1729,11 +1729,11 @@ static bool ImageEditToolOnKey(MainWindow* win, gp::Ctx* cx, const gp::KeyEvent*
         ImageEditOnEscape();
         return true;
     }
-    if (ev->vk == 'C' && ev->ctrl) {
+    if (ev->vk == 'C' && CtrlOrCmd(ev)) {
         bool editFocused = cx->win->input && cx->win->input->focused;
         return !editFocused && ImageEditOnKeyDown(win, ev->vk, true);
     }
-    if (ev->vk == VK_RETURN && !ev->ctrl && !ev->alt) {
+    if (ev->vk == VK_RETURN && !CtrlOrCmd(ev) && !ev->alt) {
         bool editFocused = cx->win->input && cx->win->input->focused;
         return DlgDefaultOnEnter(cx, editFocused);
     }

@@ -44,6 +44,7 @@
 #include "SumatraDialogs.h"
 #include "gui/DialogWidgets.h"
 #include "gui/ToolWindow.h"
+#include "Accelerators.h"
 #include "gui/NavFilesUI.h"
 #include "AppHelpersCommon.h"
 
@@ -964,6 +965,21 @@ static bool NavOnKey(int vk, bool ctrl, bool alt, NavFocus focus) {
                 return false;
         }
     }
+#if OS_DARWIN
+    // Finder's keys: Cmd + Up goes up, Cmd + [ / ] go back / forward
+    if (vk == VK_UP && ctrl) {
+        GoUp();
+        return true;
+    }
+    if (vk == VK_OEM_4 && ctrl) {
+        GoBack();
+        return true;
+    }
+    if (vk == VK_OEM_6 && ctrl) {
+        GoForward();
+        return true;
+    }
+#endif
     // Alt + Up / Left / Right go up / back / forward, like Explorer.
     // Backspace goes up, like the classic Explorer / file dialogs
     if ((vk == VK_UP && alt) || vk == VK_BACK) {
@@ -1050,7 +1066,7 @@ void NavFilesView::OnCaptureKey(NavFilesView*, gp::Ctx* cx, const gp::KeyEvent* 
         return;
     }
     gNav.hasKeyboard = true;
-    if (!NavOnKey(ev->vk, ev->ctrl, ev->alt, focus)) {
+    if (!NavOnKey(ev->vk, CtrlOrCmd(ev), ev->alt, focus)) {
         return;
     }
     const_cast<gp::KeyEvent*>(ev)->propagate = false;
@@ -1082,7 +1098,7 @@ void NavFilesView::OnRowClick(NavFilesView*, gp::Ctx* cx, const gp::ClickEvent* 
     }
     gNav.sel = (int)idx;
     if (ev->clickCount >= 2) {
-        ExecuteCurrentSelection(ev->modifiers.control);
+        ExecuteCurrentSelection(ev->modifiers.control || ev->modifiers.platform);
     }
     NavNotify(cx);
 }
@@ -1229,7 +1245,7 @@ static bool NavToolOnKey(MainWindow*, gp::Ctx* cx, const gp::KeyEvent* ev) {
     if (!NavIsOpen()) {
         return false;
     }
-    NavKeyResult res = NavListOnKey(cx->win, ev->vk, ev->ctrl, ev->alt);
+    NavKeyResult res = NavListOnKey(cx->win, ev->vk, CtrlOrCmd(ev), ev->alt);
     NavInvalidate();
     // Typed: the filter box has the focus now and takes the character
     return res == NavKeyResult::Handled;
@@ -1489,12 +1505,21 @@ static gp::El* NavRowEl(gp::Ctx* cx, int idx, Color colBg, Color colText) {
     return row;
 }
 
+// a key cap as this platform writes it: "Ctrl + Enter" is Command + Return on macOS
+static Str NavKeyCap(Str key) {
+#if OS_DARWIN
+    return MacKeyCapTemp(key);
+#else
+    return key;
+#endif
+}
+
 // one wrapping line of key-cap hints, like the command palette help row;
 // translators keep the key names in English
 static gp::El* NavHintsEl(gp::Ctx* cx, Color colText) {
     const gp::Theme& th = gp::ThemeNow(cx->app);
-    TempStr hints = fmt("(Kbd/%s) %s (Kbd/%s) %s (Kbd/%s) %s", Tr("Enter"), Tr("open in current tab"),
-                        Tr("Ctrl + Enter"), Tr("open in new tab"), Tr("Del"), Tr("delete file"));
+    TempStr hints = fmt("(Kbd/%s) %s (Kbd/%s) %s (Kbd/%s) %s", NavKeyCap(Tr("Enter")), Tr("open in current tab"),
+                        NavKeyCap(Tr("Ctrl + Enter")), Tr("open in new tab"), NavKeyCap(Tr("Del")), Tr("delete file"));
     Vec<TipSpan> spans;
     TipSpansParse(spans, hints);
     gp::El* row =

@@ -457,3 +457,15 @@ bool ShortcutParse_UnitTestKeyHint() {
     gShortcutLangCode = prevLang;
     return true;
 }
+
+// key caps the UI writes the Windows way, as macOS writes them
+bool ShortcutParse_UnitTestMacKeyCap() {
+    utassert(str::Eq(MacKeyCapTemp(StrL("Ctrl + Enter")), StrL("\u2318\u21a9")));
+    utassert(str::Eq(MacKeyCapTemp(StrL("Ctrl+Tab")), StrL("\u2303Tab")));
+    utassert(str::Eq(MacKeyCapTemp(StrL("Enter")), StrL("\u21a9")));
+    utassert(str::Eq(MacKeyCapTemp(StrL("Del")), StrL("\u2326")));
+    // a translation keeps its words; Ctrl alone is the tab-switching Control
+    utassert(str::Eq(MacKeyCapTemp(StrL("Soltar Ctrl")), StrL("Soltar \u2303")));
+    utassert(str::Eq(MacKeyCapTemp(StrL("Esc")), StrL("Esc")));
+    return true;
+}

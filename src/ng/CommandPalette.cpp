@@ -2177,6 +2177,10 @@ static gp::El* BuildHelpRow(CommandPaletteWnd* wnd, gp::Ctx* cx) {
             }
         }
         Str key = Str(s.s, keyLen);
+#if OS_DARWIN
+        // the palette takes Cmd + Backspace for Del (gui/AppShell.cpp)
+        key = str::Eq(key, StrL("Del")) ? StrL("\u2318\u232b") : MacKeyCapTemp(key);
+#endif
         Str desc = keyLen < len(s) ? Str(s.s + keyLen + 1, len(s) - keyLen - 1) : Str();
 
         gp::El* hint = gp::Div(cx->a)->FlexRow()->ItemsCenter()->Gap(4);
@@ -2339,7 +2343,7 @@ static gp::El* PaletteToolBuild(MainWindow* win, gp::Ctx* cx) {
 }
 
 static bool PaletteToolOnKey(MainWindow* win, gp::Ctx*, const gp::KeyEvent* ev) {
-    return CommandPaletteOnKeyDown(win, (int)ev->vk, ev->ctrl, ev->shift);
+    return CommandPaletteOnKeyDown(win, (int)ev->vk, CtrlOrCmd(ev), ev->shift);
 }
 
 // the smart tab switcher picks its tab when Ctrl goes up
