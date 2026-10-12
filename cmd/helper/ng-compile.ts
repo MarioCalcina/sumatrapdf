@@ -798,6 +798,7 @@ const macFrameworks = [
   "CoreGraphics",
   "ImageIO",
   "IOKit",
+  "PDFKit",
   "Security",
   "Speech",
   "WebKit",

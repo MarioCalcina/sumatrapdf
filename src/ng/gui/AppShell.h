@@ -155,6 +155,10 @@ float AppShellRenderScale(gpui::Window* win);
 void AppShellDisableAutoTermination();
 void AppShellHandleOpenDocs();
 void AppShellOpenDocsReady();
+void AppShellWatchMacEvents();
+void AppShellMacClientTitleBar(MainWindow* win, bool on);
+bool AppShellSystemIsDark();
+bool AppShellPrintPdf(MainWindow* win, Str path, Str jobTitle);
 #endif
 // presentation mode's auto-hidden cursor (orig hides it with SetCursor(null))
 void AppShellShowCursor(MainWindow* win, bool show);

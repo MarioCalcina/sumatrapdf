@@ -10,6 +10,7 @@
 #include "base/File.h"
 #include "base/Pixmap.h"
 #include "gui/WasmBridge.h"
+#include "gui/AppShell.h"
 
 #if !OS_WASM
 #include <errno.h>
@@ -494,6 +495,18 @@ void PrintCurrentFile(MainWindow* win, bool waitForCompletion, bool selectionByD
     file::Delete(printPath);
     delete selection;
     if (!ok) {
+        MessageBoxWarning(win, Tr("Couldn't initialize printer"), Tr("Printing problem."));
+    }
+    return;
+#endif
+#if OS_DARWIN
+    // the macOS print panel prints a temporary PDF; it deletes the file when done
+    TempStr printPath = GetTempFilePathTemp(StrL("sumatra-print-"));
+    bool printed = PrintEngineToPdf(engine, printPath, selection, rotation) &&
+                   AppShellPrintPdf(win, printPath, path::GetBaseNameTemp(engine->FilePath()));
+    delete selection;
+    if (!printed) {
+        file::Delete(printPath);
         MessageBoxWarning(win, Tr("Couldn't initialize printer"), Tr("Printing problem."));
     }
     return;

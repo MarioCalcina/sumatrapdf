@@ -3424,6 +3424,22 @@ static bool ToDoc(MainWindow* win, float wx, float wy, Point* out) {
     return wx >= (float)rc.x && wy >= (float)rc.y && wx < (float)(rc.x + rc.dx) && wy < (float)(rc.y + rc.dy);
 }
 
+// trackpad pinch (macOS): scales the zoom by factor, keeping the document
+// point under window position (wx, wy) in place, as orig's GID_ZOOM does
+void DocCanvasPinchZoom(MainWindow* win, float factor, float wx, float wy) {
+    if (!IsMainWindowValid(win) || !win->AsFixed() || !win->docCanvas) {
+        return;
+    }
+    Point pt;
+    if (!ToDoc(win, wx, wy, &pt)) {
+        return;
+    }
+    StopSmoothScroll(win);
+    float zoom = win->ctrl->GetZoomVirtual(true) * factor;
+    SmartZoom(win, zoom, &pt, false);
+    AppShellInvalidate(win);
+}
+
 void DocCanvasView::OnPaint(gp::PaintCtx* ctx, gp::El* e, void* user) {
     auto* win = (MainWindow*)user;
     if (!IsMainWindowValid(win) || !win->AsFixed()) {

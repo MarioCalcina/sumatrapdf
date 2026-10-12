@@ -59,6 +59,15 @@ struct ChangeThemeDlg {
 
 static ChangeThemeDlg gChangeTheme;
 
+// the list row of the System theme, which follows the OS light/dark mode
+static Str FollowSystemThemeLabel() {
+#if OS_DARWIN
+    return Tr("Follow macOS");
+#else
+    return Tr("Follow Windows");
+#endif
+}
+
 static void ChangeThemeOpenToolWindow(MainWindow* win);
 
 struct ChangeThemeView {
@@ -302,7 +311,7 @@ static gp::El* ChangeThemeToolBuild(MainWindow*, gp::Ctx* cx) {
                            ->OnScroll(gp::ListenTo(gChangeThemeView, &ChangeThemeView::OnScroll));
         int nThemes = ThemeGetCount();
         for (int i = 0; i <= nThemes; i++) {
-            Str name = (i == kFollowWindowsThemeListIndex) ? Tr("Follow Windows") : ThemeGetNameAt(i - 1);
+            Str name = (i == kFollowWindowsThemeListIndex) ? FollowSystemThemeLabel() : ThemeGetNameAt(i - 1);
             gp::El* row = gp::Div(cx->a)
                               ->FlexRow()
                               ->W(gp::kFill)
@@ -524,7 +533,7 @@ gp::El* ChangeThemeDialogBuild(MainWindow* win, gp::Ctx* cx) {
         for (int i = 0; i <= nThemes; i++) {
             // orig: a mode, not another color theme, so its name is distinct
             // from the persisted Theme = System value
-            Str name = (i == kFollowWindowsThemeListIndex) ? Tr("Follow Windows") : ThemeGetNameAt(i - 1);
+            Str name = (i == kFollowWindowsThemeListIndex) ? FollowSystemThemeLabel() : ThemeGetNameAt(i - 1);
             gp::El* row = gp::Div(cx->a)
                               ->FlexRow()
                               ->W(gp::kFill)

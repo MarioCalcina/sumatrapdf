@@ -233,14 +233,25 @@ enum CaptionButtons {
 static bool CanHaveTabsInTitlebar() {
 #if OS_WIN
     return !gPluginMode;
+#elif OS_DARWIN
+    // a full-size content view under AppKit's own window buttons
+    return true;
 #else
     return false;
 #endif
 }
 
+// macOS: room the caption leaves at the left for the traffic lights
+static int CaptionTrafficLightsDx() {
+    return OS_DARWIN ? (int)gpc::TitleBarLeftPad() : 0;
+}
+
 void AppShellSetClientTitleBar(MainWindow* win, bool on) {
     if (win && win->gpuiWin) {
         win->gpuiWin->opts.clientTitleBar = on;
+#if OS_DARWIN
+        AppShellMacClientTitleBar(win, on);
+#endif
     }
 }
 
@@ -271,7 +282,8 @@ static int CaptionWinBtnDy(MainWindow* win, bool twoRow) {
 }
 
 int AppShellFrameBorder(MainWindow* win) {
-    return ShowCaption(win) && !win->isMaximized ? kFrameBorderSize : 0;
+    // macOS draws the window's edge itself
+    return ShowCaption(win) && !win->isMaximized && !OS_DARWIN ? kFrameBorderSize : 0;
 }
 
 static int CaptionDy(MainWindow* win, bool twoRow, bool tabsVisible) {
@@ -298,8 +310,8 @@ bool AppShellCaptionRects(MainWindow* win, Rect* menuOut, Rect* tabsOut, int* dy
         return true;
     }
     *menuOut = Rect{};
-    *tabsOut =
-        Rect{border + kTabBarDy, border + winBtn - kCaptionTabBarDy, win->tabsAvailDx, hasTabs ? kCaptionTabBarDy : 0};
+    int tabsX = OS_DARWIN ? CaptionTrafficLightsDx() : border + kTabBarDy;
+    *tabsOut = Rect{tabsX, border + winBtn - kCaptionTabBarDy, win->tabsAvailDx, hasTabs ? kCaptionTabBarDy : 0};
     return true;
 }
 
@@ -435,7 +447,14 @@ static void BuildCaption(ShellView* self, gp::Ctx* cx, gp::El* root, bool twoRow
                        ->ItemsEnd()
                        ->Bg(ToGpui(ThemeControlBackgroundColor()))
                        ->Click(gp::ClickWinCaption);
+#if OS_DARWIN
+    // AppKit draws the window buttons here; the space around them drags the window
+    int sysButtonsDx = CaptionTrafficLightsDx();
+    row1->Child(gp::Div(cx->a)->W((float)sysButtonsDx)->H((float)winBtn)->Shrink0()->Click(gp::ClickWinCaption));
+#else
+    int sysButtonsDx = tabBtn + 3 * winBtn;
     row1->Child(CaptionSystemMenuButton(self, cx, tabBtn));
+#endif
     gp::El* tabs = nullptr;
     if (twoRow) {
         row1->Child(
@@ -445,7 +464,7 @@ static void BuildCaption(ShellView* self, gp::Ctx* cx, gp::El* root, bool twoRow
         tabs = TabsUIBuild(win, cx, kTabBarDy);
     } else {
         int frameDx = win->frameRc.dx - 2 * AppShellFrameBorder(win);
-        win->tabsAvailDx = std::max(0, frameDx - tabBtn - kTabsButtonGapX - 3 * winBtn);
+        win->tabsAvailDx = std::max(0, frameDx - sysButtonsDx - kTabsButtonGapX);
         tabs = TabsUIBuild(win, cx, kCaptionTabBarDy);
         if (tabs) {
             row1->Child(gp::Div(cx->a)->Flex1()->MinW(0)->H((float)kCaptionTabBarDy)->Child(tabs));
@@ -459,9 +478,11 @@ static void BuildCaption(ShellView* self, gp::Ctx* cx, gp::El* root, bool twoRow
         }
         row1->Child(gp::Div(cx->a)->W((float)kTabsButtonGapX)->H((float)winBtn)->Shrink0()->Click(gp::ClickWinCaption));
     }
+#if !OS_DARWIN
     row1->Child(CaptionButton(cx, CB_MINIMIZE, gp::ClickWinMin, winBtn));
     row1->Child(CaptionButton(cx, maximized ? CB_RESTORE : CB_MAXIMIZE, gp::ClickWinMax, winBtn));
     row1->Child(CaptionButton(cx, CB_CLOSE, gp::ClickWinClose, winBtn));
+#endif
     root->Child(row1);
     if (twoRow && tabs) {
         root->Child(tabs);
@@ -856,12 +877,15 @@ void AppShellSetFullScreen(MainWindow* win, bool fullScreen, bool) {
         if (!cur.IsEmpty()) {
             win->normalWindowRc = cur;
         }
+        // there is no caption row now, so nothing may sit under the title bar
+        AppShellSetClientTitleBar(win, false);
         Rect mon = ToolWinNativeMonitor(gw);
         if (!mon.IsEmpty()) {
             ToolWinNativeSetFrame(gw, mon, false);
         }
         return;
     }
+    AppShellSetClientTitleBar(win, win->tabsInTitlebar);
     if (!win->normalWindowRc.IsEmpty()) {
         ToolWinNativeSetFrame(gw, win->normalWindowRc, false);
     }
