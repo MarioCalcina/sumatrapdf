@@ -56,6 +56,7 @@ void DocCanvasOnWmContextMenu(MainWindow* win, int screenX, int screenY);
 void DocCanvasWheelFromFrame(MainWindow* win, gpui::Ctx* cx, const gpui::ScrollWheelEvent* ev);
 void DocCanvasPostedWheel(MainWindow* win, int delta, bool isCtrl, bool isShift);
 void DocCanvasPinchZoom(MainWindow* win, float factor, float wx, float wy);
+void DocCanvasSwipePage(MainWindow* win, int dir);
 void DocCanvasMouseDown(MainWindow* win, int x, int y);
 void DocCanvasMouseUp(MainWindow* win, int x, int y);
 void DocCanvasMouseMove(MainWindow* win, int x, int y);

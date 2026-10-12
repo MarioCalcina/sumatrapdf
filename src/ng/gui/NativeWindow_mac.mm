@@ -235,12 +235,44 @@ static void OnSmartMagnify(NSEvent* ev) {
     uitask::Post(MkFunc0Void(ApplySmartZoom), "ApplySmartZoom");
 }
 
+// --- trackpad swipe ----------------------------------------------------------
+
+// Trackpad settings' "Swipe between pages" takes two-finger swipes; its
+// three-finger choice arrives as swipe events instead (OnSwipe)
+bool AppShellSwipeTurnsPages() {
+    return [NSEvent isSwipeTrackingFromScrollEventsEnabled];
+}
+
+static MainWindow* gSwipeWin = nullptr;
+static int gSwipeDir = 0;
+
+static void ApplySwipe() {
+    MainWindow* win = gSwipeWin;
+    gSwipeWin = nullptr;
+    DocCanvasSwipePage(win, gSwipeDir);
+}
+
+// deltaX > 0 goes back, as in Safari: to the previous page
+static void OnSwipe(NSEvent* ev) {
+    MainWindow* win = MainWindowFor(ev.window);
+    int dir = ev.deltaX > 0 ? 1 : (ev.deltaX < 0 ? -1 : 0);
+    if (!win || dir == 0 || gSwipeWin) {
+        return;
+    }
+    gSwipeWin = win;
+    gSwipeDir = dir;
+    uitask::Post(MkFunc0Void(ApplySwipe), "ApplySwipe");
+}
+
 // the hooks into AppKit events gpui does not forward
 void AppShellWatchMacEvents() {
-    [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskMagnify | NSEventMaskSmartMagnify
+    NSEventMask mask = NSEventMaskMagnify | NSEventMaskSmartMagnify | NSEventMaskSwipe;
+    [NSEvent addLocalMonitorForEventsMatchingMask:mask
                                           handler:^NSEvent*(NSEvent* ev) {
                                             if (ev.type == NSEventTypeSmartMagnify) {
                                                 OnSmartMagnify(ev);
+                                            } else if (ev.type == NSEventTypeSwipe) {
+                                                OnSwipe(ev);
                                             } else {
                                                 OnMagnify(ev);
                                             }

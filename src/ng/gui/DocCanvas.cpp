@@ -89,6 +89,14 @@ static PaintFrame gFrame;
 
 struct DocCanvasView;
 
+// where a trackpad gesture is in becoming a sideways swipe (macOS)
+enum class Swipe : u8 {
+    None,
+    Undecided,
+    Sideways,
+    Done
+};
+
 // ng: the canvas state orig keeps on MainWindow; one per window (step 10b)
 struct DocCanvasUI {
     gp::Entity<DocCanvasView> view;
@@ -100,6 +108,11 @@ struct DocCanvasUI {
     // last wheel delta that was a fraction of a notch (a precision touchpad)
     TimeStamp wheelFineDeltaTime{};
     bool wheelFineDeltaSeen = false;
+    // the trackpad gesture under way and how far it has moved
+    Swipe swipe = Swipe::None;
+    float swipeDx = 0;
+    float swipeDy = 0;
+    TimeStamp swipeTime{};
     // the page context menu, built when it is opened (orig's
     // OnWindowContextMenu), and the popup that shows it
     MenuModel* ctxMenu = nullptr;
@@ -3440,6 +3453,78 @@ void DocCanvasPinchZoom(MainWindow* win, float factor, float wx, float wy) {
     AppShellInvalidate(win);
 }
 
+// three-finger swipe (macOS): 1 turns to the previous page, -1 to the next
+void DocCanvasSwipePage(MainWindow* win, int dir) {
+    if (!IsMainWindowValid(win) || !win->AsFixed() || !win->docCanvas) {
+        return;
+    }
+    WheelTurnPage(win, dir);
+    AppShellInvalidate(win);
+}
+
+#if OS_DARWIN
+// travel that tells a sideways swipe from a scroll, and that turns the page
+constexpr float kSwipeDecidePx = 8;
+constexpr float kSwipeTurnPx = 50;
+// momentum events have no phase: a pause this long ends the gesture
+constexpr double kSwipeGapMs = 250;
+
+// A sideways two-finger swipe turns the page while the page fits the width, as
+// in Preview: once per gesture, and the momentum after it is dropped. True when
+// the wheel event is part of such a swipe and must not scroll.
+static bool SwipeTakesWheel(MainWindow* win, const gp::ScrollWheelEvent* ev) {
+    DocCanvasUI* ui = Ui(win);
+    if (!ev->precise) {
+        ui->swipe = Swipe::None;
+        return false;
+    }
+    bool paused = TimeSinceInMs(ui->swipeTime) > kSwipeGapMs;
+    ui->swipeTime = TimeGet();
+    if (ev->phase == gp::TouchPhase::Started) {
+        bool fitsWidth = !win->AsFixed()->NeedHScroll();
+        ui->swipe = fitsWidth && AppShellSwipeTurnsPages() ? Swipe::Undecided : Swipe::None;
+        ui->swipeDx = 0;
+        ui->swipeDy = 0;
+    } else if (paused) {
+        ui->swipe = Swipe::None;
+    }
+    if (ui->swipe == Swipe::None) {
+        return false;
+    }
+    if (ui->swipe == Swipe::Done) {
+        return true;
+    }
+
+    bool ended = ev->phase == gp::TouchPhase::Ended || ev->phase == gp::TouchPhase::Cancelled;
+    ui->swipeDx += ev->deltaX;
+    ui->swipeDy += ev->deltaY;
+    float ax = std::abs(ui->swipeDx);
+    float ay = std::abs(ui->swipeDy);
+    if (ui->swipe == Swipe::Undecided) {
+        if (std::max(ax, ay) < kSwipeDecidePx) {
+            if (ended) {
+                ui->swipe = Swipe::None;
+            }
+            return false;
+        }
+        if (ay >= ax) {
+            ui->swipe = Swipe::None;
+            return false;
+        }
+        ui->swipe = Swipe::Sideways;
+    }
+
+    // fingers moving right show what is left of the page: the previous one
+    if (ax >= kSwipeTurnPx) {
+        WheelTurnPage(win, ui->swipeDx > 0 ? 1 : -1);
+        ui->swipe = Swipe::Done;
+    } else if (ended) {
+        ui->swipe = Swipe::Done;
+    }
+    return true;
+}
+#endif
+
 void DocCanvasView::OnPaint(gp::PaintCtx* ctx, gp::El* e, void* user) {
     auto* win = (MainWindow*)user;
     if (!IsMainWindowValid(win) || !win->AsFixed()) {
@@ -3508,6 +3593,12 @@ void DocCanvasView::OnWheel(DocCanvasView* self, gp::Ctx* cx, const gp::ScrollWh
     if (!IsMainWindowValid(win) || !win->AsFixed()) {
         return;
     }
+#if OS_DARWIN
+    if (SwipeTakesWheel(win, ev)) {
+        gp::Notify(cx);
+        return;
+    }
+#endif
     float notch = gp::WheelNotchPixels(cx->app);
     if (notch <= 0) {
         notch = 1;

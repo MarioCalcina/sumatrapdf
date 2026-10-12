@@ -75,6 +75,8 @@ AppKit code lives in `*_mac.mm` files, mostly `gui/NativeWindow_mac.mm`:
 
 - trackpad pinch zooms around the cursor (gpui has no gesture events); a
   two-finger double tap toggles the zoom
+- a sideways swipe turns the page while the page fits the width (Trackpad
+  settings' "Swipe between pages", with two or three fingers)
 - opened documents go to the Dock menu's recent documents
 - the System theme ("Follow macOS") follows the system appearance
 - the UI language on first start is the first of the system's languages we have

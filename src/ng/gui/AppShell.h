@@ -158,6 +158,7 @@ void AppShellOpenDocsReady();
 void AppShellWatchMacEvents();
 void AppShellMacClientTitleBar(MainWindow* win, bool on);
 void AppShellNoteRecentDoc(Str path);
+bool AppShellSwipeTurnsPages();
 bool AppShellSystemIsDark();
 // what the print panel does with the PDF once it closes
 enum class PrintedPdf {
