@@ -8,6 +8,7 @@ export const sharedFiles = [
   "src/base/AutoWin.h",
   "src/base/Base.cpp",
   "src/base/Base.h",
+  "src/base/Base_mac.mm",
   "src/base/Base_posix.cpp",
   "src/base/BitManip.h",
   "src/base/ByteReaderWriter.cpp",

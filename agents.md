@@ -138,6 +138,9 @@ The app embeds one LzSA archive (`cmd/helper/embedded.ts`):
 `.work/translations.txt`, `ext/marked.min.js`, `ext/mermaid.min.js`, the
 mupdf fonts and, when a website checkout exists, the manual staged in
 `.work/docs` by `cmd/gen-docs.ts`. `src/shared/EmbeddedLzsa.S` links it.
+Without upstream's `TRANS_UPLOAD_SECRET`, `bun cmd/trans-dl.ts` builds the
+translations from apptranslator's public history and sends nothing; the
+workflows run it before building.
 
 ### GPUI integration
 

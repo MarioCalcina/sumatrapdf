@@ -234,35 +234,70 @@ bool IsCurrLangRtl() {
 }
 
 #if !OS_WIN
-// ng: the win32 half below maps a LANGID to our language code. POSIX has no
-// LANGID; $LC_ALL / $LANG ("de_DE.UTF-8") name the language directly.
-Str DetectUserLang() {
-    const char* envNames[] = {"LC_ALL", "LC_MESSAGES", "LANG"};
-    for (const char* name : envNames) {
-        const char* v = getenv(name);
-        if (!v || !*v) {
-            continue;
+// ISO codes our table spells differently, then ("") ISO codes our table has
+// for another language: Breton "br" is not Brazilian Portuguese
+// clang-format off
+static const char* kIsoLangCodes[] = {
+    "be", "by",  "cs", "cz",  "da", "dk",  "fil", "tl",  "fy", "fy-nl",  "hy", "am",
+    "ko", "kr",  "ms", "my",  "my", "mm",  "nb", "no",  "pt-br", "br",  "vi", "vn",
+    "sr", "sr-rs",  "sr-cyrl", "sr-rs",  "sr-latn", "sp-rs",  "ca-es-valencia", "ca-xv",
+    "zh", "cn",  "zh-hans", "cn",  "zh-cn", "cn",  "zh-sg", "cn",
+    "zh-hant", "tw",  "zh-tw", "tw",  "zh-hk", "tw",  "zh-mo", "tw",
+    "am", "",  "br", "",  "kr", "",  "tw", "",
+};
+// clang-format on
+
+// Index in our table of a locale's language: "es-PE", "zh-Hans-CN" (macOS) or
+// "de_DE.UTF-8" ($LANG), tried from the most specific prefix down. -1 if none.
+int LangIdxForLocale(Str locale) {
+    int n = 0;
+    while (n < len(locale) && locale.s[n] != '.' && locale.s[n] != '@') {
+        n++;
+    }
+    TempStr code = str::DupTemp(Str(locale.s, n));
+    str::ToLowerInPlace(code);
+    for (int i = 0; i < len(code); i++) {
+        if (code.s[i] == '_') {
+            code.s[i] = '-';
         }
-        Str s = Str((char*)v);
-        // "de_DE.UTF-8" -> try "de-de", then "de"
-        int n = 0;
-        while (n < s.len && s.s[n] != '.' && s.s[n] != '@') {
-            n++;
-        }
-        TempStr code = str::DupTemp(Str(s.s, n));
-        str::ToLowerInPlace(code);
-        for (int i = 0; i < len(code); i++) {
-            if (code.s[i] == '_') {
-                code.s[i] = '-';
+    }
+
+    while (len(code) > 0) {
+        for (int i = 0; i < dimofi(kIsoLangCodes); i += 2) {
+            if (str::Eq(code, Str((char*)kIsoLangCodes[i]))) {
+                return FindLangIdx(Str((char*)kIsoLangCodes[i + 1]));
             }
         }
         int idx = FindLangIdx(code);
-        if (idx < 0) {
-            int dash = str::IndexOfChar(code, '-');
-            if (dash > 0) {
-                idx = FindLangIdx(Str(code.s, dash));
-            }
+        if (idx >= 0) {
+            return idx;
         }
+        int dash = str::LastIndexOfChar(code, '-');
+        if (dash <= 0) {
+            break;
+        }
+        code.len = dash;
+    }
+    return -1;
+}
+
+// ng: the win32 half below maps a LANGID to our language code. macOS lists
+// the user's languages (an app started from Finder has no $LANG); elsewhere
+// $LC_ALL / $LANG ("de_DE.UTF-8") name the language.
+Str DetectUserLang() {
+    StrVec locales;
+#if OS_DARWIN
+    GetUserLanguages(locales);
+#endif
+    const char* envNames[] = {"LC_ALL", "LC_MESSAGES", "LANG"};
+    for (const char* name : envNames) {
+        const char* v = getenv(name);
+        if (v && *v) {
+            locales.Append(Str((char*)v));
+        }
+    }
+    for (Str locale : locales) {
+        int idx = LangIdxForLocale(locale);
         if (idx >= 0) {
             return GetLangCodeByIdxTemp(idx);
         }

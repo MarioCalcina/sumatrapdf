@@ -64,6 +64,7 @@ extern bool Accelerators_UnitTestFolderNavIsSafe();
 extern bool NavFiles_UnitTestHidden();
 #if !OS_WIN
 extern bool MeasurementSystem_UnitTests();
+extern bool Translations_UnitTestLocales();
 extern bool DpiPosix_UnitTests();
 #if !OS_WASM
 extern bool AppToolsPosix_UnitTests();
@@ -198,6 +199,7 @@ int main(int argc, char** argv) {
     utassert(NavFiles_UnitTestHidden());
 #if !OS_WIN
     utassert(MeasurementSystem_UnitTests());
+    utassert(Translations_UnitTestLocales());
     utassert(DpiPosix_UnitTests());
 #if !OS_WASM
     utassert(AppToolsPosix_UnitTests());

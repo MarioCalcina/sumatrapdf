@@ -21,6 +21,9 @@
  *   6. Re-download (should now include submitted translations)
  *   7. Write filtered .work/translations.txt
  *
+ * Without TRANS_UPLOAD_SECRET (this fork) only steps 4 and 7 run, on the
+ * public history: nothing is sent to apptranslator.
+ *
  * Usage:
  *   bun cmd/trans-dl.ts                 # production apptranslator + Claude if key set
  *   bun cmd/trans-dl.ts --local         # http://127.0.0.1:9311
@@ -246,11 +249,52 @@ function tryGetTransSecret(): string {
   return s;
 }
 
-/** Minimal empty cache when we cannot talk to apptranslator (no secret). */
-function writeEmptyTranslations(): void {
-  mkdirSync(workDir, { recursive: true });
-  writeFileSync(translationsTxtPath, "", "utf-8");
-  console.log(`Wrote empty ${translationsTxtPath} (translations skipped)`);
+// strings of this fork translated from an upstream string that differs in one word
+const derivedTranslations: { english: string; from: string; word: [string, string] }[] = [
+  { english: "Follow macOS", from: "Follow Windows", word: ["Windows", "macOS"] },
+];
+
+function addDerivedTranslations(pt: ParsedTranslations): void {
+  for (const d of derivedTranslations) {
+    let n = 0;
+    for (const [lang, m] of pt.perLang) {
+      if (existingTranslation(pt.perLang, lang, d.english) !== undefined) continue;
+      const t = m.get(d.from);
+      if (!t || !t.includes(d.word[0])) continue;
+      m.set(d.english, t.replaceAll(d.word[0], d.word[1]));
+      n++;
+    }
+    console.log(`'${d.english}': ${n} languages from '${d.from}'`);
+  }
+}
+
+// Without TRANS_UPLOAD_SECRET (this fork) the translations come from the
+// public edit history: read only, nothing is marked or submitted upstream.
+async function buildFromHistory(server: string): Promise<void> {
+  const strs = extractStringsToTranslate();
+  strs.sort();
+  const wanted = new Set(strs);
+  const shipped = new Set(loadSupportedLangCodes());
+  const hist = await downloadHistory(server);
+
+  const perLang = new Map<string, Map<string, string>>();
+  for (const [lang, m] of hist) {
+    if (!shipped.has(lang)) continue;
+    const out = new Map<string, string>();
+    for (const [english, translation] of m) {
+      const t = fixTranslation(translation);
+      if (wanted.has(english) && t.length > 0 && !t.includes("\n")) out.set(english, t);
+    }
+    perLang.set(lang, out);
+  }
+  const pt: ParsedTranslations = { perLang, allStrings: strs, fromServer: clonePerLang(perLang) };
+  autoAddStrippedMatches(pt, buildStrippedIndex(hist, pt));
+  addDerivedTranslations(pt);
+
+  const untranslated = strs.filter((s) => ![...perLang.values()].some((m) => m.has(s)));
+  console.log(`${untranslated.length} strings without any translation:\n  ${untranslated.join("\n  ")}`);
+  const snapshot = JSON.stringify([...perLang].map(([lang, m]) => [lang, [...m]]));
+  writeTranslationsForBinary(pt, createHash("sha1").update(snapshot).digest("hex"));
 }
 
 interface DownloadResult {
@@ -1385,8 +1429,8 @@ async function main() {
 
   const secret = tryGetTransSecret();
   if (!secret) {
-    console.log("TRANS_UPLOAD_SECRET not set; skipping download/AI");
-    writeEmptyTranslations();
+    console.log("TRANS_UPLOAD_SECRET not set; translations from the public history, no AI");
+    await buildFromHistory(args.server);
     return;
   }
 

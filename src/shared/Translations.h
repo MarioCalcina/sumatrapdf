@@ -15,6 +15,7 @@ TempStr GetLangCodeByIdxTemp(int idx);
 TempStr GetLangNameByIdxTemp(int idx);
 bool IsCurrLangRtl();
 Str DetectUserLang();
+int LangIdxForLocale(Str locale);
 void Destroy();
 
 } // namespace trans

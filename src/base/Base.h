@@ -1188,6 +1188,10 @@ struct AutoUnlockRecursiveMutex : NonCopyable {
 
 // 0 = metric (A4), 1 = imperial (Letter). ng: orig declares it in Win.h
 int GetMeasurementSystem();
+#if OS_DARWIN
+struct StrVec;
+void GetUserLanguages(StrVec& out);
+#endif
 
 // physical memory still free and how loaded memory is, 0..100. False when the
 // system does not say; the caller then assumes no pressure.
