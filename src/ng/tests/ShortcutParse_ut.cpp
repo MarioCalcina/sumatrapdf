@@ -435,3 +435,25 @@ bool ShortcutParse_UnitTestAccelTable() {
     gShortcutLangCode = prevLang;
     return true;
 }
+
+// the home page's search cue names the find key as this platform writes it
+bool ShortcutParse_UnitTestKeyHint() {
+    auto prevLang = gShortcutLangCode;
+    gShortcutLangCode = nullptr;
+#if OS_DARWIN
+    Str findKey = StrL("\u2318F");
+#else
+    Str findKey = StrL("Ctrl + F");
+#endif
+    TempStr got = WithShortcutHintTemp(StrL("Search 3 files (Ctrl + F)"), CmdFindFirst);
+    utassert(str::Eq(got, str::JoinTemp(StrL("Search 3 files ("), findKey, StrL(")"))));
+    // a translation keeps its words, only the hint changes
+    got = WithShortcutHintTemp(StrL("Buscar en 3 archivos (Strg + F)"), CmdFindFirst);
+    utassert(str::Eq(got, str::JoinTemp(StrL("Buscar en 3 archivos ("), findKey, StrL(")"))));
+    // no trailing hint: nothing to replace
+    utassert(str::Eq(WithShortcutHintTemp(StrL("Search (3) files"), CmdFindFirst), StrL("Search (3) files")));
+    // nothing bound: the hint goes
+    utassert(str::Eq(WithShortcutHintTemp(StrL("Search 3 files (Ctrl + F)"), CmdNone), StrL("Search 3 files")));
+    gShortcutLangCode = prevLang;
+    return true;
+}

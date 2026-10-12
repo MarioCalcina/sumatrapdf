@@ -330,6 +330,25 @@ TempStr ShortcutsForCmdTemp(int cmdId, int maxCount) {
     return res;
 }
 
+// The key hint a translation ends with, e.g. "(Ctrl + F)" in "Search %d files
+// (Ctrl + F)", replaced by the key cmdId is bound to now ("⌘F" on macOS).
+// Dropped when nothing is bound; text without a trailing "(...)" is kept.
+TempStr WithShortcutHintTemp(Str text, int cmdId) {
+    int open = str::LastIndexOfChar(text, '(');
+    if (open < 0 || !str::EndsWith(text, StrL(")"))) {
+        return str::DupTemp(text);
+    }
+    Str before = Str(text.s, open);
+    TempStr key = ShortcutsForCmdTemp(cmdId, 1);
+    if (len(key) > 0) {
+        return str::JoinTemp(before, StrL("("), key, StrL(")"));
+    }
+    while (len(before) > 0 && before.s[len(before) - 1] == ' ') {
+        before.len--;
+    }
+    return str::DupTemp(before);
+}
+
 static bool sameAccelKey(const Accel& a1, const Accel& a2) {
     return a1.sc.SameKey(a2.sc);
 }

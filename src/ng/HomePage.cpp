@@ -1904,7 +1904,9 @@ gp::El* HomePageBuild(MainWindow* win, gp::Ctx* cx) {
             gp::InputSetValue(h->search, ToGpui(h->searchQuery));
         }
     }
+    // translations name Windows' key; show the one bound here (⌘F on macOS)
     TempStr cue = fmt(Tr("Search %d files (Ctrl + F)").s, CountHomePageFiles());
+    cue = WithShortcutHintTemp(cue, CmdFindFirst);
     gp::InputSetPlaceholder(h->search, ToGpui(cue));
     h->search->onChange = gp::ListenTo(Ui(win)->view, &HomeView::OnSearch);
 

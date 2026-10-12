@@ -19,6 +19,7 @@ const Accel* GetAcceleratorTable(int& nOut);
 const AccelStroke* GetAcceleratorStrokes(int& nOut);
 TempStr AppendAccelKeyToMenuStringTemp(TempStr str, int cmdId);
 TempStr ShortcutsForCmdTemp(int cmdId, int maxCount);
+TempStr WithShortcutHintTemp(Str text, int cmdId);
 int SafeAcceleratorCmd(u16 vk, bool ctrl, bool shift, bool alt, bool cmd = false);
 int AsciiAcceleratorCmd(u32 ch);
 bool IsSafeAccel(const Accel&);

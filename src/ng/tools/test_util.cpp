@@ -49,6 +49,7 @@ extern void SimpleLogTest();
 extern bool ShortcutParse_UnitTestShiftedPunct();
 extern bool ShortcutParse_UnitTestGpuiStroke();
 extern bool ShortcutParse_UnitTestAccelTable();
+extern bool ShortcutParse_UnitTestKeyHint();
 extern bool MarkdownModel_UnitTestBrowserNavigationUrl();
 extern bool MarkdownToc_UnitTestHtmlLinks();
 extern bool MarkdownToc_UnitTestHtmlHeadings();
@@ -181,6 +182,7 @@ int main(int argc, char** argv) {
     utassert(ShortcutParse_UnitTestShiftedPunct());
     utassert(ShortcutParse_UnitTestGpuiStroke());
     utassert(ShortcutParse_UnitTestAccelTable());
+    utassert(ShortcutParse_UnitTestKeyHint());
     utassert(MarkdownModel_UnitTestBrowserNavigationUrl());
     utassert(MarkdownToc_UnitTestHtmlLinks());
     utassert(MarkdownToc_UnitTestHtmlHeadings());
