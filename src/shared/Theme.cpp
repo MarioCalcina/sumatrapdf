@@ -713,6 +713,10 @@ static bool IsDefaultMainWinColor(ParsedColor* col) {
     return col->parsedOk && col->col == kMainWinBgColDefault;
 }
 
+#if OS_DARWIN
+bool AppShellSystemIsDark(); // ng's gui/NativeWindow_mac.mm
+#endif
+
 // true if Windows "choose your default app mode" is set to dark
 static bool OsAppsUseDarkMode() {
 #if OS_WIN
@@ -722,7 +726,6 @@ static bool OsAppsUseDarkMode() {
                  L"AppsUseLightTheme", RRF_RT_REG_DWORD, nullptr, &val, &cb);
     return val == 0;
 #elif OS_DARWIN
-    bool AppShellSystemIsDark(); // gui/NativeWindow_mac.mm
     return AppShellSystemIsDark();
 #else
     // ng: gpui reports the system appearance; step 12 asks it here
