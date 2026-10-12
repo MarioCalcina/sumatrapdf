@@ -1505,21 +1505,22 @@ static gp::El* NavRowEl(gp::Ctx* cx, int idx, Color colBg, Color colText) {
     return row;
 }
 
-// a key cap as this platform writes it: "Ctrl + Enter" is Command + Return on macOS
+// a key cap as this platform writes it: "Ctrl + Enter" is Command + Return on
+// macOS, whatever the translation calls the key
 static Str NavKeyCap(Str key) {
 #if OS_DARWIN
     return MacKeyCapTemp(key);
 #else
-    return key;
+    return Tr(key);
 #endif
 }
 
-// one wrapping line of key-cap hints, like the command palette help row;
-// translators keep the key names in English
+// one wrapping line of key-cap hints, like the command palette help row
 static gp::El* NavHintsEl(gp::Ctx* cx, Color colText) {
     const gp::Theme& th = gp::ThemeNow(cx->app);
-    TempStr hints = fmt("(Kbd/%s) %s (Kbd/%s) %s (Kbd/%s) %s", NavKeyCap(Tr("Enter")), Tr("open in current tab"),
-                        NavKeyCap(Tr("Ctrl + Enter")), Tr("open in new tab"), NavKeyCap(Tr("Del")), Tr("delete file"));
+    TempStr hints =
+        fmt("(Kbd/%s) %s (Kbd/%s) %s (Kbd/%s) %s", NavKeyCap(TrN("Enter")), Tr("open in current tab"),
+            NavKeyCap(TrN("Ctrl + Enter")), Tr("open in new tab"), NavKeyCap(TrN("Del")), Tr("delete file"));
     Vec<TipSpan> spans;
     TipSpansParse(spans, hints);
     gp::El* row =

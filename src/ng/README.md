@@ -52,7 +52,9 @@ Keys the app handles itself (dialogs, the command palette, lists) take `Cmd`
 where Windows takes `Ctrl` (`CtrlOrCmd()` in `gui/GpuiBridge.h`), and so do
 Ctrl-clicks (open in new tab, multi-select). The folder list adds Finder's
 `Cmd + Up`, `Cmd + [` and `Cmd + ]`. Key hints use the macOS glyphs
-(`MacKeyCapTemp()`): `⌘↩`, `⌃Tab`, `⌦`. The keyboard selection caret (`F7`)
+(`MacKeyCapTemp()`), taken from the English hint since a translation may
+rename the key (Spanish `Supr` for `Del`): `⌘↩`, `⌃Tab`, `⌦`. The keyboard
+selection caret (`F7`)
 moves as in a text view: `Option` by word, `Cmd + Left / Right` to the line's
 edge, `Cmd + Up / Down` to the document's. `Shift + Option + Left / Right`
 extend a mouse selection by word.

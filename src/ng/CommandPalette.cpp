@@ -849,15 +849,6 @@ static void ExecuteCurrentSelection() {
     ScheduleDeleteAndExecCommand();
 }
 
-// what the palette shows for Delete; macOS has Cmd+Backspace instead
-static TempStr RestoreDefaultHelpTemp() {
-#if OS_DARWIN
-    return str::DupTemp(Tr("Cmd+Backspace restore default"));
-#else
-    return str::DupTemp(Tr("Del restore default"));
-#endif
-}
-
 // Delete on a removable row: a file-history entry, an open tab or a favorite.
 // Commands and TOC entries are not removable.
 static bool RemoveSelectedItem() {
@@ -2110,6 +2101,32 @@ static gp::El* BuildSwitchRow(CommandPaletteWnd* wnd, gp::Ctx* cx) {
     return row;
 }
 
+// length of the first n words: the key of a hint ("Release Ctrl select": 2)
+static int KeyWordsLen(Str s, int n) {
+    int keyLen = 0;
+    for (int w = 0; w < n && keyLen < len(s); w++) {
+        keyLen += (w > 0);
+        while (keyLen < len(s) && s.s[keyLen] != ' ') {
+            keyLen++;
+        }
+    }
+    return keyLen;
+}
+
+#if OS_DARWIN
+// The key as a Mac writes it. A translation may rename the key (Spanish "Supr"
+// for Del), so a key with a Mac glyph comes from the English hint.
+static Str MacHelpKeyCap(Str enKey, Str key) {
+    // the palette takes Cmd + Backspace for Del (gui/AppShell.cpp)
+    if (str::Eq(enKey, StrL("Del"))) {
+        return StrL("\u2318\u232b");
+    }
+    TempStr glyph = MacKeyCapTemp(enKey);
+    bool oneWord = str::IndexOfChar(enKey, ' ') < 0;
+    return oneWord && !str::Eq(glyph, enKey) ? glyph : MacKeyCapTemp(key);
+}
+#endif
+
 static gp::El* BuildHelpRow(CommandPaletteWnd* wnd, gp::Ctx* cx) {
     const gp::Theme& th = gp::ThemeNow(cx->app);
     TempStr filter = CommandPaletteSkipWS(QueryTemp());
@@ -2120,66 +2137,59 @@ static gp::El* BuildHelpRow(CommandPaletteWnd* wnd, gp::Ctx* cx) {
     int nHelp = 0;
     switch (kind) {
         case kHelpSmartTab:
-            strings[nHelp++] = Tr("Ctrl+Tab navigate");
+            strings[nHelp++] = TrN("Ctrl+Tab navigate");
             keyWords[nHelp] = 2;
-            strings[nHelp++] = Tr("Release Ctrl select");
-            strings[nHelp++] = Tr("Space for sticky mode");
-            strings[nHelp++] = Tr("Del close tab");
+            strings[nHelp++] = TrN("Release Ctrl select");
+            strings[nHelp++] = TrN("Space for sticky mode");
+            strings[nHelp++] = TrN("Del close tab");
             break;
         case kHelpHistory:
-            strings[nHelp++] = Tr("Enter open file");
-            strings[nHelp++] = Tr("Del remove from history");
-            strings[nHelp++] = Tr("Esc close");
+            strings[nHelp++] = TrN("Enter open file");
+            strings[nHelp++] = TrN("Del remove from history");
+            strings[nHelp++] = TrN("Esc close");
             break;
         case kHelpTabs:
-            strings[nHelp++] = Tr("Enter switch to tab");
-            strings[nHelp++] = Tr("Del close tab");
-            strings[nHelp++] = Tr("Esc close");
+            strings[nHelp++] = TrN("Enter switch to tab");
+            strings[nHelp++] = TrN("Del close tab");
+            strings[nHelp++] = TrN("Esc close");
             break;
         case kHelpFavorites:
-            strings[nHelp++] = Tr("Enter go to favorite");
-            strings[nHelp++] = Tr("Del remove favorite");
-            strings[nHelp++] = Tr("Esc close");
+            strings[nHelp++] = TrN("Enter go to favorite");
+            strings[nHelp++] = TrN("Del remove favorite");
+            strings[nHelp++] = TrN("Esc close");
             break;
         case kHelpAnnotations:
         case kHelpThumbnails:
         case kHelpToc:
-            strings[nHelp++] = Tr("Enter go to");
-            strings[nHelp++] = Tr("Esc close");
+            strings[nHelp++] = TrN("Enter go to");
+            strings[nHelp++] = TrN("Esc close");
             break;
         case kHelpSettings:
-            strings[nHelp++] = Tr("Enter change");
-            strings[nHelp++] = RestoreDefaultHelpTemp();
-            strings[nHelp++] = Tr("Esc close");
+            strings[nHelp++] = TrN("Enter change");
+            strings[nHelp++] = TrN("Del restore default");
+            strings[nHelp++] = TrN("Esc close");
             break;
         case kHelpSettingValue:
-            strings[nHelp++] = Tr("Enter apply");
-            strings[nHelp++] = RestoreDefaultHelpTemp();
-            strings[nHelp++] = Tr("Esc go back");
+            strings[nHelp++] = TrN("Enter apply");
+            strings[nHelp++] = TrN("Del restore default");
+            strings[nHelp++] = TrN("Esc go back");
             break;
         case kHelpEverything:
-            strings[nHelp++] = Tr("Enter select");
-            strings[nHelp++] = Tr("Esc close");
+            strings[nHelp++] = TrN("Enter select");
+            strings[nHelp++] = TrN("Esc close");
             break;
         default:
-            strings[nHelp++] = Tr("Enter run command");
-            strings[nHelp++] = Tr("Esc close");
+            strings[nHelp++] = TrN("Enter run command");
+            strings[nHelp++] = TrN("Esc close");
             break;
     }
     gp::El* row = gp::Div(cx->a)->FlexRow()->W(gp::kFill)->JustifyCenter()->ItemsCenter()->Gap(12)->Shrink0();
     for (int i = 0; i < nHelp; i++) {
-        Str s = strings[i];
-        int keyLen = 0;
-        for (int w = 0; w < keyWords[i] && keyLen < len(s); w++) {
-            keyLen += (w > 0);
-            while (keyLen < len(s) && s.s[keyLen] != ' ') {
-                keyLen++;
-            }
-        }
+        Str s = Tr(strings[i]);
+        int keyLen = KeyWordsLen(s, keyWords[i]);
         Str key = Str(s.s, keyLen);
 #if OS_DARWIN
-        // the palette takes Cmd + Backspace for Del (gui/AppShell.cpp)
-        key = str::Eq(key, StrL("Del")) ? StrL("\u2318\u232b") : MacKeyCapTemp(key);
+        key = MacHelpKeyCap(Str(strings[i].s, KeyWordsLen(strings[i], keyWords[i])), key);
 #endif
         Str desc = keyLen < len(s) ? Str(s.s + keyLen + 1, len(s) - keyLen - 1) : Str();
 
