@@ -71,7 +71,9 @@ website checkout and `.work/docs` staging as the original app.
 
 AppKit code lives in `*_mac.mm` files, mostly `gui/NativeWindow_mac.mm`:
 
-- trackpad pinch zooms around the cursor (gpui has no gesture events)
+- trackpad pinch zooms around the cursor (gpui has no gesture events); a
+  two-finger double tap toggles the zoom
+- opened documents go to the Dock menu's recent documents
 - the System theme ("Follow macOS") follows the system appearance
 - Print opens the macOS print panel on a rendered PDF (PDFKit)
 - tabs sit in the title bar beside the traffic lights

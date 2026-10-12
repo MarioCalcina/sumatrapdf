@@ -157,6 +157,7 @@ void AppShellHandleOpenDocs();
 void AppShellOpenDocsReady();
 void AppShellWatchMacEvents();
 void AppShellMacClientTitleBar(MainWindow* win, bool on);
+void AppShellNoteRecentDoc(Str path);
 bool AppShellSystemIsDark();
 bool AppShellPrintPdf(MainWindow* win, Str path, Str jobTitle);
 #endif

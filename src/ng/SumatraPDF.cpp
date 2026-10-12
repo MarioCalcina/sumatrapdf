@@ -1725,6 +1725,11 @@ static MainWindow* LoadDocumentFinish(MainWindow* win, Str fullPath, DocControll
         } else {
             AddPathToRecentDocs(fullPath);
         }
+#elif OS_DARWIN
+        // nor the Dock menu's recent documents
+        if (!gFlags || !gFlags->forTesting) {
+            AppShellNoteRecentDoc(fullPath);
+        }
 #endif
 
         // Remove Zone.Identifier (Mark of the Web) so that Windows Explorer

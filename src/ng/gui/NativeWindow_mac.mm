@@ -215,11 +215,35 @@ bool AppShellSystemIsDark() {
 }
 @end
 
+static MainWindow* gSmartZoomWin = nullptr;
+
+static void ApplySmartZoom() {
+    MainWindow* win = gSmartZoomWin;
+    gSmartZoomWin = nullptr;
+    if (win && IsMainWindowValid(win) && win->IsDocLoaded()) {
+        win->ToggleZoom();
+    }
+}
+
+// two-finger double tap: orig's press-and-tap, which toggles the zoom
+static void OnSmartMagnify(NSEvent* ev) {
+    MainWindow* win = MainWindowFor(ev.window);
+    if (!win || gSmartZoomWin) {
+        return;
+    }
+    gSmartZoomWin = win;
+    uitask::Post(MkFunc0Void(ApplySmartZoom), "ApplySmartZoom");
+}
+
 // the hooks into AppKit events gpui does not forward
 void AppShellWatchMacEvents() {
-    [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskMagnify
+    [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskMagnify | NSEventMaskSmartMagnify
                                           handler:^NSEvent*(NSEvent* ev) {
-                                            OnMagnify(ev);
+                                            if (ev.type == NSEventTypeSmartMagnify) {
+                                                OnSmartMagnify(ev);
+                                            } else {
+                                                OnMagnify(ev);
+                                            }
                                             return ev;
                                           }];
 
@@ -280,4 +304,13 @@ bool AppShellPrintPdf(MainWindow* win, Str path, Str jobTitle) {
                     didRunSelector:@selector(printOperationDidRun:success:contextInfo:)
                        contextInfo:(__bridge_retained void*)job];
     return true;
+}
+
+// macOS's AddPathToRecentDocs(): the recent documents in the Dock menu
+void AppShellNoteRecentDoc(Str path) {
+    NSString* s = ToNSString(path);
+    if (!s) {
+        return;
+    }
+    [[NSDocumentController sharedDocumentController] noteNewRecentDocumentURL:[NSURL fileURLWithPath:s]];
 }
