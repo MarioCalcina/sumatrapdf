@@ -29,19 +29,13 @@ description: Regenerate the amalgamated MuJS copy in ext/a-mujs from upstream wi
 2. Check `ext/a-mujs/version.txt` — it records the project homepage, source repo URL, requested
    revision, resolved commit SHA-1 and GitHub commit URL. Confirm it is the revision you meant.
 
-3. Regenerate the Visual Studio projects, since the file set may have changed:
+3. Build on a Mac (or push and run the `mac-app` workflow):
 
    ```sh
-   bun cmd/premake.ts
+   bun cmd/ng-build.ts -dbg -all
    ```
 
-4. Build:
-
-   ```sh
-   bun cmd/build.ts -dbg
-   ```
-
-5. Review the diff. Don't commit without a passing build.
+4. Review the diff. Don't commit without a passing build.
 
 ## Notes
 

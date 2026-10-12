@@ -1,10 +1,9 @@
-// gen-code.ts - runs all C++ codegen (imports gen-flags, gen-commands, gen-settings;
-// gVirtKeysNum generation lives here only)
+// gen-code.ts - runs the shared C++ codegen (imports gen-flags, gen-commands;
+// gVirtKeysNum generation lives here only). ng-gen-settings.ts writes Settings.h
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { main as genFlags } from "./gen-flags";
 import { main as genCommands } from "./gen-commands";
-import { main as genSettings } from "./gen-settings";
 import { clangFormatFiles } from "./util";
 
 // C++ outputs touched by gen-code; formatted at the end so a follow-up
@@ -17,8 +16,6 @@ const generatedCppFiles = [
   "src/shared/EbookDoc.cpp",
   "src/shared/DocProperties.cpp",
   "src/shared/EngineMupdf.cpp",
-  "src/Settings.h",
-  "src/Settings.cpp",
 ];
 
 // prettier-ignore
@@ -427,9 +424,11 @@ export async function main() {
 
   genFlags();
   genCommands();
-  genVirtKeys(rootDir);
+  // the VK_* values come from compiling against windows.h
+  if (process.platform === "win32") {
+    genVirtKeys(rootDir);
+  }
   genDocPropMaps(rootDir);
-  await genSettings({ formatOutput: false });
 
   await clangFormatFiles(rootDir, generatedCppFiles);
 

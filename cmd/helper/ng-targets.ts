@@ -353,12 +353,12 @@ const unrarPosix: PlatformExtra = {
 };
 
 // JPEG-XR: WIC on Windows (load-jxr-win.c), mupdf's own loader elsewhere
-// (load-jxr.c, a stub without HAVE_JPEGXR). pkcs7-windows.c is wincrypt.
+// (load-jxr.c, a stub without HAVE_JPEGXR).
 // pkcs7_stub_posix.c satisfies the calls left in murun.c and pdfsign.c.
 // unlibarchive.c reaches for a system <archive.h> off Windows; point it at
 // the vendored one instead.
 const mupdfPosix: PlatformExtra = {
-  exclude: ["ext/mupdf/source/fitz/load-jxr-win.c", "src/mupdf/pkcs7-windows.c"],
+  exclude: ["ext/mupdf/source/fitz/load-jxr-win.c"],
   includes: ["ext/a-libarchive/libarchive"],
 };
 
@@ -515,9 +515,6 @@ const appSources = [
   "src/ng/Theme.cpp",
   "src/ng/TranslationLangs.cpp",
   "src/ng/Translations.cpp",
-  // the browser's file picker, downloads and OPFS write-back (wasm only,
-  // and no gpui in it, so it belongs here rather than in the app target)
-  "src/ng/gui/WasmBridge_wasm.cpp",
 ];
 
 const archiveWinLibs = [
@@ -1148,13 +1145,8 @@ export const targets: Target[] = [
     deps: ["a-zlib", "lzma", "a-unrar", "a-libarchive"],
     strict: true,
     exceptions: true,
-    // _CAP_Enter_Function / _CAP_Exit_Function, the /callcap hooks
-    asm: { sources: ["src/PerfLog_x64.asm"], profileOnly: true },
-    // Arena_wasm.cpp replaces the mmap/mprotect half, Launch_wasm.cpp the
-    // posix_spawnp one
     perPlatform: {
       mac: { defines: ["GPUI_HAVE_CURL=1"] },
-      wasm: { exclude: ["src/ng/base/Arena_posix.cpp", "src/ng/base/Launch_posix.cpp"] },
     },
   },
   {
@@ -1243,38 +1235,6 @@ export const targets: Target[] = [
     ],
     includes: ["src/ng", "ext/mupdf/include", "ext/djvudec"],
     deps: ["app"],
-    winLibs: [
-      "advapi32.lib",
-      "comctl32.lib",
-      "comdlg32.lib",
-      "crypt32.lib",
-      "gdi32.lib",
-      "gdiplus.lib",
-      "kernel32.lib",
-      "msimg32.lib",
-      "ole32.lib",
-      "oleaut32.lib",
-      "shell32.lib",
-      "shlwapi.lib",
-      "urlmon.lib",
-      "user32.lib",
-      "version.lib",
-      "windowscodecs.lib",
-      "wininet.lib",
-      "winspool.lib",
-      "wintrust.lib",
-    ],
-    strict: true,
-    exceptions: true,
-  },
-  {
-    // minimal host for SumatraPDF -plugin mode (orig src/tools/plugin-test.cpp)
-    name: "plugin-test",
-    kind: "app",
-    sources: ["src/ng/tools/plugin-test.cpp"],
-    includes: ["src/ng"],
-    deps: ["base"],
-    platforms: ["win"],
     winLibs: [
       "advapi32.lib",
       "comctl32.lib",
@@ -1396,11 +1356,8 @@ export const targets: Target[] = [
       "src/ng/ReadingAutoScroll.cpp",
       "src/ng/ReadingAutoScrollCommon.cpp",
       "src/ng/ReadAloud.cpp",
-      "src/ng/ReadAloud_linux.cpp",
       "src/ng/ReadAloudSession.cpp",
-      "src/ng/ReadAloud_win.cpp",
       "src/ng/ReadAloud_mac.mm",
-      "src/ng/ReadAloud_wasm.cpp",
       "src/ng/ReadAloudHighlight.cpp",
       "src/ng/SvgIcons.cpp",
       "src/ng/AnnotEditToolbar.cpp",
@@ -1486,22 +1443,10 @@ export const targets: Target[] = [
       "src/ng/gui/NavFilesUI.cpp",
       "src/ng/gui/ToolWindow.cpp",
       "src/ng/gui/ToolWindow_mac.mm",
-      "src/ng/gui/ToolWindow_linux.cpp",
       "src/ng/ExternalViewers.cpp",
       "src/ng/gui/NativeWindow.cpp",
       "src/ng/gui/NativeWindow_mac.mm",
-      "src/ng/gui/NativeWindow_wasm.cpp",
-      "src/ng/gui/OleDragDrop_win.cpp",
-      "src/ng/OleDragDropCommon_win.cpp",
-      "src/ng/gui/NativeFileDlg_win.cpp",
-      "src/ng/OpenFileFilters_win.cpp",
-      "src/ng/gui/NativeMsgBox_win.cpp",
-      "src/ng/gui/NativeCursors_win.cpp",
-      "src/ng/AnnotPlacementCursors_win.cpp",
-      "src/ng/LaserPointerCursor_win.cpp",
-      "src/ng/gui/TouchGestures_win.cpp",
       "src/ng/GlobalHotkeys.cpp",
-      "src/ng/GlobalHotkeysCommon_win.cpp",
       "src/ng/Print.cpp",
       "src/ng/Print_posix.cpp",
       "src/ng/PrintWin11.cpp",
@@ -1512,7 +1457,6 @@ export const targets: Target[] = [
       "src/ng/UpdateTemp.cpp",
       "src/ng/Installer.cpp",
       "src/ng/InstallerCommon.cpp",
-      "src/ng/InstallerUtil_win.cpp",
       "src/ng/Uninstaller.cpp",
       "src/ng/RegistryInstaller.cpp",
       "src/ng/StressTesting.cpp",
@@ -1532,9 +1476,6 @@ export const targets: Target[] = [
       "src/ng/base/CrashHandler_posix.cpp",
     ],
     includes: ["src/ng", "ext/gpui", "ext/mupdf/include", "src"],
-    // the app icon, the document-type icons, the version resource and the
-    // compatibility manifest (Windows only; other platforms ignore it)
-    rc: "src/ng/SumatraPDF.rc",
     deps: ["gpui", "app"],
     winLibs: gpuiWinLibs,
     strict: true,
@@ -1546,11 +1487,6 @@ export const targets: Target[] = [
       { from: "docs/test/zlib.3.pdf", to: kWasmDocsDir },
       { from: "docs/test/test.epub", to: kWasmDocsDir },
     ],
-    // orig's desktop screenshot picker. Win32 only; other platforms keep the
-    // page render in src/ng/Screenshot.cpp.
-    perPlatform: {
-      win: { sources: ["src/ScreenshotCapture.cpp"] },
-    },
   },
 ];
 
