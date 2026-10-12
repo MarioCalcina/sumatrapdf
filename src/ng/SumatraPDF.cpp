@@ -4446,7 +4446,9 @@ static bool gIsDivideKeyDown = false;
 
 // Shift+arrows extend an existing text selection instead of scrolling (#5814).
 static bool TryExtendTextSelectionFromKey(MainWindow* win, int key, bool isCtrl, bool isShift, bool isAlt) {
-    if (!win || !isShift || isCtrl || isAlt) {
+    // macOS: Shift + Option + Left / Right extend by word, as in a text view
+    bool byWord = OS_DARWIN && isAlt && (key == VK_LEFT || key == VK_RIGHT);
+    if (!win || !isShift || isCtrl || (isAlt && !byWord)) {
         return false;
     }
     if (!CanExtendTextSelection(win)) {
@@ -4456,6 +4458,9 @@ static bool TryExtendTextSelectionFromKey(MainWindow* win, int key, bool isCtrl,
     int delta = 0;
     if (!TextSelectExtendFromVk(key, unit, delta)) {
         return false;
+    }
+    if (byWord) {
+        unit = TextSelectUnit::Word;
     }
     ExtendTextSelection(win, unit, delta);
     return true;

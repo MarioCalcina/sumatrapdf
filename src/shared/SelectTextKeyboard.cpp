@@ -528,6 +528,33 @@ static bool IsCaretMoveKey(int key) {
            key == VK_HOME || key == VK_END;
 }
 
+#if OS_DARWIN
+struct CaretKey {
+    int key;
+    bool ctrl; // Command (CtrlOrCmd)
+    bool alt;
+};
+
+// A Mac text view's arrows as the keys MoveCaret knows: Option + Left / Right
+// by word, Option + Up / Down by a screen, Command + Left / Right to the
+// line's edge and Command + Up / Down to the document's
+static CaretKey MacCaretKey(CaretKey k) {
+    bool across = k.key == VK_LEFT || k.key == VK_RIGHT;
+    bool upDown = k.key == VK_UP || k.key == VK_DOWN;
+    if (k.ctrl == k.alt || (!across && !upDown)) {
+        return k;
+    }
+    bool back = k.key == VK_LEFT || k.key == VK_UP;
+    if (k.alt && across) {
+        return {k.key, true, false};
+    }
+    if (k.alt) {
+        return {back ? VK_PRIOR : VK_NEXT, false, false};
+    }
+    return {back ? VK_HOME : VK_END, upDown, false};
+}
+#endif
+
 // Movement keys, handled before they can scroll the view. Returns true if the
 // key was consumed.
 #if defined(SUMATRA_NG)
@@ -541,6 +568,12 @@ bool SelectTextWithKeyboardOnKeyDown(MainWindow* win, int key) {
     if (!SelectTextWithKeyboardActive(win)) {
         return false;
     }
+#if OS_DARWIN
+    CaretKey mac = MacCaretKey({key, ctrl, alt});
+    key = mac.key;
+    ctrl = mac.ctrl;
+    alt = mac.alt;
+#endif
     if (!IsCaretMoveKey(key) || alt) {
         return false;
     }

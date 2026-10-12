@@ -2539,7 +2539,8 @@ void ShellView::OnKeyDown(ShellView* self, gp::Ctx* cx, const gp::KeyEvent* ev) 
     // PreTranslate before auto-scroll, the reading bar and the nudge see them
     bool isCaretKey = ev->vk == VK_LEFT || ev->vk == VK_RIGHT || ev->vk == VK_UP || ev->vk == VK_DOWN ||
                       ev->vk == VK_HOME || ev->vk == VK_END || ev->vk == VK_PRIOR || ev->vk == VK_NEXT;
-    if (!editFocused && !ev->alt && isCaretKey && SelectTextWithKeyboardActive(win) &&
+    // macOS: Option + arrows move it too
+    if (!editFocused && (!ev->alt || OS_DARWIN) && isCaretKey && SelectTextWithKeyboardActive(win) &&
         SelectTextWithKeyboardOnKeyDown(win, ev->vk, CtrlOrCmd(ev), ev->shift, ev->alt)) {
         mut->propagate = false;
         gp::Notify(cx);
