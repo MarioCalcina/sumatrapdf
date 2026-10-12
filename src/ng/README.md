@@ -67,8 +67,8 @@ ignored; shared sources and headers are staged under each build's
 `generated/shared/` so their includes use ng headers. To diverge a shared file,
 copy it into `src/ng` and remove it from `ng-shared.ts`, then update its target.
 Translation staging lives in `.work/ng`; `bun cmd/trans-dl.ts` (run by CI)
-writes `.work/translations.txt` from apptranslator's public history. The
-manual uses the same website checkout and `.work/docs` staging as the
+writes `.work/translations.txt` from apptranslator's public history, plus
+`translations/fork.txt` for strings the history lacks. The manual uses the same website checkout and `.work/docs` staging as the
 original app.
 
 `mac-daily.yml` builds debug and release and runs the base unit tests.

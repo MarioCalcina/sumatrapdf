@@ -1,0 +1,60 @@
+# Translations of strings apptranslator's public history has none for (this
+# fork's own, and upstream's newest). bun cmd/trans-dl.ts adds them to
+# .work/translations.txt where the history lacks them; its log lists the
+# strings still missing ("lacks:").
+# Format: ":english" then "lang:translation" lines. A hint like "Del close tab"
+# keeps its key as the first word.
+:%s: restore default
+es:%s: restaurar valor predeterminado
+:Approval signature
+es:Firma de aprobación
+:Auto-Rotate Wide Pages
+es:Girar automáticamente las páginas anchas
+:Certify: form filling and signing allowed
+es:Certificar: se permite rellenar formularios y firmar
+:Certify: form filling, signing and annotations allowed
+es:Certificar: se permite rellenar formularios, firmar y anotar
+:Certify: no changes allowed
+es:Certificar: no se permiten cambios
+:Del restore default
+es:Supr restaurar valor predeterminado
+:Failed to save image
+es:Error al guardar la imagen
+:Failed to save the screenshot
+es:Error al guardar la captura de pantalla
+:File %s already exists. Overwrite?
+es:El archivo %s ya existe. ¿Sobrescribirlo?
+:Lock document after signing (last signer)
+es:Bloquear el documento tras firmar (último firmante)
+:Lock form &fields after signing
+es:Bloquear los &campos del formulario tras firmar
+:Navigate Favorites
+es:Navegar favoritos
+:Navigate History
+es:Navegar historial
+:Navigate Table Of Contents
+es:Navegar tabla de contenidos
+:Navigate Tabs
+es:Navegar pestañas
+:No result found
+es:No se ha encontrado ningún resultado
+:Nothing to take a screenshot of
+es:No hay nada que capturar
+:Quick Edit Settings
+es:Edición rápida de la configuración
+:Quit
+es:Salir
+:Resolution (DPI):
+es:Resolución (PPP):
+:Saved screenshot to '%s'
+es:Captura de pantalla guardada en '%s'
+:Search syntax
+es:Sintaxis de búsqueda
+:Show the selected annotation's note
+es:Mostrar la nota de la anotación seleccionada
+:Signature &type:
+es:&Tipo de firma:
+:Signing this way locks the document: no further changes or signatures will be possible. Continue?
+es:Firmar de esta forma bloquea el documento: no se podrán hacer más cambios ni añadir firmas. ¿Continuar?
+:Toggle Auto-Rotate Wide Pages
+es:Alternar giro automático de páginas anchas

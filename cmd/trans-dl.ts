@@ -268,6 +268,35 @@ function addDerivedTranslations(pt: ParsedTranslations): void {
   }
 }
 
+// this fork's own translations, in the format of translations.txt (":english"
+// then "lang:translation" lines); they fill only what the history lacks
+const forkTranslationsPath = join("translations", "fork.txt");
+
+function addForkTranslations(pt: ParsedTranslations): void {
+  const wanted = new Set(pt.allStrings);
+  let english = "";
+  let n = 0;
+  for (const line of readFileSync(forkTranslationsPath, "utf-8").split(/\r?\n/)) {
+    if (line.length === 0 || line.startsWith("#")) continue;
+    if (line.startsWith(":")) {
+      english = line.substring(1);
+      if (!wanted.has(english)) console.log(`${forkTranslationsPath}: '${english}' is not used`);
+      continue;
+    }
+    const colon = line.indexOf(":");
+    const m = pt.perLang.get(line.substring(0, colon));
+    if (colon <= 0 || !m) throw new Error(`${forkTranslationsPath}: bad line '${line}'`);
+    if (!wanted.has(english)) continue;
+    if (m.has(english)) {
+      console.log(`${forkTranslationsPath}: '${english}' already has a ${line.substring(0, colon)} translation`);
+      continue;
+    }
+    m.set(english, line.substring(colon + 1));
+    n++;
+  }
+  console.log(`${forkTranslationsPath}: ${n} translations`);
+}
+
 // Without TRANS_UPLOAD_SECRET (this fork) the translations come from the
 // public edit history: read only, nothing is marked or submitted upstream.
 async function buildFromHistory(server: string): Promise<void> {
@@ -290,9 +319,17 @@ async function buildFromHistory(server: string): Promise<void> {
   const pt: ParsedTranslations = { perLang, allStrings: strs, fromServer: clonePerLang(perLang) };
   autoAddStrippedMatches(pt, buildStrippedIndex(hist, pt));
   addDerivedTranslations(pt);
+  const translated = new Set(strs.filter((s) => [...perLang.values()].some((m) => m.has(s))));
+  addForkTranslations(pt);
 
+  // what translations/fork.txt could add: strings no language has, and per
+  // language the ones others have
   const untranslated = strs.filter((s) => ![...perLang.values()].some((m) => m.has(s)));
   console.log(`${untranslated.length} strings without any translation:\n  ${untranslated.join("\n  ")}`);
+  for (const [lang, m] of perLang) {
+    const gaps = strs.filter((s) => translated.has(s) && !m.has(s));
+    if (gaps.length > 0) console.log(`${lang} lacks: ${gaps.map((s) => JSON.stringify(s)).join(", ")}`);
+  }
   const snapshot = JSON.stringify([...perLang].map(([lang, m]) => [lang, [...m]]));
   writeTranslationsForBinary(pt, createHash("sha1").update(snapshot).digest("hex"));
 }

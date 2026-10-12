@@ -140,7 +140,8 @@ mupdf fonts and, when a website checkout exists, the manual staged in
 `.work/docs` by `cmd/gen-docs.ts`. `src/shared/EmbeddedLzsa.S` links it.
 Without upstream's `TRANS_UPLOAD_SECRET`, `bun cmd/trans-dl.ts` builds the
 translations from apptranslator's public history and sends nothing; the
-workflows run it before building.
+workflows run it before building. Strings the history lacks are translated
+in `translations/fork.txt`; the script's log lists what is still missing.
 
 ### GPUI integration
 
