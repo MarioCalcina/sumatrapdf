@@ -83,5 +83,6 @@ AppKit code lives in `*_mac.mm` files, mostly `gui/NativeWindow_mac.mm`:
 - opened documents go to the Dock menu's recent documents
 - the System theme ("Follow macOS") follows the system appearance
 - the UI language on first start is the first of the system's languages we have
-- Print opens the macOS print panel on a rendered PDF (PDFKit)
+- Print opens the macOS print panel (PDFKit) on the PDF itself, or on a
+  rendered one for a selection, a rotation or unsaved annotations
 - tabs sit in the title bar beside the traffic lights
