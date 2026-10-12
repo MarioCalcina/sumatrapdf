@@ -32,3 +32,28 @@ jobs:
           path: SumatraPDF-mac.dmg
           if-no-files-found: error
           retention-days: 7
+
+      # screenshots of the app installed from the dmg; best effort
+      - name: Screenshots
+        continue-on-error: true
+        run: |
+          hdiutil attach SumatraPDF-mac.dmg -nobrowse -mountpoint /Volumes/SumatraPDF
+          APP=/Volumes/SumatraPDF/SumatraPDF.app
+          mkdir shots
+          open -n -a "$APP" --args -for-testing
+          sleep 10
+          screencapture -x shots/home.png
+          pkill -f "SumatraPDF -for-testing" || true
+          sleep 2
+          open -n -a "$APP" "$PWD/ext/a-zlib/zlib.3.pdf" --args -for-testing
+          sleep 10
+          screencapture -x shots/document.png
+          pkill -f "SumatraPDF -for-testing" || true
+          hdiutil detach /Volumes/SumatraPDF
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        if: always()
+        with:
+          name: SumatraPDF-mac-screenshots
+          path: shots/
+          if-no-files-found: warn
+          retention-days: 7
