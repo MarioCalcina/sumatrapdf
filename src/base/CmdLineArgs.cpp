@@ -53,4 +53,3 @@ bool CouldBeArg(Str s) {
     char c = *s.s;
     return (c == '-') || (c == '/');
 }
-

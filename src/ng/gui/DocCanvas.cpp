@@ -1297,8 +1297,7 @@ void CanvasOnHScroll(MainWindow* win, ScrollMsg msg, int nTrackPos) {
 // lines; gpui reports pixels for a fixed three lines
 static int gDeltaPerLine = kWheelDelta / 3;
 
-void UpdateDeltaPerLine() {
-}
+void UpdateDeltaPerLine() {}
 
 static int WheelScrollPosOrTarget(MainWindow* win) {
     if (gSettings->smoothScroll && win->scrollAnimActive) {

@@ -633,4 +633,3 @@ bool ExecuteDdeCmds(Str cmd) {
     (void)win;
     return HandleExecuteCmds(hwnd, cmd);
 }
-

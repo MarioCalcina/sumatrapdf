@@ -176,4 +176,3 @@ PlatformTextRender* CreateCoreTextRender(CGContextRef context) {
 void PlatformFontDestroy() {
     // portable renderers keep no global cache
 }
-

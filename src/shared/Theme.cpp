@@ -1132,4 +1132,3 @@ Color SysHighlightBgColor() {
 Color SysHighlightTextColor() {
     return kColWhite;
 }
-

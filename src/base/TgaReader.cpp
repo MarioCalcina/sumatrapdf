@@ -413,4 +413,3 @@ Str PixmapToTgaFormat(Pixmap* pixmap) {
     return tgaData.TakeStr();
 }
 } // namespace tga
-

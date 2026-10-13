@@ -868,4 +868,3 @@ Vec<Pixmap*> PixmapsFromData(Str bmpData) {
 RenderedBitmap* LoadRenderedBitmap(Str) {
     return nullptr;
 }
-

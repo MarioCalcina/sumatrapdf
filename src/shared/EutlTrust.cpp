@@ -208,5 +208,4 @@ static bool EutlLookupThunk(const u8* der, int derLen) {
     return EutlCertIsEuTrusted(der, derLen);
 }
 
-void EutlRegisterLookup() {
-}
+void EutlRegisterLookup() {}

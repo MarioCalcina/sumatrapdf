@@ -71,4 +71,3 @@ bool ExecuteDdeCmds(Str cmd);
 
 extern bool gIsStartup;
 extern StrVec gDdeOpenOnStartup;
-

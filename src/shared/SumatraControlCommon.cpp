@@ -558,4 +558,3 @@ TempStr DisplayModeResultTemp(Str action, int* exitCodeOut) {
     str::Free(zoomLabel);
     return finish(res, 0);
 }
-

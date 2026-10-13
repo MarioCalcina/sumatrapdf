@@ -52,4 +52,3 @@ static PlatformFont* GetPlatformFontInternal(Str name, float sizePt, PlatformFon
 PlatformFont* GetPlatformFont(Str name, float sizePt, PlatformFontStyle style) {
     return GetPlatformFontInternal(name, sizePt, style, 0);
 }
-

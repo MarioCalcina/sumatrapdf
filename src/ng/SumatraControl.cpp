@@ -3402,4 +3402,3 @@ void StartSumatraControl(Str pipeName) {
     auto* arg = new ControlThreadArg{str::Dup(pipeName)};
     RunAsync(MkFunc0(SumatraControlThread, arg), StrL("SumatraControl"));
 }
-

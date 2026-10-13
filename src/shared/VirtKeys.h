@@ -115,4 +115,3 @@
 #define VK_OEM_8            0xDF
 #define VK_OEM_102          0xE2
 // clang-format on
-

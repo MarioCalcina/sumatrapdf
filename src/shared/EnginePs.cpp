@@ -32,4 +32,3 @@ bool IsEnginePsAvailable() {
 bool IsEnginePsSupportedFileType(FileType) {
     return false;
 }
-

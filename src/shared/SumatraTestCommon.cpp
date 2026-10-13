@@ -1656,4 +1656,3 @@ TempStr HiddenTabGoToPageResultTemp(int* exitCodeOut) {
     }
     return ToStrTemp(out);
 }
-

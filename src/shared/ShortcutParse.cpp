@@ -528,4 +528,3 @@ TempStr ShortcutToGpuiStroke(const KeyShortcut& sc) {
     }
     return str::JoinTemp(res, key);
 }
-

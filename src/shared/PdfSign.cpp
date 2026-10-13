@@ -343,4 +343,3 @@ bool EngineMupdfSignDocument(EngineBase* engine, const PdfSignArgs& args, Str* e
 // and are currently valid. Labels are what the Sign Document drop-down shows;
 // thumbprints are what EngineMupdfSignDocument wants in certThumbprint.
 void ListWindowsSigningCertificates(StrVec&, StrVec&) {}
-

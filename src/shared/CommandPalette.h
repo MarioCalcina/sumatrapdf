@@ -42,4 +42,3 @@ void PaletteCollectTabs(MainWindow* win, bool mru, Vec<WindowTab*>& out, int& cu
 void CommandPaletteOnAnnotationsChanged();
 void CommandPaletteOnSettingsReloaded();
 TempStr CommandPaletteStateTemp(int* exitCodeOut);
-

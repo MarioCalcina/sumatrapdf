@@ -572,4 +572,3 @@ Str SmartResolveDirectory(Str dir) {
 
     return ToAbsolutePathTemp(result);
 }
-

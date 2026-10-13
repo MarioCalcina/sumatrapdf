@@ -21,4 +21,3 @@
 
 // Cocoa has no global-hotkey abstraction in gpui yet.
 void ReRegisterGlobalHotkeys() {}
-

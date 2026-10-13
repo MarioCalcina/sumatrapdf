@@ -240,7 +240,6 @@ int printUsage(Str exeName) {
 }
 
 int main(__unused int argc, __unused char** argv) {
-
     StrVec args;
     for (int i = 0; i < argc; i++) {
         args.Append(Str(argv[i]));

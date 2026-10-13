@@ -25,4 +25,3 @@ int SafeAcceleratorCmd(u16 vk, bool ctrl, bool shift, bool alt, bool cmd = false
 int AsciiAcceleratorCmd(u32 ch);
 bool IsSafeAccel(const Accel&);
 bool IsSafeTreeAccel(const Accel&);
-

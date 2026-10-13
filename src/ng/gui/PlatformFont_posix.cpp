@@ -153,4 +153,3 @@ PlatformFont* GetBoldPlatformFont(PlatformFont* font) {
     font->boldVariant = GetPlatformFont(font->name, font->sizePt, font->style | PlatformFontStyle::Bold);
     return font->boldVariant ? font->boldVariant : font;
 }
-

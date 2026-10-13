@@ -58,4 +58,3 @@ TempStr HttpNormalizeHeadersTemp(Str headers) {
     }
     return ToStrTemp(b);
 }
-

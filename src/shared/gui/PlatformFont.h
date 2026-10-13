@@ -53,4 +53,3 @@ PlatformFont* GetDefaultGuiFont(bool bold = false, bool italic = false);
 PlatformFont* GetUserGuiFont(Str fontName, int size);
 PlatformFont* GetUserGuiFontEx(Str fontName, int size, bool bold, bool italic);
 PlatformFont* GetScaledPlatformFont(PlatformFont*, int percent);
-

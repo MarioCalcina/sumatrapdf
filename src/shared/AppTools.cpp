@@ -53,4 +53,3 @@ bool LaunchFileIfExists(Str path) {
     LaunchFileShell(path, {}, StrL("open"));
     return true;
 }
-

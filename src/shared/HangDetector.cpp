@@ -96,4 +96,3 @@ void StopUiHangDetector() {
         JoinThread(&gWatchdogThread, -1);
     }
 }
-

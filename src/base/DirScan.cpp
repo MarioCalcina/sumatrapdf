@@ -556,4 +556,3 @@ static void DirScanWorkerThread(DirScanWorker* w) {
         gTempArena = nullptr;
     }
 }
-

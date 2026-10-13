@@ -83,4 +83,3 @@ PaperFormat GetPaperFormatFromSizeApprox(SizeF size) {
     }
     return PaperFormat::Other;
 }
-

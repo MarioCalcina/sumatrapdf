@@ -299,4 +299,3 @@ struct Print_Advanced_Data {
           perPagePaperSize(perPagePaperSize),
           extraRotation(extraRotation) {}
 };
-

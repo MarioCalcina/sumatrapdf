@@ -562,4 +562,3 @@ TempStr DefaultDestinationLanguageTemp() {
     }
     return OsDefaultDestinationLanguageTemp();
 }
-

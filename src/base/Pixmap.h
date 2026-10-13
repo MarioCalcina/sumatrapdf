@@ -49,7 +49,6 @@ struct Pixmap {
     float xres = 96.0f;
     float yres = 96.0f;
     u8* data = nullptr; // pixel buffer; owned by malloc, or by hbmp when DIB-section-backed
-
 };
 
 void CopyPixmapRows(Pixmap* dst, const u8* src, int srcStride);
