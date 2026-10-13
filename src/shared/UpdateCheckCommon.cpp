@@ -38,6 +38,11 @@ bool IsTrustedUpdateDlUrl(Str dlURL) {
 
 void BuildUpdateURL(str::Builder& url, Str baseURL, UpdateCheck updateCheckType) {
     url.Reset(baseURL);
+#if OS_DARWIN
+    // the fork's update info is a release asset: nothing counts the queries
+    (void)updateCheckType;
+    return;
+#endif
     AppendClientInfoQuery(url);
     url.Append(StrL("&withPromo"));
     if (UpdateCheck::UserInitiated == updateCheckType) {

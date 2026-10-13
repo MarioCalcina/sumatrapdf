@@ -2,8 +2,13 @@ name: mac-app
 
 on:
   workflow_dispatch:
+    inputs:
+      release:
+        description: Publish the dmg as a GitHub release (the app's update check reads it)
+        type: boolean
+        default: true
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -15,8 +20,17 @@ jobs:
       # from apptranslator's public history; read only
       - name: Translations
         run: bun cmd/trans-dl.ts
+      # a further build of the day is yy.mm.dd.n, n counting that day's releases
       - name: Release build
-        run: bun cmd/ng-build.ts -rel SumatraPDF
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          day=$(date +%y.%m.%d)
+          n=$(gh release list -R "$GITHUB_REPOSITORY" --limit 100 --json tagName \
+            --jq "[.[] | select(.tagName | startswith(\"v$day\"))] | length")
+          rev=""
+          if [ "$n" -gt 0 ] && [ "$n" -le 9 ]; then rev="-rev $n"; fi
+          bun cmd/ng-build.ts -rel $rev SumatraPDF
       # drag-to-Applications disk image; ditto keeps the ad-hoc signature.
       # hdiutil on hosted runners sometimes fails with "Resource busy", so retry
       - name: Package dmg
@@ -35,6 +49,21 @@ jobs:
           path: SumatraPDF-mac.dmg
           if-no-files-found: error
           retention-days: 7
+      # the release page is a download without a GitHub login, and its
+      # update-check-mac.txt is what the app's update check reads
+      - name: Release
+        if: ${{ inputs.release }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ver=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" out/mac/rel/SumatraPDF.app/Contents/Info.plist)
+          url="https://github.com/$GITHUB_REPOSITORY/releases/tag/v$ver"
+          printf '[SumatraPDF]\nLatest: %s\nBuiltOn: %s\nDownloadPage: %s\n' "$ver" "$(date +%Y-%m-%d)" "$url" \
+            > update-check-mac.txt
+          cat update-check-mac.txt
+          gh release create "v$ver" SumatraPDF-mac.dmg update-check-mac.txt -R "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" --title "SumatraPDF $ver" --latest \
+            --notes "macOS build of ${GITHUB_SHA::7}. Download SumatraPDF-mac.dmg, open it and drag SumatraPDF to Applications."
 
       # screenshots of the app installed from the dmg; best effort
       - name: Screenshots

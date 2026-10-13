@@ -131,8 +131,8 @@ stack as module + offset, Mach-O UUIDs, log, settings) to
 nothing: upstream's server must not get reports of builds it did not make
 (`kCrashSubmitUrl` is empty). Symbolicate a report with
 `bun cmd/ng-crashes.ts -file <path>` and the build's `.dSYM`.
-Nor does the fork ask upstream for updates: Check for Updates opens the
-`mac-app` workflow page (`kForkBuildsURL`).
+Nor does the fork ask upstream for updates: `mac-app` publishes each dmg as a
+GitHub release with `update-check-mac.txt`, which the update check reads.
 
 The app embeds one LzSA archive (`cmd/helper/embedded.ts`):
 `.work/translations.txt`, `ext/marked.min.js`, `ext/mermaid.min.js`, the

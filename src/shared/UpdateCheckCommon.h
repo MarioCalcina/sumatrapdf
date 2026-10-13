@@ -5,7 +5,12 @@
 
 struct UpdateInfo;
 extern UpdateInfo* gPendingUpdate;
+#if OS_DARWIN
+// this fork's releases
+static const Str kExpectedDlHost = StrL("https://github.com/MarioCalcina/sumatrapdf/");
+#else
 static const Str kExpectedDlHost = StrL("https://www.sumatrapdfreader.org/");
+#endif
 bool IsTrustedUpdateDlUrl(Str dlURL);
 void BuildUpdateURL(str::Builder& url, Str baseURL, UpdateCheck updateCheckType);
 
