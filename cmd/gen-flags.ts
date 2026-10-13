@@ -27,6 +27,7 @@ const args = [
     "Log", "log",
     "LogToFile", "log-to-file",
     "CrashOnOpen", "crash-on-open",
+    "ReuseInstance", "reuse-instance",
     "EscToExit", "esc-to-exit",
     "ArgEnumPrinters", "enum-printers",
     "ListPrinters", "list-printers",

@@ -22,18 +22,18 @@ enum class Arg {
     FullScreen = 12, InvertColors = 13, InvertColors2 = 14, Console = 15,
     Rand = 16, Regress = 17, Tester = 18, TestApp = 19,
     NewWindow = 20, Log = 21, LogToFile = 22, CrashOnOpen = 23,
-    EscToExit = 24, ArgEnumPrinters = 25, ListPrinters = 26, SleepMs = 27,
-    PrintTo = 28, PrintSilent = 29, PrintSettings = 30, InverseSearch = 31,
-    ForwardSearch1 = 32, ForwardSearch2 = 33, NamedDest = 34, NamedDest2 = 35,
-    Page = 36, View = 37, Zoom = 38, Scroll = 39,
-    AppData = 40, StressTest = 41, N = 42, Max = 43,
-    MaxFiles = 44, Render = 45, ExtractText = 46, Bench = 47,
-    Lang = 48, BgCol = 49, BgCol2 = 50, FwdSearchOffset = 51,
-    FwdSearchWidth = 52, FwdSearchColor = 53, FwdSearchPermanent = 54, MangaMode = 55,
-    Search = 56, Adobe = 57, Pwd = 58, EngineDump = 59,
-    SetColorRange = 60, ForTesting = 61, WindowPos = 62, DumpExif = 63,
-    DumpChm = 64, Control = 65, UnitTests = 66, ForAi = 67,
-    NewWindowTabs = 68, RegenThumbnails = 69,
+    ReuseInstance = 24, EscToExit = 25, ArgEnumPrinters = 26, ListPrinters = 27,
+    SleepMs = 28, PrintTo = 29, PrintSilent = 30, PrintSettings = 31,
+    InverseSearch = 32, ForwardSearch1 = 33, ForwardSearch2 = 34, NamedDest = 35,
+    NamedDest2 = 36, Page = 37, View = 38, Zoom = 39,
+    Scroll = 40, AppData = 41, StressTest = 42, N = 43,
+    Max = 44, MaxFiles = 45, Render = 46, ExtractText = 47,
+    Bench = 48, Lang = 49, BgCol = 50, BgCol2 = 51,
+    FwdSearchOffset = 52, FwdSearchWidth = 53, FwdSearchColor = 54, FwdSearchPermanent = 55,
+    MangaMode = 56, Search = 57, Adobe = 58, Pwd = 59,
+    EngineDump = 60, SetColorRange = 61, ForTesting = 62, WindowPos = 63,
+    DumpExif = 64, DumpChm = 65, Control = 66, UnitTests = 67,
+    ForAi = 68, NewWindowTabs = 69, RegenThumbnails = 70,
 };
 
 static SeqStrings gArgNames =
@@ -43,18 +43,18 @@ static SeqStrings gArgNames =
     "fullscreen\0" "invertcolors\0" "invert-colors\0" "console\0"
     "rand\0" "regress\0" "tester\0" "testapp\0"
     "new-window\0" "log\0" "log-to-file\0" "crash-on-open\0"
-    "esc-to-exit\0" "enum-printers\0" "list-printers\0" "sleep-ms\0"
-    "print-to\0" "t\0" "print-settings\0" "inverse-search\0"
-    "forward-search\0" "fwdsearch\0" "nameddest\0" "named-dest\0"
-    "page\0" "view\0" "zoom\0" "scroll\0"
-    "appdata\0" "stress-test\0" "n\0" "max\0"
-    "max-files\0" "render\0" "extract-text\0" "bench\0"
-    "lang\0" "bgcolor\0" "bg-color\0" "fwdsearch-offset\0"
-    "fwdsearch-width\0" "fwdsearch-color\0" "fwdsearch-permanent\0" "manga-mode\0"
-    "search\0" "a\0" "pwd\0" "engine-dump\0"
-    "set-color-range\0" "for-testing\0" "window-pos\0" "dump-exif\0"
-    "dump-chm\0" "dbg-control\0" "unit-tests\0" "for-ai\0"
-    "new-window-tabs\0" "regen-thumbnails\0";
+    "reuse-instance\0" "esc-to-exit\0" "enum-printers\0" "list-printers\0"
+    "sleep-ms\0" "print-to\0" "t\0" "print-settings\0"
+    "inverse-search\0" "forward-search\0" "fwdsearch\0" "nameddest\0"
+    "named-dest\0" "page\0" "view\0" "zoom\0"
+    "scroll\0" "appdata\0" "stress-test\0" "n\0"
+    "max\0" "max-files\0" "render\0" "extract-text\0"
+    "bench\0" "lang\0" "bgcolor\0" "bg-color\0"
+    "fwdsearch-offset\0" "fwdsearch-width\0" "fwdsearch-color\0" "fwdsearch-permanent\0"
+    "manga-mode\0" "search\0" "a\0" "pwd\0"
+    "engine-dump\0" "set-color-range\0" "for-testing\0" "window-pos\0"
+    "dump-exif\0" "dump-chm\0" "dbg-control\0" "unit-tests\0"
+    "for-ai\0" "new-window-tabs\0" "regen-thumbnails\0";
 // clang-format on
 // @gen-end flags
 
@@ -529,6 +529,11 @@ static void ParseFlagNodes(Arena* a, StrNode* firstArg, Flags& i, Str toolNames)
             // to make testing of crash reporting system in pre-release/release
             // builds possible
             i.crashOnOpen = true;
+            continue;
+        }
+        if (arg == Arg::ReuseInstance) {
+            // accepted for command lines written for orig (LaTeX editor
+            // setups); no effect here
             continue;
         }
         if (arg == Arg::EscToExit) {

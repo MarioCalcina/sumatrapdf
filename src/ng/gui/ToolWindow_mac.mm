@@ -192,6 +192,23 @@ Rect ToolWinNativeMonitor(gp::Window* gw) {
     return FromMac(screen.frame);
 }
 
+// the work area of the screen `r` overlaps most (a remembered window position
+// on a second display); the main screen's when it is on none
+Rect ToolWinNativeWorkAreaFor(Rect r) {
+    NSRect want = ToMac(r);
+    NSScreen* best = [NSScreen mainScreen];
+    CGFloat bestArea = 0;
+    for (NSScreen* screen in [NSScreen screens]) {
+        NSRect overlap = NSIntersectionRect(want, screen.frame);
+        CGFloat area = overlap.size.width * overlap.size.height;
+        if (area > bestArea) {
+            bestArea = area;
+            best = screen;
+        }
+    }
+    return best ? FromMac(best.visibleFrame) : Rect{};
+}
+
 Size ToolWinNativeChrome(bool titled, bool resizable, bool utility) {
     if (!titled) {
         return {};

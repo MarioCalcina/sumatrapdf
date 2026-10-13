@@ -834,8 +834,20 @@ void AppShellSetFullScreen(MainWindow* win, bool fullScreen, bool) {
     }
 }
 
-bool AppShellNormalWindowRect(MainWindow*, Rect*) {
-    return false;
+// where the frame is while it is normal (not maximized, not fullscreen); the
+// last such rectangle once it is fullscreen or gone
+bool AppShellNormalWindowRect(MainWindow* win, Rect* out) {
+    if (!win) {
+        return false;
+    }
+    if (win->gpuiWin && !win->isFullScreen && !win->isMaximized) {
+        Rect r = ToolWinNativeFrame(win->gpuiWin);
+        if (!r.IsEmpty()) {
+            win->normalWindowRc = r;
+        }
+    }
+    *out = win->normalWindowRc;
+    return !out->IsEmpty();
 }
 
 int AppShellWindowDpi(MainWindow*) {
@@ -914,6 +926,12 @@ Rect AppShellMonitorRect(MainWindow* win) {
 
 Rect AppShellShiftToWorkArea(Rect rect, MainWindow* win, bool fully) {
     return ShiftIntoWorkArea(rect, AppShellWorkArea(win), fully);
+}
+
+// a remembered frame moved onto the display it was on, or the main one when
+// that display is gone
+Rect AppShellKeepOnScreen(Rect rect) {
+    return ShiftIntoWorkArea(rect, ToolWinNativeWorkAreaFor(rect), false);
 }
 
 void AppShellShowCursor(MainWindow* win, bool show) {

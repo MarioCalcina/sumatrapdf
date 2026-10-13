@@ -431,8 +431,8 @@ struct MainWindow {
     int sidebarDx = 0;
     // frame pixels SidebarWindowSize = grow added for the sidebar (0: none)
     int sidebarGrewFrameDx = 0;
-    // Windows: the frame's last non-maximized rectangle in screen pixels, for
-    // settings saved after the frame is gone (AppShellNormalWindowRect)
+    // the frame's last normal rectangle in screen points, for settings saved
+    // after the frame is gone or while it is fullscreen (AppShellNormalWindowRect)
     Rect normalWindowRc;
     bool tocLoaded = false;
     // set while a click on a bookmark navigates, so the page change does not

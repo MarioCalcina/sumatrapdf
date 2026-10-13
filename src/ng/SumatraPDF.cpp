@@ -624,6 +624,12 @@ void RememberDefaultWindowPosition(MainWindow* win) {
     if (win->sidebarDx > 0) {
         gSettings->sidebarDx = win->sidebarDx;
     }
+    // where the frame is, so the next start puts it back on that display
+    Rect normal;
+    if (!win->InPresentation() && AppShellNormalWindowRect(win, &normal)) {
+        gSettings->windowPos = normal;
+        return;
+    }
     if (gSettings->windowState != WIN_STATE_NORMAL) {
         return;
     }
@@ -1674,8 +1680,7 @@ void PlaceMainWindowLater(MainWindow* win, Rect pos, bool maximize) {
 // orig's CreateMainWindow + CreateAndShowMainWindow, the placement half: the
 // frame goes where the session (`data`) or the settings remember it, kept on
 // a screen, and is maximized if it was.
-// ng: gpui opens a window at a size only, so this moves the frame it made;
-// that needs the native handle, which only Windows gives us (see "gpui gaps")
+// ng: gpui opens a window at a size only, so this moves the frame it made
 void PlaceMainWindow(MainWindow* win, SessionData* data, PlaceWindowWhen when) {
     if (!win) {
         return;
@@ -1692,8 +1697,16 @@ void PlaceMainWindow(MainWindow* win, SessionData* data, PlaceWindowWhen when) {
     // a settings file from before the port could read a window's position has
     // x = y = 0 and the client size: such a window stays where gpui put it
     bool hasPos = fixedPos || (!pos.IsEmpty() && (pos.x != 0 || pos.y != 0));
-    (void)hasPos;
-    pos = {};
+    if (!hasPos) {
+        pos = {};
+    } else if (!fixedPos) {
+        pos = AppShellKeepOnScreen(pos);
+        if (!data) {
+            // we don't want the windows to overlap so shift each window by a bit
+            int nShift = std::max(len(gWindows) - 1, 0);
+            pos.x += nShift * 15;
+        }
+    }
     bool maximize = windowState == WIN_STATE_MAXIMIZED;
     if (when == PlaceWindowWhen::Later) {
         PlaceMainWindowLater(win, pos, maximize);
@@ -1706,8 +1719,7 @@ constexpr int kMinRememberedWinSize = 100;
 constexpr int kDefaultWinDx = 1024;
 constexpr int kDefaultWinDy = 768;
 
-// The size a new frame opens at. -window-pos wins, as in PlaceMainWindow:
-// off Windows nothing moves the frame later, so its size has to be right here.
+// The size a new frame opens at. -window-pos wins, as in PlaceMainWindow.
 static Size NewWindowSize(SessionData* data) {
     Rect pos = data ? data->windowPos : gSettings->windowPos;
     if (!data && gFlags && !gFlags->windowPos.IsEmpty()) {

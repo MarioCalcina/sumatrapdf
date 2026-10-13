@@ -108,13 +108,12 @@ void AppShellForgetNativeHwnd(MainWindow* win);
 // `restoreMaximized` re-maximizes on the way out (orig: the window was
 // maximized before presentation mode).
 void AppShellSetFullScreen(MainWindow* win, bool fullScreen, bool restoreMaximized);
-// screen rect of the window, for the -dbg-control layout snapshot. On wasm,
-// the frame size at 0,0.
+// screen rect of the window, for the -dbg-control layout snapshot
 Rect AppShellWindowScreenRect(MainWindow* win);
-// the canvas (MainWindow::canvasRc) in screen pixels; empty on wasm
+// the canvas (MainWindow::canvasRc) in screen points
 Rect AppShellCanvasScreenRect(MainWindow* win);
-// moves / sizes the frame to `r` (outer rectangle, screen pixels; empty: leave
-// it) and maximizes it. False on wasm.
+// moves / sizes the frame to `r` (outer rectangle, screen points; empty: leave
+// it) and maximizes it
 bool AppShellPlaceWindow(MainWindow* win, Rect r, bool maximize);
 // Current: the canvas as the frame is now. DocumentTab: a document tab is
 // about to exist, so a UseTabs strip counts before the tab does.
@@ -128,10 +127,11 @@ void AppShellSyncCanvasSize(MainWindow* win);
 Rect AppShellWorkArea(MainWindow* win);
 // full bounds of that monitor, including the dock or taskbar
 Rect AppShellMonitorRect(MainWindow* win);
+// a remembered frame kept on the display it overlaps most
+Rect AppShellKeepOnScreen(Rect rect);
 // shift rect into the work area. fully: the whole rect must be inside
 Rect AppShellShiftToWorkArea(Rect rect, MainWindow* win, bool fully);
 // the frame's rectangle while it is not maximized. False when it is not known
-// (minimized, fullscreen, no native handle, or not Windows)
 bool AppShellNormalWindowRect(MainWindow* win, Rect* out);
 // dpi of the monitor the frame is on; 96 where it is not known
 int AppShellWindowDpi(MainWindow* win);
