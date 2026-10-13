@@ -19,19 +19,19 @@ jobs:
       - name: Translations
         run: bun cmd/trans-dl.ts
       - name: test_util
-        run: bun cmd/ng-build.ts -dbg test_util -run -- -for-ai
+        run: .github/scripts/run.sh bun cmd/ng-build.ts -dbg test_util -run -- -for-ai
       - name: SumatraPDF
-        run: bun cmd/ng-build.ts -dbg SumatraPDF
+        run: .github/scripts/run.sh bun cmd/ng-build.ts -dbg SumatraPDF
       - name: Rosetta
         run: /usr/bin/pgrep -q oahd || softwareupdate --install-rosetta --agree-to-license
       - name: test_util (x86_64)
         run: |
-          bun cmd/ng-build.ts -dbg -arch x86_64 test_util
-          arch -x86_64 out/mac/dbg-x86_64/test_util -for-ai
+          .github/scripts/run.sh bun cmd/ng-build.ts -dbg -arch x86_64 test_util
+          .github/scripts/run.sh arch -x86_64 out/mac/dbg-x86_64/test_util -for-ai
 
       - name: Release build (universal)
         run: |
-          bun cmd/ng-build.ts -rel -universal SumatraPDF
+          .github/scripts/run.sh bun cmd/ng-build.ts -rel -universal SumatraPDF
           lipo -archs out/mac/rel-universal/SumatraPDF
       - name: Upload ng binaries
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
