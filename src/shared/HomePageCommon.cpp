@@ -60,7 +60,7 @@ Str SelectedTipLine() {
         return {};
     }
     if (gSelectedIsPromo) {
-        return v[gSelectedTipIdx];
+        return Tr(v[gSelectedTipIdx]);
     }
     // translated when shown, so a language change applies without re-parsing
     return str::JoinTemp(Tr("Tip:"), StrL(" "), Tr(v[gSelectedTipIdx]));

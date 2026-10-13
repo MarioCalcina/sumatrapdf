@@ -20,6 +20,8 @@ es:Girar automáticamente las páginas anchas
 es:Parte inferior
 :Bring All to Front
 es:Traer todo al frente
+:built on
+es:compilado el
 :Certify: form filling and signing allowed
 es:Certificar: se permite rellenar formularios y firmar
 :Certify: form filling, signing and annotations allowed
@@ -62,6 +64,8 @@ es:Error al guardar la selección como imagen.
 es:El archivo %s ya existe. ¿Sobrescribirlo?
 :Find & Select
 es:Buscar y seleccionar
+:forums
+es:foros
 :Hide %s
 es:Ocultar %s
 :Hide Others
@@ -70,12 +74,18 @@ es:Ocultar otros
 es:Interfaz
 :Left Edge
 es:Borde izquierdo
+:licenses
+es:licencias
 :Lock document after signing (last signer)
 es:Bloquear el documento tras firmar (último firmante)
 :Lock form &fields after signing
 es:Bloquear los &campos del formulario tras firmar
+:manual
+es:manual
 :Minimize
 es:Minimizar
+:more software by me
+es:más software del autor
 :Navigate Favorites
 es:Navegar favoritos
 :Navigate History
@@ -128,6 +138,12 @@ es:Mostrar la nota de la anotación seleccionada
 es:&Tipo de firma:
 :Signing this way locks the document: no further changes or signatures will be possible. Continue?
 es:Firmar de esta forma bloquea el documento: no se podrán hacer más cambios ni añadir firmas. ¿Continuar?
+:SumatraPDF forums
+es:Foros de SumatraPDF
+:SumatraPDF manual
+es:Manual de SumatraPDF
+:SumatraPDF website
+es:Sitio web de SumatraPDF
 :System default
 es:Predeterminada del sistema
 :Tabs
@@ -136,7 +152,23 @@ es:Pestañas
 es:Alternar giro automático de páginas anchas
 :Top
 es:Parte superior
+:Try [Edna](https://edna.arslexis.io): a note taking web app for power users.
+es:Prueba [Edna](https://edna.arslexis.io): una aplicación web de notas para usuarios avanzados.
+:Try [MarkLexis](https://marklexis.arslexis.io): a bookmarking web application.
+es:Prueba [MarkLexis](https://marklexis.arslexis.io): una aplicación web de marcadores.
+:Try [Sumatra File Manager](https://sumatrafilemanager.com): file manager with super powers.
+es:Prueba [Sumatra File Manager](https://sumatrafilemanager.com): un gestor de archivos con superpoderes.
 :Unsupported image format.
 es:Formato de imagen no compatible.
+:Various Open Source
+es:Varias de código abierto
+:version
+es:versión
+:version history
+es:historial de versiones
 :View & Zoom
 es:Vista y zoom
+:website
+es:sitio web
+:What's new
+es:Novedades

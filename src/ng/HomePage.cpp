@@ -119,18 +119,18 @@ struct AboutRow {
 static AboutRow gAboutRows[] = {
     // a null rightTxt means "the app version", filled in at build time because
     // it isn't known until runtime (32/64-bit, debug)
-    {StrL("version"), {}, {}},
-    {StrL("built on"), StrL(__DATE__ " " __TIME__), {}},
-    {StrL("manual"), StrL("SumatraPDF manual"), StrL("https://www.sumatrapdfreader.org/docs/SumatraPDF-documentation")},
-    {StrL("version history"), StrL("What's new"), StrL("https://www.sumatrapdfreader.org/docs/Version-history")},
-    {StrL("website"), StrL("SumatraPDF website"), Str(kWebsiteURL)},
-    {StrL("forums"), StrL("SumatraPDF forums"), StrL("https://github.com/sumatrapdfreader/sumatrapdf/discussions")},
-    {StrL("licenses"), StrL("Various Open Source"),
+    {TrN("version"), {}, {}},
+    {TrN("built on"), StrL(__DATE__ " " __TIME__), {}},
+    {TrN("manual"), TrN("SumatraPDF manual"), StrL("https://www.sumatrapdfreader.org/docs/SumatraPDF-documentation")},
+    {TrN("version history"), TrN("What's new"), StrL("https://www.sumatrapdfreader.org/docs/Version-history")},
+    {TrN("website"), TrN("SumatraPDF website"), Str(kWebsiteURL)},
+    {TrN("forums"), TrN("SumatraPDF forums"), StrL("https://github.com/sumatrapdfreader/sumatrapdf/discussions")},
+    {TrN("licenses"), TrN("Various Open Source"),
      StrL("https://github.com/sumatrapdfreader/sumatrapdf/blob/master/AUTHORS")},
 #if IS_DEBUG
-    {StrL("a note"), StrL("Debug version, for testing only!"), {}},
+    {TrN("a note"), StrL("Debug version, for testing only!"), {}},
 #endif
-    {StrL("more software by me"), StrL("Sumatra File Manager"), StrL("https://sumatrafilemanager.com")},
+    {TrN("more software by me"), StrL("Sumatra File Manager"), StrL("https://sumatrafilemanager.com")},
     {{}, {}, {}}};
 
 constexpr int kAboutSoftwareRow = dimofi(gAboutRows) - 2;
@@ -1028,6 +1028,21 @@ static gp::El* SumatraLogoEl(gp::Ctx* cx, float fontSize, Str fontFamily = {}, S
     return row;
 }
 
+// the About rows in the UI language: the left column, and the right one where
+// it names a link ("What's new"); the date, the version and names stay as is
+static Str AboutLeftText(int row) {
+    return Tr(gAboutRows[row].leftTxt);
+}
+
+static Str AboutRightText(int row) {
+    AboutRow* el = &gAboutRows[row];
+    if (!el->rightTxt.s) {
+        return GetAppVersionTemp();
+    }
+    bool isName = row == kAboutSoftwareRow;
+    return len(el->url) > 0 && !isName ? Tr(el->rightTxt) : TrimGitTemp(el->rightTxt);
+}
+
 // orig's two-column About table: the left column right-aligned, the right one
 // left-aligned, a vertical divider between them, links in the link color
 static gp::El* AboutTableEl(MainWindow* win, gp::Ctx* cx, int nRows = kAboutSoftwareRow + 1) {
@@ -1039,9 +1054,11 @@ static gp::El* AboutTableEl(MainWindow* win, gp::Ctx* cx, int nRows = kAboutSoft
     gp::El* right = gp::Div(cx->a)->FlexCol()->ItemsStart()->Gap(6);
     for (int i = 0; i < nRows; i++) {
         AboutRow* el = &gAboutRows[i];
-        left->Child(
-            gp::TextEl(cx->a, GpuiDup(cx->a, el->leftTxt))->Font((float)kLeftTextFontSize)->Fg(ToGpui(colText))->H(18));
-        Str txt = el->rightTxt.s ? TrimGitTemp(el->rightTxt) : Str(GetAppVersionTemp());
+        left->Child(gp::TextEl(cx->a, GpuiDup(cx->a, AboutLeftText(i)))
+                        ->Font((float)kLeftTextFontSize)
+                        ->Fg(ToGpui(colText))
+                        ->H(18));
+        Str txt = AboutRightText(i);
         bool isLink = canAccessDisk && len(el->url) > 0;
         gp::El* r = gp::TextEl(cx->a, GpuiDup(cx->a, txt))
                         ->Font((float)kRightTextFontSize)
@@ -1069,7 +1086,7 @@ static gp::El* AboutSoftwareEl(MainWindow* win, gp::Ctx* cx, float fontScale = 1
                                float linkDy = gp::kAuto) {
     AboutRow& software = gAboutRows[kAboutSoftwareRow];
     bool isLink = CanAccessDisk();
-    gp::El* link = gp::TextEl(cx->a, GpuiDup(cx->a, software.rightTxt))
+    gp::El* link = gp::TextEl(cx->a, GpuiDup(cx->a, AboutRightText(kAboutSoftwareRow)))
                        ->FontFamily(GStrL("Arial"))
                        ->Weight(gp::FontWeight::Black)
                        ->Font((float)kRightTextFontSize * fontScale)
@@ -1087,7 +1104,7 @@ static gp::El* AboutSoftwareEl(MainWindow* win, gp::Ctx* cx, float fontScale = 1
         ->FlexCol()
         ->ItemsCenter()
         ->Gap((float)kAboutCopyGap)
-        ->Child(gp::TextEl(cx->a, GpuiDup(cx->a, software.leftTxt))
+        ->Child(gp::TextEl(cx->a, GpuiDup(cx->a, AboutLeftText(kAboutSoftwareRow)))
                     ->FontFamily(GStrL("Arial"))
                     ->Font((float)kLeftTextFontSize * fontScale)
                     ->H(headerDy)
@@ -1249,11 +1266,6 @@ struct AboutDims {
     RectF box;
 };
 
-static Str AboutRightText(int row) {
-    AboutRow* el = &gAboutRows[row];
-    return el->rightTxt.s ? TrimGitTemp(el->rightTxt) : Str(GetAppVersionTemp());
-}
-
 static void MeasureAbout(MainWindow* win, AboutDims& d) {
     int dpi = std::max(AppShellWindowDpi(win), 96);
     float toDip = 96.f / (float)dpi;
@@ -1271,7 +1283,7 @@ static void MeasureAbout(MainWindow* win, AboutDims& d) {
     int tableDy = 0;
     int n = 0;
     for (; n < kAboutSoftwareRow && n < kAboutMaxRows; n++) {
-        Size l = PlatformFontMeasureText(fontLeft, gAboutRows[n].leftTxt);
+        Size l = PlatformFontMeasureText(fontLeft, AboutLeftText(n));
         Size r = PlatformFontMeasureText(fontRight, AboutRightText(n));
         leftDx = std::max(leftDx, l.dx);
         rightDx = std::max(rightDx, r.dx);
@@ -1286,8 +1298,8 @@ static void MeasureAbout(MainWindow* win, AboutDims& d) {
     int btnDy = btnText.dy + 2 * scale(kAboutBtnPadDy);
     int copyBlockDy = scale(kAboutCopyGap) + btnDy;
     AboutRow& software = gAboutRows[kAboutSoftwareRow];
-    Size softwareHeader = PlatformFontMeasureText(fontLeft, software.leftTxt);
-    Size softwareLink = PlatformFontMeasureText(fontRight, software.rightTxt);
+    Size softwareHeader = PlatformFontMeasureText(fontLeft, AboutLeftText(kAboutSoftwareRow));
+    Size softwareLink = PlatformFontMeasureText(fontRight, AboutRightText(kAboutSoftwareRow));
     int softwareDy = softwareHeader.dy + scale(kAboutCopyGap) + softwareLink.dy;
     int softwareBlockDy = scale(kAboutSoftwareGap) + softwareDy + scale(kAboutRectPadding);
 
@@ -1353,7 +1365,7 @@ static gp::El* AboutToolBuild(MainWindow* win, gp::Ctx* cx) {
                         ->FlexRow()
                         ->ItemsCenter()
                         ->JustifyEnd()
-                        ->Child(gp::TextEl(cx->a, GpuiDup(cx->a, el->leftTxt))
+                        ->Child(gp::TextEl(cx->a, GpuiDup(cx->a, AboutLeftText(i)))
                                     ->FontFamily(GStrL("Arial"))
                                     ->Font((float)kLeftTextFontSize * fontScale)
                                     ->Fg(line)

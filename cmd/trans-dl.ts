@@ -172,6 +172,7 @@ function extractStringsFromCFilesNoPaths(): string[] {
 // home page tips: one per line of the sumatraTips raw string, translated at
 // runtime with Tr(line). Their markup ([text](link), (Kbd/...)) must survive
 const tipsPattern = /^(?:static )?Str sumatraTips = StrL\(R"tips\(([\s\S]*?)\)tips"\);/m;
+const promosPattern = /^(?:static )?Str sumatraPromos = StrL\(R"promos\(([\s\S]*?)\)promos"\);/m;
 
 function extractTips(): string[] {
   const tips: string[] = [];
@@ -187,7 +188,20 @@ function extractTips(): string[] {
         .filter((s) => s.length > 0),
     );
   }
-  console.log(`${tips.length} tips`);
+  // ng's promotions, translated when shown like the tips
+  {
+    const path = join("src", "ng", "HomePage.cpp");
+    const m = promosPattern.exec(readFileSync(path, "utf-8"));
+    if (!m) throw new Error(`sumatraPromos not found in ${path}`);
+    tips.push(
+      ...m[1]
+        .split("
+")
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0),
+    );
+  }
+  console.log(`${tips.length} tips and promotions`);
   return tips;
 }
 
