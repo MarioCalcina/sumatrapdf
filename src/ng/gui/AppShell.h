@@ -157,6 +157,7 @@ void AppShellHandleOpenDocs();
 void AppShellOpenDocsReady();
 void AppShellWatchMacEvents();
 void AppShellMacClientTitleBar(MainWindow* win, bool on);
+void AppShellMacFinishMenus();
 void AppShellNoteRecentDoc(Str path);
 bool AppShellSwipeTurnsPages();
 bool AppShellSystemIsDark();

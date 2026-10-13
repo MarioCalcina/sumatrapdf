@@ -147,7 +147,7 @@ function getFilesToProcess(): string[] {
       const path = join(dir, entry.name);
       if (entry.isDirectory()) {
         walk(path);
-      } else if (entry.isFile() && extname(entry.name).toLowerCase() === ".cpp") {
+      } else if (entry.isFile() && [".cpp", ".mm"].includes(extname(entry.name).toLowerCase())) {
         res.push(path);
       }
     }

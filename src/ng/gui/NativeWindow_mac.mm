@@ -18,6 +18,8 @@
 #include "SumatraPDF.h"
 #include "MainWindow.h"
 #include "Theme.h"
+#include "Translations.h"
+#include "Version.h"
 #include "gui/AppShell.h"
 #include "gui/DocCanvas.h"
 
@@ -142,6 +144,67 @@ void AppShellMacClientTitleBar(MainWindow* win, bool on) {
     window.titleVisibility = on ? NSWindowTitleHidden : NSWindowTitleVisible;
     window.titlebarAppearsTransparent = on;
     window.titlebarSeparatorStyle = on ? NSTitlebarSeparatorStyleNone : NSTitlebarSeparatorStyleAutomatic;
+}
+
+// --- menu bar ----------------------------------------------------------------
+
+static NSMenuItem* StdMenuItem(Str title, SEL action, NSString* key, NSEventModifierFlags mods) {
+    NSMenuItem* item = [[NSMenuItem alloc] initWithTitle:ToNSString(title) action:action keyEquivalent:key];
+    item.keyEquivalentModifierMask = mods;
+    return item;
+}
+
+// What every Mac app has and gpui's menu bar, built from the app's menu model,
+// leaves out: Services and Hide in the app menu, Minimize and Bring All to Front
+// in the Window menu, which gpui finds by its English title, so it's translated
+// here. The actions go to AppKit through the responder chain.
+void AppShellMacFinishMenus() {
+    NSMenu* bar = [NSApp mainMenu];
+    NSMenu* appMenu = bar.numberOfItems > 0 ? [bar itemAtIndex:0].submenu : nil;
+
+    // About, Settings..., separator, Quit (InstallNativeMenu)
+    constexpr NSInteger kAppMenuItems = 4;
+    if (appMenu.numberOfItems == kAppMenuItems) {
+        NSMenuItem* services = StdMenuItem(Tr("Services"), nil, @"", 0);
+        services.submenu = [[NSMenu alloc] initWithTitle:services.title];
+        NSApp.servicesMenu = services.submenu;
+        NSEventModifierFlags cmd = NSEventModifierFlagCommand;
+        NSArray<NSMenuItem*>* items = @[
+            [NSMenuItem separatorItem],
+            services,
+            [NSMenuItem separatorItem],
+            StdMenuItem(fmt(Tr("Hide %s").s, StrL(kAppName)), @selector(hide:), @"h", cmd),
+            StdMenuItem(Tr("Hide Others"), @selector(hideOtherApplications:), @"h", cmd | NSEventModifierFlagOption),
+            StdMenuItem(Tr("Show All"), @selector(unhideAllApplications:), @"", 0),
+        ];
+        for (NSUInteger i = 0; i < items.count; i++) {
+            [appMenu insertItem:items[i] atIndex:(NSInteger)(2 + i)];
+        }
+        [appMenu insertItem:[NSMenuItem separatorItem] atIndex:1];
+    }
+
+    // AppKit adds the window list below
+    NSMenu* windowMenu = NSApp.windowsMenu;
+    if (!windowMenu || [windowMenu indexOfItemWithTarget:nil andAction:@selector(performMiniaturize:)] >= 0) {
+        return;
+    }
+    NSString* title = ToNSString(Tr("Window"));
+    windowMenu.title = title;
+    for (NSMenuItem* item in bar.itemArray) {
+        if (item.submenu == windowMenu) {
+            item.title = title;
+        }
+    }
+    NSArray<NSMenuItem*>* items = @[
+        StdMenuItem(Tr("Minimize"), @selector(performMiniaturize:), @"m", NSEventModifierFlagCommand),
+        StdMenuItem(Tr("Zoom"), @selector(performZoom:), @"", 0),
+        [NSMenuItem separatorItem],
+        StdMenuItem(Tr("Bring All to Front"), @selector(arrangeInFront:), @"", 0),
+        [NSMenuItem separatorItem],
+    ];
+    for (NSUInteger i = 0; i < items.count; i++) {
+        [windowMenu insertItem:items[i] atIndex:(NSInteger)i];
+    }
 }
 
 // --- trackpad pinch ----------------------------------------------------------

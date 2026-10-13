@@ -6,10 +6,14 @@
 # keeps its key as the first word.
 :%s: restore default
 es:%s: restaurar valor predeterminado
+:About %s
+es:Acerca de %s
 :Approval signature
 es:Firma de aprobación
 :Auto-Rotate Wide Pages
 es:Girar automáticamente las páginas anchas
+:Bring All to Front
+es:Traer todo al frente
 :Certify: form filling and signing allowed
 es:Certificar: se permite rellenar formularios y firmar
 :Certify: form filling, signing and annotations allowed
@@ -24,10 +28,16 @@ es:Error al guardar la imagen
 es:Error al guardar la captura de pantalla
 :File %s already exists. Overwrite?
 es:El archivo %s ya existe. ¿Sobrescribirlo?
+:Hide %s
+es:Ocultar %s
+:Hide Others
+es:Ocultar otros
 :Lock document after signing (last signer)
 es:Bloquear el documento tras firmar (último firmante)
 :Lock form &fields after signing
 es:Bloquear los &campos del formulario tras firmar
+:Minimize
+es:Minimizar
 :Navigate Favorites
 es:Navegar favoritos
 :Navigate History
@@ -42,8 +52,8 @@ es:No se ha encontrado ningún resultado
 es:No hay nada que capturar
 :Quick Edit Settings
 es:Edición rápida de la configuración
-:Quit
-es:Salir
+:Quit %s
+es:Salir de %s
 :Resolution (DPI):
 es:Resolución (PPP):
 :Save Image
@@ -52,6 +62,10 @@ es:Guardar imagen
 es:Captura de pantalla guardada en '%s'
 :Search syntax
 es:Sintaxis de búsqueda
+:Services
+es:Servicios
+:Show All
+es:Mostrar todo
 :Show the selected annotation's note
 es:Mostrar la nota de la anotación seleccionada
 :Signature &type:
@@ -60,3 +74,5 @@ es:&Tipo de firma:
 es:Firmar de esta forma bloquea el documento: no se podrán hacer más cambios ni añadir firmas. ¿Continuar?
 :Toggle Auto-Rotate Wide Pages
 es:Alternar giro automático de páginas anchas
+:Window
+es:Ventana

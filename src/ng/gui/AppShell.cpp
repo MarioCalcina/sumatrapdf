@@ -33,6 +33,7 @@
 #include "ShortcutParse.h"
 #include "Accelerators.h"
 #include "Translations.h"
+#include "Version.h"
 #include "Theme.h"
 #include "CommandAvailability.h"
 #include "Menu.h"
@@ -1325,14 +1326,14 @@ static void InstallNativeMenu(MainWindow* win) {
     int n = 0;
 
     gp::MenuRow* appRows = AllocArrayTemp<gp::MenuRow>(4);
-    appRows[0].label = ToGpui(ParseMenuAccelTextTemp(Tr("&About")).display);
+    appRows[0].label = ToGpui(fmt(Tr("About %s").s, StrL(kAppName)));
     appRows[0].action = ActSumatraCmd();
     appRows[0].arg = CmdHelpAbout;
     appRows[1].label = ToGpui(ParseMenuAccelTextTemp(Tr("&Settings...")).display);
     appRows[1].action = ActSumatraCmd();
     appRows[1].arg = CmdOptions;
     appRows[2].separator = true;
-    appRows[3].label = ToGpui(Tr("Quit"));
+    appRows[3].label = ToGpui(fmt(Tr("Quit %s").s, StrL(kAppName)));
     appRows[3].action = ActSumatraCmd();
     appRows[3].arg = CmdExit;
     appRows[3].stroke = "cmd-q";
@@ -1364,6 +1365,9 @@ static void InstallNativeMenu(MainWindow* win) {
         defs[n++] = windowDef;
     }
     gp::AppSetMenus(gApp, defs, n);
+#if OS_DARWIN
+    AppShellMacFinishMenus();
+#endif
 }
 
 bool AppShellNativeMenu() {

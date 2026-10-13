@@ -32,6 +32,16 @@ const docTypes: DocType[] = [
   { name: "JPEG XL Image", exts: ["jxl"] },
 ];
 
+// the languages of src/shared/TranslationLangs.cpp as Apple language ids. Listed
+// in CFBundleLocalizations, they let AppKit's own UI (print and open panels, the
+// menu items it adds) follow the app's language instead of staying English.
+// es-419 gives Latin America its own AppKit Spanish.
+const appleLangs = (
+  "en af ar az be bg bn bs ca co cs cy da de el es es-419 et eu fa fi fil fo fr fy ga gl he hi hr hu hy id it " +
+  "ja jv ka ko ku kw lt lv mk ml ms my nb ne nl nn pa pl pt-BR pt-PT ro ru sat si sk sl sn sq sr sr-Latn sv ta " +
+  "th tr uk uz vi zh-Hans zh-Hant"
+).split(" ");
+
 function plistArray(items: string[]): string {
   return `<array>${items.map((s) => `<string>${s}</string>`).join("")}</array>`;
 }
@@ -64,6 +74,8 @@ function infoPlist(exeName: string, version: string): string {
   <key>CFBundleVersion</key><string>${version}</string>
   <key>NSPrincipalClass</key><string>NSApplication</string>
   <key>NSHighResolutionCapable</key><true/>
+  <key>CFBundleDevelopmentRegion</key><string>en</string>
+  <key>CFBundleLocalizations</key>${plistArray(appleLangs)}
   <key>CFBundleDocumentTypes</key>
   <array>
 ${docTypes.map(docTypePlist).join("\n")}
