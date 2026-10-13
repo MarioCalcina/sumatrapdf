@@ -30,7 +30,7 @@ jobs:
             --jq "[.[] | select(.tagName | startswith(\"v$day\"))] | length")
           rev=""
           if [ "$n" -gt 0 ] && [ "$n" -le 9 ]; then rev="-rev $n"; fi
-          bun cmd/ng-build.ts -rel -universal $rev SumatraPDF
+          .github/scripts/run.sh bun cmd/ng-build.ts -rel -universal $rev SumatraPDF
           lipo -archs out/mac/rel-universal/SumatraPDF
       # drag-to-Applications disk image; ditto keeps the ad-hoc signature.
       # hdiutil on hosted runners sometimes fails with "Resource busy", so retry

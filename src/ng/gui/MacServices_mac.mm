@@ -62,8 +62,9 @@ Pixmap* MacFileIconPixmap(Str path, int px) {
     }
     memset(pm->data, 0, (size_t)pm->stride * (size_t)px);
     CGColorSpaceRef cs = CGColorSpaceCreateDeviceRGB();
-    CGContextRef ctx = CGBitmapContextCreate(pm->data, (size_t)px, (size_t)px, 8, (size_t)pm->stride, cs,
-                                             kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little);
+    // BGRA, premultiplied: the Pixmap layout
+    CGBitmapInfo info = (CGBitmapInfo)kCGImageAlphaPremultipliedFirst | (CGBitmapInfo)kCGBitmapByteOrder32Little;
+    CGContextRef ctx = CGBitmapContextCreate(pm->data, (size_t)px, (size_t)px, 8, (size_t)pm->stride, cs, info);
     CGColorSpaceRelease(cs);
     if (!ctx) {
         FreePixmap(pm);
