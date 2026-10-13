@@ -46,6 +46,7 @@
 #include "gui/ToolWindow.h"
 #include "gui/PlatformFont.h"
 #include "gui/DocCanvas.h"
+#include "gui/MacServices.h"
 #include "SvgIcons.h"
 #include "gui/DialogWidgets.h"
 #include "OverlayScrollbar.h"
@@ -405,9 +406,62 @@ static gp::ImageLoadState HomeThumbLoad(gp::PaintApp* pa, void* user, gp::Render
     return t->img ? gp::ImageLoadState::Ready : gp::ImageLoadState::Failed;
 }
 
-// orig draws the shell's small icon for the file's type in front of its name.
-// ng: the shell is asked on Windows only; elsewhere it is gpui's document glyph
+// one Finder icon per file extension and pixel size, made the first time a
+// file of that type is listed
+struct HomeFileIcon {
+    HomeFileIcon* next = nullptr;
+    Str ext; // lowercase, with the dot; empty for none
+    int px = 0;
+    Pixmap* pixmap = nullptr;
+    // made from the pixmap on the paint thread, the first time it is drawn
+    gp::RenderImage* img = nullptr;
+    bool tried = false;
+};
+
+static HomeFileIcon* gFileIcons = nullptr;
+
+static HomeFileIcon* FileTypeIcon(Str path, int px) {
+    TempStr ext = str::DupTemp(path::GetExtTemp(path));
+    str::ToLowerInPlace(ext);
+    for (HomeFileIcon* icon = gFileIcons; icon; icon = icon->next) {
+        if (icon->px == px && str::Eq(icon->ext, ext)) {
+            return icon->pixmap ? icon : nullptr;
+        }
+    }
+    auto* icon = new HomeFileIcon();
+    icon->ext = str::Dup(ext);
+    icon->px = px;
+    icon->pixmap = MacFileIconPixmap(path, px);
+    ListInsertFront(&gFileIcons, icon);
+    return icon->pixmap ? icon : nullptr;
+}
+
+// the icon's pixels are premultiplied BGRA, which is what gpui takes
+static gp::ImageLoadState HomeFileIconLoad(gp::PaintApp* pa, void* user, gp::RenderImage** imgOut) {
+    auto* icon = (HomeFileIcon*)user;
+    Pixmap* px = icon->pixmap;
+    if (!icon->tried) {
+        icon->tried = true;
+        if (px->stride == px->width * 4) {
+            icon->img = gp::RenderImageFromBgra(pa, px->data, px->width, px->height);
+        }
+    }
+    *imgOut = icon->img;
+    return icon->img ? gp::ImageLoadState::Ready : gp::ImageLoadState::Failed;
+}
+
+// orig draws the shell's small icon for the file's type in front of its name;
+// here it is Finder's, at the display's backing scale. gpui's document glyph
+// stands in when there is none.
 static gp::El* HomeFileIconEl(MainWindow* win, gp::Ctx* cx, FileState* fs, Color colText) {
+    constexpr int kIconDy = 16;
+    float scale = win && win->gpuiWin ? AppShellRenderScale(win->gpuiWin) : 1.f;
+    HomeFileIcon* icon = FileTypeIcon(fs->filePath, (int)((float)kIconDy * scale + 0.5f));
+    if (icon) {
+        float dy = (float)kIconDy * CanvasScale(win);
+        gp::ImageSource src = gp::ImageSource::FromCustom(HomeFileIconLoad, icon);
+        return gp::ImageEl(cx->a, src, GStrL(""))->W(dy)->H(dy)->Shrink0();
+    }
     return gp::IconEl(cx->a, gp::IconName::FileText, 14)->Fg(ToGpui(colText))->Shrink0();
 }
 

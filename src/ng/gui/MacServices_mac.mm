@@ -2,7 +2,8 @@
    License: GPLv3 */
 
 // AppKit and IOKit services gpui has no counterpart for: images on the
-// pasteboard (gpui writes text only), keeping the display awake.
+// pasteboard (gpui writes text only), Finder's file icons, keeping the display
+// awake.
 
 #include "base/Base.h"
 
@@ -17,6 +18,7 @@
 #undef BOOL
 #include "base/MacTypesShow.h"
 
+#include "base/Pixmap.h"
 #include "gui/MacServices.h"
 
 // PNG for the apps that read it, TIFF for the ones that only take AppKit's
@@ -35,6 +37,48 @@ bool MacPasteboardSetPng(Str png) {
         ok = [pb setData:tiff forType:NSPasteboardTypeTIFF] || ok;
     }
     return ok;
+}
+
+// the icon Finder shows for the file, or for its extension when the file is
+// gone: `px` pixels square, premultiplied BGRA
+Pixmap* MacFileIconPixmap(Str path, int px) {
+    if (px <= 0 || len(path) == 0) {
+        return nullptr;
+    }
+    NSString* p = [[NSString alloc] initWithBytes:path.s length:(NSUInteger)len(path) encoding:NSUTF8StringEncoding];
+    NSWorkspace* ws = [NSWorkspace sharedWorkspace];
+    NSImage* icon = nil;
+    if (p && [[NSFileManager defaultManager] fileExistsAtPath:p]) {
+        icon = [ws iconForFile:p];
+    } else if (p.pathExtension.length > 0) {
+        icon = [ws iconForFileType:p.pathExtension];
+    }
+    if (!icon) {
+        return nullptr;
+    }
+    Pixmap* pm = AllocPixmap(px, px, PixmapFormat::BGRA8, true);
+    if (!pm) {
+        return nullptr;
+    }
+    memset(pm->data, 0, (size_t)pm->stride * (size_t)px);
+    CGColorSpaceRef cs = CGColorSpaceCreateDeviceRGB();
+    CGContextRef ctx = CGBitmapContextCreate(pm->data, (size_t)px, (size_t)px, 8, (size_t)pm->stride, cs,
+                                             kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little);
+    CGColorSpaceRelease(cs);
+    if (!ctx) {
+        FreePixmap(pm);
+        return nullptr;
+    }
+    [NSGraphicsContext saveGraphicsState];
+    [NSGraphicsContext setCurrentContext:[NSGraphicsContext graphicsContextWithCGContext:ctx flipped:NO]];
+    [icon drawInRect:NSMakeRect(0, 0, px, px)
+            fromRect:NSZeroRect
+           operation:NSCompositingOperationSourceOver
+            fraction:1.0];
+    [NSGraphicsContext restoreGraphicsState];
+    CGContextRelease(ctx);
+    pm->hasAlpha = true;
+    return pm;
 }
 
 static IOPMAssertionID gNoSleep = kIOPMNullAssertionID;

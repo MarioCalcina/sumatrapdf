@@ -113,6 +113,9 @@ AppKit code lives in `*_mac.mm` files, mostly `gui/NativeWindow_mac.mm`:
 - Fullscreen.PreventSleep holds an IOKit assertion against display sleep
 - the window opens where it was closed, on the display it was on
   (`AppShellKeepOnScreen`)
+- a tab dragged out of its strip and dropped on another window joins that
+  window; the window server says which one is under the pointer
+- the Home page lists recent files with Finder's icon for their type
 - File > Open Recent and Show in Finder; About, Settings and Quit only in the
   app menu
 - tabs sit in the title bar beside the traffic lights
@@ -123,8 +126,6 @@ gpui-kit-cpp):
 
 - a text field's context menu (Cut, Copy, Paste, Select All) is gpui's and
   stays English
-- a tab dropped on another window's tab strip opens a window of its own: gpui
-  captures the mouse for the window the drag started in
 - the note and ink annotation tools show the cross cursor, not orig's icon
   cursors: gpui sets the cursor itself on every mouse move
 - a text selection can't be dragged out of the window: gpui has no drag

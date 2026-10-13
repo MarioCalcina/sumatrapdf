@@ -209,6 +209,15 @@ Rect ToolWinNativeWorkAreaFor(Rect r) {
     return best ? FromMac(best.visibleFrame) : Rect{};
 }
 
+int ToolWinNativeNumber(gp::Window* gw) {
+    NSWindow* w = NsWin(gw);
+    return w ? (int)w.windowNumber : 0;
+}
+
+int ToolWinNativeNumberUnderMouse() {
+    return (int)[NSWindow windowNumberAtPoint:[NSEvent mouseLocation] belowWindowWithWindowNumber:0];
+}
+
 Size ToolWinNativeChrome(bool titled, bool resizable, bool utility) {
     if (!titled) {
         return {};

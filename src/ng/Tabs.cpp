@@ -289,9 +289,9 @@ void RemoveTab(WindowTab* tab) {
 
 // orig's MaybeMigrateTab: a tab dropped outside its strip moves to `newWin`,
 // or to a window of its own when there is none.
-// ng: gpui captures the mouse for the window the drag started in, so a drop on
-// another window's strip never arrives; `newWin` is always null here (see
-// "gpui gaps"). Everything else is orig's.
+// ng: gpui captures the mouse for the window the drag started in, so the
+// window under the pointer comes from the window server (TabsUI.cpp).
+// Everything else is orig's.
 void MaybeMigrateTab(WindowTab* tab, MainWindow* newWin) {
     MainWindow* oldWin = tab->win;
     if (tab->IsNonDocumentTab()) {

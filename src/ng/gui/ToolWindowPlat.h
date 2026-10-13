@@ -16,6 +16,10 @@ Rect ToolWinNativeContentRect(gpui::Window* gw);
 Rect ToolWinNativeWorkArea(gpui::Window* gw);
 Rect ToolWinNativeMonitor(gpui::Window* gw);
 Rect ToolWinNativeWorkAreaFor(Rect r);
+// the window server's number of the window, and of the topmost one under the
+// mouse pointer; 0 when there is none
+int ToolWinNativeNumber(gpui::Window* gw);
+int ToolWinNativeNumberUnderMouse();
 // extra size around a client area for this kind of frame. dx is left+right,
 // dy is top+bottom
 Size ToolWinNativeChrome(bool titled, bool resizable, bool utility);
