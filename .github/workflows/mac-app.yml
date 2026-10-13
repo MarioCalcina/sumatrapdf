@@ -119,6 +119,14 @@ jobs:
             pkill -f "SumatraPDF -for-testing" || true
             sleep 2
           done
+          # Save As with ⌘S: without -dbg-control it is macOS's save panel
+          open -n -a "$APP" "$PWD/ext/a-zlib/zlib.3.pdf" --args -for-testing
+          sleep 8
+          t 20 osascript -e 'tell application "System Events" to tell process "SumatraPDF"' \
+            -e 'set frontmost to true' -e 'keystroke "s" using command down' -e 'end tell' || echo "keystroke: exit $?"
+          sleep 4
+          screencapture -x shots/es-save.png
+          pkill -f "SumatraPDF -for-testing" || true
           cp -R "$HOME/Library/Application Support/SumatraPDF/crashinfo" shots/ || true
           defaults delete -g AppleLanguages || true
           hdiutil detach /Volumes/SumatraPDF || true
