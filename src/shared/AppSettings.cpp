@@ -35,7 +35,6 @@
 #include "CachedObjects.h"
 #include "PagePosition.h"
 #include "GlobalHotkeys.h"
-#include "ExplorerQuickLook.h"
 #include "ReadAloud.h"
 #include "AppSettings.h"
 void ReloadSettingsUpdateWindows(bool showToolbarBefore);
@@ -503,7 +502,6 @@ bool LoadSettings() {
         gSettings->showAnnotationAuthorInTooltip ? AnnotAuthorVisibility::Show : AnnotAuthorVisibility::Hide;
     EngineMupdfSetAnnotAuthorInTooltip(authorVisibility);
     SetEngineeringDrawingEnhanceMode(gSettings->engineeringDrawingEnhance);
-    ExplorerQuickLookApplyFromSettings();
 
     if (trans::ValidateLangCode(gprefs->uiLanguage)) {
         SetCurrentLang(gprefs->uiLanguage);

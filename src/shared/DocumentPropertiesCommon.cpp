@@ -193,7 +193,7 @@ static Str FileTypeDisplayName(FileType ft) {
 // own, an embedded PDF stream isn't a file, and in plugin mode the "path" is
 // a URL we can't read.
 void AppendFileType(str::Builder& out, Str path) {
-    if (gPluginMode || len(path) == 0) {
+    if (len(path) == 0) {
         return;
     }
     if (path::IsDirectory(path) || !file::Exists(path)) {
@@ -450,11 +450,11 @@ static void AddImageProperties(EngineBase* engine, int pageNo, str::Builder& out
 void GetPropsText(DocController* ctrl, str::Builder& out) {
     ReportIf(!ctrl);
 
-    Str path = gPluginMode ? gPluginURL : Str(ctrl->GetFilePath());
+    Str path = ctrl->GetFilePath();
     AppendProp(out, Tr("File:"), len(path) == 0 ? StrL("(not available)") : path);
 
     DisplayModel* dm = ctrl->AsFixed();
-    i64 fileSize = file::GetSize(path); // can be gPluginURL
+    i64 fileSize = file::GetSize(path);
     if (-1 == fileSize && dm) {
         EngineBase* engine = dm->GetEngine();
         Str d = engine->GetFileData();

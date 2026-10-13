@@ -882,7 +882,7 @@ export const targets: Target[] = [
     // orig's "base" project: src/base plus gui/Dpi. No gpui.
     name: "base",
     kind: "staticlib",
-    sources: ["src/ng/base/*.cpp", "src/ng/base/*.mm", "src/ng/gui/Dpi*.cpp", "src/ng/PerfLog.cpp"],
+    sources: ["src/ng/base/*.cpp", "src/ng/base/*.mm", "src/ng/gui/Dpi*.cpp"],
     exclude: [
       // not in orig's base project: the app links one of CrashHandler.cpp /
       // CrashHandlerNoOp.cpp and one of SumatraLog.cpp / LogNoOp.cpp
@@ -1140,12 +1140,8 @@ export const targets: Target[] = [
       "src/ng/Print.cpp",
       "src/ng/Print_posix.cpp",
       "src/ng/HangDetector.cpp",
-      "src/ng/ExplorerQuickLook.cpp",
       "src/ng/UpdateCheck.cpp",
       "src/ng/UpdateCheckCommon.cpp",
-      "src/ng/UpdateTemp.cpp",
-      "src/ng/Installer.cpp",
-      "src/ng/Uninstaller.cpp",
       "src/ng/StressTesting.cpp",
       "src/ng/SumatraControl.cpp",
       "src/ng/SumatraControlCommon.cpp",

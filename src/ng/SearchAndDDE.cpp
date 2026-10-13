@@ -33,7 +33,6 @@
 #include "Commands.h"
 #include "Version.h"
 #include "SumatraConfig.h"
-#include "ExplorerQuickLook.h"
 #include "Tabs.h"
 #include "Selection.h"
 #include "PdfSync.h"

@@ -22,7 +22,6 @@
 #include "SumatraPDF.h"
 #include "MainWindow.h"
 #include "GlobalHotkeys.h"
-#include "ExplorerQuickLook.h"
 #include "ReadAloud.h"
 #include "SearchAndDDE.h"
 #include "PdfTools.h"
@@ -56,7 +55,7 @@ bool AppShellAcceptDrop(MainWindow* win, float x, float y, const Str* paths, int
     if (!IsMainWindowValidAndNotClosing(win)) {
         return false;
     }
-    if (phase == FileDropPhase::Leave || !CanAccessDisk() || gPluginMode) {
+    if (phase == FileDropPhase::Leave || !CanAccessDisk()) {
         bool ignored = false;
         PdfToolDialogOnDragOver(win, nullptr, false, &ignored, DropHost::Frame);
         return false;

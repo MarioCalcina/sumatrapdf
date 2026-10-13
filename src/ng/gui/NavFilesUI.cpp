@@ -868,7 +868,7 @@ static void NavDeleteFile(NavDeleteCtx* c, bool ok) {
 // alone: recursively deleting a folder from a file picker is too easy to
 // trigger by accident, and "Show in Folder" + Explorer covers it.
 static void DeleteCurrentSelection() {
-    if (!CanAccessDisk() || gPluginMode) {
+    if (!CanAccessDisk()) {
         return;
     }
     int idx = gNav.sel;
@@ -1360,7 +1360,7 @@ static TempStr NavStartDirNoDocTemp() {
 }
 
 void ShowNavFilesInFolder(MainWindow* win, Str selectPath, bool skipHistory) {
-    if (!win || !CanAccessDisk() || gPluginMode) {
+    if (!win || !CanAccessDisk()) {
         return;
     }
     // Prefer an explicit path (e.g. home-page thumbnail); else the current tab.

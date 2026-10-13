@@ -529,7 +529,7 @@ void EnablePdfAnnotationsToolbar(MainWindow* win) {
 }
 
 bool ShouldShowToolbar(MainWindow* win) {
-    if (win->presentation || win->isQuickLook) {
+    if (win->presentation) {
         return false;
     }
     int mode = ToolbarModeForWindow(win);
@@ -537,7 +537,7 @@ bool ShouldShowToolbar(MainWindow* win) {
 }
 
 bool ShouldOverlayToolbar(MainWindow* win) {
-    if (win->presentation || win->isQuickLook) {
+    if (win->presentation) {
         return false;
     }
     if (ToolbarModeForWindow(win) != kToolbarOverlay) {
@@ -678,11 +678,6 @@ bool IsCmdEnabled(MainWindow* win, int cmdId, AppCommandCtx* ctx) {
     }
 
     switch (cmdId) {
-        case CmdOpenFile:
-        case CmdOpenFileNoHistory:
-            // opening different files isn't allowed in plugin mode
-            return !gPluginMode;
-
 #ifndef DISABLE_DOCUMENT_RESTRICTIONS
         case CmdPrint:
             return !win->AsFixed() || win->AsFixed()->GetEngine()->AllowsPrinting();

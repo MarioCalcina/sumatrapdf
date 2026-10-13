@@ -63,7 +63,7 @@ static Vec<ToolWindow*> gToolWindows;
 static bool gToolWindowsOff = false;
 
 bool ToolWindowsAvailable() {
-    return !gToolWindowsOff && !gPluginMode;
+    return !gToolWindowsOff;
 }
 
 static bool IsLive(ToolWindow* tw) {

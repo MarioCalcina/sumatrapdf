@@ -210,10 +210,8 @@ bool HasPendingPreReleaseUpdate() {
     return false;
 }
 
-// GlobalHotkeys.cpp / ExplorerQuickLook.cpp (step 14a) are app-target only
+// GlobalHotkeys.cpp (step 14a) is app-target only
 void ReRegisterGlobalHotkeys() {}
-
-void ExplorerQuickLookApplyFromSettings() {}
 
 // ReadAloud.cpp (step 14c) is app-target only; the settings apply the voice
 bool ApplyReadAloudVoiceFromSettings() {

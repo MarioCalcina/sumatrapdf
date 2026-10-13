@@ -8,11 +8,6 @@
 constexpr const char* kWebsiteURL = "https://www.sumatrapdfreader.org/";
 constexpr const char* kContributeTranslationsURL = "https://www.sumatrapdfreader.org/docs/Contribute-translation";
 
-// in plugin mode the "file path" is the URL the document came from. ng: the
-// plugin host is step 17, so this is always empty for now
-extern Str gPluginURL;
-#define gPluginMode (len(gPluginURL) > 0)
-
 #include "Permissions.h"
 
 struct RenderCache;

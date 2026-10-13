@@ -21,8 +21,8 @@
 #include "UpdateCheck.h"
 #include "UpdateCheckCommon.h"
 
-// an available update surfaced by the pre-release startup notification; the
-// "Download and update" link downloads & installs it (owned here until then)
+// an available update surfaced by the pre-release startup notification; its
+// "Update" link opens the download page (owned here until then)
 UpdateInfo* gPendingUpdate = nullptr;
 
 bool HasPendingPreReleaseUpdate() {
@@ -33,16 +33,9 @@ bool IsTrustedUpdateDlUrl(Str dlURL) {
     return str::StartsWith(dlURL, kExpectedDlHost);
 }
 
-void BuildUpdateURL(str::Builder& url, Str baseURL, UpdateCheck updateCheckType) {
+// the fork's update info is a release asset: no query, nothing counts checks
+void BuildUpdateURL(str::Builder& url, Str baseURL, UpdateCheck) {
     url.Reset(baseURL);
-    // the fork's update info is a release asset: nothing counts the queries
-    (void)updateCheckType;
-    return;
-    AppendClientInfoQuery(url);
-    url.Append(StrL("&withPromo"));
-    if (UpdateCheck::UserInitiated == updateCheckType) {
-        url.Append(StrL("&force"));
-    }
 }
 
 UpdateInfo* ParseUpdateInfo(Str d) {
@@ -80,27 +73,7 @@ UpdateInfo* ParseUpdateInfo(Str d) {
     if (onDate) {
         res->builtOn = str::Dup(onDate);
     }
-
-    // those are optional. if missing, we'll just tell the user to go to website to download
-    res->installer64 = str::Dup(node->GetValue(StrL("Installer64")));
-    res->installerArm64 = str::Dup(node->GetValue(StrL("InstallerArm64")));
-    res->installer32 = str::Dup(node->GetValue(StrL("Installer32")));
-
-    res->portable64 = str::Dup(node->GetValue(StrL("PortableExe64")));
-    res->portableArm64 = str::Dup(node->GetValue(StrL("PortableExeArm64")));
-    res->portable32 = str::Dup(node->GetValue(StrL("PortableExe32")));
+    // optional: without it the user is sent to the releases page
     res->downloadPage = str::Dup(node->GetValue(StrL("DownloadPage")));
-
-    // figure out which executable to download
-    Str dlURL;
-    bool isDll = IsDllBuild();
-    if (IsArmBuild()) {
-        dlURL = isDll ? res->installerArm64 : res->portableArm64;
-    } else if (IsProcess64()) {
-        dlURL = isDll ? res->installer64 : res->portable64;
-    } else {
-        dlURL = isDll ? res->installer32 : res->portable32;
-    }
-    res->dlURL = str::Dup(dlURL);
     return res;
 }

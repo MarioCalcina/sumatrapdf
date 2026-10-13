@@ -30,12 +30,10 @@ struct FileArgs {
 FileArgs* ParseFileArgs(Str path);
 
 struct Flags {
-    HWND hwndPluginParent = nullptr;
     Str printerName;
     Str printSettings;
     Str forwardSearchOrigin;
     Str namedDest;
-    Str pluginURL;
     Str appdataDir;
     Str inverseSearchCmdLine;
     Str search;
@@ -45,13 +43,8 @@ struct Flags {
     Str stressTestFilter;
     Str stressTestRanges;
     Str controlPipeName; // -dbg-control <named-pipe>
-    Str upgradeFrom;
-    Str dde;
     Str lang;
-    Str installDir;
     Str logFile;
-    Str updateSelfTo;
-    Str deleteFile;
     StrVec fileNames;
     // pathsToBenchmark contain 2 strings per each file to benchmark:
     // - name of the file to benchmark
@@ -78,16 +71,13 @@ struct Flags {
 
     bool exitWhenDone = false;
     bool printDialog = false;
-    bool reuseDdeInstance = false;
     bool restrictedUse = false;
     bool enterPresentation = false;
     bool enterFullScreen = false;
     bool showConsole = false;
     bool exitImmediately = false;
-    // installer: doesn't show any UI
+    // -silent: no error UI while printing (-print-to, -print-to-default)
     bool silent = false;
-    // installer: starts the install immediately and launches the app at end
-    bool fastInstall = false;
     bool invertColors = false;
     bool regress = false;
     bool tester = false;
@@ -99,15 +89,9 @@ struct Flags {
     // -for-testing: for ad-hoc testing by humans or agents. Always starts
     // a new instance, doesn't restore session, doesn't save settings
     bool forTesting = false;
-    // -quicklook: chrome-less always-on-top preview window (Explorer Space)
-    bool quickLook = false;
-    // -quicklook-agent: hidden Space-bar hook for Explorer, no UI
-    bool quickLookAgent = false;
     bool testRenderPage = false;
     bool testExtractPage = false;
     bool testApp = false;
-    bool testPlugin = false;
-    bool testPreview = false;
     bool dumpExif = false;        // -dump-exif
     bool dumpChm = false;         // -dump-chm
     bool unitTests = false;       // -unit-tests (debug builds only)
@@ -115,24 +99,8 @@ struct Flags {
     bool forAi = false;           // -for-ai (AI-friendly unit test output)
     bool showPrintersDialog = false;
     bool crashOnOpen = false;
-    // related to installer
     bool showHelp = false;
-    bool install = false;
-    bool uninstall = false;
-    bool withFilter = false;
-    bool withPreview = false;
-    bool noDesktopShortcut = false;
-    bool justExtractFiles = false;
     bool log = false;
-    bool allUsers = false;
-    bool runInstallNow = false;
-    bool storeInstaller = false;
-    // -html-backend ie|webview2: force the embedded browser hosting CHM /
-    // markdown. Empty (the default) picks WebView2 when it's installed.
-    Str htmlBackend;
-    Str installRegRoot;
-    Str perfLogFile;           // -log-perf-file <path>
-    bool startPerfLog = false; // -start-perf-log (profile builds)
 
     Flags() = default;
     ~Flags() = default;

@@ -55,11 +55,8 @@
 #include "Menu.h"
 #include "TipMarkup.h"
 #include "Notifications.h"
-#include "ExplorerQuickLook.h"
 #include "EmbeddedResources.h"
-#include "Installer.h"
 #include "VirtKeys.h"
-#include "PerfLog.h"
 #include "StressTesting.h"
 #include "SumatraControl.h"
 #include "GlobalHotkeys.h"
@@ -316,8 +313,7 @@ void ReloadSettingsUpdateWindows(bool showToolbarBefore) {
     }
 }
 
-// orig's, minus what this port has no service for: ExplorerQuickLook (step 14)
-// and the UseTabs <-> windows transition (it closes and reopens every window)
+// orig's, minus the UseTabs <-> windows transition (it closes and reopens every window)
 void ApplyChangedSettingsAndRelayout(const SettingsApplyState& before) {
     Settings* p = gSettings;
 
@@ -1578,7 +1574,7 @@ static MainWindow* LoadDocumentFinish(MainWindow* win, Str fullPath, DocControll
 
     // Add the file also to Windows' recently used documents (this doesn't
     // happen automatically on drag&drop, reopening from history, etc.)
-    if (CanAccessDisk() && !gPluginMode && !IsStressTesting() && !tab->skipHistory) {
+    if (CanAccessDisk() && !IsStressTesting() && !tab->skipHistory) {
         // nor the Dock menu's recent documents
         if (!gFlags || !gFlags->forTesting) {
             AppShellNoteRecentDoc(fullPath);
@@ -1642,7 +1638,7 @@ static void StartLoadDocuments(StrVec& paths, MainWindow* win, bool skipHistory)
 
 void OpenDroppedFiles(MainWindow* win, const Str* paths, int n) {
     // orig doesn't register the canvas as a drop target then
-    if (!CanAccessDisk() || gPluginMode) {
+    if (!CanAccessDisk()) {
         return;
     }
     StrVec pathsToLoad;
@@ -1662,7 +1658,7 @@ struct PlaceWindowArgs {
 
 static void PlaceWindowDeferred(PlaceWindowArgs* args) {
     AutoDelete delArgs(args);
-    if (!IsMainWindowValidAndNotClosing(args->win) || args->win->isQuickLook) {
+    if (!IsMainWindowValidAndNotClosing(args->win)) {
         return;
     }
     AppShellPlaceWindow(args->win, args->pos, args->maximize);
@@ -1682,7 +1678,7 @@ void PlaceMainWindowLater(MainWindow* win, Rect pos, bool maximize) {
 // ng: gpui opens a window at a size only, so this moves the frame it made;
 // that needs the native handle, which only Windows gives us (see "gpui gaps")
 void PlaceMainWindow(MainWindow* win, SessionData* data, PlaceWindowWhen when) {
-    if (!win || gPluginMode || win->isQuickLook) {
+    if (!win) {
         return;
     }
     int windowState = data ? data->windowState : gSettings->windowState;
@@ -2013,7 +2009,7 @@ static bool GoToFileInBrowserView(MainWindow* win, Str path) {
 
 // pathToDelete is removed from disk once another document has loaded
 void OpenNextPrevFileInFolder(MainWindow* win, bool forward, Str pathToDelete) {
-    if (!win || win->IsCurrentTabAbout() || !CanAccessDisk() || gPluginMode) {
+    if (!win || win->IsCurrentTabAbout() || !CanAccessDisk()) {
         return;
     }
     WindowTab* tab = win->CurrentTab();
@@ -2763,7 +2759,7 @@ TempStr RenameFileResultTemp(Str dstPath, int* exitCodeOut) {
 }
 
 static void RenameCurrentFile(MainWindow* win) {
-    if (!CanAccessDisk() || !win->IsDocLoaded() || gPluginMode) {
+    if (!CanAccessDisk() || !win->IsDocLoaded()) {
         return;
     }
     auto* ctrl = win->ctrl;
@@ -2800,7 +2796,7 @@ static void RenameCurrentFile(MainWindow* win) {
 }
 
 static void DeleteCurrentFile(MainWindow* win) {
-    if (!CanAccessDisk() || !win->IsDocLoaded() || gPluginMode) {
+    if (!CanAccessDisk() || !win->IsDocLoaded()) {
         return;
     }
     TempStr path = str::DupTemp(win->ctrl->GetFilePath());
@@ -3145,7 +3141,7 @@ static void OnHomeDeleteDone(HomeDeleteCtx* c, bool ok) {
 // orig's CmdDeleteFile in the home page's context menu: a file that is gone
 // only leaves the history, one that is there goes to the trash
 void DeleteFileFromHomePage(MainWindow* win, Str path) {
-    if (!CanAccessDisk() || gPluginMode) {
+    if (!CanAccessDisk()) {
         return;
     }
     TempStr owned = str::DupTemp(path);
@@ -3203,7 +3199,7 @@ void CopyFilePath(WindowTab* tab) {
 // Show in folder: Explorer (and select the file) unless File / Use SumatraPDF
 // file picker is on, in which case open Navigate Files in Folder on that dir
 void ShowFileInFolder(MainWindow* win, Str path) {
-    if (!win || len(path) == 0 || gPluginMode || !CanAccessDisk()) {
+    if (!win || len(path) == 0 || !CanAccessDisk()) {
         return;
     }
     if (FilePickerIsSumatraPDF()) {
@@ -3342,7 +3338,7 @@ static void SyncCanvasAfterSidebar(MainWindow* win) {
 // none). Skip if already grown (tab switch). Hide undoes the grow.
 // The sidebar and the canvas margin are in dips, the frame in pixels.
 static void AdjustFrameForSidebarNow(MainWindow* win, bool show) {
-    if (!win || !win->gpuiWin || gPluginMode) {
+    if (!win || !win->gpuiWin) {
         return;
     }
     if (!gSettings || !str::EqI(gSettings->sidebarWindowSize, StrL("grow"))) {
@@ -3445,12 +3441,6 @@ void SetSidebarVisibility(MainWindow* win, bool tocVisible, bool showFavorites, 
     if (!CanAccessDisk()) {
         showFavorites = false;
         requestedFavorites = false;
-    }
-    // a QuickLook preview shows the page and nothing else; the heading ToC
-    // arrives after ApplyExplorerQuickLookChrome() and would re-open the pane
-    if (win->isQuickLook) {
-        tocVisible = false;
-        showFavorites = false;
     }
 
     bool requestedToc = tocVisible;
@@ -3584,7 +3574,7 @@ static void ToggleFilePicker() {
 
 static void OpenFileCmd(MainWindow* win, bool skipHistory, bool forceOsPicker) {
     // don't allow opening different files in plugin mode
-    if (!CanAccessDisk() || gPluginMode) {
+    if (!CanAccessDisk()) {
         return;
     }
     // ng: without an OS picker File / Open did nothing at all
@@ -3928,7 +3918,7 @@ static void CopyLocationToClipboard(MainWindow* win, WindowTab* tab) {
 // this is the chrome state around it - no tabs, no sidebar in presentation,
 // Fullscreen.Toolbar for the toolbar and Fullscreen.ShowMenubar for the menu.
 void EnterFullScreen(MainWindow* win, bool presentation) {
-    if (!HasPermission(Perm::FullscreenAccess) || gPluginMode) {
+    if (!HasPermission(Perm::FullscreenAccess)) {
         return;
     }
     if (presentation ? win->InPresentation() : win->isFullScreen) {
@@ -6086,7 +6076,6 @@ int GpuiMain(int argc, char** argv) {
     }
     gAppStartTime = TimeGet();
     AppShellDisableAutoTermination();
-    InitPerfLog();
     uitask::Initialize(uitask::Dispatch::Queue);
 
     gFlags = new Flags();
@@ -6094,17 +6083,11 @@ int GpuiMain(int argc, char** argv) {
     if (gFlags->forTesting) {
         gForTesting = true;
     }
-    if (gFlags->perfLogFile) {
-        SetPerfLogPath(gFlags->perfLogFile);
-    }
     // ng: the log and the crash info go under the application data directory
     // (orig has a build-specific one for them), so -appdata is applied before
     // either is set up, not with the settings
     if (len(gFlags->appdataDir) > 0) {
         SetAppDataDir(gFlags->appdataDir);
-    }
-    if (gFlags->startPerfLog) {
-        StartPerfLog();
     }
     if (len(gFlags->logFile) > 0) {
         StartLogToFile(gFlags->logFile, true);
@@ -6116,66 +6099,11 @@ int GpuiMain(int argc, char** argv) {
             StartLogToFile(logPath, true);
         }
     }
-    if (len(gFlags->updateSelfTo) > 0) {
-        UpdateSelfTo(gFlags->updateSelfTo, gFlags->sleepMs);
-    }
 
     InitializePolicies(gFlags->restrictedUse);
     // must follow InitializePolicies(): it asks whether we may use the network
     InstallSumatraCrashHandler(gFlags->forTesting);
     gCrashOnOpen = gFlags->crashOnOpen;
-    // the installer / uninstaller modes of the exe: their own window, no
-    // settings, no document model (orig runs them from WinMain the same way)
-    if (gFlags->uninstall) {
-        int exitCode = RunUninstaller(gFlags);
-        uitask::Destroy();
-        return exitCode;
-    }
-    if (gFlags->install || gFlags->fastInstall || gFlags->runInstallNow || gFlags->justExtractFiles) {
-        int exitCode = RunInstaller(gFlags);
-        ScheduleDeleteTempInstaller();
-        uitask::Destroy();
-        return exitCode;
-    }
-    if (gFlags->quickLookAgent) {
-        // the hidden Explorer Space-bar hook; no UI, no settings
-        RunExplorerQuickLookAgentLoop();
-        delete gFlags;
-        gFlags = nullptr;
-        uitask::Destroy();
-        return 0;
-    }
-    // -appdata <dir>: settings, history and thumbnails live there instead of
-    // the per-user location (orig does this in WinMain)
-    if (len(gFlags->upgradeFrom) > 0) {
-        logf(" flags.upgradeFrom: '%s'\n", gFlags->upgradeFrom);
-        StartInstallerAutoUpgrade(gFlags->upgradeFrom);
-        delete gFlags;
-        gFlags = nullptr;
-        uitask::Destroy();
-        return 0;
-    }
-    if (len(gFlags->deleteFile) > 0) {
-        logf(" flags.deleteFile: '%s'\n", gFlags->deleteFile);
-        // sleeping for a bit to make sure that the program that launched us
-        // had time to exit so that we can overwrite it
-        if (gFlags->sleepMs > 0) {
-            SleepInMs(gFlags->sleepMs);
-        }
-        // TODO: retry if file busy?
-        bool ok = file::Delete(gFlags->deleteFile);
-        if (ok) {
-            logf("Deleted '%s'\n", gFlags->deleteFile);
-        } else {
-            logf("Failed to delete '%s'\n", gFlags->deleteFile);
-        }
-        if (gFlags->exitWhenDone) {
-            delete gFlags;
-            gFlags = nullptr;
-            uitask::Destroy();
-            return 0;
-        }
-    }
     LoadSettings();
 #if IS_DEBUG
     if (gFlags->testExtractPage) {
@@ -6272,14 +6200,8 @@ int GpuiMain(int argc, char** argv) {
 
     Size size = NewWindowSize(nullptr);
     MainWindow* win = AppShellCreateWindow(app, size.dx, size.dy);
-    if (!gFlags->quickLook) {
-        PlaceMainWindow(win, nullptr, PlaceWindowWhen::Now);
-    }
+    PlaceMainWindow(win, nullptr, PlaceWindowWhen::Now);
     ReRegisterGlobalHotkeys();
-    if (gFlags->quickLook) {
-        win->isQuickLook = true;
-        ApplyExplorerQuickLookChrome(win);
-    }
     SetSidebarVisibility(win, false, gSettings->showFavorites);
     ShowMaybeDelayedNotifications(win);
 
@@ -6359,7 +6281,6 @@ int GpuiMain(int argc, char** argv) {
 
     int res = AppShellRun(app);
     StopUiHangDetector();
-    SavePerfLog();
     UnregisterSettingsForFileChanges();
     TtsRelease();
     ClearPendingNextPrevNav();
@@ -6390,6 +6311,5 @@ int GpuiMain(int argc, char** argv) {
     gFlags = nullptr;
     uitask::Destroy();
     gp::AppFree(app);
-    DestroyPerfLog();
     return res;
 }

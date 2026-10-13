@@ -19,18 +19,6 @@ struct UpdateInfo {
     HWND hwndParent = nullptr;
     MainWindow* win = nullptr;
     Str latestVer;
-
-    Str installer64;
-    Str portable64;
-
-    Str installer32;
-    Str portable32;
-
-    Str installerArm64;
-    Str portableArm64;
-
-    Str dlURL;
-    Str installerPath;
     Str builtOn; // optional "yyyy-mm-dd" from the update-check file
     // optional, where the browser gets this build when we can't install it (ng)
     Str downloadPage;
@@ -38,14 +26,6 @@ struct UpdateInfo {
     UpdateInfo() = default;
     ~UpdateInfo() {
         str::Free(latestVer);
-        str::Free(installer64);
-        str::Free(portable64);
-        str::Free(installer32);
-        str::Free(portable32);
-        str::Free(installerArm64);
-        str::Free(portableArm64);
-        str::Free(dlURL);
-        str::Free(installerPath);
         str::Free(builtOn);
         str::Free(downloadPage);
     }

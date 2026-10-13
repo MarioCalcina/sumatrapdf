@@ -521,7 +521,6 @@ struct MainWindow {
     bool showSelection = false;
     bool isFullScreen = false;
     // -quicklook: a chrome-less always-on-top preview window (Explorer Space)
-    bool isQuickLook = false;
     PresentationMode presentation = PM_DISABLED;
     int windowStateBeforePresentation = 0;
     // ng: orig arms kHideCursorTimerID on the canvas; the shell's tick counts

@@ -89,12 +89,10 @@
 #include "CommandPalette.h"
 #include "SumatraDialogs.h"
 #include "NavFilesInFolder.h"
-#include "Installer.h"
 #include "Theme.h"
 #include "ReadAloud.h"
 #include "ReadingAutoScroll.h"
 #include "ReadingBar.h"
-#include "ExplorerQuickLook.h"
 #include "PagePosition.h"
 #include "Accelerators.h"
 #include "ChmDump.h"
@@ -103,7 +101,6 @@
 #include "SumatraControl.h"
 #include "Version.h"
 #include "SumatraPDF.h"
-#include "PerfLog.h"
 #include "SumatraPDFCommon.h"
 
 #include "SumatraLog.h"
@@ -1650,7 +1647,7 @@ bool AutoReloadFileStillChanging(WindowTab* tab) {
 }
 
 void EnsureNextPrevDirScan(Str filePath) {
-    if (len(filePath) == 0 || !CanAccessDisk() || gPluginMode) {
+    if (len(filePath) == 0 || !CanAccessDisk()) {
         return;
     }
     TempStr dir = path::GetDirTemp(filePath);
@@ -1684,7 +1681,7 @@ TempStr PeekNextFileInFolderTemp(MainWindow* win, int* outN, int* outM) {
     if (outM) {
         *outM = 0;
     }
-    if (!win || win->IsCurrentTabAbout() || !CanAccessDisk() || gPluginMode) {
+    if (!win || win->IsCurrentTabAbout() || !CanAccessDisk()) {
         return {};
     }
     WindowTab* tab = win->CurrentTab();
@@ -1809,7 +1806,7 @@ static TempStr PerceivedTypeTemp(Str path) {
 // lets the shell open a file of any supported perceived type
 // in the default application for opening such files
 bool OpenFileExternally(Str path) {
-    if (!CanAccessDisk() || gPluginMode) {
+    if (!CanAccessDisk()) {
         return false;
     }
 
@@ -1872,7 +1869,7 @@ void CreateThumbnailForFile(MainWindow* win, FileState* ds) {
 }
 
 void DeleteCurrentFileAndOpenNext(MainWindow* win) {
-    if (!CanAccessDisk() || !win->IsDocLoaded() || gPluginMode) {
+    if (!CanAccessDisk() || !win->IsDocLoaded()) {
         return;
     }
     Str path = str::Dup(win->ctrl->GetFilePath());
@@ -2234,11 +2231,6 @@ void ApplyRedactionsInTab(WindowTab* tab) {
 
 // the values of the Scrollbars setting, in ScrollbarMode order
 SeqStrings gScrollbarModeNames = "windows\0smart\0overlay\0hidden\0";
-
-// in plugin mode, the window's frame isn't drawn and closing and
-// fullscreen are disabled, so that SumatraPDF can be displayed
-// embedded (e.g. in a web browser)
-Str gPluginURL; // owned by Flags in WinMain
 
 void OnFrameKeyB(MainWindow* win, bool isShift) {
     auto* ctrl = win->ctrl;

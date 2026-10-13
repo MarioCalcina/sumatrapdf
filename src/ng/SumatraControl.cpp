@@ -96,7 +96,6 @@ extern "C" {
 #include "AnnotFilterToolbar.h"
 #include "SelectionToolbar.h"
 #include "RefHover.h"
-#include "PerfLog.h"
 #include "ReadAloud.h"
 #include "ReadingAutoScroll.h"
 #include "ReadingBar.h"
@@ -3054,13 +3053,10 @@ static void ExecuteControlRequest(ControlRequest* req) {
             break;
         }
 
+        // the profiler is orig's Windows-only build; the commands stay for the
+        // tests that send them
         case ControlCmd::StartPerfLog:
-            StartPerfLog();
-            AppendTestResult(req, 0, StrL("OK"));
-            break;
-
         case ControlCmd::StopPerfLog:
-            StopPerfLog();
             AppendTestResult(req, 0, StrL("OK"));
             break;
 

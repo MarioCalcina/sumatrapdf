@@ -53,7 +53,6 @@
 #include "ReadingAutoScroll.h"
 #include "ReadingBar.h"
 #include "NavFilesInFolder.h"
-#include "PerfLog.h"
 #include "SumatraControl.h"
 #include "SumatraControlCommon.h"
 

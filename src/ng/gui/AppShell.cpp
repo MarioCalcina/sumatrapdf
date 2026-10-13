@@ -80,7 +80,6 @@
 #include "FormFields.h"
 #include "ImageSaveCropResize.h"
 #include "Screenshot.h"
-#include "ExplorerQuickLook.h"
 #include "AIChatCommon.h"
 #include "AIChatPanel.h"
 #include "gui/DialogWidgets.h"
@@ -2401,11 +2400,6 @@ void ShellView::OnKeyDown(ShellView* self, gp::Ctx* cx, const gp::KeyEvent* ev) 
         gp::Notify(cx);
         return;
     }
-    if (ExplorerQuickLookOnKeyDown(win, (int)ev->vk, CtrlOrCmd(ev) || ev->shift || ev->alt)) {
-        mut->propagate = false;
-        gp::Notify(cx);
-        return;
-    }
     // orig's FrameOnKeydown / FrameOnChar: a black or white presentation screen
     // swallows a key that is not an accelerator and goes back to the slide
     if (PM_BLACK_SCREEN == win->presentation || PM_WHITE_SCREEN == win->presentation) {
@@ -2781,7 +2775,7 @@ Rect AppShellPredictCanvasRc(MainWindow* win, CanvasPredict predict) {
         return {};
     }
     bool tabsVisible = TabsAreVisible(win);
-    if (predict == CanvasPredict::DocumentTab && SettingsUseTabs() && !win->isQuickLook && !win->isFullScreen &&
+    if (predict == CanvasPredict::DocumentTab && SettingsUseTabs() && !win->isFullScreen &&
         !win->InPresentation()) {
         tabsVisible = true;
     }
@@ -2833,7 +2827,7 @@ gp::El* ShellView::Render(ShellView* self, gp::Ctx* cx) {
     }
     bool menuBarShown = (win->isMenuBarVisible || self->menuBarTemp) && !nativeMenu;
     // orig: tabsInTitlebar follows UseTabs
-    SetTabsInTitlebar(win, CanHaveTabsInTitlebar() && SettingsUseTabs() && !win->isQuickLook);
+    SetTabsInTitlebar(win, CanHaveTabsInTitlebar() && SettingsUseTabs());
     bool showCaption = ShowCaption(win);
     if (!showCaption) {
         win->tabsAvailDx = 0;

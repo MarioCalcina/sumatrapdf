@@ -26,7 +26,6 @@
 #include "WindowTab.h"
 #include "Commands.h"
 #include "AppTools.h"
-#include "ExplorerQuickLook.h"
 #include "Selection.h"
 #include "FindBar.h"
 #include "FindWindow.h"
@@ -2150,7 +2149,7 @@ static bool LaunchInverseSearchCmd(Str cmdLine) {
 }
 
 bool OnInverseSearch(MainWindow* win, int x, int y) {
-    if (!CanAccessDisk() || gPluginMode) {
+    if (!CanAccessDisk()) {
         return false;
     }
     WindowTab* tab = win->CurrentTab();

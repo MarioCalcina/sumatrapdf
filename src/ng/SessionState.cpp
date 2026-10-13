@@ -142,9 +142,6 @@ static void RememberSessionState() {
     }
 
     for (auto* win : gWindows) {
-        if (win->isQuickLook) {
-            continue;
-        }
         SessionData* windowState = NewSessionData();
         for (WindowTab* tab : win->Tabs()) {
             if (len(tab->filePath) == 0) {

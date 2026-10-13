@@ -15,10 +15,6 @@
 #endif
 #endif
 
-#ifndef IS_PERF_LOG
-#define IS_PERF_LOG 0
-#endif
-
 #ifndef IS_ASAN
 #if defined(__SANITIZE_ADDRESS__)
 #define IS_ASAN 1

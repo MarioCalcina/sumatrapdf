@@ -1,10 +1,9 @@
 /* Copyright 2022 the SumatraPDF project authors (see AUTHORS file).
    License: GPLv3 */
 
-// ng: orig's UpdateCheck.cpp. The download and the parsing are orig's; what
-// differs is the presentation (orig's three TaskDialogs are the port's
-// AlertDialog-backed MsgBox), and that off Windows the http get goes through
-// gpui (base's Http is winhttp) and there is no installer to run.
+// ng: orig's UpdateCheck.cpp. The parsing is orig's; the http get goes through
+// gpui, and a new version is installed from its download page (a dmg on this
+// fork's GitHub release), not by an installer the app runs.
 
 #include "gui/GpuiBridge.h"
 
@@ -51,33 +50,20 @@ bool IsArmBuild() {
 #endif
 }
 
-// ng: each platform has its own builds and update info, uploaded to
-// software/sumatrapdfng/<platform>/ in R2, and its own update check url on
-// the website, which also counts that platform's checks apart from the rest.
-// Wasm has no builds of its own to offer and asks orig's release url.
-
 // clang-format off
-// tried in order; later entries are backups if earlier HTTP gets fail
-// upstream would offer a build without this fork's changes: the fork's mac-app
+// tried in order; later entries are backups if earlier HTTP gets fail.
+// Upstream would offer a build without this fork's changes: the fork's mac-app
 // workflow attaches this to each release
 static const Str updateInfoURLs[] = {
     StrL("https://github.com/MarioCalcina/sumatrapdf/releases/latest/download/update-check-mac.txt"),
 };
 
 #define kWebisteDownloadPageURL "https://github.com/MarioCalcina/sumatrapdf/releases/latest"
-#ifndef kWebisteDownloadPageURL
-#define kWebisteDownloadPageURL "https://www.sumatrapdfreader.org/download-free-pdf-viewer"
-#endif
 // clang-format on
 
 // prevent multiple update tasks from happening simultaneously
 // (this might e.g. happen if a user checks manually very quickly after startup)
 static bool gUpdateCheckInProgress = false;
-
-// when true, NotifyUserOfUpdate skips the install-confirmation dialog and just
-// installs (set when the user clicks "Download and update" in the pre-release
-// update notification)
-static bool gUpdateAutoInstall = false;
 
 // the bottom-left "update available" notification (with the download link)
 static Kind kNotifUpdateAvailable = "notifUpdateAvailable";
@@ -90,15 +76,9 @@ static void CurrentFileTime(FILETIME* ft) {
 The format of update information downloaded from the server:
 
 [SumatraPDF]
-Latest: 14276
-BuiltOn: 2026-08-21
-Installer64: https://www.sumatrapdfreader.org/dl/prerel/14276/SumatraPDF-prerel-64-install.exe
-...
-
-ng: macOS and Linux have no installer to run, so their info names what the
-browser should open instead:
-
-DownloadPage: https://www.sumatrapdfreader.org/dlng/mac/14276/SumatraPDF-mac-arm64.zip
+Latest: 26.10.13
+BuiltOn: 2026-10-13
+DownloadPage: https://github.com/MarioCalcina/sumatrapdf/releases/tag/v26.10.13
 */
 
 static bool ShouldCheckForUpdate(UpdateCheck updateCheckType) {
@@ -165,13 +145,6 @@ static void OpenWebPage(Str url) {
     SumatraLaunchBrowser(url);
 }
 
-// no installer off Windows: the user is sent to the download page instead
-void StartInstallerAutoUpgrade(Str) {}
-
-static void ExitAfterStartingUpdater() {}
-
-void UpdateSelfTo(Str, int) {}
-
 // The build's own download when the update info names a trusted one.
 static void OpenDownloadPage(UpdateInfo* updateInfo) {
     Str page = updateInfo->downloadPage;
@@ -183,46 +156,15 @@ static void OpenDownloadPage(UpdateInfo* updateInfo) {
 
 static void OnInstallAnswer(UpdateInfo* updateInfo, int res) {
     AutoDelete delInfo(updateInfo);
-    Str installerPath = updateInfo->installerPath;
-    bool didDownloadInstaller = file::Exists(installerPath);
-
-    // persist timeOfLastUpdateCheck before a possible exit
     ScheduleSaveSettings();
-    FlushScheduledSaveSettings();
-    if (res != MbRetYes) {
-        file::Delete(installerPath);
-        return;
-    }
-    // if installer not downloaded tell user to download from website
-    if (!didDownloadInstaller) {
+    if (res == MbRetYes) {
         OpenDownloadPage(updateInfo);
-        return;
     }
-    StartInstallerAutoUpgrade(installerPath);
-    ExitAfterStartingUpdater();
 }
 
 // ng: orig's TaskDialog with "Don't install" / "Install and relaunch" buttons;
 // the port's message box has Yes / No
 static void NotifyUserOfUpdate(UpdateInfo* updateInfo) {
-    Str installerPathAuto = updateInfo->installerPath;
-    // auto-install path: the user already opted in via the "Download and update"
-    // link, so skip the confirmation dialog and just install
-    if (gUpdateAutoInstall) {
-        gUpdateAutoInstall = false;
-        ScheduleSaveSettings();
-        FlushScheduledSaveSettings();
-        if (installerPathAuto && file::Exists(installerPathAuto)) {
-            StartInstallerAutoUpgrade(installerPathAuto);
-            ExitAfterStartingUpdater();
-        } else {
-            logf("NotifyUserOfUpdate: auto-install requested but installer not downloaded\n");
-            OpenDownloadPage(updateInfo);
-        }
-        delete updateInfo;
-        return;
-    }
-
     Str mainInstr = Tr("New version available");
     Str ver = updateInfo->latestVer;
     Str fmtStr = Tr("You have version '%s' and version '%s' is available.\nDo you want to install the new version?");
@@ -234,53 +176,8 @@ static void NotifyUserOfUpdate(UpdateInfo* updateInfo) {
            MkFunc1<UpdateInfo, int>(OnInstallAnswer, updateInfo));
 }
 
-struct UpdateProgressData {
-    MainWindow* win = nullptr;
-    i64 nDownloaded = 0;
-};
-
-struct DownloadUpdateAsyncData {
-    MainWindow* win = nullptr;
-    UpdateInfo* updateInfo = nullptr;
-
-    DownloadUpdateAsyncData() = default;
-    ~DownloadUpdateAsyncData() { delete updateInfo; }
-};
-
-static void DownloadUpdateFinish(DownloadUpdateAsyncData* data) {
-    MainWindow* win = data->win;
-    UpdateInfo* updateInfo = data->updateInfo;
-    data->updateInfo = nullptr;
-    RemoveNotificationsForGroup(win, kNotifUpdateCheckInProgress);
-    gUpdateCheckInProgress = false;
-    delete data;
-    NotifyUserOfUpdate(updateInfo);
-}
-
-static void UpdateDownloadProgressNotif(UpdateProgressData* data) {
-    TempStr size = FormatFileSizeShortTransTemp(data->nDownloaded);
-    auto* wnd = GetNotificationForGroup(data->win, kNotifUpdateCheckInProgress);
-    if (wnd) {
-        NotificationUpdateMessage(wnd, fmt("Downloading update: %s", size), 0);
-    }
-    delete data;
-}
-
-static void UpdateProgressCb(UpdateProgressData* data, HttpProgress* progress) {
-    auto* fnData = new UpdateProgressData;
-    fnData->win = data->win;
-    fnData->nDownloaded = progress->nDownloaded;
-    uitask::Post(MkFunc0<UpdateProgressData>(UpdateDownloadProgressNotif, fnData), nullptr);
-}
-
-static void DownloadUpdateAsync(DownloadUpdateAsyncData* data) {
-
-    // process the rest on ui thread to avoid threading issues
-    uitask::Post(MkFunc0<DownloadUpdateAsyncData>(DownloadUpdateFinish, data), "TaskShowAutoUpdateDialog");
-}
-
 // pre-release builds surface an available update with a bottom-left notification
-// whose "Update" link triggers a one-click download + install
+// whose "Update" link opens the download page
 static void ShowUpdateAvailableNotification(MainWindow* win, UpdateInfo* updateInfo) {
     if (!win || !updateInfo) {
         return;
@@ -305,34 +202,16 @@ static void ShowUpdateAvailableNotification(MainWindow* win, UpdateInfo* updateI
     ShowNotification(args);
 }
 
-// download + install the update surfaced by the pre-release update notification
+// the "Update" link of the pre-release update notification: the download page
 void DownloadAndInstallPendingUpdate(MainWindow* win) {
     if (!win || !gPendingUpdate) {
         return;
     }
     UpdateInfo* updateInfo = gPendingUpdate;
     gPendingUpdate = nullptr;
-    gUpdateAutoInstall = true;
-    updateInfo->win = win;
+    AutoDelete delInfo(updateInfo);
     RemoveNotificationsForGroup(win, kNotifUpdateAvailable);
-
-    // progress notification updated by UpdateDownloadProgressNotif (same group)
-    NotificationCreateArgs nargs;
-    nargs.win = win;
-    nargs.msg = Tr("Downloading update...");
-    nargs.warning = true;
-    nargs.groupId = kNotifUpdateCheckInProgress;
-    nargs.timeoutMs = kNotifNoTimeout;
-    nargs.corner = NotifCorner::BottomLeft;
-    nargs.xMargin = 2;
-    nargs.yMargin = 2;
-    ShowNotification(nargs);
-
-    gUpdateCheckInProgress = true;
-    auto* fnData = new DownloadUpdateAsyncData;
-    fnData->win = win;
-    fnData->updateInfo = updateInfo;
-    RunAsync(MkFunc0<DownloadUpdateAsyncData>(DownloadUpdateAsync, fnData), StrL("DownloadUpdateAsync"));
+    OpenDownloadPage(updateInfo);
 }
 
 static bool ShouldDownloadUpdate(UpdateInfo* updateInfo) {
@@ -348,15 +227,6 @@ static void OnVisitWebsiteAnswer(int res) {
     if (res == MbRetYes) {
         OpenWebPage(StrL(kWebisteDownloadPageURL));
     }
-}
-
-static void NotifySuspiciousUpdate(MainWindow* win, Str dlURL) {
-    logf("NotifySuspiciousUpdate: suspicious download url '%s'\n", dlURL);
-    TempStr content =
-        fmt("Suspicious update.\n\nDownload link should come from %s but is %s.\n\nVisit the website to download the "
-            "latest version?",
-            kExpectedDlHost, dlURL);
-    MsgBox(win, content, Tr("SumatraPDF Update"), MbYesNo | MbIconWarning, MkFunc1Void(OnVisitWebsiteAnswer));
 }
 
 // Shown only for a user-initiated update check that couldn't download/parse the
@@ -420,23 +290,8 @@ static DWORD MaybeStartUpdateDownload(MainWindow* win, HttpRsp* rsp, UpdateCheck
         return 0;
     }
 
-    if (len(updateInfo->dlURL) == 0) {
-        // currently for release builds we don't set this and redirect to a website instead
-        logf("MaybeStartUpdateDownload: didn't find download url\n");
-        RemoveNotificationsForGroup(win, kNotifUpdateCheckInProgress);
-        NotifyUserOfUpdate(updateInfo);
-        return 0;
-    }
-
-    if (!IsTrustedUpdateDlUrl(updateInfo->dlURL)) {
-        RemoveNotificationsForGroup(win, kNotifUpdateCheckInProgress);
-        NotifySuspiciousUpdate(win, updateInfo->dlURL);
-        delete updateInfo;
-        return 0;
-    }
-
-    // pre-release automatic check: don't download yet. Show a bottom-left
-    // notification whose "Update" link does the download + install.
+    // pre-release automatic check: show a bottom-left notification whose
+    // "Update" link opens the download page
     if (updateCheckType == UpdateCheck::Automatic && gIsPreReleaseBuild) {
         RemoveNotificationsForGroup(win, kNotifUpdateCheckInProgress);
         delete gPendingUpdate;       // drop any update from a previous check
@@ -445,14 +300,8 @@ static DWORD MaybeStartUpdateDownload(MainWindow* win, HttpRsp* rsp, UpdateCheck
         return 0;
     }
 
-    // download the installer to make update feel instant to the user
-    logf("MaybeStartUpdateDownload: starting to download '%s'\n", updateInfo->dlURL);
-    gUpdateCheckInProgress = true;
-
-    auto* fnData = new DownloadUpdateAsyncData;
-    fnData->win = win;
-    fnData->updateInfo = updateInfo;
-    RunAsync(MkFunc0<DownloadUpdateAsyncData>(DownloadUpdateAsync, fnData), StrL("DownloadUpdateAsync"));
+    RemoveNotificationsForGroup(win, kNotifUpdateCheckInProgress);
+    NotifyUserOfUpdate(updateInfo);
     return 0;
 }
 
