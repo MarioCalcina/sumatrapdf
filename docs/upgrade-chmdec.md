@@ -37,9 +37,6 @@ cp /tmp/chmdec-update/dist/chm.c ext/chmdec/chm.c
 cp /tmp/chmdec-update/dist/chm.h ext/chmdec/chm.h
 ```
 
-On Windows (PowerShell), use `Copy-Item ... -Force` — run the two copies as
-separate commands (avoid `;` chaining in the shell tool).
-
 Optionally refresh the license if it changed:
 
 ```bash
@@ -67,8 +64,8 @@ Diff the new `ext/chmdec/chm.h` against the previous version.
 
 Pay special attention to:
 
-- **New functions** — may need export entries and `ChmFile.cpp` updates
-- **Removed/renamed functions** — update callers and exports
+- **New functions** — may need `ChmFile.cpp` updates
+- **Removed/renamed functions** — update callers
 - **`chm_open` buffer lifetime** — the in-memory buffer is not copied; it must
   outlive the `chm_ctx` (SumatraPDF keeps file bytes in `ChmFile` until
   `chm_ctx_free`)
@@ -77,45 +74,19 @@ Current integration points:
 
 | File | Role |
 |------|------|
-| `src/ChmFile.cpp` / `src/ChmFile.h` | CHM document open / entry read |
-| `src/ChmDump.cpp` | `-dump-chm` diagnostics |
-| `src/SumatraTest.cpp` | `-test-chm` LZX / open regression |
-| `src/libsumatrapdf.def` | Hand-maintained export list for `libsumatrapdf.dll` |
-| `premake5.lua` | `chmdec` static lib project |
+| `src/shared/ChmFile.cpp` / `ChmFile.h` | CHM document open / entry read |
+| `src/shared/ChmDump.cpp` | `-dump-chm` diagnostics |
+| `src/shared/SumatraTestCommon.cpp` | `-test-chm` LZX / open regression |
+| `cmd/helper/ng-targets.ts` | `chmdec` static lib target |
 | `ext/versions.txt` | Vendored dependency version log |
 
-### 5. Update DLL exports (if API changed)
-
-chmdec is linked into `libsumatrapdf.dll` (and into the static EXE). The DLL build of
-`SumatraPDF.exe`, `PdfFilter`, and `PdfPreview` must **not** also link the
-`chmdec` static lib — they import `chm_*` from `libsumatrapdf.dll` via
-`src/libsumatrapdf.def`.
-
-When new public functions are added, append them to the `; chmdec exports`
-section in `src/libsumatrapdf.def`.
-
-Current chmdec exports:
-
-```
-chm_ctx_new
-chm_ctx_free
-chm_open
-chm_close
-chm_read_entry
-chm_get_entries
-LZX_test_pretree_make_decode_table
-```
-
-`LZX_test_pretree_make_decode_table` is a test-only hook used by `-test-chm`
-(`src/SumatraTest.cpp`); it is defined in `chm.c` but not declared in `chm.h`.
-
-### 6. Build and smoke-test
+### 5. Build and smoke-test
 
 ```bash
-bun cmd/build.ts -dbg
+bun cmd/ng-build.ts -dbg
 # optional CHM regression (needs a sample .chm):
-# out/dbg64/SumatraPDF.exe -for-testing -test-chm path\to\file.chm
-# out/dbg64/SumatraPDF.exe -for-testing -dump-chm path\to\file.chm
+# out/mac/dbg/SumatraPDF -for-testing -test-chm path/to/file.chm
+# out/mac/dbg/SumatraPDF -for-testing -dump-chm path/to/file.chm
 ```
 
 Also run `bun tests/issue-chm-lzx.ts` if LZX decode tables changed.
@@ -132,7 +103,5 @@ Imported dist/chm.c and dist/chm.h from https://github.com/kjk/chmdec @ <full-ha
 
 - `ext/chmdec` is a **single-file amalgamation** (like sqlite / heicdec): compile
   `chm.c` only; include `chm.h` from callers.
-- The static library project is named `chmdec` in premake / MSBuild; sources
-  keep the historical `chm_*` C API names.
-- Static `SumatraPDF-static` and `test_engines` still link `chmdec` directly
-  (no `libsumatrapdf.dll`). The DLL-split products import via def exports only.
+- The build target is named `chmdec`; sources keep the historical `chm_*` C
+  API names.

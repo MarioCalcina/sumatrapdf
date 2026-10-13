@@ -37,9 +37,6 @@ cp /tmp/djvudec-update/dist/djvu.c ext/djvudec/djvu.c
 cp /tmp/djvudec-update/dist/djvu.h ext/djvudec/djvu.h
 ```
 
-On Windows (PowerShell), use `Copy-Item ... -Force` — run the two copies as
-separate commands (avoid `;` chaining in the shell tool).
-
 **Do not clang-format** files under `ext/djvudec/` (vendored code).
 
 ### 3. Update ext/versions.txt
@@ -62,91 +59,40 @@ is also documented in upstream `src/djvu.h`.
 
 Pay special attention to:
 
-- **New functions** — may need export entries and `EngineDjvuDec.cpp` updates
-- **Removed/renamed functions** — update `src/EngineDjvuDec.cpp` and exports
+- **New functions** — may need `EngineDjvuDec.cpp` updates
+- **Removed/renamed functions** — update `src/shared/EngineDjvuDec.cpp`
 - **`djvu_init()`** — must be called once before concurrent decode (bilinear
   scaler table). `djvu_doc_open` also calls it, but that is not enough when
-  render threads race on first open. SumatraPDF guards this in
-  `EngineDjvuDec.cpp` via `DjvuDecInitOnce()` (SRWLOCK, same pattern as
-  `EngineDjVu.cpp`).
+  render threads race on first open. `EngineDjvuDec.cpp` calls it once from a
+  function-local static initializer.
 
 Current integration points:
 
 | File | Role |
 |------|------|
-| `src/EngineDjvuDec.cpp` | Engine using the djvu_* API |
-| `src/EngineCreate.cpp` | Creates the djvudec engine for DjVu files |
-| `src/libsumatrapdf.def` | Hand-maintained export list for `libsumatrapdf.dll` |
-| `premake5.lua` | `djvudec` static lib project |
+| `src/shared/EngineDjvuDec.cpp` | Engine using the djvu_* API |
+| `src/shared/EngineCreate.cpp` | Creates the djvudec engine for DjVu files |
+| `cmd/helper/ng-targets.ts` | `djvudec` static lib target |
 | `ext/versions.txt` | Vendored dependency version log |
 
-### 5. Update DLL exports (if API changed)
+### 5. Update EngineDjvuDec (if needed)
 
-djvudec is statically linked into `libsumatrapdf.dll`; `SumatraPDF.exe` imports
-`djvu_*` symbols from that DLL via `src/libsumatrapdf.def`.
-
-When new public functions are added, append them to the `; djvudec exports`
-section in `src/libsumatrapdf.def`.
-
-Current djvudec exports:
-
-```
-djvu_init
-djvu_ctx_new
-djvu_ctx_free
-djvu_ctx_set_lazy_iw44
-djvu_ctx_set_no_compose
-djvu_ctx_set_iw_max_chunks
-djvu_ctx_set_bgr
-djvu_doc_open
-djvu_doc_close
-djvu_doc_page_count
-djvu_doc_page_info
-djvu_page_get_type
-djvu_page_render
-djvu_page_render_info
-djvu_page_render_into
-djvu_image_destroy
-djvu_doc_page_id
-djvu_doc_page_title
-djvu_doc_page_by_name
-djvu_page_text_get_zones
-djvu_text_zones_destroy
-djvu_doc_outline
-djvu_outline_destroy
-djvu_page_get_links
-djvu_page_links_destroy
-```
-
-### 6. Update EngineDjvuDec (if needed)
-
-Review `src/EngineDjvuDec.cpp` for any API mismatches. Common cases:
+Review `src/shared/EngineDjvuDec.cpp` for any API mismatches. Common cases:
 
 - New init function → ensure a once-guarded call before concurrent use
 - New metadata/render helpers → wire up if SumatraPDF should expose them
 - Changed struct fields → fix accessors
 
-After editing `src/EngineDjvuDec.cpp`, run:
+After editing it, run `bun cmd/format.ts`.
+
+### 6. Build and smoke-test
 
 ```bash
-clang-format -i src/EngineDjvuDec.cpp
+bun cmd/ng-build.ts -dbg
+out/mac/dbg/SumatraPDF -for-testing <path-to>.djvu
 ```
 
-### 7. Build and smoke-test
-
-```bash
-bun cmd/build.ts -dbg
-```
-
-Test with:
-
-```bash
-./out/dbg64/SumatraPDF.exe -for-testing <path-to>.djvu
-```
-
-Use a `.djvu` from `C:\Users\kjk\OneDrive\!sumatra\bugs\` if available.
-
-### 8. Commit message
+### 7. Commit message
 
 Include the upstream commit hash:
 

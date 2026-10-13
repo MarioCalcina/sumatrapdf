@@ -48,8 +48,8 @@ function writeChanged(path: string, text: string): void {
   writeFileSync(path, text);
 }
 
-async function run(tc: Toolchain, args: string[], cwd = root): Promise<void> {
-  const proc = Bun.spawn(args, { cwd, env: { ...process.env, ...tc.env }, stdout: "inherit", stderr: "inherit" });
+async function run(args: string[], cwd = root): Promise<void> {
+  const proc = Bun.spawn(args, { cwd, stdout: "inherit", stderr: "inherit" });
   if ((await proc.exited) !== 0) throw new Error(`${args[0]} failed`);
 }
 
@@ -66,7 +66,6 @@ const packDefaults: PackOptions = { manual: true, compress: true, fonts: true };
 
 // Match pack-embedded-prebuild.cmd: manual at the root, fonts in fonts\, and the shared translation snapshot.
 export async function packEmbedded(
-  tc: Toolchain,
   packer: string,
   dir: string,
   inputRoot = root,
@@ -106,32 +105,15 @@ export async function packEmbedded(
     utimesSync(dst, st.atime, st.mtime);
   }
   const packerArgs = opts.compress ? [] : ["-store"];
-  await run(tc, [packer, ...packerArgs, archive, staging]);
+  await run([packer, ...packerArgs, archive, staging]);
   return archive;
 }
 
-export async function embedLzsa(tc: Toolchain, archive: string, dir: string): Promise<string> {
-  const wrapper = join(root, "src/shared/EmbeddedLzsa.S");
-  const obj = join(dir, tc.msvcStyle ? "embedded.res" : "embedded.o");
-  let args: string[];
-  let source = wrapper;
-  if (tc.msvcStyle) {
-    if (!tc.rc) throw new Error("rc.exe not found");
-    source = join(dir, "generated/embedded.rc");
-    writeChanged(source, `#include "resource.h"\nIDR_EMBEDDED_PAK RCDATA "${archive.replaceAll("\\", "/")}"\n`);
-    args = [tc.rc, "/nologo", "/i", join(root, "src/ng"), "/fo", obj, source];
-  } else {
-    args = [
-      tc.cc,
-      "-x",
-      "assembler-with-cpp",
-      `-DEMBEDDED_LZSA="${archive.replaceAll("\\", "/")}"`,
-      "-c",
-      wrapper,
-      "-o",
-      obj,
-    ];
-  }
+// `archFlags`: the architecture and deployment target of the build
+export async function embedLzsa(tc: Toolchain, archive: string, dir: string, archFlags: string[]): Promise<string> {
+  const source = join(root, "src/shared/EmbeddedLzsa.S");
+  const obj = join(dir, "embedded.o");
+  const args = [tc.cc, ...archFlags, "-x", "assembler-with-cpp", `-DEMBEDDED_LZSA="${archive}"`, "-c", source, "-o", obj];
   const key = args.join("\n");
   const keyPath = `${obj}.cmd`;
   const deps = [archive, source, join(root, "src/ng/resource.h")];
@@ -143,7 +125,7 @@ export async function embedLzsa(tc: Toolchain, archive: string, dir: string): Pr
   )
     return obj;
   console.log(`embedding ${relative(root, archive)}`);
-  await run(tc, args);
+  await run(args);
   writeFileSync(keyPath, key);
   return obj;
 }

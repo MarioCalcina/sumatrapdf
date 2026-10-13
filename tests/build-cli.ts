@@ -1,12 +1,12 @@
 import { join } from "node:path";
 import { ROOT } from "./util.ts";
 import { outDirName, resolveSources, type BuildFlags } from "../cmd/helper/ng-compile";
-import { forPlatform, targets } from "../cmd/helper/ng-targets";
-import type { Platform } from "../cmd/helper/ng-toolchain";
+import { forArch, targets } from "../cmd/helper/ng-targets";
+import { hostArch, macArchs } from "../cmd/helper/ng-toolchain";
 import { isShared, sharedFiles } from "../cmd/helper/ng-shared";
 import { existsSync } from "node:fs";
 
-function run(args: string[], script = "build.ts"): { code: number; stdout: string; stderr: string } {
+function run(args: string[], script = "ng-build.ts"): { code: number; stdout: string; stderr: string } {
   const proc = Bun.spawnSync(["bun", join(ROOT, "cmd", script), ...args], { cwd: ROOT });
   return {
     code: proc.exitCode,
@@ -20,24 +20,6 @@ function check(condition: boolean, message: string): void {
 }
 
 export async function testit(): Promise<void> {
-  const noArgs = run([]);
-  check(noArgs.code === 0, `no-argument exit code: ${noArgs.code}`);
-  check(noArgs.stdout.includes("Usage: bun cmd/build.ts"), "no-argument invocation did not print usage");
-
-  const unknown = run(["-not-a-build-option"]);
-  check(unknown.code !== 0, "unknown option succeeded");
-  check(unknown.stderr.includes("unknown option: -not-a-build-option"), "unknown option did not print an error");
-  check(unknown.stderr.includes("Usage: bun cmd/build.ts"), "unknown option did not print usage");
-
-  const conflict = run(["-dbg", "-rel"]);
-  check(conflict.code !== 0, "conflicting configurations succeeded");
-  check(conflict.stderr.includes("cannot be used together"), "configuration conflict did not explain the error");
-
-  for (const flag of ["-mingw", "-wine", "-win"]) {
-    const removed = run([flag]);
-    check(removed.code !== 0 && removed.stderr.includes("unknown option"), `${flag} is still supported`);
-  }
-
   const ngHelp = run([], "ng-build.ts");
   check(ngHelp.code === 0 && ngHelp.stdout.includes("Usage: bun cmd/ng-build.ts"), "ng did not print usage");
   const ngUnknown = run(["-unknown"], "ng-build.ts");
@@ -51,19 +33,18 @@ export async function testit(): Promise<void> {
   const makeLzsa = targets.find((target) => target.name === "MakeLZSA");
   check(makeLzsa?.systemDeps === "archive", "MakeLZSA pulls desktop system dependencies");
 
-  const flags: BuildFlags = { debug: true, asan: false, clang: false, clean: false, verbose: false };
-  for (const plat of ["win", "mac", "linux", "wasm"] as Platform[]) {
-    check(outDirName(plat, flags) === `${plat}/dbg`, `wrong ng debug directory for ${plat}`);
-    check(outDirName(plat, { ...flags, debug: false }) === `${plat}/rel`, `wrong ng release directory for ${plat}`);
-    check(outDirName(plat, { ...flags, asan: true }) === `${plat}/dbg-asan`, `wrong ng ASan directory for ${plat}`);
-  }
+  const flags: BuildFlags = { debug: true, asan: false, clean: false, verbose: false, arch: hostArch };
+  check(outDirName(flags) === "mac/dbg", "wrong debug directory");
+  check(outDirName({ ...flags, debug: false }) === "mac/rel", "wrong release directory");
+  check(outDirName({ ...flags, asan: true }) === "mac/dbg-asan", "wrong ASan directory");
+  const other = macArchs.find((a) => a !== hostArch)!;
+  check(outDirName({ ...flags, arch: other }) === `mac/dbg-${other}`, "wrong directory for the other architecture");
   const fail = (msg: string): never => {
     throw new Error(msg);
   };
   for (const target of targets) {
-    for (const plat of ["win", "mac", "linux", "wasm"] as Platform[]) {
-      if (target.platforms && !target.platforms.includes(plat)) continue;
-      for (const src of resolveSources(forPlatform(target, plat), plat, fail)) {
+    for (const arch of macArchs) {
+      for (const src of resolveSources(forArch(target, arch), fail)) {
         check(
           !src.startsWith("src/") || src.startsWith("src/ng/") || isShared(src),
           `${target.name} uses unlisted originals`,

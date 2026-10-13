@@ -69,30 +69,8 @@ async function main() {
   const clangFormatPath = findClangFormat();
   console.log(`using '${clangFormatPath}'`);
 
-  const patterns = [
-    "src/*.cpp",
-    "src/shared/**/*.{cpp,c,h}",
-    "src/*.h",
-    "src/mui/*.cpp",
-    "src/mui/*.h",
-    "src/base/*.cpp",
-    "src/base/*.h",
-    "src/base/tests/*.cpp",
-    "src/base/tests/*.h",
-    "src/tests/*.cpp",
-    "src/tests/*.h",
-    "src/gui/*",
-    "src/gui/win/*",
-    "src/gui/tests/*",
-    "src/uia/*",
-    "src/tools/**/*.{cpp,c,h,hpp}",
-    "src/ifilter/*.cpp",
-    "src/ifilter/*.h",
-    "src/previewer/*.cpp",
-    "src/previewer/*.h",
-    "src/mupdf/*.c",
-    "src/mupdf/*.h",
-  ];
+  // src/ng is ng-format.ts's
+  const patterns = ["src/shared/**/*.{cpp,c,h}", "src/base/**/*.{cpp,h}", "src/mupdf/*.{c,h}"];
 
   const files = await globFiles(patterns);
   const toFormat = files.filter((f) => !isWhitelisted(f));

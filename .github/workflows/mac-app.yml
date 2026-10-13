@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   build:
-    # macos-latest is Apple Silicon: the app is arm64 only
+    # macos-latest is Apple Silicon; the app is universal (arm64 + x86_64)
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
@@ -30,13 +30,14 @@ jobs:
             --jq "[.[] | select(.tagName | startswith(\"v$day\"))] | length")
           rev=""
           if [ "$n" -gt 0 ] && [ "$n" -le 9 ]; then rev="-rev $n"; fi
-          bun cmd/ng-build.ts -rel $rev SumatraPDF
+          bun cmd/ng-build.ts -rel -universal $rev SumatraPDF
+          lipo -archs out/mac/rel-universal/SumatraPDF
       # drag-to-Applications disk image; ditto keeps the ad-hoc signature.
       # hdiutil on hosted runners sometimes fails with "Resource busy", so retry
       - name: Package dmg
         run: |
           mkdir dmg
-          ditto out/mac/rel/SumatraPDF.app dmg/SumatraPDF.app
+          ditto out/mac/rel-universal/SumatraPDF.app dmg/SumatraPDF.app
           ln -s /Applications dmg/Applications
           for i in 1 2 3; do
             hdiutil create -volname SumatraPDF -srcfolder dmg -format UDZO -ov SumatraPDF-mac.dmg && break
@@ -56,7 +57,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          ver=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" out/mac/rel/SumatraPDF.app/Contents/Info.plist)
+          ver=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" out/mac/rel-universal/SumatraPDF.app/Contents/Info.plist)
           url="https://github.com/$GITHUB_REPOSITORY/releases/tag/v$ver"
           printf '[SumatraPDF]\nLatest: %s\nBuiltOn: %s\nDownloadPage: %s\n' "$ver" "$(date +%Y-%m-%d)" "$url" \
             > update-check-mac.txt

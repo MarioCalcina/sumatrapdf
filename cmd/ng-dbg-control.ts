@@ -134,18 +134,14 @@ function decodeArgs(data: Buffer): Arg[] {
   return out;
 }
 
-// A named pipe on Windows; elsewhere a unix domain socket, <name> being its
-// path or, without a "/", /tmp/<name>.sock (see SumatraControl.cpp).
+// A unix domain socket, <name> being its path or, without a "/",
+// /tmp/<name>.sock (see SumatraControl.cpp).
 function pipePath(name: string): string {
-  if (process.platform !== "win32") {
-    return name.includes("/") ? name : `/tmp/${name}.sock`;
-  }
-  return name.startsWith("\\\\.\\pipe\\") ? name : `\\\\.\\pipe\\${name}`;
+  return name.includes("/") ? name : `/tmp/${name}.sock`;
 }
 
 function defaultExe(): string {
-  if (process.platform === "win32") return "out/win/dbg/SumatraPDF.exe";
-  return process.platform === "darwin" ? "out/mac/dbg/SumatraPDF" : "out/linux/dbg/SumatraPDF";
+  return "out/mac/dbg/SumatraPDF";
 }
 
 export async function connect(name: string, timeoutMs: number): Promise<Socket> {

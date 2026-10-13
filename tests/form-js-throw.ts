@@ -4,8 +4,8 @@
 // the app's own console callback never throws.
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { root as ROOT } from "../cmd/helper/ng-compile";
-import { findToolchain, hostPlatform } from "../cmd/helper/ng-toolchain";
+import { outDir, root as ROOT } from "../cmd/helper/ng-compile";
+import { hostArch } from "../cmd/helper/ng-toolchain";
 import { makePdf } from "./form-js-no-stderr.ts";
 import { tmpPath } from "./util.ts";
 
@@ -13,16 +13,15 @@ export async function testit(): Promise<void> {
   const fail = (message: string): never => {
     throw new Error(message);
   };
-  const tc = findToolchain(ROOT, hostPlatform(), false, fail);
   const run = (args: string[]) => {
-    const proc = Bun.spawnSync(args, { cwd: ROOT, env: { ...process.env, ...tc.env } });
+    const proc = Bun.spawnSync(args, { cwd: ROOT });
     if (proc.exitCode !== 0) fail(`${args.join(" ")} failed (exit ${proc.exitCode}):\n${proc.stdout}\n${proc.stderr}`);
   };
   run([process.execPath, join(ROOT, "cmd/ng-build.ts"), "-rel", "test_mupdf"]);
 
   const pdf = tmpPath("form-js-throw.pdf");
   writeFileSync(pdf, makePdf('console.println("x");'));
-  const probe = join(ROOT, "out", tc.plat, "rel", tc.msvcStyle ? "test_mupdf.exe" : "test_mupdf");
+  const probe = join(outDir({ debug: false, asan: false, clean: false, verbose: false, arch: hostArch }), "test_mupdf");
   run([probe, "-js-throw", pdf]);
 
   // copying a script's event.value out of the JS engine runs out of memory:
