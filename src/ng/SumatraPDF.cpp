@@ -6026,6 +6026,10 @@ void ExecuteCmd(MainWindow* win, int cmdId) {
             EmptyThumbnailCacheDirectory();
             ScheduleSaveSettings();
             MaybeRedrawHomePage();
+            // the menu bar keeps File > Open Recent until it is rebuilt
+            for (MainWindow* w : gWindows) {
+                RebuildMenuBar(w);
+            }
             TempStr msg = fmt(Tr("Cleared history of %d files, deleted thumbnails.").s, nFiles);
             ShowTemporaryNotification(win, msg, kNotif5SecsTimeOut);
             break;

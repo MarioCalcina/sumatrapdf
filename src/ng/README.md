@@ -95,13 +95,16 @@ AppKit code lives in `*_mac.mm` files, mostly `gui/NativeWindow_mac.mm`:
   `CFBundleLocalizations` lists ours, so AppKit's own panels (print, open)
   and menu items follow it
 - the app menu gets Services and Hide, the Window menu Minimize, Zoom and
-  Bring All to Front, which gpui's menu bar lacks (`AppShellMacFinishMenus`).
+  Bring All to Front, which gpui's menu bar lacks (`AppShellMacFinishMenus`),
+  and an Edit menu through which AppKit's text fields (the save, open and print
+  panels) cut, copy and paste; Help gets macOS's search field.
   gpui finds the Window menu by its English title, so it is translated after
 - Print opens the macOS print panel (PDFKit) on the PDF itself, or on a
   rendered one for a selection, a rotation or unsaved annotations
 - Save As (and every other save) is the macOS save panel; a `-dbg-control`
   script gets the port's dialog, which it can drive
-- File > Show in Finder; About, Settings and Quit only in the app menu
+- File > Open Recent and Show in Finder; About, Settings and Quit only in the
+  app menu
 - tabs sit in the title bar beside the traffic lights
 
 gpui gap: a text field's context menu (Cut, Copy, Paste, Select All) is

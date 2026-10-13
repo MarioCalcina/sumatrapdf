@@ -158,9 +158,10 @@ static NSMenuItem* StdMenuItem(Str title, SEL action, NSString* key, NSEventModi
 }
 
 // What every Mac app has and gpui's menu bar, built from the app's menu model,
-// leaves out: Services and Hide in the app menu, Minimize and Bring All to Front
-// in the Window menu, which gpui finds by its English title, so it's translated
-// here. The actions go to AppKit through the responder chain.
+// leaves out: Services and Hide in the app menu, the Edit menu, Minimize and
+// Bring All to Front in the Window menu, which gpui finds by its English title,
+// so it's translated here, and Help's search field. The actions go to AppKit
+// through the responder chain.
 void AppShellMacFinishMenus() {
     NSMenu* bar = [NSApp mainMenu];
     NSMenu* appMenu = bar.numberOfItems > 0 ? [bar itemAtIndex:0].submenu : nil;
@@ -184,6 +185,32 @@ void AppShellMacFinishMenus() {
             [appMenu insertItem:items[i] atIndex:(NSInteger)(2 + i)];
         }
         [appMenu insertItem:[NSMenuItem separatorItem] atIndex:1];
+    }
+
+    // AppKit's own text fields (the save, open and print panels) cut, copy and
+    // paste through the Edit menu. Nothing in the app's windows answers these
+    // actions: the items are off there and the keys go on to gpui.
+    NSString* editTitle = ToNSString(Tr("Edit"));
+    if (bar.numberOfItems > 1 && [bar indexOfItemWithTitle:editTitle] < 0) {
+        NSEventModifierFlags cmd = NSEventModifierFlagCommand;
+        NSMenu* edit = [[NSMenu alloc] initWithTitle:editTitle];
+        [edit addItem:StdMenuItem(Tr("Undo"), @selector(undo:), @"z", cmd)];
+        [edit addItem:StdMenuItem(Tr("Redo"), @selector(redo:), @"z", cmd | NSEventModifierFlagShift)];
+        [edit addItem:[NSMenuItem separatorItem]];
+        [edit addItem:StdMenuItem(Tr("Cut"), @selector(cut:), @"x", cmd)];
+        [edit addItem:StdMenuItem(Tr("Copy"), @selector(copy:), @"c", cmd)];
+        [edit addItem:StdMenuItem(Tr("Paste"), @selector(paste:), @"v", cmd)];
+        [edit addItem:StdMenuItem(Tr("Select All"), @selector(selectAll:), @"a", cmd)];
+        NSMenuItem* editItem = StdMenuItem(Tr("Edit"), nil, @"", 0);
+        editItem.submenu = edit;
+        // after File, as in every Mac app
+        [bar insertItem:editItem atIndex:2];
+    }
+
+    // the Help menu gets macOS's search field, which finds menu items
+    NSMenu* help = bar.itemArray.lastObject.submenu;
+    if (help && help != NSApp.windowsMenu) {
+        NSApp.helpMenu = help;
     }
 
     // AppKit adds the window list below

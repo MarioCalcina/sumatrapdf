@@ -422,6 +422,30 @@ static void AppendRecentFilesToMenu(MenuModel* menu) {
         return;
     }
     SetFileHistoryCmdIds(files);
+#if OS_DARWIN
+    // a Mac app lists them in File > Open Recent, below Open, ending with a way
+    // to clear them
+    MenuItemModel recent;
+    recent.title = str::Dup(Tr("Open Recent"));
+    recent.titleOwned = true;
+    recent.submenu = new MenuModel();
+    for (const FileHistoryEntry& f : files) {
+        TempStr name = ShortenStringUtf8InTheMiddleTemp(path::GetBaseNameTemp(f.path), 70);
+        MenuAppendString(recent.submenu, str::ReplaceTemp(name, StrL("&"), StrL("&&")), f.cmdId);
+    }
+    MenuAppendSeparator(recent.submenu);
+    MenuAppendString(recent.submenu, Tr("Clear History"), CmdClearHistory);
+    // Open is File's first submenu
+    int at = len(menu->items);
+    for (int i = 0; i < len(menu->items); i++) {
+        if (menu->items[i].submenu) {
+            at = i + 1;
+            break;
+        }
+    }
+    VecInsertAt(menu->items, at, recent);
+    return;
+#endif
     for (int i = 0; i < len(files); i++) {
         TempStr name = ShortenStringUtf8InTheMiddleTemp(path::GetBaseNameTemp(files[i].path), 70);
         name = str::ReplaceTemp(name, StrL("&"), StrL("&&"));

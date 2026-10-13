@@ -1026,6 +1026,79 @@ lv:Kopēšana neizdevās
 co:Fiascu di a copia
 fo:Avritan miseydnaðist
 sat:ᱱᱚᱠᱚᱞ ᱨᱮ ᱵᱷᱩᱞ ᱦᱩᱭᱮᱱᱟ
+:Cut
+af:Knip
+am:Կտրել
+ar:قص
+bg:Изрежи
+bn:কাটুন
+br:Recortar
+bs:Izreži
+by:Выразаць
+ca-xv:Retalla
+ca:Retallar
+cn:剪切
+cy:Torri
+cz:Vyjmout
+de:Ausschneiden
+dk:Klip
+el:Αποκοπή
+es:Cortar
+et:Lõika
+eu:Ebaki
+fa:برش
+fi:Leikkaa
+fr:Couper
+fy-nl:Knippe
+ga:Gearr
+gl:Cortar
+he:גזור
+hi:काटें
+hr:Izreži
+hu:Kivágás
+id:Potong
+it:Taglia
+ja:カット
+ka:ამოჭრა
+kr:오려두기
+kw:Treghi
+lt:Iškirpti
+mk:Исечи
+ml:മുറിക്കുക
+mm:ဖြတ်
+my:Potong
+nl:Knip
+nn:Klipp ut
+no:Klipp ut
+pa:ਕੱਟੋ
+pl:Wytnij
+pt:Cortar
+ro:Decupează
+ru:Вырезать
+si:කපන්න
+sk:Vystrihnúť
+sl:Izreži
+sn:Cheka
+sp-rs:Iseci
+sq:Prije
+sr-rs:Исеци
+sv:Klipp ut
+ta:வெட்டு
+th:ตัด
+tl:I-cut
+tr:Kes
+tw:剪下
+uk:Вирізати
+uz:Kesish
+vn:Cắt
+ne:काट्नुहोस्
+az:Kəs
+ku:بڕین
+jv:Potong
+lv:Izgriezt
+co:Taglià
+fo:Klipp
+sat:ᱠᱟᱴ ᱢᱮ
 :Del restore default
 af:Del herstel verstek
 am:Del վերականգնել լռելյայնը
@@ -1099,6 +1172,49 @@ lv:Del atjaunot noklusējumu
 co:Squ. restaurà u valore predefinitu
 fo:Del endurset vanligt virði
 sat:Del ᱰᱤᱯᱷᱚᱞᱴ ᱫᱚᱦᱲᱟ ᱫᱚᱦᱚ
+:Edit
+af:Redigeer
+bg:Редакция
+bs:Uredi
+by:Праўка
+ca-xv:Edició
+ca:Edició
+cz:Úpravy
+et:Redigeeri
+eu:Editatu
+fa:ویرایش
+fi:Muokkaa
+fy-nl:Bewurkje
+he:עריכה
+hi:संपादित करें
+hu:Szerkesztés
+ja:編集
+kr:편집
+mk:Уреди
+ml:എഡിറ്റ്
+mm:တည်းဖြတ်
+my:Edit
+nn:Rediger
+pt:Edição
+ro:Editare
+si:සංස්කරණය
+sk:Upraviť
+sl:Uredi
+sn:Gadzirisa
+sp-rs:Izmeni
+sq:Përpunim
+sr-rs:Измени
+sv:Redigera
+th:แก้ไข
+tl:I-edit
+uk:Редагування
+uz:Tahrirlash
+vn:Sửa
+ne:सम्पादन
+ku:دەستکاری
+jv:Sunting
+fo:Rætta
+sat:ᱥᱟᱯᱲᱟᱣ
 :enter search term
 af:tik 'n soekterm
 am:մուտքագրեք որոնման բառ
@@ -3956,6 +4072,79 @@ sat:ᱵᱚᱸᱫᱚ
 fa:باز کردن پرونده با انتخابگر پرونده macOS...
 ku:کردنەوەی پەڕگە بە هەڵبژاردەری پەڕگەی macOS...
 sat:macOS ᱨᱮᱫᱽ ᱵᱟᱪᱷᱚᱱᱤᱭᱟᱹ ᱛᱮ ᱨᱮᱫᱽ ᱡᱷᱤᱡᱽ ᱢᱮ...
+:Open Recent
+af:Maak onlangse oop
+am:Բացել վերջինները
+ar:فتح الحديثة
+bg:Отвори скорошни
+bn:সাম্প্রতিক খুলুন
+br:Abrir Recente
+bs:Otvori nedavno
+by:Адкрыць нядаўнія
+ca-xv:Obri recent
+ca:Obrir recent
+cn:打开最近使用
+cy:Agor Diweddar
+cz:Otevřít nedávné
+de:Benutzte Dokumente
+dk:Åbn seneste
+el:Άνοιγμα πρόσφατου
+es:Abrir reciente
+et:Ava hiljutine
+eu:Ireki azkenak
+fa:باز کردن اخیر
+fi:Avaa viimeaikainen
+fr:Ouvrir l'élément récent
+fy-nl:Resint iepenje
+ga:Oscail Le Déanaí
+gl:Abrir recente
+he:פתח אחרונים
+hi:हाल ही का खोलें
+hr:Otvori nedavno
+hu:Legutóbbi megnyitása
+id:Buka Terbaru
+it:Apri recenti
+ja:最近使った項目を開く
+ka:ბოლოს გამოყენებულის გახსნა
+kr:최근 사용 열기
+kw:Ygeri Nowydh
+lt:Atidaryti naujausius
+mk:Отвори неодамнешни
+ml:അടുത്തിടെയുള്ളത് തുറക്കുക
+mm:မကြာသေးမီက ဖွင့်ရန်
+my:Buka Terkini
+nl:Open recent
+nn:Opne nylege
+no:Åpne nylige
+pa:ਹਾਲੀਆ ਖੋਲ੍ਹੋ
+pl:Otwórz ostatnie
+pt:Abrir recente
+ro:Deschide recent
+ru:Открыть недавние
+si:මෑත ඒවා විවෘත කරන්න
+sk:Otvoriť nedávne
+sl:Odpri nedavno
+sn:Vhura Zvichangoburwa
+sp-rs:Otvori nedavno
+sq:Hap së fundi
+sr-rs:Отвори недавно
+sv:Öppna senaste
+ta:சமீபத்தியதைத் திற
+th:เปิดรายการล่าสุด
+tl:Buksan ang Kamakailan
+tr:Son Kullanılanı Aç
+tw:打開最近使用過的
+uk:Відкрити недавні
+uz:Oxirgilarni ochish
+vn:Mở gần đây
+ne:हालसालैको खोल्नुहोस्
+az:Sonuncunu aç
+ku:کردنەوەی دواییەکان
+jv:Bukak Anyar
+lv:Atvērt nesenos
+co:Apre recente
+fo:Lat upp nýligt
+sat:ᱱᱤᱛᱚᱜᱟᱜ ᱡᱷᱤᱡᱽ ᱢᱮ
 :Open using &macOS File Picker...
 fa:باز کردن با استفاده از انتخابگر فایل &macOS...
 pa:&macOS ਫਾਈਲ ਚੋਣਕਾਰ ਵਰਤ ਕੇ ਖੋਲ੍ਹੋ...
@@ -4253,6 +4442,79 @@ lv:Lapu uz augšu
 co:Pagina in sù
 fo:Síða upp
 sat:ᱥᱟᱦᱴᱟ ᱪᱮᱛᱟᱱ
+:Paste
+af:Plak
+am:Տեղադրել
+ar:لصق
+bg:Постави
+bn:পেস্ট করুন
+br:Colar
+bs:Zalijepi
+by:Уставіць
+ca-xv:Apega
+ca:Enganxar
+cn:粘贴
+cy:Gludo
+cz:Vložit
+de:Einsetzen
+dk:Indsæt
+el:Επικόλληση
+es:Pegar
+et:Kleebi
+eu:Itsatsi
+fa:چسباندن
+fi:Sijoita
+fr:Coller
+fy-nl:Plakke
+ga:Greamaigh
+gl:Pegar
+he:הדבק
+hi:पेस्ट करें
+hr:Zalijepi
+hu:Beillesztés
+id:Tempel
+it:Incolla
+ja:ペースト
+ka:ჩასმა
+kr:붙여넣기
+kw:Gludya
+lt:Įklijuoti
+mk:Залепи
+ml:ഒട്ടിക്കുക
+mm:ကူးထည့်
+my:Tampal
+nl:Plak
+nn:Lim inn
+no:Lim inn
+pa:ਚਿਪਕਾਓ
+pl:Wklej
+pt:Colar
+ro:Lipește
+ru:Вставить
+si:අලවන්න
+sk:Vložiť
+sl:Prilepi
+sn:Namira
+sp-rs:Nalepi
+sq:Ngjit
+sr-rs:Налепи
+sv:Klistra in
+ta:ஒட்டு
+th:วาง
+tl:I-paste
+tr:Yapıştır
+tw:貼上
+uk:Вставити
+uz:Qo‘yish
+vn:Dán
+ne:टाँस्नुहोस्
+az:Yapışdır
+ku:لکاندن
+jv:Tempel
+lv:Ielīmēt
+co:Incullà
+fo:Set inn
+sat:ᱥᱟᱴ ᱢᱮ
 :Quick Edit Settings
 af:Vinnige redigering van instellings
 am:Կարգավորումների արագ խմբագրում
