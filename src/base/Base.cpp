@@ -5363,6 +5363,8 @@ TempStr FormatNumWithThousandSepTemp(i64 num, LCID locale) {
         str::BufSet(thousandSepW, dimof(thousandSepW), StrL(","));
     }
     TempStr thousandSep = ToUtf8Temp(thousandSepW);
+#elif OS_DARWIN
+    TempStr thousandSep = locale == LOCALE_INVARIANT ? StrL(",") : LocaleThousandSepTemp();
 #else
     (void)locale;
     TempStr thousandSep = StrL(",");
@@ -5403,6 +5405,8 @@ TempStr FormatFloatWithThousandSepTemp(double number, LCID locale, bool stripTra
         decimal[i++] = (char)c;
     }
 
+#elif OS_DARWIN
+    Str decimal = locale == LOCALE_INVARIANT ? StrL(".") : LocaleDecimalSepTemp();
 #else
     char decimal[4] = {'.', 0};
 #endif

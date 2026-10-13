@@ -231,8 +231,8 @@ UINT GetACP();
 
 constexpr UINT CP_ACP = 0;
 constexpr UINT CP_UTF8 = 65001;
-constexpr LCID LOCALE_USER_DEFAULT = 0;
-constexpr LCID LOCALE_INVARIANT = 0;
+constexpr LCID LOCALE_USER_DEFAULT = 0x0400;
+constexpr LCID LOCALE_INVARIANT = 0x007f;
 #define __TEXT(s) L##s
 #define TEXT(s) __TEXT(s)
 constexpr int MAX_PATH = 4096;
@@ -1191,6 +1191,10 @@ int GetMeasurementSystem();
 #if OS_DARWIN
 struct StrVec;
 void GetUserLanguages(StrVec& out);
+TempStr LocaleThousandSepTemp();
+TempStr LocaleDecimalSepTemp();
+enum class DateStyle { Date, DateTime };
+TempStr FormatLocaleDateTemp(int year, int month, int day, int hour, int minute, int second, DateStyle style);
 #endif
 
 // physical memory still free and how loaded memory is, 0..100. False when the
