@@ -386,6 +386,21 @@ static void ArenaPtrCompressTest() {
     }
 }
 
+#if !OS_WASM
+// a loaded CI runner can start a 50 ms worker late: poll for its flag
+// instead of sleeping a fixed time
+static bool WaitForFlag(AtomicBool* flag) {
+    constexpr int kTimeoutMs = 5000;
+    for (int waited = 0; waited < kTimeoutMs; waited += 10) {
+        if (AtomicBoolGet(flag)) {
+            return true;
+        }
+        SleepInMs(10);
+    }
+    return AtomicBoolGet(flag);
+}
+#endif
+
 #if OS_POSIX && !OS_WASM
 static AtomicBool gTimedJoinFinished;
 
@@ -400,12 +415,11 @@ static void TimedJoinTest() {
     utassert(thread != nullptr);
     utassert(!JoinThread(&thread, 1));
     utassert(thread == nullptr);
-    SleepInMs(100);
-    utassert(AtomicBoolGet(&gTimedJoinFinished));
+    utassert(WaitForFlag(&gTimedJoinFinished));
 
     AtomicBoolSet(&gTimedJoinFinished, false);
     thread = StartThread(MkFunc0Void(TimedJoinWorker), StrL("timed-join-test"));
-    utassert(JoinThread(&thread, 500));
+    utassert(JoinThread(&thread, 5000));
     utassert(thread == nullptr);
     utassert(AtomicBoolGet(&gTimedJoinFinished));
 }
@@ -438,8 +452,7 @@ static void WaitThreadTest() {
     AtomicBoolSet(&gWaitThreadFinished, false);
     thread = StartThread(MkFunc0Void(WaitThreadWorker), StrL("wait-thread-test"));
     utassert(SafeCloseThreadHandle(&thread));
-    SleepInMs(150);
-    utassert(AtomicBoolGet(&gWaitThreadFinished));
+    utassert(WaitForFlag(&gWaitThreadFinished));
 }
 #endif
 
