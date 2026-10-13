@@ -10,7 +10,7 @@
 #include "base/Base.h"
 #include "base/File.h"
 
-// ng: Windows signs through wincrypt; Linux uses MuPDF's OpenSSL helper.
+// ng: signing goes through the Security framework (mupdf/pkcs7_mac.h).
 
 extern "C" {
 #include <mupdf/pdf.h>

@@ -3,9 +3,8 @@
 
 // ng: the window half of orig's NavFilesInFolder.cpp. Orig's
 // NavFilesInFolderWnd is a resizable top-level window built out of virtual
-// controls and docked beside the main window. On wasm the picker is a column
-// at the right edge of the frame, like the AI chat panel, and "which window
-// is active" is a flag: gNav.hasKeyboard.
+// controls and docked beside the main window. "Which window is active" is a
+// flag: gNav.hasKeyboard.
 // The functions keep orig's names (they are its methods there) and its
 // comments; the listing itself is the model half in NavFilesInFolder.cpp.
 

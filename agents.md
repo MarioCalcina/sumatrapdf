@@ -1,9 +1,9 @@
 This is a macOS-only fork of SumatraPDF. The app is SumatraPDF ng in
 `src/ng/`, a C++ program whose UI is drawn with GPUI. The original Win32 app,
-the Linux and WebAssembly builds and their build and test tooling were removed.
-Code the original app shared with ng lives in `src/shared/` and `src/base/`;
-it still has `OS_WIN` / `OS_LINUX` / `OS_WASM` branches, which the macOS
-build compiles out.
+the Linux and WebAssembly builds, their code paths and their build and test
+tooling were removed. Code the original app shared with ng lives in
+`src/shared/` and `src/base/`. There are no platform conditionals: `Base.h`
+refuses anything but macOS on arm64 or x86_64.
 
 We don't use STL but our own string / helper / container functions implemented in src/base directory
 
@@ -22,16 +22,23 @@ hand-edit them. To update one, use its `/update-<library>` skill
 (`.claude/skills/update-*`), which carries that library's quirks.
 
 Build on a Mac with bun and the Xcode command line tools: `bun cmd/ng-build.ts -dbg`
-(or `-rel`; `-asan`, `-profile`, `-clean`, `-all`, `-run` or a target name as
-needed). Outputs go to `out/mac/<config>` (`dbg` / `rel`, with an `-asan` or
-`-profile` suffix); the app is also wrapped in `out/mac/<config>/SumatraPDF.app`
-(`cmd/helper/ng-mac-bundle.ts`). Build internals live under `cmd/helper/` and
-are not invoked directly.
+(or `-rel`; `-asan`, `-clean`, `-all`, `-run` or a target name as needed).
+Outputs go to `out/mac/<config>` (`dbg` / `rel`, with an `-asan` suffix); the
+app is also wrapped in `out/mac/<config>/SumatraPDF.app`
+(`cmd/helper/ng-mac-bundle.ts`). A build is for this Mac's architecture;
+`-arch x86_64` (or `arm64`) builds the other one into `out/mac/<config>-<arch>`,
+and `-universal` builds both and joins them with lipo into
+`out/mac/<config>-universal`. Everything targets macOS 11
+(`macMinVersion` in `cmd/helper/ng-toolchain.ts`). Build internals live under
+`cmd/helper/` and are not invoked directly.
 
 The development PC may have no Mac. `.github/workflows/mac-app.yml` (manual
-trigger) builds the release app on a GitHub macOS runner, packs
+trigger) builds the universal release app on a GitHub macOS runner, packs
 `SumatraPDF-mac.dmg` and uploads screenshots of the app opened from it.
-`mac-daily.yml` builds debug and release and runs the unit tests.
+`mac-daily.yml` builds debug and the universal release, and runs the unit tests
+natively and, for x86_64, under Rosetta. A failing build step's last lines are
+an error annotation (`.github/scripts/run.sh`), readable through the checks API
+when the job log can't be downloaded.
 
 Unit tests are the `test_util` target: `bun cmd/ng-build.ts -dbg test_util -run -- -for-ai`.
 
@@ -97,8 +104,9 @@ the message must explain the context and reasoning.
   (⌘ shortcuts, see `src/ng/README.md`). Record unavoidable differences and
   GPUI gaps in feature documentation.
 - Preserve document engines, settings format and shortcut syntax.
-- Platform-specific files carry a suffix: `*_mac.mm` / `*_mac.cpp` (macOS) or
-  `*_posix.cpp`. Gate code with `OS_DARWIN` / `OS_POSIX`.
+- AppKit / Objective-C code goes in `*_mac.mm` files (Objective-C++ with ARC).
+  `*_mac.cpp` and `*_posix.cpp` are plain C++ that use the system APIs;
+  the suffixes say where code came from, they don't select platforms.
 - The files ng shares with the original tree are listed in
   `cmd/helper/ng-shared.ts`. The build stages them under
   `out/mac/<config>/generated/shared/` so quoted includes select ng's
@@ -109,8 +117,9 @@ the message must explain the context and reasoning.
 - Ng follows the same coding and commit rules, including **no automatic commits**.
 
 GPUI compiles as ARC Objective-C++, linking Cocoa, CoreText, CoreGraphics,
-IOKit, PDFKit and WebKit; libarchive uses system iconv. Dav1d/heicdec build
-flags follow the host architecture.
+IOKit, PDFKit and WebKit; libarchive uses system iconv. Dav1d's config and
+heicdec's SSE4.1 flag follow the architecture being built (`perArch` /
+`arch` in `cmd/helper/ng-targets.ts`).
 
 `test_engines` opens documents and renders pages; `test_mupdf` probes MuPDF.
 Use `cmd/ng-dbg-control.ts` with `-dbg-control <name>` (a unix socket,
@@ -146,8 +155,7 @@ in `translations/fork.txt`; the script's log lists what is still missing.
 ### GPUI integration
 
 For a file needing GPUI and base, include `gui/GpuiBridge.h` **first**, instead
-of `base/Base.h`. It handles Winsock/Windows include order and conflicting
-macros. Our `Str`, `Vec`, `Rect`, `Point`, `Size` remain global; GPUI's are
+of `base/Base.h`. It handles include order and conflicting macros. Our `Str`, `Vec`, `Rect`, `Point`, `Size` remain global; GPUI's are
 qualified with `gp::` (`gpui`) or `gpc::` (`gpui::component`). Never use
 `using namespace gpui` with base. Use `GStrL`, `ToGpui`, `FromGpui` and
 `GpuiDup` for conversions and frame-arena strings.
@@ -164,7 +172,7 @@ that repo's main, run `bun cmd/update-dist.ts` there, then vendor here with
 
 We rely on a controlled include order rather than self-sufficient headers (this is the inverse of the common "own header first" advice). In a `.cpp`/`.c` file:
 
-- `#include "base/Base.h"` comes **first**. It pulls in `<windows.h>` plus many common C/C++ headers and our base string / container / `ByteSlice` helpers, which most other headers assume are already available.
+- `#include "base/Base.h"` comes **first**. It pulls in many common C/C++ headers and our base string / container / `ByteSlice` helpers, which most other headers assume are already available.
 - Then the remaining includes (other `base/` headers, then the rest of the project headers).
 - The file's **own header goes at the end** of the include list (after the headers it depends on, since headers are not self-sufficient) — only `SumatraLog.h` may come after it.
 - `SumatraLog.h`, if present, is the **last** include.

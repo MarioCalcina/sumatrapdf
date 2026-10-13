@@ -154,9 +154,7 @@ float CanvasScale(MainWindow* win) {
 // --- page bitmaps -----------------------------------------------------------
 
 // ng: a page bitmap goes to gpui as raw pixels (RenderImageFromBgra: tightly
-// packed, premultiplied BGRA). It used to be wrapped in a BMP header and
-// decoded, which the browser does asynchronously: the page stayed blank on
-// wasm until something else repainted.
+// packed, premultiplied BGRA), with no BMP header to decode.
 
 static gp::RenderImage* RenderImageFromBgraPixmap(gp::PaintApp* pa, Pixmap* px);
 

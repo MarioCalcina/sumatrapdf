@@ -1,6 +1,6 @@
 // Pre-release suite. issue-5842 is first: it runs the app unit tests, then the
 // slow WebView TOC check, so a failure there shows up before the fast suite.
-// Then the fast tests, issue-6003, and LaTeX / SyncTeX.
+// Then the fast tests and LaTeX / SyncTeX.
 //
 // Run:  bun tests/run-pre-release.ts [--no-build] [-silent] [-ng] [-exe <SumatraPDF.exe>]
 
@@ -14,18 +14,16 @@ import {
 } from "./util.ts";
 import { tests as almostAllTests, testit as runAlmostAll } from "./run-almost-all.ts";
 import { testit as issue5842 } from "./issue-5842.ts";
-import { testit as issue6003 } from "./issue-6003.ts";
 import { testit as latexTests } from "./latex.ts";
 
 export async function testit(opts?: SuiteOptions): Promise<void> {
   const silent = opts?.silent ?? false;
   const t0 = performance.now();
   resetTestTimes();
-  // + issue-5842, issue-6003, latex
-  startSuiteProgress(almostAllTests.length + 3);
+  // + issue-5842, latex
+  startSuiteProgress(almostAllTests.length + 2);
   await runTest("issue-5842", issue5842, { silent });
   await runAlmostAll({ silent, keepTestTimes: true, summary: false });
-  await runTest("issue-6003", issue6003, { silent });
 
   if (!silent) {
     console.log("\n========== latex ==========");
@@ -33,7 +31,7 @@ export async function testit(opts?: SuiteOptions): Promise<void> {
   await runTest("latex", latexTests, { silent });
 
   console.log(
-    `\n✅ pre-release checks passed (run-almost-all + issue-5842 + issue-6003 + latex) in ${formatDuration(performance.now() - t0)}`,
+    `\n✅ pre-release checks passed (run-almost-all + issue-5842 + latex) in ${formatDuration(performance.now() - t0)}`,
   );
 }
 

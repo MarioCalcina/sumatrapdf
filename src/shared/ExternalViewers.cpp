@@ -465,8 +465,8 @@ bool RunWithExe(WindowTab* tab, Str cmdLine, Str filter) {
 
 // --- send as e-mail attachment (step 14a) -----------------------------------
 
-// ng: no MAPI off Windows. Linux's xdg-email supports attachments; other
-// desktops get a mailto naming the file so the user can attach it.
+// ng: Mail gets the file as an attachment; without it, a mailto names the
+// file so the user can attach it.
 static bool IsEmailAttachmentSendAvailable() {
     return true;
 }

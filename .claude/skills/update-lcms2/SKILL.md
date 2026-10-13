@@ -6,7 +6,7 @@ description: Regenerate the amalgamated Little CMS copy in ext/a-lcms2 from upst
 # Update amalgamated Little CMS
 
 `ext/a-lcms2/` is generated — never hand-edit it. `bun cmd/amalgam.ts -lcms2` clones upstream into
-`.work/deps/lcms2`, amalgamates it, and validates the result by compiling it with `cl.exe`. It is Artifex's `lcms2mt` fork, the thread-safe variant mupdf needs.
+`.work/deps/lcms2`, amalgamates it, and validates the result by compiling it for arm64 and x86_64 with its build target's flags. It is Artifex's `lcms2mt` fork, the thread-safe variant mupdf needs.
 
 ## Steps
 
@@ -31,7 +31,7 @@ description: Regenerate the amalgamated Little CMS copy in ext/a-lcms2 from upst
 2. Check `ext/a-lcms2/version.txt` — it records the project homepage, source repo URL, requested
    revision, resolved commit SHA-1 and GitHub commit URL. Confirm it is the revision you meant.
 
-3. Build on a Mac (or push and run the `mac-app` workflow):
+3. Build on a Mac (or push and run the `mac-daily` workflow):
 
    ```sh
    bun cmd/ng-build.ts -dbg -all
@@ -42,4 +42,4 @@ description: Regenerate the amalgamated Little CMS copy in ext/a-lcms2 from upst
 ## Notes
 
 - `extra_xform.h` is a chameleonic header: `cmsxform.c` includes it dozens of times, redefining `FUNCTION_NAME` and friends each time, so it ships as a file rather than being inlined.
-- A handful of file-local statics collide once every `.c` is one translation unit. `lcms2Renames` in `cmd/amalgam.ts` gives them a per-file prefix. A new collision after an update shows up as a redefinition error from the script's own `cl.exe` validation — add the offending name there.
+- A handful of file-local statics collide once every `.c` is one translation unit. `lcms2Renames` in `cmd/amalgam.ts` gives them a per-file prefix. A new collision after an update shows up as a redefinition error from the script's own compile check — add the offending name there.

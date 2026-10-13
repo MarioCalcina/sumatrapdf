@@ -56,8 +56,7 @@
 #include "SumatraControl.h"
 #include "SumatraControlCommon.h"
 
-// Parts of the -dbg-control channel that orig and ng have in common. ng has no
-// listener thread on wasm, so nothing calls them there.
+// Parts of the -dbg-control channel that orig and ng have in common.
 
 // Boxes the current page actually declares (issue #814). Optional int arg is pageNo.
 TempStr PageBoxesResultTemp(int pageNo, int* exitCodeOut) {

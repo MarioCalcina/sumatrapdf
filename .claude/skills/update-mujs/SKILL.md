@@ -6,7 +6,7 @@ description: Regenerate the amalgamated MuJS copy in ext/a-mujs from upstream wi
 # Update amalgamated MuJS
 
 `ext/a-mujs/` is generated — never hand-edit it. `bun cmd/amalgam.ts -mujs` clones upstream into
-`.work/deps/mujs`, amalgamates it, and validates the result by compiling it with `cl.exe`.
+`.work/deps/mujs`, amalgamates it, and validates the result by compiling it for arm64 and x86_64 with its build target's flags.
 
 ## Steps
 
@@ -29,7 +29,7 @@ description: Regenerate the amalgamated MuJS copy in ext/a-mujs from upstream wi
 2. Check `ext/a-mujs/version.txt` — it records the project homepage, source repo URL, requested
    revision, resolved commit SHA-1 and GitHub commit URL. Confirm it is the revision you meant.
 
-3. Build on a Mac (or push and run the `mac-app` workflow):
+3. Build on a Mac (or push and run the `mac-daily` workflow):
 
    ```sh
    bun cmd/ng-build.ts -dbg -all

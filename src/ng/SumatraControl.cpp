@@ -112,8 +112,6 @@ void LayoutProbeNote(MainWindow* win) {
     }
 }
 
-// ng: the channel needs a listener thread, which wasm does not have
-
 // action: "add" | "goto" | "goto-fav" | "next" | "prev" | "page"
 // Adds a favorite without the name dialog.
 void AddFavoriteSilent(MainWindow* win, int pageNo) {

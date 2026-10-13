@@ -1,9 +1,7 @@
 /* Copyright 2026 the SumatraPDF project authors (see AUTHORS file).
    License: Simplified BSD (see COPYING.BSD) */
 
-// ng: the POSIX half of gui/PlatformFont.cpp. Linux uses Pango and macOS uses
-// CoreText; wasm retains estimated metrics until browser font measurement is
-// exposed to native code.
+// ng: the POSIX half of gui/PlatformFont.cpp, on CoreText.
 
 #include "base/Base.h"
 

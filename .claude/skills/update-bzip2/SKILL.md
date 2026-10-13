@@ -6,7 +6,7 @@ description: Regenerate the amalgamated bzip2 copy in ext/a-bzip2 from upstream 
 # Update amalgamated bzip2
 
 `ext/a-bzip2/` is generated — never hand-edit it. `bun cmd/amalgam.ts -bzip2` clones upstream into
-`.work/deps/bzip2`, amalgamates it, and validates the result by compiling it with `cl.exe`.
+`.work/deps/bzip2`, amalgamates it, and validates the result by compiling it for arm64 and x86_64 with its build target's flags.
 
 ## Steps
 
@@ -29,7 +29,7 @@ description: Regenerate the amalgamated bzip2 copy in ext/a-bzip2 from upstream 
 2. Check `ext/a-bzip2/version.txt` — it records the project homepage, source repo URL, requested
    revision, resolved commit SHA-1 and GitHub commit URL. Confirm it is the revision you meant.
 
-3. Build on a Mac (or push and run the `mac-app` workflow):
+3. Build on a Mac (or push and run the `mac-daily` workflow):
 
    ```sh
    bun cmd/ng-build.ts -dbg -all

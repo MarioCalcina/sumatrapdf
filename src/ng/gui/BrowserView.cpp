@@ -7,7 +7,7 @@
 // position reported back from the page, the zoom percent and the in-page find
 // scripts. What differs is the plumbing: wry takes a custom protocol instead of
 // a WebView2 resource filter, and the notifications come back through
-// chrome.webview.postMessage (window.ipc on mac and Linux).
+// window.ipc instead of chrome.webview.postMessage.
 
 #include "gui/GpuiBridge.h"
 

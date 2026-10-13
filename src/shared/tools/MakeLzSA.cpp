@@ -20,8 +20,8 @@ constexpr int kLzmaHeaderSize = 1 + LZMA_PROPS_SIZE;
 // first byte of an entry stored as is
 constexpr u8 kStoredMarker = (u8)-1;
 
-// Store: for an archive that is compressed as a whole later, e.g. inside
-// a .wasm the web server sends with brotli. Compressing twice gains nothing.
+// Store: for an archive that is compressed as a whole later. Compressing
+// twice gains nothing.
 enum class Packing {
     Lzma,
     Store

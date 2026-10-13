@@ -1,5 +1,5 @@
 // Runs LaTeX / SyncTeX integration tests that need external toolchains
-// (MiKTeX pdflatex/lualatex, Tectonic, and/or WSL).
+// (pdflatex / lualatex from a TeX distribution, or Tectonic).
 //
 // Each test skips gracefully when its dependencies are not installed.
 //
@@ -8,12 +8,10 @@
 import { buildApp, formatDuration, runTest } from "./util.ts";
 import { testit as issue5633 } from "./issue-5633.ts";
 import { testit as adHocSynctexChinese } from "./ad-hoc-synctex-chinese.ts";
-import { testit as adHocSynctexWsl } from "./ad-hoc-synctex-wsl.ts";
 
 const tests: [string, () => void | Promise<void>][] = [
   ["ad-hoc-synctex-chinese", adHocSynctexChinese],
   ["issue-5633", issue5633],
-  ["ad-hoc-synctex-wsl", adHocSynctexWsl],
 ];
 
 export async function testit(): Promise<void> {

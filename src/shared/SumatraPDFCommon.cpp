@@ -2389,7 +2389,7 @@ static void RegenerateThumbnailsThread(RegenerateThumbnailsData* data) {
     DestroyTempArena();
 }
 
-// where the app can't run itself in the background (wasm, a failed launch)
+// where the app can't run itself in the background (a failed launch)
 static void RegenerateThumbnailsAsync() {
     Vec<FileState*> list;
     CollectThumbnailFiles(list);

@@ -7,8 +7,7 @@
 // file + browse, password, reason, location, where to sign, the appearance
 // check boxes and the optional image), and the same "hide the dialog and let
 // the user click or drag on the page" placement mode.
-// Signing uses wincrypt on Windows; with a certificate file, the Security
-// framework on macOS and OpenSSL on Linux.
+// Signing uses the Security framework.
 
 #include "gui/GpuiBridge.h"
 #include "base/File.h"

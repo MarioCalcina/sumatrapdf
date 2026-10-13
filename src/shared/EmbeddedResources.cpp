@@ -75,9 +75,8 @@ struct EmbeddedFont {
 static Mutex gFontsMutex;
 static EmbeddedFont* gFonts = nullptr;
 
-// %LOCALAPPDATA%\SumatraPDF\fonts, or the XDG / macOS equivalent. Not the
-// settings directory: a portable exe and the preview dll share this cache.
-// Wasm uses /fonts, which the page mirrors to OPFS.
+// ~/Library/Application Support/SumatraPDF/fonts. Not the settings
+// directory, which -appdata can move.
 static TempStr FontCacheDirTemp() {
     const char* home = getenv("HOME");
     if (home && *home) {

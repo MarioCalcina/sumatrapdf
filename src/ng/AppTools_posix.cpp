@@ -48,8 +48,7 @@ void SetAppDataDir(Str dir) {
     gAppDataDir = str::Dup(GetPermArena(), dir);
 }
 
-// $XDG_CONFIG_HOME/SumatraPDF on Linux, ~/Library/Application Support/SumatraPDF
-// on mac, /settings on wasm (OPFS, mirrored in MEMFS)
+// ~/Library/Application Support/SumatraPDF
 static TempStr DefaultAppDataDirTemp() {
     const char* home = getenv("HOME");
     if (home && *home) {

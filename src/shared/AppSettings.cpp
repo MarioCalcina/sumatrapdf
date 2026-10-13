@@ -741,7 +741,7 @@ static void SchedulePrefsReload() {
 }
 
 // Write the file when it does not exist yet, then open it in the default
-// .txt app (ShellExecute on Windows, open / xdg-open on macOS and Linux).
+// .txt app (open).
 void OpenSettingsFile() {
     if (!CanAccessDisk()) {
         return;

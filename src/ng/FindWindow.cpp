@@ -4,8 +4,7 @@
 // ng: orig's FindWindow.cpp - the floating variant of the find UI, chosen with
 // SearchUIFloating (the pin button switches between the two). orig makes it an
 // owned WS_POPUP | WS_CAPTION | WS_THICKFRAME tool window with a DropDown, a
-// pages Edit and a VirtListBox. On wasm it is a gpui card inside the frame,
-// dragged by its header; elsewhere it is that tool window. Position is
+// pages Edit and a VirtListBox; here it is that tool window. Position is
 // remembered in gSettings->searchUIWindowPos. Same
 // contents and order: find box, "n / m" status, previous, next, match case,
 // match whole word, dock, close, the "Limit to pages 1-N:" row and the

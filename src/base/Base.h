@@ -989,10 +989,6 @@ bool GetPhysMemoryInfo(u64* availPhysOut, int* loadPercentOut, u64* totalPhysOut
 void SetThreadName(Str threadName, ThreadId threadId = 0);
 void SleepInMs(int ms);
 
-// ng: the wasm build has no pthreads (emscripten without -pthread), so
-// StartThread() runs the function inline and returns a handle that joins
-// immediately. RenderCache checks this and drains on the main thread instead.
-
 void RunAsync(const Func0&, Str threadName = {});
 ThreadHandle StartThread(const Func0&, Str threadName = {});
 // ng: number of logical processors (was CpuCoreCount() in the win32-only Win.h)

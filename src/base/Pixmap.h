@@ -1,27 +1,12 @@
 /* Copyright 2022 the SumatraPDF project authors (see AUTHORS file).
    License: Simplified BSD (see COPYING.BSD) */
 
-// Pixmap is a platform-independent, raw (uncompressed) in-memory bitmap: a tightly
-// described pixel buffer with no dependency on any OS imaging API. It exists so image
-// decoders can return decoded pixels without binding to Gdiplus::Bitmap, and so the
-// pixels can be handed to the platform's imaging API with zero copies:
-//  - Windows: Gdiplus::Bitmap(w, h, stride, format, scan0) borrows the buffer
-//  - macOS:   CGBitmapContextCreate / CGImageCreate over the buffer
-//  - Linux:   cairo_image_surface_create_for_data over the buffer
+// Pixmap is a raw (uncompressed) in-memory bitmap: a tightly described pixel buffer
+// with no dependency on an OS imaging API, so image decoders can return decoded pixels
+// that CGBitmapContextCreate / CGImageCreate (and gpui) take with zero copies.
 //
-// BGRA8 (premultiplied) is the canonical layout because it is the natively zero-copy
-// layout on all three platforms (Gdiplus 32bppPARGB, CoreGraphics
-// PremultipliedFirst|ByteOrder32Little, cairo ARGB32). The Windows-specific zero-copy
-// conversion helpers live in GdiPlusUtil.h (NewGdiplusBitmapFromPixmap / PixmapFromGdiplus).
-//
-// A Pixmap may additionally be backed by a platform "present" object so it can be blitted
-// to the screen with no copy (a GDI DIB section on Windows; later a CGImage/cairo surface
-// on mac/linux). That backing is described per-platform with #if rather than an opaque
-// handle. When present (hbmp != null on Windows), `data` points into the present object's
-// pixels and is owned by it (freed via FreePixmapNativeBitmap), not by malloc/free.
-//
-// On Windows this header uses HBITMAP/HANDLE directly; <windows.h> is assumed to have
-// been included before it (it comes in via Base.h).
+// BGRA8 (premultiplied) is the canonical layout because it is CoreGraphics'
+// PremultipliedFirst|ByteOrder32Little.
 
 enum class PixmapFormat : u8 {
     // byte order in memory. BGRA8 is the zero-copy layout on all 3 platforms.
@@ -48,7 +33,7 @@ struct Pixmap {
     bool hasAlpha = false;
     float xres = 96.0f;
     float yres = 96.0f;
-    u8* data = nullptr; // pixel buffer; owned by malloc, or by hbmp when DIB-section-backed
+    u8* data = nullptr; // pixel buffer; owned by malloc
 };
 
 void CopyPixmapRows(Pixmap* dst, const u8* src, int srcStride);

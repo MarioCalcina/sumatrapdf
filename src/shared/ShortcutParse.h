@@ -10,7 +10,7 @@ struct KeyShortcut {
         kShiftKey = 4,
         kCtrlKey = 8,
         kAltKey = 16,
-        // Command on macOS, Super on Linux
+        // Command
         kCmdKey = 32,
     };
 

@@ -6,7 +6,7 @@ description: Regenerate the amalgamated Brotli copy in ext/a-brotli from upstrea
 # Update amalgamated Brotli
 
 `ext/a-brotli/` is generated — never hand-edit it. `bun cmd/amalgam.ts -brotli` clones upstream into
-`.work/deps/brotli`, amalgamates it, and validates the result by compiling it with `cl.exe`.
+`.work/deps/brotli`, amalgamates it, and validates the result by compiling it for arm64 and x86_64 with its build target's flags.
 
 ## Steps
 
@@ -31,7 +31,7 @@ description: Regenerate the amalgamated Brotli copy in ext/a-brotli from upstrea
 2. Check `ext/a-brotli/version.txt` — it records the project homepage, source repo URL, requested
    revision, resolved commit SHA-1 and GitHub commit URL. Confirm it is the revision you meant.
 
-3. Build on a Mac (or push and run the `mac-app` workflow):
+3. Build on a Mac (or push and run the `mac-daily` workflow):
 
    ```sh
    bun cmd/ng-build.ts -dbg -all
@@ -42,4 +42,4 @@ description: Regenerate the amalgamated Brotli copy in ext/a-brotli from upstrea
 ## Notes
 
 - The `*_inc.h` files are X-macro fragments with no include guard; the inliner expands them at every use, which is what they are for.
-- `compress_fragment_two_pass.c` is a near-copy of `compress_fragment.c`, so most of `brotliRenames` in `cmd/amalgam.ts` is one half of that pair. A new collision after an update shows up as a redefinition error from the script's own `cl.exe` validation — add the offending name to `brotliRenames`.
+- `compress_fragment_two_pass.c` is a near-copy of `compress_fragment.c`, so most of `brotliRenames` in `cmd/amalgam.ts` is one half of that pair. A new collision after an update shows up as a redefinition error from the script's own compile check — add the offending name to `brotliRenames`.

@@ -132,8 +132,6 @@ void TakeScreenshots(MainWindow* win) {
     if (!IsMainWindowValidAndNotClosing(win)) {
         return;
     }
-    // wasm writes a temp PNG and hands it to the browser. The disk permission
-    // is about the user's files, which a tab does not have.
     if (!CanAccessDisk()) {
         return;
     }

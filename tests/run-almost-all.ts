@@ -58,7 +58,6 @@ import { testit as issue5924 } from "./issue-5924.ts";
 import { testit as issue5926 } from "./issue-5926.ts";
 import { testit as issue1914 } from "./issue-1914.ts";
 import { testit as issue1198 } from "./issue-1198.ts";
-import { testit as issue2568 } from "./issue-2568.ts";
 import { testit as issue2799 } from "./issue-2799.ts";
 import { testit as issue6190 } from "./issue-6190.ts";
 import { testit as issue6201 } from "./issue-6201.ts";
@@ -130,8 +129,6 @@ import { testit as issue6246 } from "./issue-6246.ts";
 import { testit as issue6247 } from "./issue-6247.ts";
 import { testit as issue6250 } from "./issue-6250.ts";
 import { testit as issue6252 } from "./issue-6252.ts";
-import { testit as installerDesktopShortcut } from "./installer-desktop-shortcut.ts";
-import { testit as issue4291 } from "./issue-4291.ts";
 import { testit as issue6271 } from "./issue-6271.ts";
 import { testit as issue3755 } from "./issue-3755.ts";
 import { testit as issue5803 } from "./issue-5803.ts";
@@ -358,7 +355,6 @@ import { testit as selectionFontBbox } from "./selection-font-bbox.ts";
 import { testit as issue4839 } from "./issue-4839.ts";
 import { testit as issue6023 } from "./issue-6023.ts";
 import { testit as issue6017 } from "./issue-6017.ts";
-import { testit as issue6025 } from "./issue-6025.ts";
 import { testit as issue5946 } from "./issue-5946.ts";
 import { testit as issue6012 } from "./issue-6012.ts";
 import { testit as issue6080 } from "./issue-6080.ts";
@@ -384,7 +380,6 @@ import { testit as issue6144 } from "./issue-6144.ts";
 import { testit as toolbarTabSwitchPos } from "./toolbar-tab-switch-pos.ts";
 import { testit as facingFitTinyViewport } from "./facing-fit-tiny-viewport.ts";
 import { testit as mdMissingFile } from "./ad-hoc-md-missing-file.ts";
-import { testit as issue6148 } from "./issue-6148.ts";
 import { testit as issue6184 } from "./issue-6184.ts";
 import { testit as issue6220 } from "./issue-6220.ts";
 import { testit as sessionRestoreTabState } from "./session-restore-tab-state.ts";
@@ -426,7 +421,6 @@ export const tests: NamedTest[] = [
   ["sign-certify", signCertify],
   ["issue-6271", issue6271],
   ["form-js-no-stderr", formJsNoStderr],
-  ["issue-4291", issue4291],
   ["issue-6279", issue6279],
   ["issue-2423", issue2423],
   ["jpeg-xl-pdf", jpegXlPdf],
@@ -464,7 +458,6 @@ export const tests: NamedTest[] = [
   ["issue-6246", issue6246],
   ["issue-6247", issue6247],
   ["issue-6250", issue6250],
-  ["installer-desktop-shortcut", installerDesktopShortcut],
   ["issue-5803", issue5803],
   ["issue-3862", issue3862],
   ["issue-6248", issue6248],
@@ -481,7 +474,6 @@ export const tests: NamedTest[] = [
   ["issue-6140", issue6140],
   ["ad-hoc-md-missing-file", mdMissingFile],
   ["issue-6142", issue6142],
-  ["issue-6148", issue6148],
   ["issue-6143", issue6143],
   ["issue-5993", issue5993],
   ["issue-2629", issue2629],
@@ -580,7 +572,6 @@ export const tests: NamedTest[] = [
   ["issue-5926", issue5926],
   ["issue-1914", issue1914],
   ["issue-1198", issue1198],
-  ["issue-2568", issue2568],
   ["issue-6190", issue6190],
   ["issue-6201", issue6201],
   ["issue-6194", issue6194],
@@ -760,7 +751,6 @@ export const tests: NamedTest[] = [
   ["issue-4839", issue4839],
   ["issue-6023", issue6023],
   ["issue-6017", issue6017],
-  ["issue-6025", issue6025],
   ["issue-5946", issue5946],
   ["issue-6012", issue6012],
   ["issue-6080", issue6080],
