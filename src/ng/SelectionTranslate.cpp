@@ -15,9 +15,6 @@
 
 #include "gui/GpuiBridge.h"
 #include "VirtKeys.h"
-#if OS_WIN
-#include "base/Win.h"
-#endif
 
 #include "base/CmdLineArgs.h"
 #include "base/Http.h"
@@ -51,10 +48,6 @@
 
 #include "SumatraLog.h"
 
-#if OS_WIN
-// clang-format on
-
-#else
 // Map the selected UI language when the OS has no Windows LANGID API.
 static const char* gLangCodeToName =
     "en\0English\0zh\0Chinese (Simplified)\0tw\0Chinese (Traditional)\0cn\0Chinese (Simplified)\0de\0German\0"
@@ -62,25 +55,13 @@ static const char* gLangCodeToName =
     "ar\0Arabic\0hi\0Hindi\0tr\0Turkish\0vn\0Vietnamese\0vi\0Vietnamese\0pl\0Polish\0uk\0Ukrainian\0nl\0Dutch\0"
     "th\0Thai\0id\0Indonesian\0cz\0Czech\0cs\0Czech\0sv\0Swedish\0ro\0Romanian\0el\0Greek\0he\0Hebrew\0"
     "da\0Danish\0fi\0Finnish\0no\0Norwegian\0hu\0Hungarian\0sk\0Slovak\0bn\0Bengali\0";
-#endif
 
 TempStr OsDefaultDestinationLanguageTemp() {
-#if OS_WIN
-    LANGID langId = GetUserDefaultUILanguage();
-    Str name = PrimaryLangIdToEnglishName(PRIMARYLANGID(langId));
-    if (name) {
-        return name;
-    }
-    if (SUBLANGID(langId) == SUBLANG_CHINESE_TRADITIONAL) {
-        return StrL("Chinese (Traditional)");
-    }
-#else
     Str code = trans::GetCurrentLangCode();
     int idx = SeqStrIndexIS(gLangCodeToName, code);
     if (idx >= 0 && idx % 2 == 0) {
         return SeqStrByIndex(gLangCodeToName, idx + 1);
     }
-#endif
     return StrL("English");
 }
 

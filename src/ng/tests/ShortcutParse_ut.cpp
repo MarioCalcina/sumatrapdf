@@ -16,10 +16,8 @@
 constexpr u8 kVirt = KeyShortcut::kVirtKey;
 constexpr u8 kShift = KeyShortcut::kShiftKey;
 constexpr u8 kCtrl = KeyShortcut::kCtrlKey;
-#if OS_DARWIN
 constexpr u8 kAlt = KeyShortcut::kAltKey;
 constexpr u8 kCmd = KeyShortcut::kCmdKey;
-#endif
 
 static bool AccelShowsAs(u8 mods, u16 key, Str expected) {
     KeyShortcut a(mods, key);
@@ -36,11 +34,7 @@ bool ShortcutParse_UnitTestShiftedPunct() {
 
     utassert(AccelShowsAs(kShift | kVirt, VK_OEM_2, StrL("?")));
     utassert(AccelShowsAs(kVirt, VK_OEM_2, StrL("/")));
-#if OS_DARWIN
     utassert(AccelShowsAs(kCtrl | kShift | kVirt, VK_OEM_2, StrL("\u2303?")));
-#else
-    utassert(AccelShowsAs(kCtrl | kShift | kVirt, VK_OEM_2, StrL("Ctrl + ?")));
-#endif
     utassert(AccelShowsAs(kShift | kVirt, VK_OEM_COMMA, StrL("<")));
     utassert(AccelShowsAs(kShift | kVirt, VK_OEM_PERIOD, StrL(">")));
     utassert(AccelShowsAs(kShift | kVirt, VK_OEM_4, StrL("{")));
@@ -50,7 +44,6 @@ bool ShortcutParse_UnitTestShiftedPunct() {
     utassert(AccelShowsAs(kShift | kVirt, VK_OEM_7, StrL("\"")));
     utassert(AccelShowsAs(kShift | kVirt, VK_OEM_3, StrL("~")));
     // VK codes that equal a punctuation char ('\'' is VK_RIGHT) aren't punctuation
-#if OS_DARWIN
     utassert(AccelShowsAs(kShift | kVirt, 'A',
                           StrL("\u21e7"
                                "A")));
@@ -58,12 +51,6 @@ bool ShortcutParse_UnitTestShiftedPunct() {
     utassert(AccelShowsAs(kShift | kVirt, VK_DELETE, StrL("\u21e7\u2326")));
     utassert(AccelShowsAs(kShift | kVirt, VK_SNAPSHOT, StrL("\u21e7PrtSc")));
     utassert(AccelShowsAs(kAlt | kShift | kCmd | kVirt, 'G', StrL("\u2325\u21e7\u2318G")));
-#else
-    utassert(AccelShowsAs(kShift | kVirt, 'A', StrL("Shift + A")));
-    utassert(AccelShowsAs(kCtrl | kShift | kVirt, VK_RIGHT, StrL("Ctrl + Shift + Right")));
-    utassert(AccelShowsAs(kShift | kVirt, VK_DELETE, StrL("Shift + Del")));
-    utassert(AccelShowsAs(kShift | kVirt, VK_SNAPSHOT, StrL("Shift + PrtSc")));
-#endif
 
     KeyShortcut a{};
     utassert(ParseShortcutString(StrL("<"), a));
@@ -101,7 +88,6 @@ bool ShortcutParse_UnitTestShiftedPunct() {
     utassert(ParseShortcutString(StrL("Ctrl + '"), a));
     utassert(a.vk == VK_OEM_7 && a.Mods() == (kCtrl | kVirt));
 
-#if OS_DARWIN
     // the menu bar's glyphs in every ui language, not orig's "<-" / "->"
     gShortcutLangCode = [] { return StrL("es"); };
     utassert(AccelShowsAs(kCmd | kVirt, VK_LEFT, StrL("\u2318\u2190")));
@@ -110,7 +96,6 @@ bool ShortcutParse_UnitTestShiftedPunct() {
     utassert(AccelShowsAs(kVirt, VK_NEXT, StrL("\u21df")));
     utassert(AccelShowsAs(kVirt, VK_HOME, StrL("\u2196")));
     utassert(AccelShowsAs(kVirt, VK_END, StrL("\u2198")));
-#endif
 
     gShortcutLangCode = prevLang;
     return true;
@@ -143,11 +128,9 @@ bool ShortcutParse_UnitTestGpuiStroke() {
     utassert(StrokeIs(StrL("Ctrl + Numpad0"), StrL("ctrl-numpad0")));
     utassert(StrokeIs(StrL("Numpad9"), StrL("numpad9")));
     utassert(StrokeIs(StrL("Ctrl + ["), StrL("ctrl-[")));
-#if !OS_WIN
     utassert(StrokeIs(StrL("Cmd + K"), StrL("cmd-k")));
     utassert(StrokeIs(StrL("Ctrl + Cmd + F"), StrL("ctrl-cmd-f")));
     utassert(StrokeIs(StrL("Super + Shift + Left"), StrL("cmd-shift-left")));
-#endif
     // the keyboard-help accelerator: Shift + '/' on a US layout
     utassert(str::Eq(ShortcutToGpuiStroke(KeyShortcut(kShift | kVirt, VK_OEM_2)), StrL("shift-/")));
     // a lowercase letter parses as an unshifted virtual key
@@ -168,7 +151,6 @@ bool ShortcutParse_UnitTestGpuiStroke() {
     int nStrokes = 0;
     const AccelStroke* strokes = GetAcceleratorStrokes(nStrokes);
     utassert(nStrokes > 0 && strokes != nullptr);
-#if OS_DARWIN
     bool cmdK = false;
     for (int j = 0; j < nStrokes; j++) {
         if (strokes[j].cmd == CmdCommandPalette && str::Eq(strokes[j].stroke, StrL("cmd-k"))) {
@@ -177,7 +159,6 @@ bool ShortcutParse_UnitTestGpuiStroke() {
         }
     }
     utassert(cmdK);
-#endif
     for (int i = 0; i < n; i++) {
         // an ASCII accelerator is matched on the typed character
         // (AsciiAcceleratorCmd), not bound as a stroke
@@ -301,7 +282,6 @@ static const struct {
     Str shortcut;
     int cmd;
 } gPlatformShortcuts[] = {
-#if OS_DARWIN
     {StrL("Cmd + G"), CmdFindNext},
     {StrL("Cmd + Shift + G"), CmdFindPrev},
     {StrL("Cmd + Alt + G"), CmdGoToPage},
@@ -323,11 +303,6 @@ static const struct {
     {StrL("Alt + Up"), CmdScrollUpPage},
     {StrL("Alt + Down"), CmdScrollDownPage},
     {StrL("Cmd + Backspace"), CmdDeleteAnnotation},
-#elif OS_LINUX
-    {StrL("Ctrl + ,"), CmdOptions},
-#else
-    {StrL("Ctrl + O"), CmdOpenFile},
-#endif
 };
 // clang-format on
 
@@ -348,7 +323,6 @@ static bool IsPlatformShortcut(const KeyShortcut& sc) {
 // a documented (Windows) shortcut as this platform binds it; false when the
 // platform has no such binding
 static bool ToPlatformDocumented(KeyShortcut& sc) {
-#if OS_DARWIN
     bool isArrowLR = sc.vk == VK_LEFT || sc.vk == VK_RIGHT;
     if (sc.alt && !sc.ctrl && isArrowLR) {
         return false;
@@ -361,7 +335,6 @@ static bool ToPlatformDocumented(KeyShortcut& sc) {
         sc.ctrl = false;
         sc.cmd = true;
     }
-#endif
     return !IsPlatformShortcut(sc);
 }
 
@@ -437,10 +410,8 @@ bool ShortcutParse_UnitTestAccelTable() {
         utassert(found);
     }
 
-#if OS_DARWIN
     // "?" parses as Shift + numpad Divide, so this one is spelled as a key
     utassert(IsBoundTo(accels, n, KeyShortcut(kShift | kCmd | kVirt, VK_OEM_2), CmdHelpOpenManual));
-#endif
 
     gLogToConsole = prevLogToConsole;
     gShortcutLangCode = prevLang;
@@ -451,11 +422,7 @@ bool ShortcutParse_UnitTestAccelTable() {
 bool ShortcutParse_UnitTestKeyHint() {
     auto prevLang = gShortcutLangCode;
     gShortcutLangCode = nullptr;
-#if OS_DARWIN
     Str findKey = StrL("\u2318F");
-#else
-    Str findKey = StrL("Ctrl + F");
-#endif
     TempStr got = WithShortcutHintTemp(StrL("Search 3 files (Ctrl + F)"), CmdFindFirst);
     utassert(str::Eq(got, str::JoinTemp(StrL("Search 3 files ("), findKey, StrL(")"))));
     // a translation keeps its words, only the hint changes

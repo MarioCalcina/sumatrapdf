@@ -5,8 +5,6 @@
 // Windows gets these from <windows.h>, included by base/Base.h.
 // https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
 
-#if !OS_WIN
-
 // clang-format off
 #define VK_LBUTTON          0x01
 #define VK_RBUTTON          0x02
@@ -117,5 +115,3 @@
 #define VK_OEM_8            0xDF
 #define VK_OEM_102          0xE2
 // clang-format on
-
-#endif

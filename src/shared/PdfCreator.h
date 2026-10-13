@@ -15,9 +15,6 @@ class PdfCreator {
     ~PdfCreator();
 
     bool AddPageFromFzImage(fz_image* image, float imgDpi = 0) const;
-#if OS_WIN
-    bool AddPageFromGdiplusBitmap(Gdiplus::Bitmap* bmp, float imgDpi = 0);
-#endif
     bool AddPageFromImageData(Str data, float imgDpi = 0) const;
 
     bool SetProperty(DocProp prop, Str value) const;

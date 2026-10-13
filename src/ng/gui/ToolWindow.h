@@ -4,9 +4,9 @@
 // ng: orig shows a number of things in top-level windows of their own (Browse
 // Files In Folder, the find window, Document Properties, ...). gpui opens a
 // window at a size and nothing else (see "gpui gaps": no owner, no style, no
-// position). On Windows, macOS and Linux the native frame is configured, and
-// such a window is a second gpui window described by a ToolWindowDesc. On
-// wasm, and in plugin mode, ToolWindowsAvailable() is false and the caller
+// position), so the native frame is configured here, and such a window is a
+// second gpui window described by a ToolWindowDesc. When
+// ToolWindowsAvailable() is false the caller
 // draws the same content inside the frame.
 
 namespace gpui {
@@ -104,8 +104,8 @@ struct ToolWindowDesc {
     Rect (*place)(MainWindow* owner, ToolWindow* tw) = nullptr;
 };
 
-// false where a second window cannot be owned, styled and placed (off
-// Windows, wasm, plugin mode): the caller keeps its content in the frame
+// false when tool windows are off (gToolWindowsOff): the caller keeps its
+// content in the frame
 bool ToolWindowsAvailable();
 
 // `outer` is the window rectangle in screen pixels (see ToolWindowOuterSize).
@@ -184,15 +184,6 @@ float ToolWindowSetUiFontPx(gpui::Ctx* cx, float px);
 // too, and they are closed before it is
 void ToolWindowsInvalidateFor(MainWindow* win);
 void ToolWindowsCloseFor(MainWindow* win);
-#if OS_WIN
-// NativeWindow.cpp claims gpui windows by class name; these are not frames
-bool ToolWindowOwnsHwnd(HWND hwnd);
-HWND ToolWindowHwnd(ToolWindow* tw);
-// the SumatraWgDefaultWinClass window tests post to, or the tool window
-HWND ToolWindowOrigHwnd(ToolWindow* tw);
-// the main window of the tool window with this handle
-MainWindow* ToolWindowOwnerFromHwnd(HWND hwnd);
-#endif
 
 // -dbg-control's TestToolWindow: list | on | off | close <name> |
 // input <name> <kind> a b c d (see AppShellTestInput) | state <name> |

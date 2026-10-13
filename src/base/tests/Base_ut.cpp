@@ -386,7 +386,6 @@ static void ArenaPtrCompressTest() {
     }
 }
 
-#if !OS_WASM
 // a loaded CI runner can start a 50 ms worker late: poll for its flag
 // instead of sleeping a fixed time
 static bool WaitForFlag(AtomicBool* flag) {
@@ -399,9 +398,7 @@ static bool WaitForFlag(AtomicBool* flag) {
     }
     return AtomicBoolGet(flag);
 }
-#endif
 
-#if OS_POSIX && !OS_WASM
 static AtomicBool gTimedJoinFinished;
 
 static void TimedJoinWorker() {
@@ -423,9 +420,7 @@ static void TimedJoinTest() {
     utassert(thread == nullptr);
     utassert(AtomicBoolGet(&gTimedJoinFinished));
 }
-#endif
 
-#if !OS_WASM
 static AtomicBool gWaitThreadFinished;
 
 static void WaitThreadWorker() {
@@ -454,12 +449,9 @@ static void WaitThreadTest() {
     utassert(SafeCloseThreadHandle(&thread));
     utassert(WaitForFlag(&gWaitThreadFinished));
 }
-#endif
 
 void BaseUtilTest() {
-#if !OS_WASM
     WaitThreadTest();
-#endif
     ListTest();
     Func0Test();
     Func1Test();
@@ -468,9 +460,7 @@ void BaseUtilTest() {
     ColorTest();
     ArenaChainedBlockSizeTest();
     ArenaPtrCompressTest();
-#if OS_POSIX && !OS_WASM
     TimedJoinTest();
-#endif
 
     size_t n = dimof(roundUpTestCases) / 2;
     for (size_t i = 0; i < n; i++) {

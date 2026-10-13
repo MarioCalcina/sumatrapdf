@@ -8,9 +8,7 @@
 
 #include "base/Base.h"
 
-#if !OS_WIN
 #include "VirtKeys.h"
-#endif
 #include "ShortcutParse.h"
 
 constexpr u8 kVirt = KeyShortcut::kVirtKey;
@@ -157,7 +155,6 @@ static bool skipVirtKey(Str& s, Str key) {
 
 // used in menu shortcuts
 static TempStr getVirtTemp(u8 key, bool isEng) {
-#if OS_DARWIN
     // the glyphs the menu bar draws for these keys, in every language
     switch (key) {
         case VK_LEFT:
@@ -187,7 +184,6 @@ static TempStr getVirtTemp(u8 key, bool isEng) {
         case VK_END:
             return StrL("\u2198");
     }
-#endif
     // over-rides for non-english languages
     if (!isEng) {
         switch (key) {
@@ -249,14 +245,12 @@ again:
         fVirt |= (kCtrl | kVirt);
         goto again;
     }
-#if !OS_WIN
     // an ACCEL has no bit for the Windows key
     if (skipVirtKey(cursor, StrL("cmd")) || skipVirtKey(cursor, StrL("command")) ||
         skipVirtKey(cursor, StrL("super")) || skipVirtKey(cursor, StrL("meta"))) {
         fVirt |= (kCmd | kVirt);
         goto again;
     }
-#endif
     if (skipVirtKey(cursor, StrL("global"))) {
         goto again;
     }
@@ -306,42 +300,11 @@ again:
         if (len(ws) != 1) {
             return false;
         }
-#if OS_WIN
-        WCHAR wc = *ws.s;
-        // https://github.com/sumatrapdfreader/sumatrapdf/issues/4490
-        // handle cyrrilic / hebrew keyboards where shortcut character
-        // is unicode and needs to be translated to virtual char
-        HKL kl = GetKeyboardLayout(0);
-        SHORT vkAndShift = VkKeyScanExW(wc, kl);
-        if (vkAndShift == -1) {
-            logf("can't map char 0x%x\n", (int)wc);
-            return false;
-        }
-        // https://docs.microsoft.com/en-gb/windows/win32/api/winuser/nf-winuser-vkkeyscanexw
-        // ... high-order byte contains the shift state,
-        // 1 Either SHIFT key is pressed.
-        // 2 Either CTRL key is pressed.
-        // 4 Either ALT key is pressed.
-        BYTE shiftState = HIBYTE(vkAndShift);
-        key = (u16)LOBYTE(vkAndShift);
-        if (shiftState & 0x1) {
-            fVirt |= (kShift | kVirt);
-        }
-        if (shiftState & 0x2) {
-            fVirt |= (kCtrl | kVirt);
-        }
-        if (shiftState & 0x4) {
-            fVirt |= (kAlt | kVirt);
-        }
-        sc = KeyShortcut(fVirt | kVirt, key);
-        return true;
-#else
         // ng: POSIX gap. Mapping a unicode character to a virtual key needs
         // the active keyboard layout (win32 VkKeyScanExW); gpui doesn't
         // expose one yet, so non-ASCII shortcut characters don't bind.
         logf("can't map char 0x%x (no keyboard layout)\n", (int)*ws.s);
         return false;
-#endif
     }
     if (len(s) == 0) {
         return false;
@@ -432,7 +395,6 @@ TempStr AppendAccelKeyToMenuStringTemp(TempStr menuStr, const KeyShortcut& sc) {
     u8 key = (u8)sc.vk;
     bool isVirt = sc.isVirt;
     char shiftedPunct = sc.shift ? ShiftedPunctGlyph(key) : 0;
-#if OS_DARWIN
     // the menu bar's notation: ⌃⌥⇧⌘ in that order, nothing between them
     if (sc.ctrl) {
         str.Append(StrL("\u2303"));
@@ -446,34 +408,6 @@ TempStr AppendAccelKeyToMenuStringTemp(TempStr menuStr, const KeyShortcut& sc) {
     if (sc.cmd) {
         str.Append(StrL("\u2318"));
     }
-#else
-    if (sc.cmd) {
-        str.Append(StrL("Super + "));
-    }
-    if (sc.alt && sc.ctrl) {
-        // same bits as AltGr on Windows; keep the name the user would type
-        str.Append(StrL("AltGr + "));
-    } else if (sc.alt) {
-        Str s = StrL("Alt + ");
-        if (isGerman) {
-            s = StrL("Größe + ");
-        }
-        str.Append(s);
-    } else if (sc.ctrl) {
-        Str s = StrL("Ctrl + ");
-        if (isGerman) {
-            s = StrL("Strg + ");
-        }
-        str.Append(s);
-    }
-    if (sc.shift && !shiftedPunct) {
-        Str s = StrL("Shift + ");
-        if (isGerman) {
-            s = StrL("Umschalt + ");
-        }
-        str.Append(s);
-    }
-#endif
     if (shiftedPunct) {
         str.AppendChar(shiftedPunct);
         goto Exit;
@@ -594,20 +528,3 @@ TempStr ShortcutToGpuiStroke(const KeyShortcut& sc) {
     }
     return str::JoinTemp(res, key);
 }
-
-#if OS_WIN
-bool ParseShortcutString(Str shortcut, ACCEL& accel) {
-    KeyShortcut sc;
-    if (!ParseShortcutString(shortcut, sc)) {
-        return false;
-    }
-    accel.fVirt = sc.Mods();
-    accel.key = sc.vk;
-    return true;
-}
-
-TempStr AppendAccelKeyToMenuStringTemp(TempStr menuStr, const ACCEL& accel) {
-    KeyShortcut sc(accel.fVirt, accel.key);
-    return AppendAccelKeyToMenuStringTemp(menuStr, sc);
-}
-#endif

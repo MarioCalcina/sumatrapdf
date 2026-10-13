@@ -59,7 +59,6 @@ struct AppCommandCtx {
     bool canUndo = false;
     bool canRedo = false;
     bool clipboardHasImage = false;
-    bool clipboardReadAsync = false;
 
     int nTabs = 0;
     bool hasDocTabs = false;

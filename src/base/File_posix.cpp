@@ -10,26 +10,8 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <unistd.h>
-#if OS_DARWIN
 #include <mach-o/dyld.h>
 #include <sys/mount.h>
-#elif OS_LINUX
-#include <linux/magic.h>
-#include <sys/vfs.h>
-// kernel headers before 6.x (Ubuntu 22.04) lack these
-#ifndef CIFS_SUPER_MAGIC
-#define CIFS_SUPER_MAGIC 0xFF534D42
-#endif
-#ifndef SMB2_SUPER_MAGIC
-#define SMB2_SUPER_MAGIC 0xFE534D42
-#endif
-#ifndef CEPH_SUPER_MAGIC
-#define CEPH_SUPER_MAGIC 0x00C36400
-#endif
-#ifndef FUSE_SUPER_MAGIC
-#define FUSE_SUPER_MAGIC 0x65735546
-#endif
-#endif
 
 #include "base/File.h"
 
@@ -45,7 +27,6 @@ static FILETIME FileTimeFromTimespec(time_t sec, long nsec) {
     return FileTimeFromU64(ticks);
 }
 
-#if defined(__APPLE__)
 static timespec StatAccessTime(const struct stat& st) {
     return st.st_atimespec;
 }
@@ -53,15 +34,6 @@ static timespec StatAccessTime(const struct stat& st) {
 static timespec StatModificationTime(const struct stat& st) {
     return st.st_mtimespec;
 }
-#else
-static timespec StatAccessTime(const struct stat& st) {
-    return st.st_atim;
-}
-
-static timespec StatModificationTime(const struct stat& st) {
-    return st.st_mtim;
-}
-#endif
 
 static FILETIME FileTimeFromTimespec(timespec ts) {
     return FileTimeFromTimespec(ts.tv_sec, ts.tv_nsec);
@@ -150,7 +122,6 @@ bool HasVariableDriveLetter(Str /*path*/) {
     return false;
 }
 
-#if !OS_WASM
 static bool StatFileSystem(Str path, struct statfs& fs) {
     if (len(path) == 0) {
         return false;
@@ -167,38 +138,13 @@ static bool StatFileSystem(Str path, struct statfs& fs) {
         current = parent;
     }
 }
-#endif
 
 bool IsOnNetworkDrive(Str path) {
-#if OS_WASM
-    (void)path;
-    return false;
-#else
     struct statfs fs{};
     if (!StatFileSystem(path, fs)) {
         return false;
     }
-#if OS_DARWIN
     return (fs.f_flags & MNT_LOCAL) == 0;
-#else
-    switch ((unsigned long)fs.f_type) {
-        case NFS_SUPER_MAGIC:
-        case SMB_SUPER_MAGIC:
-        case CIFS_SUPER_MAGIC:
-        case SMB2_SUPER_MAGIC:
-        case CODA_SUPER_MAGIC:
-        case NCP_SUPER_MAGIC:
-        case AFS_SUPER_MAGIC:
-        case AFS_FS_MAGIC:
-        case CEPH_SUPER_MAGIC:
-        case V9FS_MAGIC:
-        case FUSE_SUPER_MAGIC:
-            return true;
-        default:
-            return false;
-    }
-#endif
-#endif
 }
 
 bool IsCloudPlaceholder(Str /*path*/) {
@@ -233,12 +179,8 @@ bool IsOnAvailableDrive(Str path) {
 }
 
 bool SupportsChangeNotifications(Str path) {
-#if OS_LINUX
-    return !IsOnNetworkDrive(path);
-#else
     (void)path;
     return false;
-#endif
 }
 
 bool IsAbsolute(Str path) {
@@ -273,7 +215,6 @@ TempStr GetTempFilePathTemp(Str filePrefix) {
 
 // Path of this process image (exe or DLL that contains this code).
 TempStr GetSelfExePathTemp() {
-#if OS_DARWIN
     char buf[PATH_MAX];
     uint32_t size = sizeof(buf);
     if (_NSGetExecutablePath(buf, &size) != 0) {
@@ -284,15 +225,6 @@ TempStr GetSelfExePathTemp() {
         return str::DupTemp(Str(resolved));
     }
     return str::DupTemp(Str(buf));
-#else
-    char buf[PATH_MAX];
-    ssize_t n = readlink("/proc/self/exe", buf, sizeof(buf) - 1);
-    if (n < 0) {
-        return {};
-    }
-    buf[n] = 0;
-    return str::DupTemp(Str(buf));
-#endif
 }
 
 namespace file {
@@ -463,13 +395,6 @@ bool Delete(Str path) {
     }
     return errno == ENOENT;
 }
-
-#if !OS_DARWIN
-// no Trash API here; macOS has one (File_mac.mm)
-bool DeleteFileToTrash(Str path) {
-    return Delete(path);
-}
-#endif
 
 bool Copy(Str dst, Str src, bool dontOverwrite) {
     return Copy(dst, src, dontOverwrite, {});

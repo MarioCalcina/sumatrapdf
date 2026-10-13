@@ -5,12 +5,7 @@
 #include "base/File.h"
 #include "base/Timer.h"
 #include "base/UITask.h"
-#if OS_WIN
-#include "base/Win.h"
-#include "base/ScopedWin.h"
-#else
 #include "base/Launch.h"
-#endif
 #include "gui/UIModels.h"
 #include "Settings.h"
 #include "DisplayMode.h"
@@ -31,7 +26,6 @@
 #include "WindowTab.h"
 #include "Commands.h"
 #include "AppTools.h"
-#include "ExplorerQuickLook.h"
 #include "Selection.h"
 #include "FindBar.h"
 #include "FindWindow.h"
@@ -1126,23 +1120,6 @@ void RebuildFindMatchPaintCache(MainWindow* win, DisplayModel* dm, int firstPage
     }
 }
 
-#if OS_WIN
-LRESULT OnDDExecute(HWND hwnd, WPARAM wp, LPARAM lp) {
-    HWND hwndClient = (HWND)wp;
-    HGLOBAL hCommand = (HGLOBAL)lp;
-    bool isUnicode = IsWindowUnicode(hwndClient);
-
-    TempStr cmd = HGLOBALToStrTemp(hCommand, isUnicode);
-    bool didHandle = HandleExecuteCmds(hwnd, cmd);
-    DDEACK ack{};
-    ack.fAck = didHandle ? 1 : 0;
-    LPARAM lpres = PackDDElParam(WM_DDE_ACK, *(WORD*)&ack, (UINT_PTR)hCommand);
-    PostMessageW(hwndClient, WM_DDE_ACK, (WPARAM)hwnd, lpres);
-    return 0;
-}
-
-#endif // OS_WIN
-
 // goToPage: scroll to the match's page even when it's already shown (a new
 // search). Moving between matches never adds a nav point: the search's start
 // view is already in the history (MarkSearchStart), so Back returns there
@@ -2146,12 +2123,6 @@ static TempStr BuildOpenFileCmdTemp(Str pattern, Str path, int line, int col) {
 // Windows there is no CreateProcess wrapper for a whole command line, so the
 // first token is the program and the rest its arguments.
 static bool LaunchInverseSearchCmd(Str cmdLine) {
-#if OS_WIN
-    // resolve relative paths with relation to SumatraPDF.exe's directory
-    TempStr appDir = GetSelfExeDirTemp();
-    AutoCloseHandle process(LaunchProcessInDir(cmdLine, appDir));
-    return process != nullptr;
-#else
     Str rest = cmdLine;
     TempStr exe;
     if (rest.len > 0 && rest.s[0] == '"') {
@@ -2175,11 +2146,10 @@ static bool LaunchInverseSearchCmd(Str cmdLine) {
         rest = Str(rest.s + 1, rest.len - 1);
     }
     return LaunchFileShell(exe, rest);
-#endif
 }
 
 bool OnInverseSearch(MainWindow* win, int x, int y) {
-    if (!CanAccessDisk() || gPluginMode) {
+    if (!CanAccessDisk()) {
         return false;
     }
     WindowTab* tab = win->CurrentTab();
@@ -2399,106 +2369,6 @@ Str HandleCmdCommand(HWND hwnd, Str cmd, bool* ack) {
     *ack = true;
     return next;
 }
-
-#if OS_WIN
-
-static bool HandleRequestCmds(Str cmd, str::Builder& rsp) {
-    bool didHandle = false;
-    while (cmd) {
-        logf("HandleRequestCmds: '%s'\n", cmd);
-
-        Str nextCmd = HandleGetFileStateCmd(cmd, &didHandle, rsp);
-        if (str::IsNull(nextCmd)) {
-            nextCmd = HandleGetOpenFilesCmd(cmd, &didHandle, rsp);
-        }
-        if (str::IsNull(nextCmd)) {
-            nextCmd = HandleAppRequestCmd(cmd, &didHandle, rsp);
-        }
-        if (str::IsNull(nextCmd)) {
-            TempStr tmp;
-            nextCmd = str::Parse(cmd, "%s]", &tmp);
-        }
-        cmd = nextCmd;
-    }
-    return didHandle;
-}
-
-LRESULT OnDDERequest(HWND hwnd, WPARAM wp, LPARAM lp) {
-    // window that is sending us the message
-    HWND hwndClient = (HWND)wp;
-
-    UINT fmt = LOWORD(lp);
-    if (fmt != CF_TEXT && fmt != CF_UNICODETEXT) {
-        logf("OnDDERequest: invalid fmt '%d'\n", (int)fmt);
-        return 0;
-    }
-    ATOM a = HIWORD(lp);
-    TempStr cmd = AtomToStrTemp(a);
-    if (len(cmd) == 0) {
-        return 0;
-    }
-
-    str::Builder rsp;
-    bool didHandle = HandleRequestCmds(cmd, rsp);
-    if (!didHandle) {
-        rsp.Reset(StrL("error: unknown command"));
-    }
-
-    void* data;
-    int cbData;
-    int cch = 0;
-    if (fmt == CF_TEXT) {
-        data = (void*)ToStr(rsp).s;
-        cbData = len(rsp) + 1;
-    } else {
-        WCHAR* tmp = CWStrTemp(ToStr(rsp), cch);
-        data = (void*)tmp;
-        cbData = (cch + 1) * 2;
-    }
-
-    // the payload goes at DDEDATA.Value, i.e. offsetof(DDEDATA, Value) -- NOT
-    // sizeof(DDEDATA), whose trailing Value[1] + padding would push it too far
-    // and the client would read zeros
-    int cbDdeData = (int)offsetof(DDEDATA, Value);
-    u8* res = (u8*)AllocZero(GetTempArena(), cbDdeData + cbData);
-    DDEDATA* ddeData = (DDEDATA*)res;
-    ddeData->fResponse = 1; // this data answers a WM_DDE_REQUEST (not an advise)
-    ddeData->fRelease = 1;  // tell client to free HGLOBAL
-    ddeData->cfFormat = (short)fmt;
-    memcpy(res + cbDdeData, data, (size_t)cbData);
-
-    HGLOBAL h = MemToHGLOBAL(res, cbDdeData + cbData, GMEM_MOVEABLE | GMEM_DDESHARE);
-    // must use PackDDElParam, not MAKELPARAM: on 64-bit MAKELPARAM would
-    // truncate the HGLOBAL to 16 bits and the DDE client would dereference a
-    // garbage handle (crash in user32's WM_DDE_DATA handling)
-    LPARAM lpres = PackDDElParam(WM_DDE_DATA, (UINT_PTR)h, a);
-    if (!PostMessageW(hwndClient, WM_DDE_DATA, (WPARAM)hwnd, lpres)) {
-        // the client went away: we still own the data and the packed lParam
-        GlobalFree(h);
-        FreeDDElParam(WM_DDE_DATA, lpres);
-    }
-    return 0;
-}
-
-LRESULT OnDDEInitiate(HWND hwnd, WPARAM wp, LPARAM lp) {
-    ATOM aServer = GlobalAddAtomW(kSumatraDdeServer);
-    ATOM aTopic = GlobalAddAtomW(kSumatraDdeTopic);
-
-    if (LOWORD(lp) == aServer && HIWORD(lp) == aTopic) {
-        SendMessageW((HWND)wp, WM_DDE_ACK, (WPARAM)hwnd, MAKELPARAM(aServer, 0));
-    } else {
-        GlobalDeleteAtom(aServer);
-        GlobalDeleteAtom(aTopic);
-    }
-    return 0;
-}
-
-LRESULT OnDDETerminate(HWND hwnd, WPARAM wp, LPARAM) {
-    PostMessageW((HWND)wp, WM_DDE_TERMINATE, (WPARAM)hwnd, 0L);
-    return 0;
-}
-
-#endif // OS_WIN
 
 void FindTextOnThread(MainWindow* win, TextSearch::Direction direction, bool showProgress) {
     if (!win->findEdit) {

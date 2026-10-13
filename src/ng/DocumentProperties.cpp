@@ -7,16 +7,11 @@
 // alignment); the window is a gpui Dialog with a read-only monospaced editor.
 
 #include "gui/GpuiBridge.h"
-#if OS_WIN
-#include "base/Win.h"
-#endif
 #include "VirtKeys.h"
 #include "base/File.h"
 #include "base/UITask.h"
 
-#if !OS_WIN
 #include <locale.h>
-#endif
 
 #include "gui/Dpi.h"
 #include "gui/UIModels.h"
@@ -44,9 +39,6 @@
 #include "gui/DialogWidgets.h"
 #include "gui/ToolWindow.h"
 
-#if OS_WIN
-#include <wincrypt.h>
-#endif
 #include "DocumentProperties.h"
 #include "DocumentPropertiesCommon.h"
 
@@ -75,20 +67,12 @@ struct PropertiesDlg {
     // orig's edit font as GDI measures it, in dips: Consolas 14 is 8 x 17
     float toolCharDx = 0;
     float toolLineDy = 0;
-#if OS_WIN
-    PdfSigCert* certs = nullptr;
-    DialogSelect certSelect;
-#endif
 };
 
 static PropertiesDlg gProps;
 
 struct PropertiesView {
     static void OnCopy(PropertiesView* self, gp::Ctx* cx, const gp::ClickEvent*);
-#if OS_WIN
-    static void OnViewCert(PropertiesView* self, gp::Ctx* cx, const gp::ClickEvent*);
-    static void OnUpdateEutl(PropertiesView* self, gp::Ctx* cx, const gp::ClickEvent*);
-#endif
     static void OnClose(PropertiesView* self, gp::Ctx* cx, const gp::ClickEvent*);
 };
 
@@ -198,36 +182,6 @@ static bool IsoDateParse(Str date, PropDate* timeOut, int* timeZoneOut) {
 }
 
 static TempStr FormatDateTemp(const PropDate& date, int timeZone) {
-#if OS_WIN
-    SYSTEMTIME st{};
-    st.wYear = (WORD)date.year;
-    st.wMonth = (WORD)date.month;
-    st.wDay = (WORD)date.day;
-    st.wHour = (WORD)date.hour;
-    st.wMinute = (WORD)date.minute;
-    st.wSecond = (WORD)date.second;
-    WCHAR bufW[512]{};
-    int cchBufLen = dimof(bufW);
-    int ret = GetDateFormatW(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &st, nullptr, bufW, cchBufLen);
-    if (ret < 2) { // GetDateFormat() failed or returned an empty result
-        return {};
-    }
-
-    // don't add 00:00:00 for dates without time
-    if (0 == date.hour && 0 == date.minute && 0 == date.second) {
-        TempStr res = ToUtf8Temp(bufW);
-        return AddTimeZone(res, timeZone);
-    }
-
-    WCHAR* tmp = bufW + ret;
-    tmp[-1] = ' ';
-    ret = GetTimeFormatW(LOCALE_USER_DEFAULT, 0, &st, nullptr, tmp, cchBufLen - ret);
-    if (ret < 2) { // GetTimeFormat() failed or returned an empty result
-        tmp[-1] = '\0';
-    }
-    TempStr res = ToUtf8Temp(bufW);
-    return AddTimeZone(res, timeZone);
-#elif OS_DARWIN
     if (date.year == 0) {
         return {};
     }
@@ -237,27 +191,6 @@ static TempStr FormatDateTemp(const PropDate& date, int timeZone) {
     TempStr res =
         FormatLocaleDateTemp(date.year, date.month, date.day, date.hour, date.minute, date.second, style);
     return len(res) > 0 ? AddTimeZone(res, timeZone) : res;
-#else
-    if (date.year == 0) {
-        return {};
-    }
-
-    static const char* locale = setlocale(LC_TIME, "");
-    (void)locale;
-    struct tm tm{};
-    tm.tm_year = date.year - 1900;
-    tm.tm_mon = date.month - 1;
-    tm.tm_mday = date.day;
-    tm.tm_hour = date.hour;
-    tm.tm_min = date.minute;
-    tm.tm_sec = date.second;
-    char buf[512]{};
-    const char* format = (date.hour == 0 && date.minute == 0 && date.second == 0) ? "%x" : "%x %X";
-    if (strftime(buf, dimof(buf), format, &tm) == 0) {
-        return {};
-    }
-    return AddTimeZone(Str(buf), timeZone);
-#endif
 }
 
 // clang-format on
@@ -281,46 +214,6 @@ void AppendDateProp(str::Builder& out, Str key, Str val, bool isPdfDate) {
     AppendProp(out, key, dateStr);
 }
 
-#if OS_WIN
-static void ViewCertDer(HWND parent, Str der) {
-    if (len(der) == 0) {
-        return;
-    }
-    PCCERT_CONTEXT cert =
-        CertCreateCertificateContext(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, (const BYTE*)der.s, (DWORD)len(der));
-    if (!cert) {
-        return;
-    }
-    using Fn = BOOL(WINAPI*)(DWORD, const void*, HWND, LPCWSTR, DWORD, void*);
-    HMODULE dll = LoadLibraryW(L"cryptui.dll");
-    Fn view = dll ? (Fn)GetProcAddress(dll, "CryptUIDlgViewContext") : nullptr;
-    if (view) {
-        view(CERT_STORE_CERTIFICATE_CONTEXT, cert, parent, L"Certificate", 0, nullptr);
-    }
-    if (dll) {
-        FreeLibrary(dll);
-    }
-    CertFreeCertificateContext(cert);
-}
-
-TempStr FileTimeLocalTemp(const FILETIME& ft) {
-    FILETIME local{};
-    SYSTEMTIME st{};
-    if (!FileTimeToLocalFileTime(&ft, &local) || !FileTimeToSystemTime(&local, &st)) {
-        return {};
-    }
-    PropDate d;
-    d.year = st.wYear;
-    d.month = st.wMonth;
-    d.day = st.wDay;
-    d.hour = st.wHour;
-    d.minute = st.wMinute;
-    d.second = st.wSecond;
-    return FormatDateTemp(d, 0);
-}
-
-#endif
-
 // --- the dialog -------------------------------------------------------------
 
 // Open as an overlay or as its own window. The frame builder skips the
@@ -339,12 +232,6 @@ TempStr PropertiesDialogButtonsTemp(int* exitCodeOut) {
     }
     int viewCert = 0;
     int updateEutl = 0;
-#if OS_WIN
-    if (gProps.certs) {
-        viewCert = 1;
-        updateEutl = 1;
-    }
-#endif
     if (exitCodeOut) {
         *exitCodeOut = 0;
     }
@@ -393,11 +280,6 @@ void DeletePropertiesWindow(MainWindow* win) {
     delete gProps.textEdit;
     gProps.textEdit = nullptr;
     gProps.propsText.Reset();
-#if OS_WIN
-    gProps.certSelect.Free();
-    FreePdfSigCerts(gProps.certs);
-    gProps.certs = nullptr;
-#endif
     AppShellInvalidate(gProps.win);
 }
 
@@ -408,43 +290,6 @@ void PropertiesView::OnCopy(PropertiesView*, gp::Ctx* cx, const gp::ClickEvent*)
     ShowTemporaryNotification(gProps.win, Tr("Copied to clipboard"));
     gp::Notify(cx);
 }
-
-#if OS_WIN
-void PropertiesView::OnViewCert(PropertiesView*, gp::Ctx* cx, const gp::ClickEvent*) {
-    PdfSigCert* cert = gProps.certs;
-    for (int i = 0; cert && i < gProps.certSelect.sel; i++) {
-        cert = cert->next;
-    }
-    if (cert) {
-        ViewCertDer((HWND)gp::PlatWindowHandle(cx->win), cert->der);
-    }
-}
-
-void OnEutlUpdateDone(EutlUpdateJob* job) {
-    gProps.eutlUpdating = false;
-    if (IsMainWindowValidAndNotClosing(job->win)) {
-        if (job->ok) {
-            ShowTemporaryNotification(job->win, job->msg, kNotif5SecsTimeOut);
-        } else {
-            ShowWarningNotification(job->win, job->msg, kNotif5SecsTimeOut);
-        }
-        AppShellInvalidate(job->win);
-    }
-    str::Free(job->msg);
-    delete job;
-}
-
-void PropertiesView::OnUpdateEutl(PropertiesView*, gp::Ctx* cx, const gp::ClickEvent*) {
-    if (gProps.eutlUpdating) {
-        return;
-    }
-    gProps.eutlUpdating = true;
-    auto* job = new EutlUpdateJob;
-    job->win = gProps.win;
-    RunAsync(MkFunc0<EutlUpdateJob>(EutlUpdateThread, job), StrL("EutlUpdate"));
-    gp::Notify(cx);
-}
-#endif
 
 void PropertiesView::OnClose(PropertiesView*, gp::Ctx* cx, const gp::ClickEvent*) {
     DeletePropertiesWindow((MainWindow*)nullptr);
@@ -488,25 +333,7 @@ void ShowProperties(MainWindow* win, DocController* ctrl) {
     gProps.win = win;
     gProps.propsText.Reset();
     DisplayModel* dm = ctrl->AsFixed();
-#if OS_WIN
-    EngineBase* engine = dm ? dm->GetEngine() : nullptr;
-    if (EngineMupdfIsPdf(engine)) {
-        EutlRegisterLookup();
-        gProps.certs = EngineMupdfGetSignatureCerts(engine);
-        if (gProps.certs) {
-            StrVec labels;
-            for (PdfSigCert* cert = gProps.certs; cert; cert = cert->next) {
-                labels.Append(cert->label);
-            }
-            gProps.certSelect.Init(win->gpuiWin ? win->gpuiWin->app : nullptr);
-            gProps.certSelect.SetItems(labels, 0);
-        }
-    }
-#endif
     GetPropsText(ctrl, gProps.propsText);
-#if OS_WIN
-    AppendCertsText(gProps.propsText, gProps.certs);
-#endif
     AlignPropertiesText(gProps.propsText);
     EndWithSingleNewline(gProps.propsText);
     gProps.propsText.Append(StrL("\n"));
@@ -797,19 +624,6 @@ static gp::El* PropsToolBuild(MainWindow*, gp::Ctx* cx) {
     gp::El* footer = gp::Div(cx->a)->FlexRow()->JustifyEnd()->ItemsEnd()->Gap(kPropsToolPad)->H(btnRowDy)->Shrink0();
     footer->Child(PropsToolButton(cx, GStrL("props-copy"), Tr("Copy To Clipboard"),
                                   gp::ListenTo(gPropertiesView, &PropertiesView::OnCopy), btnFont));
-#if OS_WIN
-    if (gProps.certs) {
-        gProps.certSelect.PollChanged(cx->app);
-        if (gProps.certs->next) {
-            footer->Child(gProps.certSelect.Build(cx, StrL("props-certificate"), 220));
-        }
-        footer->Child(PropsToolButton(cx, GStrL("props-view-certificate"), Tr("View Certificate..."),
-                                      gp::ListenTo(gPropertiesView, &PropertiesView::OnViewCert), btnFont));
-        footer->Child(PropsToolButton(cx, GStrL("props-update-eutl"), Tr("Update EU Trusted List"),
-                                      gp::ListenTo(gPropertiesView, &PropertiesView::OnUpdateEutl), btnFont,
-                                      gProps.eutlUpdating));
-    }
-#endif
     return gp::Div(cx->a)
         ->FlexCol()
         ->W(gp::kFill)
@@ -868,23 +682,6 @@ gp::El* PropertiesDialogBuild(MainWindow* win, gp::Ctx* cx) {
     gp::El* body = gp::Div(cx->a)->FlexCol()->W(gp::kFill)->Child(edit)->Child(measure);
 
     gp::El* footer = gp::Div(cx->a)->FlexRow()->JustifyEnd()->Gap(8);
-#if OS_WIN
-    if (gProps.certs) {
-        gProps.certSelect.PollChanged(cx->app);
-        if (gProps.certs->next) {
-            footer->Child(gProps.certSelect.Build(cx, StrL("props-certificate"), 220));
-        }
-        footer->Child(gpc::Button::New(cx, GStrL("props-view-certificate"))
-                          ->Label(ToGpui(Tr("View Certificate...")))
-                          ->OnClick(gp::ListenTo(gPropertiesView, &PropertiesView::OnViewCert))
-                          ->IntoEl());
-        footer->Child(gpc::Button::New(cx, GStrL("props-update-eutl"))
-                          ->Label(ToGpui(Tr("Update EU Trusted List")))
-                          ->Disabled(gProps.eutlUpdating)
-                          ->OnClick(gp::ListenTo(gPropertiesView, &PropertiesView::OnUpdateEutl))
-                          ->IntoEl());
-    }
-#endif
     footer->Child(gpc::Button::New(cx, GStrL("props-copy"))
                       ->Label(ToGpui(Tr("Copy To Clipboard")))
                       ->OnClick(gp::ListenTo(gPropertiesView, &PropertiesView::OnCopy))

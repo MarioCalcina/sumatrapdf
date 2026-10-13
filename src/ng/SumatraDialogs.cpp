@@ -137,14 +137,6 @@ void MsgBox(MainWindow* win, Str text, Str caption, uint flags, Func1<int> onRes
         onResult.Call(MbRetCancel);
         return;
     }
-#if OS_WIN
-    // orig's MessageBoxW, where the system's box can be shown
-    if (NativeMsgBoxEnabled()) {
-        logf("MsgBox (system): '%s' / '%s' flags 0x%x\n", caption, text, flags);
-        NativeMsgBox(win, text, len(caption) > 0 ? caption : Str(kAppName), flags, onResult);
-        return;
-    }
-#endif
     gMsgBox.win = win;
     gMsgBox.host = ToolWindowActiveOf(win);
     gMsgBox.text = str::Dup(text);
@@ -886,14 +878,6 @@ void ShowUnsavedAnnotationsDialog(MainWindow* win, Str fileName, Func1<int> onCh
     if (gUnsaved.visible) {
         FinishUnsaved(SaveChoice::Cancel);
     }
-#if OS_WIN
-    // orig's task dialog, where the system's can be shown
-    if (NativeMsgBoxEnabled()) {
-        logf("ShowUnsavedAnnotationsDialog (system): '%s'\n", fileName);
-        NativeUnsavedDialog(win, fileName, onChoice);
-        return;
-    }
-#endif
     gUnsaved.win = win;
     gUnsaved.fileName = str::Dup(fileName);
     gUnsaved.onChoice = onChoice;

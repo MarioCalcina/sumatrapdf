@@ -299,9 +299,3 @@ struct Print_Advanced_Data {
           perPagePaperSize(perPagePaperSize),
           extraRotation(extraRotation) {}
 };
-
-#if OS_WIN
-// dlgTemplate owns the in-memory DLGTEMPLATE and must outlive the property
-// sheet, as orig's RTL template does
-HPROPSHEETPAGE CreatePrintAdvancedPropSheet(Print_Advanced_Data* data, ScopedMem<DLGTEMPLATE>& dlgTemplate);
-#endif

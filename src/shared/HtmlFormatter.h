@@ -5,13 +5,6 @@ namespace dict {
 class MapStrToInt;
 }
 
-#if OS_WIN
-namespace Gdiplus {
-class Color;
-class Graphics;
-} // namespace Gdiplus
-#endif
-
 // Include gui/PlatformFont.h and gui/PlatformText.h first.
 enum class DrawInstrType {
     Unknown = 0,
@@ -266,17 +259,8 @@ struct HtmlFormatter {
     Vec<HtmlPage*>* FormatAllPages(bool skipEmptyPages = true);
 };
 
-#if OS_WIN
-void DrawHtmlPage(Gdiplus::Graphics* g, PlatformTextRender* textDraw, Vec<DrawInstr>* drawInstructions, float offX,
-                  float offY, bool showBbox, Color textColor, bool* abortCookie = nullptr);
-#elif OS_LINUX
-struct _cairo;
-void DrawHtmlPage(struct _cairo* cairo, PlatformTextRender* textDraw, Vec<DrawInstr>* drawInstructions, float offX,
-                  float offY, bool showBbox, Color textColor, bool* abortCookie = nullptr);
-#elif OS_DARWIN
 struct CGContext;
 void DrawHtmlPage(struct CGContext* context, PlatformTextRender* textDraw, Vec<DrawInstr>* drawInstructions, float offX,
                   float offY, bool showBbox, Color textColor, bool* abortCookie = nullptr);
-#endif
 
 HtmlFormatterArgs* CreateFormatterDefaultArgs(int dx, int dy, Arena* textAllocator = nullptr);

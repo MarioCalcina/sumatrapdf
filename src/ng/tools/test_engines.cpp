@@ -7,10 +7,6 @@
 #include "base/Timer.h"
 #include "base/UITask.h"
 
-#if OS_WIN
-#include <shlwapi.h>
-#endif
-
 extern "C" {
 #include <mupdf/fitz.h>
 }
@@ -129,9 +125,6 @@ static bool RenderPath(Str path) {
 static bool SavePixmapAsPng(Pixmap* pixmap, Str path) {
     Pixmap* owned = nullptr;
     if (pixmap->format == PixmapFormat::Native) {
-#if OS_WIN
-        owned = PixmapCopyAs32bppDIB(pixmap);
-#endif
         if (!owned) {
             printf("SavePixmapAsPng: can't read a native pixmap\n");
             return false;
@@ -461,43 +454,6 @@ static bool BenchIsOnNetworkDrive(Str path) {
 // Compares path::IsOnNetworkDrive() against PathIsNetworkPathW() (what it used
 // to call) over a spread of path shapes. Windows-only: PathIsNetworkPathW and
 // the drive-letter cases are Win32.
-#if OS_WIN
-static bool CheckIsOnNetworkDrive() {
-    // X: is a mapped network drive here, Q: is unmapped
-    struct TestCase {
-        const char* path;
-        bool want;
-    };
-    TestCase cases[] = {
-        {R"(X:\tmp\file.pdf)", true},
-        {R"(x:\tmp\file.pdf)", true},
-        {R"(C:\Users\kjk\file.pdf)", false},
-        {"c:/Users/kjk/file.pdf", false},
-        {R"(\\server\share\file.pdf)", true},
-        {R"(\\?\UNC\server\share\file.pdf)", true},
-        {R"(\\?\C:\Users\file.pdf)", false},
-        {R"(\\?\X:\tmp\file.pdf)", true},
-        // a local device, not a network path: PathIsNetworkPathW() says true
-        // here because it only looks for the leading "\\"
-        {R"(\\.\PhysicalDrive0)", false},
-        {"file.pdf", false},
-        {R"(..\file.pdf)", false},
-        {R"(Q:\unmapped\file.pdf)", false},
-        {"", false},
-        {"C", false},
-    };
-    bool ok = true;
-    for (const TestCase& tc : cases) {
-        Str path(tc.path);
-        bool got = path::IsOnNetworkDrive(path);
-        bool old = PathIsNetworkPathW(CWStrTemp(path)) != FALSE;
-        const char* mark = (got == tc.want) ? "ok  " : "FAIL";
-        printf("%s '%s' got=%d want=%d (PathIsNetworkPathW=%d)\n", mark, tc.path, (int)got, (int)tc.want, (int)old);
-        ok = ok && (got == tc.want);
-    }
-    return ok;
-}
-#endif
 
 // Times file::ReadN(): reads the first 64 KB of every file in a directory,
 // which is what EngineImageDir::LoadMediabox() does per page.
@@ -724,13 +680,6 @@ int main(int argc, char** argv) {
         DestroyTempArena();
         return ok ? 0 : 1;
     }
-#if OS_WIN
-    if (argc == 2 && str::Eq(Str(argv[1]), StrL("-check-netdrive"))) {
-        bool ok = CheckIsOnNetworkDrive();
-        DestroyTempArena();
-        return ok ? 0 : 1;
-    }
-#endif
     if (argc == 3 && str::Eq(Str(argv[2]), StrL("-bench-netdrive"))) {
         bool ok = BenchIsOnNetworkDrive(Str(argv[1]));
         DestroyTempArena();

@@ -10,7 +10,6 @@
 #include "ImageReader.h"
 
 #include "AppTools.h"
-#include "gui/WasmBridge.h"
 #include "FileThumbnails.h"
 #include "FileThumbnailsCommon.h"
 
@@ -26,9 +25,6 @@ extern "C" {
 static bool SavePixmapAsPng(Pixmap* pixmap, Str path) {
     Pixmap* owned = nullptr;
     if (pixmap->format == PixmapFormat::Native) {
-#if OS_WIN
-        owned = PixmapCopyAs32bppDIB(pixmap);
-#endif
         if (!owned) {
             logf("SavePixmapAsPng: can't read a native pixmap\n");
             return false;
@@ -109,10 +105,6 @@ void SaveThumbnail(FileState* fs) {
         return;
     }
     logf("SaveThumbnail: '%s' -> '%s'\n", fs->filePath, thumbnailPath);
-#if OS_WASM
-    // the cache lives under the app data directory, which is stored in OPFS
-    WasmPersistSettings();
-#endif
 }
 
 void CreateChmThumbnail(Str, const Size&, const OnBitmapRendered* saveThumbnail) {

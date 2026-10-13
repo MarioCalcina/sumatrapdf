@@ -3,9 +3,8 @@
 
 // ng: the window half of orig's NavFilesInFolder.cpp. Orig's
 // NavFilesInFolderWnd is a resizable top-level window built out of virtual
-// controls and docked beside the main window. On wasm the picker is a column
-// at the right edge of the frame, like the AI chat panel, and "which window
-// is active" is a flag: gNav.hasKeyboard.
+// controls and docked beside the main window. "Which window is active" is a
+// flag: gNav.hasKeyboard.
 // The functions keep orig's names (they are its methods there) and its
 // comments; the listing itself is the model half in NavFilesInFolder.cpp.
 
@@ -13,9 +12,6 @@
 #include "VirtKeys.h"
 #include "base/File.h"
 #include "base/UITask.h"
-#if OS_WIN
-#include "base/Win.h"
-#endif
 
 #include "gui/Dpi.h"
 #include "gui/UIModels.h"
@@ -520,22 +516,11 @@ static void FinishNavDirScan(NavDirScanResult* r) {
 static void NavDirScanThread(NavDirScanReq* req) {
     AutoDelete delReq(req);
     // the home view enumerates a shell folder, which needs COM on this thread
-#if OS_WIN
-    bool comInited = false;
-    if (len(req->dir) == 0) {
-        comInited = SUCCEEDED(CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED));
-    }
-#endif
     auto* r = new NavDirScanResult;
     r->gen = req->gen;
     r->isRefresh = req->isRefresh;
     r->dir = str::Dup(req->dir);
     CollectNavEntriesForDir(req->dir, r->entries);
-#if OS_WIN
-    if (comInited) {
-        CoUninitialize();
-    }
-#endif
     uitask::Post(MkFunc0<NavDirScanResult>(FinishNavDirScan, r), "FinishNavDirScan");
 }
 
@@ -882,7 +867,7 @@ static void NavDeleteFile(NavDeleteCtx* c, bool ok) {
 // alone: recursively deleting a folder from a file picker is too easy to
 // trigger by accident, and "Show in Folder" + Explorer covers it.
 static void DeleteCurrentSelection() {
-    if (!CanAccessDisk() || gPluginMode) {
+    if (!CanAccessDisk()) {
         return;
     }
     int idx = gNav.sel;
@@ -965,7 +950,6 @@ static bool NavOnKey(int vk, bool ctrl, bool alt, NavFocus focus) {
                 return false;
         }
     }
-#if OS_DARWIN
     // Finder's keys: Cmd + Up goes up, Cmd + [ / ] go back / forward
     if (vk == VK_UP && ctrl) {
         GoUp();
@@ -979,7 +963,6 @@ static bool NavOnKey(int vk, bool ctrl, bool alt, NavFocus focus) {
         GoForward();
         return true;
     }
-#endif
     // Alt + Up / Left / Right go up / back / forward, like Explorer.
     // Backspace goes up, like the classic Explorer / file dialogs
     if ((vk == VK_UP && alt) || vk == VK_BACK) {
@@ -1367,12 +1350,8 @@ static TempStr NavStartDirNoDocTemp() {
             return dir;
         }
     }
-#if OS_WIN
-    TempStr docs = GetSpecialFolderTemp(CSIDL_PERSONAL);
-#else
     const char* home = getenv("HOME");
     TempStr docs = str::DupTemp(Str((char*)(home ? home : "")));
-#endif
     if (len(docs) > 0 && dir::Exists(docs)) {
         return docs;
     }
@@ -1380,7 +1359,7 @@ static TempStr NavStartDirNoDocTemp() {
 }
 
 void ShowNavFilesInFolder(MainWindow* win, Str selectPath, bool skipHistory) {
-    if (!win || !CanAccessDisk() || gPluginMode) {
+    if (!win || !CanAccessDisk()) {
         return;
     }
     // Prefer an explicit path (e.g. home-page thumbnail); else the current tab.
@@ -1508,11 +1487,7 @@ static gp::El* NavRowEl(gp::Ctx* cx, int idx, Color colBg, Color colText) {
 // a key cap as this platform writes it: "Ctrl + Enter" is Command + Return on
 // macOS, whatever the translation calls the key
 static Str NavKeyCap(Str key) {
-#if OS_DARWIN
     return MacKeyCapTemp(key);
-#else
-    return Tr(key);
-#endif
 }
 
 // one wrapping line of key-cap hints, like the command palette help row

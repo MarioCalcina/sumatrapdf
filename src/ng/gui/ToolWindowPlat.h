@@ -1,8 +1,8 @@
 /* Copyright 2026 the SumatraPDF project authors (see AUTHORS file).
    License: GPLv3 */
 
-// Native frame of a gpui window on macOS and Linux. Coordinates are top-left
-// origin, in the units gpui sizes windows with (points on macOS, pixels on X11).
+// Native frame of a gpui window. Coordinates are top-left origin, in points
+// (the units gpui sizes windows with).
 
 namespace gpui {
 struct Window;
@@ -15,6 +15,11 @@ Rect ToolWinNativeContentRect(gpui::Window* gw);
 // work area and full bounds of the monitor the window is on
 Rect ToolWinNativeWorkArea(gpui::Window* gw);
 Rect ToolWinNativeMonitor(gpui::Window* gw);
+Rect ToolWinNativeWorkAreaFor(Rect r);
+// the window server's number of the window, and of the topmost one under the
+// mouse pointer; 0 when there is none
+int ToolWinNativeNumber(gpui::Window* gw);
+int ToolWinNativeNumberUnderMouse();
 // extra size around a client area for this kind of frame. dx is left+right,
 // dy is top+bottom
 Size ToolWinNativeChrome(bool titled, bool resizable, bool utility);

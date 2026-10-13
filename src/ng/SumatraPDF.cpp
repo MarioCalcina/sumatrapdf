@@ -19,9 +19,6 @@
 #include "base/Timer.h"
 #include "base/Archive.h"
 #include "base/Pixmap.h"
-#include "base/ScopedWin.h"
-#include "base/Win.h"
-#include "base/WinDynCalls.h"
 
 #include "gui/UIModels.h"
 
@@ -58,11 +55,8 @@
 #include "Menu.h"
 #include "TipMarkup.h"
 #include "Notifications.h"
-#include "ExplorerQuickLook.h"
 #include "EmbeddedResources.h"
-#include "Installer.h"
 #include "VirtKeys.h"
-#include "PerfLog.h"
 #include "StressTesting.h"
 #include "SumatraControl.h"
 #include "GlobalHotkeys.h"
@@ -77,10 +71,7 @@
 #include "gui/Dpi.h"
 #include "gui/AppShell.h"
 #include "gui/NativeFileDlg.h"
-#include "gui/OleDragDrop.h"
-#include "gui/NativeCursors.h"
 #include "gui/Sidebar.h"
-#include "gui/WasmBridge.h"
 #include "gui/DocCanvas.h"
 #include "gui/DialogWidgets.h"
 #include "gui/TabsUI.h"
@@ -133,10 +124,8 @@
 #include "SimpleBrowserWindow.h"
 #include "PdfTools.h"
 #include "Print.h"
-#include "PrintWin11.h"
 #include "TextViewWnd.h"
 #include "SumatraPDFCommon.h"
-#include "VirtualDesktop.h"
 
 RenderCache* gRenderCache = nullptr;
 static Flags* gFlags = nullptr;
@@ -156,25 +145,6 @@ static bool gCrashOnOpen = false;
 // lets the shell open a URI for any supported scheme in
 // the appropriate application (web browser, mail client, etc.)
 bool SumatraLaunchBrowser(Str url) {
-#if OS_WIN
-    if (gPluginMode) {
-        // pass the URI back to the browser
-        ReportIf(len(gWindows) == 0);
-        if (len(gWindows) == 0) {
-            return false;
-        }
-        HWND plugin = AppShellNativeHwnd(gWindows[0]);
-        HWND parent = GetAncestor(plugin, GA_PARENT);
-        int urlLen = len(url);
-        if (!parent || len(url) == 0 || (urlLen > 4096)) {
-            return false;
-        }
-        TempStr urlZ = str::DupTemp(url);
-        COPYDATASTRUCT cds = {0x4C5255 /* URL */, (DWORD)urlZ.len + 1, urlZ.s};
-        return SendMessageW(parent, WM_COPYDATA, (WPARAM)plugin, (LPARAM)&cds);
-    }
-#endif
-
     if (!CanAccessDisk()) {
         return false;
     }
@@ -342,8 +312,7 @@ void ReloadSettingsUpdateWindows(bool showToolbarBefore) {
     }
 }
 
-// orig's, minus what this port has no service for: ExplorerQuickLook (step 14)
-// and the UseTabs <-> windows transition (it closes and reopens every window)
+// orig's, minus the UseTabs <-> windows transition (it closes and reopens every window)
 void ApplyChangedSettingsAndRelayout(const SettingsApplyState& before) {
     Settings* p = gSettings;
 
@@ -513,11 +482,6 @@ static MainWindow* ManualBrowserParentWindow() {
 }
 
 void LaunchDocumentation(Str docURI) {
-#if OS_WASM
-    // the wasm build embeds no manual (cmd/ng-build.ts)
-    SumatraLaunchBrowser(DocURIToWebUrlTemp(docURI));
-    return;
-#endif
     MainWindow* win = ManualBrowserParentWindow();
     bool haveManual = len(ManualFileData(StrL("manual.shell.html"))) > 0;
     if (win && BrowserViewAvailable() && haveManual) {
@@ -639,12 +603,6 @@ void RememberDefaultWindowPosition(MainWindow* win) {
     if (!win->IsDocLoaded() && WindowHasDocumentLoading(win)) {
         int intended = gSettings->windowState;
         bool zoomed = win->isMaximized;
-#if OS_WIN
-        HWND hwnd = AppShellNativeHwnd(win);
-        if (hwnd && IsZoomed(hwnd)) {
-            zoomed = true;
-        }
-#endif
         if (intended == WIN_STATE_MAXIMIZED && !zoomed) {
             return;
         }
@@ -666,14 +624,12 @@ void RememberDefaultWindowPosition(MainWindow* win) {
     if (win->sidebarDx > 0) {
         gSettings->sidebarDx = win->sidebarDx;
     }
-#if OS_WIN
-    // where the frame is, or where it goes back to when it is maximized, so we
-    // know which monitor the window is on
+    // where the frame is, so the next start puts it back on that display
     Rect normal;
-    if (!win->InPresentation() && AppShellNormalWindowRect(win, &normal) && !normal.IsEmpty()) {
+    if (!win->InPresentation() && AppShellNormalWindowRect(win, &normal)) {
         gSettings->windowPos = normal;
+        return;
     }
-#else
     if (gSettings->windowState != WIN_STATE_NORMAL) {
         return;
     }
@@ -683,7 +639,6 @@ void RememberDefaultWindowPosition(MainWindow* win) {
         gSettings->windowPos.dx = win->frameRc.dx;
         gSettings->windowPos.dy = win->frameRc.dy;
     }
-#endif
 }
 
 TempStr WindowStateDuringLoadResultTemp(int* exitCodeOut) {
@@ -713,12 +668,6 @@ TempStr WindowStateDuringLoadResultTemp(int* exitCodeOut) {
     if (win->gpuiWin) {
         win->gpuiWin->maximized = false;
     }
-#if OS_WIN
-    HWND hwnd = AppShellNativeHwnd(win);
-    if (hwnd && IsZoomed(hwnd)) {
-        ShowWindow(hwnd, SW_RESTORE);
-    }
-#endif
 
     gSettings->windowState = WIN_STATE_MAXIMIZED;
     WindowTab* tab = win->CurrentTab();
@@ -754,12 +703,6 @@ TempStr WindowStateDuringLoadResultTemp(int* exitCodeOut) {
 
     bool okLoading = observedLoading == WIN_STATE_MAXIMIZED;
     bool stillZoomed = win->isMaximized;
-#if OS_WIN
-    HWND frame = AppShellNativeHwnd(win);
-    if (frame && IsZoomed(frame)) {
-        stillZoomed = true;
-    }
-#endif
     bool okEmpty = stillZoomed || observedEmpty == WIN_STATE_NORMAL;
     if (okLoading && okEmpty) {
         out.Append(StrL("OK loading preserved maximized; empty records normal\n"));
@@ -1251,65 +1194,6 @@ static void AskForPasswordAndLoad(MainWindow* win, Str path, LoadPrefs prefs, Lo
     ShowGetPasswordDialog(win, baseName, canRememberPwd, MkFunc1(OnPasswordEntered, retry));
 }
 
-#if OS_WIN
-// On the home page: if we registered as Open With for extensions that no longer
-// open with us, show a bottom bar with per-extension fix links.
-static void MaybeShowDefaultAppNotification(MainWindow* win) {
-    if (!IsMainWindowValidAndNotClosing(win)) {
-        return;
-    }
-    if (!win->IsCurrentTabAbout()) {
-        return;
-    }
-    if (!CanAccessDisk() || gPluginMode) {
-        return;
-    }
-    if (!IsOurExeInstalled()) {
-        return;
-    }
-
-    StrVec missing;
-    CollectNonDefaultRegisteredExtensions(missing);
-    logf("MaybeShowDefaultAppNotification: %d extension(s) not ours\n", len(missing));
-    ShowDefaultAppNotification(win, missing);
-}
-
-// ng: split from MaybeShowDefaultAppNotification so the bar can be shown
-// without a real installation (-dbg-control TestDefaultAppNotif)
-void ShowDefaultAppNotification(MainWindow* win, const StrVec& missing) {
-    if (len(missing) == 0) {
-        RemoveNotificationsForGroup(win, kNotifDefaultApp);
-        return;
-    }
-
-    // "SumatraPDF is no longer the default app for opening [pdf](CmdFixDefaultApp .pdf), ..."
-    str::Builder sb;
-    sb.Append(StrL("SumatraPDF is no longer the default app for opening "));
-    int nShow = std::min(len(missing), kMaxDefaultAppLinks);
-    for (int i = 0; i < nShow; i++) {
-        if (i > 0) {
-            sb.Append(StrL(", "));
-        }
-        Str ext = missing[i]; // ".pdf"
-        // link text without the leading dot: "pdf"
-        Str label = (len(ext) > 0 && ext.s[0] == '.') ? Str(ext.s + 1, ext.len - 1) : ext;
-        sb.Append(fmt("[%s](CmdFixDefaultApp %s)", label, ext));
-    }
-    if (len(missing) > nShow) {
-        sb.Append(fmt(" and %d more", len(missing) - nShow));
-    }
-    sb.Append(StrL(". Click a link to fix."));
-
-    NotificationCreateArgs args;
-    args.win = win;
-    args.msg = ToStrTemp(sb);
-    args.timeoutMs = kNotifNoTimeout;
-    args.groupId = kNotifDefaultApp;
-    args.corner = NotifCorner::BottomBar;
-    ShowNotification(args);
-}
-#endif
-
 // a warning about the document that just loaded: bottom-right, small margins,
 // 16s timeout, shown only while `tab` is current
 static void ShowLoadWarning(MainWindow* win, WindowTab* tab, Kind groupId, Str msg, bool plainText) {
@@ -1380,30 +1264,8 @@ bool DismissNotificationsOnEsc(MainWindow* win) {
 // Keys and wheels the browser page handles itself. Anything else stays with
 // the frame (accelerators, find, and so on).
 static bool BrowserNavMsg(UINT msg, WPARAM wp) {
-#if OS_WIN
-    if (msg == WM_MOUSEWHEEL || msg == WM_MOUSEHWHEEL) {
-        return true;
-    }
-    if (msg != WM_KEYDOWN && msg != WM_KEYUP) {
-        return false;
-    }
-    switch ((int)wp) {
-        case VK_LEFT:
-        case VK_RIGHT:
-        case VK_UP:
-        case VK_DOWN:
-        case VK_HOME:
-        case VK_END:
-        case VK_PRIOR:
-        case VK_NEXT:
-        case VK_MULTIPLY:
-        case VK_DIVIDE:
-            return true;
-    }
-#else
     (void)msg;
     (void)wp;
-#endif
     return false;
 }
 
@@ -1717,20 +1579,11 @@ static MainWindow* LoadDocumentFinish(MainWindow* win, Str fullPath, DocControll
 
     // Add the file also to Windows' recently used documents (this doesn't
     // happen automatically on drag&drop, reopening from history, etc.)
-    if (CanAccessDisk() && !gPluginMode && !IsStressTesting() && !tab->skipHistory) {
-#if OS_WIN
-        // ng: an automated run must not fill the user's real jump list
-        if (gFlags && gFlags->forTesting) {
-            logf("AddPathToRecentDocs: skipped for '%s' (-for-testing)\n", fullPath);
-        } else {
-            AddPathToRecentDocs(fullPath);
-        }
-#elif OS_DARWIN
+    if (CanAccessDisk() && !IsStressTesting() && !tab->skipHistory) {
         // nor the Dock menu's recent documents
         if (!gFlags || !gFlags->forTesting) {
             AppShellNoteRecentDoc(fullPath);
         }
-#endif
 
         // Remove Zone.Identifier (Mark of the Web) so that Windows Explorer
         // will show previews/thumbnails for this file without security warnings
@@ -1751,11 +1604,6 @@ static MainWindow* LoadDocumentFinish(MainWindow* win, Str fullPath, DocControll
     // keep / restore the page-info tip after a load or reload (issue #4454)
     ShowPageInfoIfWanted(win);
     ShowLoadWarnings(win, tab);
-#if OS_WASM
-    // opening a file should leave the keyboard on the document, the way the
-    // frame HWND has it. A click that opened the file focused a button instead.
-    AppShellFocusFrame(win);
-#endif
     if (prefs == LoadPrefs::Save) {
         ScheduleSaveSettings();
     }
@@ -1795,7 +1643,7 @@ static void StartLoadDocuments(StrVec& paths, MainWindow* win, bool skipHistory)
 
 void OpenDroppedFiles(MainWindow* win, const Str* paths, int n) {
     // orig doesn't register the canvas as a drop target then
-    if (!CanAccessDisk() || gPluginMode) {
+    if (!CanAccessDisk()) {
         return;
     }
     StrVec pathsToLoad;
@@ -1815,7 +1663,7 @@ struct PlaceWindowArgs {
 
 static void PlaceWindowDeferred(PlaceWindowArgs* args) {
     AutoDelete delArgs(args);
-    if (!IsMainWindowValidAndNotClosing(args->win) || args->win->isQuickLook) {
+    if (!IsMainWindowValidAndNotClosing(args->win)) {
         return;
     }
     AppShellPlaceWindow(args->win, args->pos, args->maximize);
@@ -1832,10 +1680,9 @@ void PlaceMainWindowLater(MainWindow* win, Rect pos, bool maximize) {
 // orig's CreateMainWindow + CreateAndShowMainWindow, the placement half: the
 // frame goes where the session (`data`) or the settings remember it, kept on
 // a screen, and is maximized if it was.
-// ng: gpui opens a window at a size only, so this moves the frame it made;
-// that needs the native handle, which only Windows gives us (see "gpui gaps")
+// ng: gpui opens a window at a size only, so this moves the frame it made
 void PlaceMainWindow(MainWindow* win, SessionData* data, PlaceWindowWhen when) {
-    if (!win || gPluginMode || win->isQuickLook) {
+    if (!win) {
         return;
     }
     int windowState = data ? data->windowState : gSettings->windowState;
@@ -1850,23 +1697,16 @@ void PlaceMainWindow(MainWindow* win, SessionData* data, PlaceWindowWhen when) {
     // a settings file from before the port could read a window's position has
     // x = y = 0 and the client size: such a window stays where gpui put it
     bool hasPos = fixedPos || (!pos.IsEmpty() && (pos.x != 0 || pos.y != 0));
-#if OS_WIN
     if (!hasPos) {
         pos = {};
-    } else if (data) {
-        pos = ShiftRectToWorkArea(pos);
-    } else {
-        EnsureAreaVisibility(pos);
-        if (!fixedPos) {
+    } else if (!fixedPos) {
+        pos = AppShellKeepOnScreen(pos);
+        if (!data) {
             // we don't want the windows to overlap so shift each window by a bit
             int nShift = std::max(len(gWindows) - 1, 0);
-            pos.x += nShift * MulDiv(15, AppShellWindowDpi(win), 96);
+            pos.x += nShift * 15;
         }
     }
-#else
-    (void)hasPos;
-    pos = {};
-#endif
     bool maximize = windowState == WIN_STATE_MAXIMIZED;
     if (when == PlaceWindowWhen::Later) {
         PlaceMainWindowLater(win, pos, maximize);
@@ -1879,8 +1719,7 @@ constexpr int kMinRememberedWinSize = 100;
 constexpr int kDefaultWinDx = 1024;
 constexpr int kDefaultWinDy = 768;
 
-// The size a new frame opens at. -window-pos wins, as in PlaceMainWindow:
-// off Windows nothing moves the frame later, so its size has to be right here.
+// The size a new frame opens at. -window-pos wins, as in PlaceMainWindow.
 static Size NewWindowSize(SessionData* data) {
     Rect pos = data ? data->windowPos : gSettings->windowPos;
     if (!data && gFlags && !gFlags->windowPos.IsEmpty()) {
@@ -2181,7 +2020,7 @@ static bool GoToFileInBrowserView(MainWindow* win, Str path) {
 
 // pathToDelete is removed from disk once another document has loaded
 void OpenNextPrevFileInFolder(MainWindow* win, bool forward, Str pathToDelete) {
-    if (!win || win->IsCurrentTabAbout() || !CanAccessDisk() || gPluginMode) {
+    if (!win || win->IsCurrentTabAbout() || !CanAccessDisk()) {
         return;
     }
     WindowTab* tab = win->CurrentTab();
@@ -2931,7 +2770,7 @@ TempStr RenameFileResultTemp(Str dstPath, int* exitCodeOut) {
 }
 
 static void RenameCurrentFile(MainWindow* win) {
-    if (!CanAccessDisk() || !win->IsDocLoaded() || gPluginMode) {
+    if (!CanAccessDisk() || !win->IsDocLoaded()) {
         return;
     }
     auto* ctrl = win->ctrl;
@@ -2968,7 +2807,7 @@ static void RenameCurrentFile(MainWindow* win) {
 }
 
 static void DeleteCurrentFile(MainWindow* win) {
-    if (!CanAccessDisk() || !win->IsDocLoaded() || gPluginMode) {
+    if (!CanAccessDisk() || !win->IsDocLoaded()) {
         return;
     }
     TempStr path = str::DupTemp(win->ctrl->GetFilePath());
@@ -2983,85 +2822,6 @@ static void DeleteCurrentFile(MainWindow* win) {
         win->RedrawAll(true);
     }
 }
-
-#if OS_WIN
-// the .lnk the shortcut dialog is about to write
-struct LnkShortcutCtx {
-    MainWindow* win = nullptr;
-    Str docPath; // owned
-    Str args;    // owned
-    Str desc;    // owned
-};
-
-static void DeleteLnkShortcutCtx(LnkShortcutCtx* c) {
-    str::Free(c->docPath);
-    str::Free(c->args);
-    str::Free(c->desc);
-    delete c;
-}
-
-static void OnLnkShortcutPathPicked(LnkShortcutCtx* c, SavePathArgs* args) {
-    TempStr fileName = str::DupTemp(args->path);
-    if (len(fileName) > 0) {
-        if (!str::EndsWithI(fileName, StrL(".lnk"))) {
-            fileName = str::JoinTemp(fileName, StrL(".lnk"));
-        }
-        auto exePath = GetSelfExePathTemp();
-        CreateShortcut(fileName, exePath, c->args, c->desc, 1);
-    }
-    DeleteLnkShortcutCtx(c);
-}
-
-static void CreateLnkShortcut(MainWindow* win) {
-    if (!CanAccessDisk() || gPluginMode || !win->IsDocLoaded()) {
-        return;
-    }
-    auto* ctrl = win->ctrl;
-    Str path = ctrl->GetFilePath();
-
-    // Remove the extension so that it can be replaced with .lnk
-    TempStr defExt = str::DupTemp(ctrl->GetDefaultFileExt());
-    TempStr dstFileName = str::DupTemp(path::GetBaseNameTemp(path));
-    str::TransCharsInPlace(dstFileName, StrL(":"), StrL("_"));
-    if (str::EndsWithI(dstFileName, defExt)) {
-        dstFileName.len -= len(defExt);
-    }
-
-    ScrollState ss(ctrl->CurrentPageNo(), 0, 0);
-    if (win->AsFixed()) {
-        ss = win->AsFixed()->GetScrollState();
-    }
-    Str viewMode = DisplayModeToString(ctrl->GetDisplayMode());
-    TempStr zoomVirtual = fmt("%.2f", ctrl->GetZoomVirtual());
-    if (kZoomFitPage == ctrl->GetZoomVirtual()) {
-        zoomVirtual = StrL("fitpage");
-    } else if (kZoomFitWidth == ctrl->GetZoomVirtual()) {
-        zoomVirtual = StrL("fitwidth");
-    } else if (kZoomFitHeight == ctrl->GetZoomVirtual()) {
-        zoomVirtual = StrL("fitheight");
-    } else if (kZoomFitContent == ctrl->GetZoomVirtual()) {
-        zoomVirtual = StrL("fitcontent");
-    }
-    TempStr label = ctrl->GetPageLabeTemp(ss.page);
-
-    auto* c = new LnkShortcutCtx();
-    c->win = win;
-    c->docPath = str::Dup(path);
-    c->args = str::Dup(fmt("\"%s\" -page %d -view \"%s\" -zoom %s -scroll %d,%d", path, ss.page, viewMode, zoomVirtual,
-                           (int)ss.x, (int)ss.y));
-    c->desc = str::Dup(fmt(Tr("Bookmark shortcut to page %s of %s").s, label, path));
-
-    auto* args = new SavePathArgs();
-    args->win = win;
-    args->title = str::Dup(Tr("Bookmark Shortcuts"));
-    args->initialPath = str::Dup(path::JoinTemp(path::GetDirTemp(path), str::JoinTemp(dstFileName, StrL(".lnk"))));
-    args->defExt = str::Dup(StrL(".lnk"));
-    args->filter = str::Dup(fmt("%s\1*.lnk\1", Tr("Bookmark Shortcuts")));
-    args->nativeFile = str::Dup(dstFileName);
-    args->onDone = MkFunc1(OnLnkShortcutPathPicked, c);
-    ShowSavePathDialog(args);
-}
-#endif
 
 // CmdShowGeneratedHTML: the HTML the markdown viewer renders, as a file
 static void ShowGeneratedMarkdownHtml(MainWindow* win) {
@@ -3342,16 +3102,8 @@ void CopyRenderedBitmapToClipboard(MainWindow*, RenderedBitmap* bmp) {
     if (!bmp) {
         return;
     }
-#if OS_WIN
-    // via the Pixmap, so an image with an alpha channel reaches the clipboard
-    // with its transparency intact (#5844, #5598)
-    Pixmap* px = PixmapFromRenderedBitmap(bmp);
-    ImageEditCopyToClipboard(px);
-    FreePixmap(px);
-#else
     // ng: nothing creates a RenderedBitmap off Windows (it is a win32 HBITMAP
     // wrapper and is not even a complete type there), so bmp is always null
-#endif
 }
 
 // orig's WindowTab.cpp SaveDataToFile: a save prompt, then the bytes.
@@ -3400,7 +3152,7 @@ static void OnHomeDeleteDone(HomeDeleteCtx* c, bool ok) {
 // orig's CmdDeleteFile in the home page's context menu: a file that is gone
 // only leaves the history, one that is there goes to the trash
 void DeleteFileFromHomePage(MainWindow* win, Str path) {
-    if (!CanAccessDisk() || gPluginMode) {
+    if (!CanAccessDisk()) {
         return;
     }
     TempStr owned = str::DupTemp(path);
@@ -3458,10 +3210,10 @@ void CopyFilePath(WindowTab* tab) {
 // Show in folder: Explorer (and select the file) unless File / Use SumatraPDF
 // file picker is on, in which case open Navigate Files in Folder on that dir
 void ShowFileInFolder(MainWindow* win, Str path) {
-    if (!win || len(path) == 0 || gPluginMode || !CanAccessDisk()) {
+    if (!win || len(path) == 0 || !CanAccessDisk()) {
         return;
     }
-    if (FilePickerIsSumatraPDF() || OS_WASM) {
+    if (FilePickerIsSumatraPDF()) {
         ShowNavFilesInFolder(win, path, false);
         return;
     }
@@ -3587,29 +3339,6 @@ int SidebarNativeDx(MainWindow*) {
     return 0;
 }
 
-#if OS_WIN
-// SidebarWindowSize = grow opts in; by default the window keeps its size (#6205)
-static bool FrameCanResizeForSidebar(MainWindow* win) {
-    HWND hwnd = win ? AppShellNativeHwnd(win) : nullptr;
-    if (!hwnd || gPluginMode) {
-        return false;
-    }
-    if (!str::EqI(gSettings->sidebarWindowSize, StrL("grow"))) {
-        return false;
-    }
-    if (win->isFullScreen || win->presentation) {
-        return false;
-    }
-    if (IsZoomed(hwnd)) {
-        return false;
-    }
-    if (!HwndIsVisible(hwnd)) {
-        return false;
-    }
-    return true;
-}
-#endif
-
 // The pane flags are already set. A frame that did not move still has to
 // give the canvas up (25% zoom has margin) or hand it back (hide).
 static void SyncCanvasAfterSidebar(MainWindow* win) {
@@ -3620,61 +3349,7 @@ static void SyncCanvasAfterSidebar(MainWindow* win) {
 // none). Skip if already grown (tab switch). Hide undoes the grow.
 // The sidebar and the canvas margin are in dips, the frame in pixels.
 static void AdjustFrameForSidebarNow(MainWindow* win, bool show) {
-#if OS_WIN
-    if (!FrameCanResizeForSidebar(win)) {
-        if (!show) {
-            win->sidebarGrewFrameDx = 0;
-        }
-        return;
-    }
-
-    HWND hwnd = AppShellNativeHwnd(win);
-    Rect wr = HwndWindowRect(hwnd);
-    Rect work = GetWorkAreaRect(wr, hwnd);
-    bool onRight = gSettings->sidebarOnRight;
-    int dpi = AppShellWindowDpi(win);
-
-    if (show) {
-        if (win->sidebarGrewFrameDx > 0) {
-            return;
-        }
-        int extra = SidebarExtraDx(win);
-        int unused = 0;
-        if (DisplayModel* dm = win->AsFixed()) {
-            unused = dm->UnusedCanvasDx();
-        }
-        int spare = work.dx - wr.dx;
-        int grow = limitValue(MulDiv(extra - unused, dpi, 96), 0, std::max(spare, 0));
-        if (grow <= 0) {
-            win->sidebarGrewFrameDx = 0;
-            return;
-        }
-        wr.dx += grow;
-        if (!onRight) {
-            wr.x -= grow;
-        }
-        wr = ShiftRectToWorkArea(wr, hwnd, true);
-        win->sidebarGrewFrameDx = grow;
-        if (win->sidebarDx < kSidebarMinDx) {
-            win->sidebarDx = extra - kSplitterDx;
-        }
-        HwndMoveWindow(hwnd, &wr);
-        return;
-    }
-
-    int extra = win->sidebarGrewFrameDx;
-    win->sidebarGrewFrameDx = 0;
-    if (extra <= 0 || wr.dx <= extra) {
-        return;
-    }
-    if (!onRight) {
-        wr.x += extra;
-    }
-    wr.dx -= extra;
-    wr = ShiftRectToWorkArea(wr, hwnd, true);
-    HwndMoveWindow(hwnd, &wr);
-#else
-    if (!win || !win->gpuiWin || gPluginMode) {
+    if (!win || !win->gpuiWin) {
         return;
     }
     if (!gSettings || !str::EqI(gSettings->sidebarWindowSize, StrL("grow"))) {
@@ -3741,7 +3416,6 @@ static void AdjustFrameForSidebarNow(MainWindow* win, bool show) {
     wr = AppShellShiftToWorkArea(wr, win, true);
     AppShellPlaceWindow(win, wr, false);
     win->frameRc.dx -= shrunk;
-#endif
 }
 
 struct SidebarFrameArgs {
@@ -3778,12 +3452,6 @@ void SetSidebarVisibility(MainWindow* win, bool tocVisible, bool showFavorites, 
     if (!CanAccessDisk()) {
         showFavorites = false;
         requestedFavorites = false;
-    }
-    // a QuickLook preview shows the page and nothing else; the heading ToC
-    // arrives after ApplyExplorerQuickLookChrome() and would re-open the pane
-    if (win->isQuickLook) {
-        tocVisible = false;
-        showFavorites = false;
     }
 
     bool requestedToc = tocVisible;
@@ -3915,53 +3583,64 @@ static void ToggleFilePicker() {
     ScheduleSaveSettings();
 }
 
-#if OS_WIN
-struct OpenDocsData {
-    MainWindow* win = nullptr;
-    bool skipHistory = false;
-};
+// orig's BuildOpenFileFilters: "All supported documents" first, then one group
+// per format and "All files", as an lpstrFilter with \1 for \0
+static TempStr OpenDocsFilterTemp() {
+    const struct {
+        Str name;
+        Str filter;
+        bool available;
+    } fileFormats[] = {
+        {Tr("PDF documents"), StrL("*.pdf;*.p7m"), true},
+        {Tr("XPS documents"), StrL("*.xps;*.oxps"), true},
+        {Tr("DjVu documents"), StrL("*.djvu"), true},
+        {Tr("PostScript documents"), StrL("*.ps;*.eps"), IsEnginePsAvailable()},
+        {Tr("DVI documents"), StrL("*.dvi"), IsEngineDviAvailable()},
+        {Tr("Comic books"), StrL("*.cbz;*.cbr;*.cb7;*.cbt"), true},
+        {Tr("CHM documents"), StrL("*.chm"), true},
+        {Tr("SVG documents"), StrL("*.svg"), true},
+        {Tr("EPUB ebooks"), StrL("*.epub"), true},
+        {Tr("Microsoft Reader ebooks"), StrL("*.lit"), true},
+        {Tr("Markdown documents"), StrL("*.md;*.markdown"), true},
+        {Tr("Mobi documents"), StrL("*.mobi"), true},
+        {Tr("FictionBook documents"), StrL("*.fb2;*.fb2z;*.zfb2"), true},
+        {Tr("PalmDoc documents"), StrL("*.pdb;*.prc"), true},
+        {Tr("Images"),
+         StrL("*.bmp;*.dib;*.gif;*.jpg;*.jpeg;*.jfif;*.jxr;*.hdp;*.wdp;*.png;*.tga;*.tif;*.tiff;*.webp;*.heic;*.heif;"
+              "*.avif;*.jxl;*.jp2;*.j2k;*.jpx;*.jpf;*.jpm;*.j2c;*.ico"),
+         true},
+        {Tr("Text documents"), StrL("*.txt;*.log;*.nfo;*.tcr"), true},
+    };
 
-// orig's OpenFileWithOSFilePicker: IFileOpenDialog with multi-select
-static void OpenDocsWithOsPicker(OpenDocsData* d) {
-    MainWindow* win = d->win;
-    bool skipHistory = d->skipHistory;
-    delete d;
-    if (!IsMainWindowValidAndNotClosing(win)) {
-        return;
+    str::Builder all;
+    str::Builder groups;
+    for (const auto& ff : fileFormats) {
+        if (!ff.available) {
+            continue;
+        }
+        if (len(all) > 0) {
+            all.AppendChar(';');
+        }
+        all.Append(ff.filter);
+        groups.Append(ff.name);
+        groups.AppendChar('\1');
+        groups.Append(ff.filter);
+        groups.AppendChar('\1');
     }
-    StrVec paths;
-    if (NativeOpenDocsDlg(win, &paths) && IsMainWindowValidAndNotClosing(win)) {
-        StartLoadDocuments(paths, win, skipHistory);
-    }
+    return fmt("%s\1%s\1%s%s\1*.*\1", Tr("All supported documents"), ToStr(all), ToStr(groups), Tr("All files"));
 }
-#endif
 
 static void OpenFileCmd(MainWindow* win, bool skipHistory, bool forceOsPicker) {
-    // don't allow opening different files in plugin mode
-    if (!CanAccessDisk() || gPluginMode) {
+    if (!CanAccessDisk()) {
         return;
     }
-    // ng: without an OS picker File / Open did nothing at all
-    if ((!forceOsPicker && FilePickerIsSumatraPDF()) || !AppShellHasOsFilePicker()) {
+    if (!forceOsPicker && FilePickerIsSumatraPDF()) {
         ShowNavFilesInFolder(win, {}, skipHistory);
         return;
     }
-#if OS_WIN
-    if (NativeFileDlgEnabled()) {
-        // ng: the dialog runs a message loop, so it is shown once gpui has
-        // unwound from the key or the menu click
-        auto* d = new OpenDocsData{win, skipHistory};
-        uitask::Post(MkFunc0(OpenDocsWithOsPicker, d), "OpenFileWithOSFilePicker");
-        return;
-    }
-#endif
-    TempStr path = AppShellPromptForFileTemp(win);
-    if (len(path) == 0) {
-        return;
-    }
-    WindowTab* tab = LoadDocument(win, path) ? win->CurrentTab() : nullptr;
-    if (tab && skipHistory) {
-        tab->skipHistory = true;
+    StrVec paths;
+    if (AppShellPromptForFiles(win, OpenDocsFilterTemp(), &paths)) {
+        StartLoadDocuments(paths, win, skipHistory);
     }
 }
 
@@ -4058,61 +3737,6 @@ static void CreateImageStampFromClipboard(MainWindow* win, Point pt) {
     FinishImageStamp(win, tab, annot);
 }
 
-#if OS_WASM
-enum class ClipboardImageUse {
-    Open,
-    Stamp,
-};
-
-struct ClipboardImageRead {
-    MainWindow* win = nullptr;
-    WindowTab* tab = nullptr;
-    ClipboardImageUse use = ClipboardImageUse::Open;
-    Point pt;
-};
-
-static ClipboardImageRead gClipboardImageRead;
-
-static void ClipboardImageReady(void*, gp::App*, gp::Window*, const gp::ClipboardItem& item) {
-    ClipboardImageRead op = gClipboardImageRead;
-    gClipboardImageRead = {};
-    if (!IsMainWindowValidAndNotClosing(op.win) || op.win->CurrentTab() != op.tab) {
-        return;
-    }
-    Pixmap* image = nullptr;
-    if (item.HasImage()) {
-        image = PixmapFromData(Str((char*)item.imageBytes, item.imageBytesLen));
-    }
-    if (op.use == ClipboardImageUse::Open) {
-        if (!image && op.win->pdfAnnotationsToolbarEnabled && HasCopiedAnnotation()) {
-            PasteAnnotationInTab(op.win, op.tab);
-            return;
-        }
-        PasteImageFromClipboard(op.win, image);
-        return;
-    }
-    if (!image) {
-        ShowWarningNotification(op.win, Tr("No image in the clipboard"), kNotifDefaultTimeOut);
-        return;
-    }
-    Annotation* annot = CreateImageStampAnnotation(op.win, op.tab, op.win->AsFixed(), image, op.pt);
-    FreePixmap(image);
-    FinishImageStamp(op.win, op.tab, annot);
-}
-
-static bool ReadClipboardImage(MainWindow* win, ClipboardImageUse use, Point pt = {}) {
-    if (gClipboardImageRead.win) {
-        return true;
-    }
-    gClipboardImageRead = {win, win->CurrentTab(), use, pt};
-    if (gp::ClipboardReadAsync(win->gpuiWin, ClipboardImageReady, nullptr)) {
-        return true;
-    }
-    gClipboardImageRead = {};
-    return false;
-}
-#endif
-
 // stamp an image file on the page as a Fill & Sign-style signature (#1744)
 enum class ImageStampSource {
     Prompt,
@@ -4143,22 +3767,6 @@ static void InsertImageAtPath(MainWindow* win, Point pt, Str path) {
     FinishImageStamp(win, tab, annot);
 }
 
-// ng: for the platforms whose picker answers later (AppShellPickFileAsync)
-struct ImagePickCtx {
-    MainWindow* win = nullptr;
-    WindowTab* tab = nullptr;
-    Point pt;
-};
-
-static ImagePickCtx gImagePick;
-
-static void OnImagePicked(ImagePickCtx* ctx, Str path) {
-    if (!IsMainWindowValidAndNotClosing(ctx->win) || ctx->win->CurrentTab() != ctx->tab) {
-        return;
-    }
-    InsertImageAtPath(ctx->win, ctx->pt, path);
-}
-
 static void InsertImageFromFile(MainWindow* win, Point pt, ImageStampSource source) {
     WindowTab* tab = win->CurrentTab();
     DisplayModel* dm = win->AsFixed();
@@ -4179,10 +3787,6 @@ static void InsertImageFromFile(MainWindow* win, Point pt, ImageStampSource sour
         TempStr filter =
             fmt("%s\1*.png;*.jpg;*.jpeg;*.jfif;*.bmp;*.gif;*.tif;*.tiff;*.webp;*.heic;*.heif;*.ico\1%s\1*.*\1",
                 Tr("Image files"), Tr("All files"));
-        gImagePick = {win, tab, pt};
-        if (AppShellPickFileAsync(win, Tr("Image files"), filter, MkFunc1(OnImagePicked, &gImagePick))) {
-            return;
-        }
         path = AppShellPromptForPathTemp(win, Tr("Image files"), filter);
     }
     if (len(path) == 0) {
@@ -4346,7 +3950,7 @@ static void CopyLocationToClipboard(MainWindow* win, WindowTab* tab) {
 // this is the chrome state around it - no tabs, no sidebar in presentation,
 // Fullscreen.Toolbar for the toolbar and Fullscreen.ShowMenubar for the menu.
 void EnterFullScreen(MainWindow* win, bool presentation) {
-    if (!HasPermission(Perm::FullscreenAccess) || gPluginMode) {
+    if (!HasPermission(Perm::FullscreenAccess)) {
         return;
     }
     if (presentation ? win->InPresentation() : win->isFullScreen) {
@@ -4447,7 +4051,7 @@ static bool gIsDivideKeyDown = false;
 // Shift+arrows extend an existing text selection instead of scrolling (#5814).
 static bool TryExtendTextSelectionFromKey(MainWindow* win, int key, bool isCtrl, bool isShift, bool isAlt) {
     // macOS: Shift + Option + Left / Right extend by word, as in a text view
-    bool byWord = OS_DARWIN && isAlt && (key == VK_LEFT || key == VK_RIGHT);
+    bool byWord = isAlt && (key == VK_LEFT || key == VK_RIGHT);
     if (!win || !isShift || isCtrl || (isAlt && !byWord)) {
         return false;
     }
@@ -4946,12 +4550,6 @@ void ExecuteCmd(MainWindow* win, int cmdId) {
             DeleteCachedFiles(win);
             break;
 
-#if OS_WIN
-        case CmdCreateShortcutToFile:
-            CreateLnkShortcut(win);
-            break;
-#endif
-
         case CmdSaveAs:
             SaveCurrentFileAs(win);
             break;
@@ -5082,11 +4680,6 @@ void ExecuteCmd(MainWindow* win, int cmdId) {
             // (GetClipboardSequenceNumber); there is no such counter here, so
             // an image on the clipboard wins
             Pixmap* image = ImageEditGetClipboard(win);
-#if OS_WASM
-            if (!image && ReadClipboardImage(win, ClipboardImageUse::Open)) {
-                break;
-            }
-#endif
             if (!image && win->pdfAnnotationsToolbarEnabled && HasCopiedAnnotation()) {
                 PasteAnnotationInTab(win, tab);
                 break;
@@ -6045,17 +5638,6 @@ void ExecuteCmd(MainWindow* win, int cmdId) {
             break;
         }
 
-#if OS_WIN
-        // open the OS "Open with" / Default apps UI for this extension
-        case CmdFixDefaultApp: {
-            Str ext = GetCommandStringArg(cmd, kCmdArgExt, {});
-            if (len(ext) > 0) {
-                LaunchDefaultAppDialogForExtension(ext);
-            }
-            break;
-        }
-#endif
-
         case CmdDebugTogglePredictiveRender:
             // no notification: the command palette shows the state it will
             // switch to, so announcing the same thing again is redundant
@@ -6074,9 +5656,6 @@ void ExecuteCmd(MainWindow* win, int cmdId) {
         // equivalent for. What asks IsUIRtl() (text runs, the toolbar and the
         // sidebar order) flips; the rest of the layout does not
         case CmdDebugToggleDpiOverride:
-#if OS_WIN
-            AppShellToggleDpiOverride();
-#endif
             break;
 
         case CmdDebugToggleRtl:
@@ -6108,11 +5687,7 @@ void ExecuteCmd(MainWindow* win, int cmdId) {
             break;
 
         case CmdScreenshot:
-#if OS_WIN
-            ShowScreenshotPicker(AppShellNativeHwnd(win));
-#else
             TakeScreenshots(win);
-#endif
             break;
 
         case CmdSetScreenshotHotkey:
@@ -6219,11 +5794,6 @@ void ExecuteCmd(MainWindow* win, int cmdId) {
         }
 
         case CmdCreateAnnotImageFromClipboard:
-#if OS_WASM
-            if (ReadClipboardImage(win, ClipboardImageUse::Stamp)) {
-                break;
-            }
-#endif
             CreateImageStampFromClipboard(win, Point{});
             break;
 
@@ -6375,11 +5945,6 @@ void ExecuteCmdAtPoint(MainWindow* win, int cmdId, Point pt) {
         return;
     }
     if (origId == CmdCreateAnnotImageFromClipboard) {
-#if OS_WASM
-        if (ReadClipboardImage(win, ClipboardImageUse::Stamp, pt)) {
-            return;
-        }
-#endif
         CreateImageStampFromClipboard(win, pt);
         return;
     }
@@ -6421,221 +5986,8 @@ void ExecuteCmdAtPoint(MainWindow* win, int cmdId, Point pt) {
 static void ParseCommandLine(Flags& flags, int argc, char** argv) {
     // the perm arena, as orig does: the flags outlive every frame and the
     // temp arena is reset on each one
-#if OS_WIN
-    (void)argc;
-    (void)argv;
-    ParseFlags(GetPermArena(), WStr(GetCommandLineW()), flags);
-#else
     ParseFlagsArgv(GetPermArena(), argc, argv, flags);
-#endif
 }
-
-#if OS_WIN
-
-// ─── single instance / reuse instance (orig's, Windows only) ──────────────
-
-// Finds a window of a previously running instance to reuse. Prefers a window on
-// the current virtual desktop; if the instance only has windows on other
-// desktops, returns one of them and sets *openInNewWindow so the caller opens
-// the file in a new window (which Windows places on the current desktop),
-// instead of switching to another desktop (#5630). Returns nullptr if we can't
-// talk to the previous instance (e.g. it runs elevated and we don't), so the
-// caller opens files in this process instead of sending DDE messages that the
-// elevated process would never receive.
-static HWND FindExistingSumatraProcessHwnd(HANDLE* hMutex, bool* openInNewWindow) {
-    *openInNewWindow = false;
-    // create a unique identifier for this executable and appdata combination
-    // (allows independent side-by-side installations)
-    TempStr combinedPath = str::JoinTemp(GetSelfExePathTemp(), StrL("|"), GetAppDataDirTemp());
-    str::ToLowerInPlace(combinedPath);
-    u32 hash = MurmurHash2(combinedPath);
-    TempStr mapId = fmt("SumatraPDF-%08x", hash);
-
-    int retriesLeft = 3;
-Retry:
-    // use a memory mapping containing a process id as mutex
-    HANDLE hMap = CreateFileMappingW(INVALID_HANDLE_VALUE, nullptr, PAGE_READWRITE, 0, sizeof(DWORD), CWStrTemp(mapId));
-    if (hMap) {
-        bool hasPrevInst = (GetLastError() == ERROR_ALREADY_EXISTS);
-        DWORD* procId = (DWORD*)MapViewOfFile(hMap, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(DWORD));
-        if (!procId) {
-            CloseHandle(hMap);
-        } else if (!hasPrevInst) {
-            *procId = GetCurrentProcessId();
-            UnmapViewOfFile(procId);
-            *hMutex = hMap;
-            return nullptr;
-        } else {
-            // if the mapping already exists, find one window belonging to the original process
-            DWORD prevProcId = *procId;
-            UnmapViewOfFile(procId);
-            CloseHandle(hMap);
-            // a non-admin process can't send DDE messages to an admin process, so
-            // don't return its window; retrying won't help either
-            if (!CanTalkToProcess(prevProcId)) {
-                return nullptr;
-            }
-            Vec<HWND> hwnds;
-            AppShellFindOtherInstanceWindows(prevProcId, hwnds);
-            // nullptr on Win7 / no virtual desktops -> IsWindowOnCurrentDesktop()
-            // returns true for every window, so we reuse the first one as before.
-            ISumatraVirtualDesktopManager* vdm = CreateVirtualDesktopManager();
-            HWND otherDesktopWnd = nullptr; // a window of the prev instance, on another desktop
-            HWND found = nullptr;
-            for (HWND hwnd : hwnds) {
-                if (IsWindowOnCurrentDesktop(vdm, hwnd)) {
-                    found = hwnd;
-                    break;
-                }
-                otherDesktopWnd = hwnd;
-            }
-            if (vdm) {
-                vdm->Release();
-            }
-            if (found) {
-                AllowSetForegroundWindow(prevProcId);
-                return found; // reuse the window on the current desktop
-            }
-            if (otherDesktopWnd) {
-                // the previous instance has windows, but none on the current virtual
-                // desktop. Reuse it but open the file in a new window (it lands on the
-                // current desktop) rather than switching desktops (#5630).
-                AllowSetForegroundWindow(prevProcId);
-                *openInNewWindow = true;
-                return otherDesktopWnd;
-            }
-        }
-    }
-
-    // process is alive but its window isn't ready yet (startup race): retry
-    if (--retriesLeft < 0) {
-        return nullptr;
-    }
-    SleepInMs(100);
-    goto Retry;
-}
-
-// orig's WinMain: hand the command line to an already running instance when
-// -reuse-instance / -dde / the ReuseInstance setting asks for it. Returns true
-// when this process is done and should exit.
-static bool ForwardToExistingInstance(Flags& flags, HANDLE* hMutex) {
-    bool openInNewWindow = false;
-    HWND existingInstanceHwnd = FindExistingSumatraProcessHwnd(hMutex, &openInNewWindow);
-
-    HWND existingHwnd = nullptr;
-    if (flags.printDialog || gForTesting) {
-        // the print dialog and the test runs always use this process
-    } else if (flags.reuseDdeInstance || flags.dde) {
-        Vec<HWND> hwnds;
-        AppShellFindOtherInstanceWindows(0, hwnds);
-        existingHwnd = len(hwnds) > 0 ? hwnds[0] : nullptr;
-    } else if (gSettings->reuseInstance) {
-        existingHwnd = existingInstanceHwnd;
-    }
-
-    if (flags.dde) {
-        logf("sending flags.dde '%s', hwnd: 0x%p\n", flags.dde, existingHwnd);
-        SendMyselfDDE(flags.dde, existingHwnd);
-        return true;
-    }
-    if (!existingHwnd) {
-        return false;
-    }
-
-    int nFiles = len(flags.fileNames);
-    // reusing an instance whose windows are all on other virtual desktops:
-    // open the first file in a new window so it lands on the current desktop
-    // (#5630). Subsequent files then open into that (now current) window.
-    bool reuseInNewWindow = openInNewWindow && (existingHwnd == existingInstanceHwnd);
-    // -new-window: each file in its own window. -new-window-tabs: one new
-    // window, remaining files as tabs in that window (issue #5044).
-    bool userNewWindowEach = flags.inNewWindow && !flags.inNewWindowTabs;
-    bool userNewWindowTabs = flags.inNewWindowTabs;
-    bool canBatchOpen = nFiles > 1 && !flags.reuseDdeInstance && IsSimpleOpenCase(flags, true) && !userNewWindowEach;
-    if (canBatchOpen) {
-        StrVec paths;
-        for (Str path : flags.fileNames) {
-            paths.Append(path::NormalizeTemp(path));
-        }
-        u32 newWindow = (reuseInNewWindow || userNewWindowTabs) ? 2 : 0;
-        if (SendOpenFilesToExistingInstance(existingHwnd, paths, newWindow)) {
-            return true;
-        }
-    }
-    for (int n = 0; n < nFiles; n++) {
-        Str path = flags.fileNames[n];
-        bool isFirstWindow = (0 == n);
-        bool savedInNewWindow = flags.inNewWindow;
-        if (reuseInNewWindow && n == 0) {
-            flags.inNewWindow = true;
-        } else if (userNewWindowTabs) {
-            flags.inNewWindow = (n == 0);
-        } else if (userNewWindowEach) {
-            flags.inNewWindow = true;
-        }
-        OpenUsingDDE(existingHwnd, path, flags, isFirstWindow);
-        flags.inNewWindow = savedInNewWindow;
-    }
-    if (0 == nFiles) {
-        // https://github.com/sumatrapdfreader/sumatrapdf/issues/2306
-        // if -new-window cmd-line flag given, create a new window
-        // even if there are no files to open
-        if (flags.inNewWindow || flags.inNewWindowTabs) {
-            return false;
-        }
-        // https://github.com/sumatrapdfreader/sumatrapdf/issues/3386
-        // e.g. when shift-click in taskbar, open a new window
-        SendMyselfDDE(StrL("[NewWindow]"), existingHwnd);
-    }
-    return true;
-}
-
-#endif
-
-#if OS_WIN
-
-// orig's MaybeMakePluginWindow(). gpui has no parent-window option in WinOpts
-// (see "gpui gaps"), but it does hand out the native handle, so the reparenting
-// is orig's win32 code on that handle.
-// return false if failed in a way that should abort the app
-static bool MaybeMakePluginWindow(MainWindow* win, HWND hwndParent) {
-    if (!hwndParent) {
-        return true;
-    }
-    HWND hwndFrame = AppShellNativeHwnd(win);
-    logf("MakePluginWindow: win: 0x%p, hwndFrame: 0x%p, hwndParent: 0x%p (isWindow: %d), gPluginURL: %s\n", win,
-         (void*)hwndFrame, (void*)hwndParent, (int)IsWindow(hwndParent),
-         len(gPluginURL) == 0 ? StrL("<null>") : gPluginURL);
-    ReportIf(!gPluginMode);
-
-    if (!IsWindow(hwndParent) || !hwndFrame) {
-        // we validated hwndParent for validity at startup but I'm seeing cases
-        // in crash reports were it's not valid here
-        // I assume the window went away so we just abort
-        return false;
-    }
-
-    // first SetParent as top-level window (may fail but primes the window manager)
-    SetParent(hwndFrame, hwndParent);
-
-    // strip styles and set WS_CHILD
-    LONG ws = GetWindowLongW(hwndFrame, GWL_STYLE);
-    ws &= ~(WS_POPUP | WS_BORDER | WS_CAPTION | WS_THICKFRAME);
-    ws |= WS_CHILD;
-    SetWindowLongW(hwndFrame, GWL_STYLE, ws);
-
-    // second SetParent after WS_CHILD is set
-    SetParent(hwndFrame, hwndParent);
-    Rect r = HwndClientRect(hwndParent);
-    HwndMoveWindow(hwndFrame, &r);
-    ShowWindow(hwndFrame, SW_SHOW);
-    UpdateWindow(hwndFrame);
-
-    // from here on, we depend on the plugin's host to resize us
-    HwndSetFocus(hwndFrame);
-    return true;
-}
-#endif
 
 // when the process started, so the canvas can say how long the first page
 // took to appear (the -dbg-control performance snapshot)
@@ -6728,9 +6080,6 @@ static void ExtractPageTextToStdout(EngineBase* engine, int pageNo) {
 }
 
 static void TestExtractPages(const Flags& ci) {
-#if OS_WIN
-    RedirectIOToExistingConsole();
-#endif
     gLogToConsole = false;
     for (Str fileName : ci.fileNames) {
         EngineBase* engine = CreateEngineFromFile(fileName, nullptr, true);
@@ -6758,44 +6107,19 @@ int GpuiMain(int argc, char** argv) {
         return toolRes;
     }
     gAppStartTime = TimeGet();
-#if OS_DARWIN
     AppShellDisableAutoTermination();
-#endif
-#if OS_WIN
-    // ng: orig's WinMain does this; without it WIC and GDI+ decode nothing, so
-    // e.g. reading a cached thumbnail back fails
-    ScopedOle ole;
-    ScopedGdiPlus gdiPlus(true);
-    // the dynamically loaded win32 entry points (dbghelp for the crash handler
-    // and the hang detector, the per-monitor DPI calls); orig's WinMain too
-    InitDynCalls();
-    NoDllHijacking();
-#endif
-    InitPerfLog();
     uitask::Initialize(uitask::Dispatch::Queue);
 
     gFlags = new Flags();
     ParseCommandLine(*gFlags, argc, argv);
-#if OS_WASM
-    // a page has no command line; `?file=` names a document in MEMFS
-    if (TempStr path = WasmQueryFileTemp(); len(path) > 0) {
-        gFlags->fileNames.Append(path);
-    }
-#endif
     if (gFlags->forTesting) {
         gForTesting = true;
-    }
-    if (gFlags->perfLogFile) {
-        SetPerfLogPath(gFlags->perfLogFile);
     }
     // ng: the log and the crash info go under the application data directory
     // (orig has a build-specific one for them), so -appdata is applied before
     // either is set up, not with the settings
     if (len(gFlags->appdataDir) > 0) {
         SetAppDataDir(gFlags->appdataDir);
-    }
-    if (gFlags->startPerfLog) {
-        StartPerfLog();
     }
     if (len(gFlags->logFile) > 0) {
         StartLogToFile(gFlags->logFile, true);
@@ -6807,77 +6131,11 @@ int GpuiMain(int argc, char** argv) {
             StartLogToFile(logPath, true);
         }
     }
-    if (len(gFlags->updateSelfTo) > 0) {
-        UpdateSelfTo(gFlags->updateSelfTo, gFlags->sleepMs);
-    }
 
     InitializePolicies(gFlags->restrictedUse);
     // must follow InitializePolicies(): it asks whether we may use the network
     InstallSumatraCrashHandler(gFlags->forTesting);
     gCrashOnOpen = gFlags->crashOnOpen;
-#if OS_WIN
-    if (len(gFlags->installRegRoot) > 0) {
-        SetInstallRegistryTestRoot(gFlags->installRegRoot);
-    }
-#endif
-    // the installer / uninstaller modes of the exe: their own window, no
-    // settings, no document model (orig runs them from WinMain the same way)
-    if (gFlags->uninstall) {
-        int exitCode = RunUninstaller(gFlags);
-        uitask::Destroy();
-        return exitCode;
-    }
-    if (gFlags->install || gFlags->fastInstall || gFlags->runInstallNow || gFlags->justExtractFiles) {
-        int exitCode = RunInstaller(gFlags);
-        ScheduleDeleteTempInstaller();
-        uitask::Destroy();
-        return exitCode;
-    }
-    if (gFlags->quickLookAgent) {
-        // the hidden Explorer Space-bar hook; no UI, no settings
-        RunExplorerQuickLookAgentLoop();
-        delete gFlags;
-        gFlags = nullptr;
-        uitask::Destroy();
-        return 0;
-    }
-    // -appdata <dir>: settings, history and thumbnails live there instead of
-    // the per-user location (orig does this in WinMain)
-    if (len(gFlags->upgradeFrom) > 0) {
-        logf(" flags.upgradeFrom: '%s'\n", gFlags->upgradeFrom);
-        StartInstallerAutoUpgrade(gFlags->upgradeFrom);
-        delete gFlags;
-        gFlags = nullptr;
-        uitask::Destroy();
-        return 0;
-    }
-    if (len(gFlags->deleteFile) > 0) {
-        logf(" flags.deleteFile: '%s'\n", gFlags->deleteFile);
-#if OS_WIN
-        RedirectIOToExistingConsole();
-#endif
-        // sleeping for a bit to make sure that the program that launched us
-        // had time to exit so that we can overwrite it
-        if (gFlags->sleepMs > 0) {
-            SleepInMs(gFlags->sleepMs);
-        }
-        // TODO: retry if file busy?
-        bool ok = file::Delete(gFlags->deleteFile);
-        if (ok) {
-            logf("Deleted '%s'\n", gFlags->deleteFile);
-        } else {
-            logf("Failed to delete '%s'\n", gFlags->deleteFile);
-        }
-        if (gFlags->exitWhenDone) {
-#if OS_WIN
-            HandleRedirectedConsoleOnShutdown();
-#endif
-            delete gFlags;
-            gFlags = nullptr;
-            uitask::Destroy();
-            return 0;
-        }
-    }
     LoadSettings();
 #if IS_DEBUG
     if (gFlags->testExtractPage) {
@@ -6919,11 +6177,6 @@ int GpuiMain(int argc, char** argv) {
         uitask::Destroy();
         return 0;
     }
-#if OS_WIN
-    if (gFlags->showConsole) {
-        RedirectIOToConsole();
-    }
-#endif
     if (len(gFlags->pathsToBenchmark) > 0) {
         BenchFileOrDir(gFlags->pathsToBenchmark);
     }
@@ -6961,36 +6214,6 @@ int GpuiMain(int argc, char** argv) {
         uitask::Destroy();
         return printExitCode;
     }
-#if OS_WIN
-    // hand the command line to an already running instance when asked to
-    // (-reuse-instance, -dde, or the ReuseInstance setting). The mapping this
-    // opens is what makes us the "first" instance; it lives until we exit
-    HANDLE hInstanceMutex = nullptr;
-    if (ForwardToExistingInstance(*gFlags, &hInstanceMutex)) {
-        CleanUpSettings();
-        trans::Destroy();
-        FreeAcceleratorTables();
-        delete gFlags;
-        gFlags = nullptr;
-        uitask::Destroy();
-        return 0;
-    }
-#endif
-
-#if OS_WIN
-    if (gFlags->hwndPluginParent) {
-        // check early to avoid a crash in MakePluginWindow()
-        if (!IsWindow(gFlags->hwndPluginParent)) {
-            logf("-plugin argument is not a valid window handle (hwnd)\n");
-            uitask::Destroy();
-            return 1;
-        }
-        if (!SetupPluginMode(*gFlags)) {
-            uitask::Destroy();
-            return 1;
-        }
-    }
-#endif
 
     // LoadSettings() already built the accelerator table (orig's WinMain does
     // not build it either); building it twice trips ReportIf(gAccels)
@@ -7000,10 +6223,8 @@ int GpuiMain(int argc, char** argv) {
     gRenderCache = new RenderCache();
 
     gp::App* app = gp::AppNew();
-#if OS_DARWIN
     AppShellHandleOpenDocs();
     AppShellWatchMacEvents();
-#endif
     gpc::Init(app);
     // the current theme's colors become gpui's before the first element is built
     AppShellSetApp(app);
@@ -7011,16 +6232,8 @@ int GpuiMain(int argc, char** argv) {
 
     Size size = NewWindowSize(nullptr);
     MainWindow* win = AppShellCreateWindow(app, size.dx, size.dy);
-    if (!gFlags->quickLook) {
-        PlaceMainWindow(win, nullptr, PlaceWindowWhen::Now);
-    }
-#if !OS_WIN
+    PlaceMainWindow(win, nullptr, PlaceWindowWhen::Now);
     ReRegisterGlobalHotkeys();
-#endif
-    if (gFlags->quickLook) {
-        win->isQuickLook = true;
-        ApplyExplorerQuickLookChrome(win);
-    }
     SetSidebarVisibility(win, false, gSettings->showFavorites);
     ShowMaybeDelayedNotifications(win);
 
@@ -7029,11 +6242,6 @@ int GpuiMain(int argc, char** argv) {
     TakeInitialSessionData();
     InstallSessionStateHook();
     InstallLayoutNotifHooks();
-#if OS_WIN
-    // a DDE / WM_COPYDATA open that arrives while the command line is still
-    // being opened is queued instead of racing it
-    gIsStartup = true;
-#endif
     bool restoredSession = false;
     if (len(gFlags->fileNames) == 0 || SettingsUseTabs()) {
         restoredSession = RestoreSession(win);
@@ -7066,13 +6274,7 @@ int GpuiMain(int argc, char** argv) {
         }
     }
     gApplyCliViewToEbookLayout = false;
-#if OS_DARWIN
     AppShellOpenDocsReady();
-#endif
-#if OS_WIN
-    LoadDdeOpenOnStartup(win);
-    gIsStartup = false;
-#endif
     // orig's LoadOnStartup: WindowState = 3 in the settings, then the command
     // line flags, which win over it
     if (!restoredSession && gSettings->windowState == WIN_STATE_FULLSCREEN) {
@@ -7080,12 +6282,6 @@ int GpuiMain(int argc, char** argv) {
     }
     EnterFullScreenFromFlags(*gFlags, win);
     ApplyStartupViewFlags(*gFlags, win);
-#if OS_WIN
-    if (gFlags->hwndPluginParent && !MaybeMakePluginWindow(win, gFlags->hwndPluginParent)) {
-        logf("MaybeMakePluginWindow() failed, quitting\n");
-        AppShellQuit();
-    }
-#endif
     if (len(gFlags->stressTestPath) > 0) {
         // don't save file history and preference changes
         RestrictPolicies(Perm::SavePreferences);
@@ -7107,12 +6303,6 @@ int GpuiMain(int argc, char** argv) {
         StartSearchFromCommandLine(win, gFlags->search);
     }
     StartAsyncUpdateCheck(win, UpdateCheck::Automatic);
-#if OS_WIN
-    // home-page bottom bar if we lost default-app status for registered extensions
-    if (win->IsCurrentTabAbout()) {
-        uitask::Post(MkFunc0(MaybeShowDefaultAppNotification, win), "MaybeShowDefaultAppNotification");
-    }
-#endif
     StartSumatraControl(gFlags->controlPipeName);
 
     // on by default in debug builds; release builds can opt in by calling
@@ -7123,15 +6313,9 @@ int GpuiMain(int argc, char** argv) {
 
     int res = AppShellRun(app);
     StopUiHangDetector();
-    SavePerfLog();
     UnregisterSettingsForFileChanges();
-    ShutdownWin11Printing();
     TtsRelease();
     ClearPendingNextPrevNav();
-#if OS_WIN
-    DisconnectLastDragDataObject();
-    NativeCursorsDelete();
-#endif
 
     // the window is off the screen but its model is still here, and the shell
     // cached its geometry on every frame, so the session snapshot SaveSettings
@@ -7159,11 +6343,5 @@ int GpuiMain(int argc, char** argv) {
     gFlags = nullptr;
     uitask::Destroy();
     gp::AppFree(app);
-#if OS_WIN
-    if (hInstanceMutex) {
-        CloseHandle(hInstanceMutex);
-    }
-#endif
-    DestroyPerfLog();
     return res;
 }

@@ -17,11 +17,7 @@ extern char** environ;
 
 // the desktop's "open this with whatever handles it" program
 static const char* OpenerProgram() {
-#if OS_DARWIN
     return "open";
-#else
-    return "xdg-open";
-#endif
 }
 
 // one command line into argv, honoring double quotes. Same rules as the
@@ -160,21 +156,9 @@ void OpenPathInDefaultFileManager(Str path) {
 
     TempStr fullPath = path::NormalizeTemp(path);
     StrVec args;
-#if OS_DARWIN
     args.Append(StrL("open"));
     args.Append(StrL("-R"));
     args.Append(fullPath);
-#else
-    TempStr uri = fmt("file://%s", url::EncodePathTemp(fullPath));
-    args.Append(StrL("dbus-send"));
-    args.Append(StrL("--session"));
-    args.Append(StrL("--dest=org.freedesktop.FileManager1"));
-    args.Append(StrL("--type=method_call"));
-    args.Append(StrL("/org/freedesktop/FileManager1"));
-    args.Append(StrL("org.freedesktop.FileManager1.ShowItems"));
-    args.Append(fmt("array:string:%s", uri));
-    args.Append(StrL("string:"));
-#endif
     if (SpawnDetached(args)) {
         return;
     }

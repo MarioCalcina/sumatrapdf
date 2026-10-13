@@ -4,7 +4,6 @@
 #include "base/Base.h"
 #include "base/Pixmap.h"
 #include "base/GuessFileType.h"
-#include "base/GdiPlusUtil.h"
 
 #include <webp/decode.h>
 

@@ -30,25 +30,10 @@ static TempStr FindAntiGravityExecutableTemp() {
     StrVec candidates;
     TempStr userProfile = AIChatHomeDirTemp();
     if (len(userProfile) > 0) {
-#if OS_WIN
-        candidates.Append(fmt("%s\\AppData\\Local\\agy\\bin\\agy.exe", userProfile));
-        candidates.Append(fmt("%s\\AppData\\Local\\agy\\bin\\antigravity.exe", userProfile));
-        candidates.Append(fmt("%s\\AppData\\Roaming\\Antigravity\\bin\\agy.exe", userProfile));
-        candidates.Append(fmt("%s\\AppData\\Roaming\\Antigravity\\bin\\antigravity.exe", userProfile));
-        candidates.Append(fmt("%s\\.gemini\\antigravity-cli\\bin\\antigravity.exe", userProfile));
-        candidates.Append(fmt("%s\\.gemini\\antigravity-cli\\bin\\agy.exe", userProfile));
-        candidates.Append(fmt("%s\\.local\\bin\\antigravity.exe", userProfile));
-        candidates.Append(fmt("%s\\.local\\bin\\agy.exe", userProfile));
-        candidates.Append(fmt("%s\\AppData\\Local\\Programs\\antigravity\\antigravity.exe", userProfile));
-        candidates.Append(fmt("%s\\AppData\\Local\\Programs\\agy\\agy.exe", userProfile));
-        candidates.Append(fmt("%s\\AppData\\Roaming\\npm\\antigravity.cmd", userProfile));
-        candidates.Append(fmt("%s\\AppData\\Roaming\\npm\\agy.cmd", userProfile));
-#else
         candidates.Append(path::JoinTemp(userProfile, StrL(".gemini/antigravity-cli/bin/antigravity")));
         candidates.Append(path::JoinTemp(userProfile, StrL(".gemini/antigravity-cli/bin/agy")));
         candidates.Append(path::JoinTemp(userProfile, StrL(".local/bin/antigravity")));
         candidates.Append(path::JoinTemp(userProfile, StrL(".local/bin/agy")));
-#endif
     }
     TempStr res = AIChatFindExecutableTemp(candidates, StrL("antigravity.exe"), StrL("antigravity"));
     if (res) {

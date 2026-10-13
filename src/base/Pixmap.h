@@ -1,27 +1,12 @@
 /* Copyright 2022 the SumatraPDF project authors (see AUTHORS file).
    License: Simplified BSD (see COPYING.BSD) */
 
-// Pixmap is a platform-independent, raw (uncompressed) in-memory bitmap: a tightly
-// described pixel buffer with no dependency on any OS imaging API. It exists so image
-// decoders can return decoded pixels without binding to Gdiplus::Bitmap, and so the
-// pixels can be handed to the platform's imaging API with zero copies:
-//  - Windows: Gdiplus::Bitmap(w, h, stride, format, scan0) borrows the buffer
-//  - macOS:   CGBitmapContextCreate / CGImageCreate over the buffer
-//  - Linux:   cairo_image_surface_create_for_data over the buffer
+// Pixmap is a raw (uncompressed) in-memory bitmap: a tightly described pixel buffer
+// with no dependency on an OS imaging API, so image decoders can return decoded pixels
+// that CGBitmapContextCreate / CGImageCreate (and gpui) take with zero copies.
 //
-// BGRA8 (premultiplied) is the canonical layout because it is the natively zero-copy
-// layout on all three platforms (Gdiplus 32bppPARGB, CoreGraphics
-// PremultipliedFirst|ByteOrder32Little, cairo ARGB32). The Windows-specific zero-copy
-// conversion helpers live in GdiPlusUtil.h (NewGdiplusBitmapFromPixmap / PixmapFromGdiplus).
-//
-// A Pixmap may additionally be backed by a platform "present" object so it can be blitted
-// to the screen with no copy (a GDI DIB section on Windows; later a CGImage/cairo surface
-// on mac/linux). That backing is described per-platform with #if rather than an opaque
-// handle. When present (hbmp != null on Windows), `data` points into the present object's
-// pixels and is owned by it (freed via FreePixmapNativeBitmap), not by malloc/free.
-//
-// On Windows this header uses HBITMAP/HANDLE directly; <windows.h> is assumed to have
-// been included before it (it comes in via Base.h).
+// BGRA8 (premultiplied) is the canonical layout because it is CoreGraphics'
+// PremultipliedFirst|ByteOrder32Little.
 
 enum class PixmapFormat : u8 {
     // byte order in memory. BGRA8 is the zero-copy layout on all 3 platforms.
@@ -48,14 +33,7 @@ struct Pixmap {
     bool hasAlpha = false;
     float xres = 96.0f;
     float yres = 96.0f;
-    u8* data = nullptr; // pixel buffer; owned by malloc, or by hbmp when DIB-section-backed
-
-#if OS_WIN
-    // When non-null, the Pixmap is backed by a GDI DIB section: `data` is its pixels and
-    // the bitmap is directly blittable (BlitPixmap). Owns these handles.
-    HBITMAP hbmp = nullptr;
-    HANDLE hMap = nullptr; // optional file mapping backing hbmp
-#endif
+    u8* data = nullptr; // pixel buffer; owned by malloc
 };
 
 void CopyPixmapRows(Pixmap* dst, const u8* src, int srcStride);
@@ -66,28 +44,6 @@ Pixmap* PixmapToBgra(Pixmap* p);
 
 // Gives a decoder an RGB24 or straight-alpha RGBA32 destination buffer.
 typedef u8* (*DecodeDstAllocFn)(void* user, int dx, int dy, bool hasAlpha, int* stride);
-
-#if OS_WIN
-struct RenderedBitmap;
-
-// DIB-section-backed 32bpp BGRA8. Use only when this pixmap must be SelectObject'd
-// or must adopt a GDI HBITMAP / Native DIB. Heap pixels blit via StretchDIBits
-// with no extra copy (BlitPixmap / BlitPixmapAlpha).
-Pixmap* AllocPixmapDIB(int w, int h);
-Pixmap* PixmapFromHICON(HICON);
-bool BlitPixmap(Pixmap* p, HDC hdc, Rect target);
-bool BlitPixmapAlpha(Pixmap* p, HDC hdc, Rect target);
-bool BlitPixmapRegion(Pixmap* p, HDC hdc, Rect target, Rect source);
-bool BlitPixmapDibBits(const Pixmap* p, HDC hdc, Rect target, Rect source);
-Pixmap* PixmapFromHBITMAP(HBITMAP hbmp, Size size, HANDLE hMap = nullptr);
-// an opaque 32bpp copy of a DIB-backed Pixmap, for code that needs to read pixels
-// out of one whose format is Native. Returns null if there's nothing to copy
-Pixmap* PixmapCopyAs32bppDIB(const Pixmap* p);
-Pixmap* PixmapFromRenderedBitmap(RenderedBitmap* rb);
-RenderedBitmap* RenderedBitmapFromPixmap(Pixmap* px);
-
-void FreePixmapNativeBitmap(Pixmap* p);
-#endif
 
 // remaps a rendered page bitmap onto a text / background / link color ramp
 // (dark mode). ng: portable, orig declares it in the win32 half
@@ -137,7 +93,6 @@ inline Pixmap* AllocPixmap(int w, int h, PixmapFormat fmt = PixmapFormat::BGRA8,
     return p;
 }
 
-#if !OS_WIN
 // No GDI DIB section off Windows; same heap buffer as AllocPixmap.
 inline Pixmap* AllocPixmapDIB(int w, int h) {
     return AllocPixmap(w, h);
@@ -147,19 +102,11 @@ inline Pixmap* AllocPixmapDIB(int w, int h) {
 // Applies an EXIF orientation (2..8) and frees the input; anything else
 // returns px unchanged.
 Pixmap* PixmapApplyExifOrientation(Pixmap* px, int orientation);
-#endif
 
 inline void FreePixmap(Pixmap* p) {
     if (!p) {
         return;
     }
-#if OS_WIN
-    if (p->hbmp) {
-        FreePixmapNativeBitmap(p);
-        delete p;
-        return;
-    }
-#endif
     free(p->data);
     delete p;
 }
@@ -169,12 +116,6 @@ inline Pixmap* ClonePixmap(const Pixmap* src) {
     if (!src || !src->data) {
         return nullptr;
     }
-#if OS_WIN
-    // ng: Native pixels have no layout to copy; the clone is a 32bpp DIB
-    if (src->format == PixmapFormat::Native) {
-        return PixmapCopyAs32bppDIB(src);
-    }
-#endif
     Pixmap* p = AllocPixmap(src->width, src->height, src->format, src->premultiplied);
     if (!p) {
         return nullptr;

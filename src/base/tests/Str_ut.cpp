@@ -928,12 +928,8 @@ void StrTest() {
     }
 
     utassert(str::IsDigit('0') && str::IsDigit(TEXT('5')) && str::IsDigit(L'9'));
-#if OS_WIN
-    utassert(iswdigit(L'\u0660') && !str::IsDigit(L'\xB2'));
-#else
     // wchar_t is 4 bytes here, so name the narrow overload explicitly
     utassert(!str::IsDigit((char)L'\xB2'));
-#endif
 
     utassert(str::CmpNatural(StrL(".hg"), StrL("2.pdf")) < 0);
     utassert(str::CmpNatural(StrL("100.pdf"), StrL("2.pdf")) > 0);
@@ -945,13 +941,6 @@ void StrTest() {
     utassert(str::CmpNatural(Str{}, StrL(".pdf")) < 0);
     utassert(str::CmpNatural(StrL("a.pdf"), StrL("")) > 0);
     utassert(str::CmpNatural(Str{}, Str{}) == 0);
-
-#if OS_WIN
-// base/Base.h defines LOCALE_INVARIANT as a constant outside Windows
-#ifndef LOCALE_INVARIANT
-#define LOCALE_INVARIANT (MAKELCID(MAKELANGID(LANG_INVARIANT, SUBLANG_NEUTRAL), SORT_DEFAULT))
-#endif
-#endif
 
     // clang-format off
     struct {

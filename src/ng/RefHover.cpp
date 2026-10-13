@@ -7,9 +7,6 @@
 
 #include "base/Base.h"
 #include "base/Pixmap.h"
-#if OS_WIN
-#include "base/Win.h"
-#endif
 
 #include "gui/UIModels.h"
 
@@ -21,90 +18,6 @@
 #include "MainWindow.h"
 #include "gui/AppShell.h"
 #include "RefHover.h"
-
-#if OS_WIN
-// Tests post WM_MOUSEWHEEL at the popup hwnd. The popup is an element, so a
-// message-only window stands in for that hwnd.
-struct RefHoverMsgWin {
-    RefHoverState* s = nullptr;
-    HWND hwnd = nullptr;
-};
-
-static Vec<RefHoverMsgWin> gRefHoverMsgWins;
-
-static constexpr const WCHAR* kRefHoverMsgClass = L"SumatraPDFRefHoverMsg";
-
-static RefHoverState* StateForMsgHwnd(HWND hwnd) {
-    for (int i = 0; i < len(gRefHoverMsgWins); i++) {
-        if (gRefHoverMsgWins[i].hwnd == hwnd) {
-            return gRefHoverMsgWins[i].s;
-        }
-    }
-    return nullptr;
-}
-
-static LRESULT CALLBACK RefHoverMsgProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
-    if (msg != WM_MOUSEWHEEL && msg != WM_MOUSEHWHEEL) {
-        return DefWindowProcW(hwnd, msg, wp, lp);
-    }
-    RefHoverState* s = StateForMsgHwnd(hwnd);
-    if (!s || !s->visible || !s->hitEngine) {
-        return 0;
-    }
-    int delta = GET_WHEEL_DELTA_WPARAM(wp);
-    if (msg == WM_MOUSEHWHEEL) {
-        RefHoverWheelScroll(s, s->hitEngine, -delta);
-    } else if (((GET_KEYSTATE_WPARAM(wp) & MK_CONTROL) != 0) || IsCtrlPressed()) {
-        RefHoverWheelZoom(s, s->hitEngine, delta);
-    } else {
-        RefHoverWheelScroll(s, s->hitEngine, delta);
-    }
-    if (s->win) {
-        AppShellInvalidate(s->win);
-    }
-    return 0;
-}
-
-static void EnsureMsgClass() {
-    static bool registered = false;
-    if (registered) {
-        return;
-    }
-    WNDCLASSEXW wc{};
-    wc.cbSize = sizeof(wc);
-    wc.lpfnWndProc = RefHoverMsgProc;
-    wc.hInstance = GetModuleHandleW(nullptr);
-    wc.lpszClassName = kRefHoverMsgClass;
-    registered = RegisterClassExW(&wc) != 0;
-}
-
-static void CreateMsgWin(RefHoverState* s) {
-    EnsureMsgClass();
-    HWND hwnd = CreateWindowExW(0, kRefHoverMsgClass, L"", 0, 0, 0, 0, 0, HWND_MESSAGE, nullptr,
-                                GetModuleHandleW(nullptr), nullptr);
-    if (!hwnd) {
-        return;
-    }
-    RefHoverMsgWin w;
-    w.s = s;
-    w.hwnd = hwnd;
-    VecAppend(gRefHoverMsgWins, w);
-}
-
-static void DestroyMsgWin(RefHoverState* s) {
-    for (int i = 0; i < len(gRefHoverMsgWins); i++) {
-        if (gRefHoverMsgWins[i].s != s) {
-            continue;
-        }
-        HWND hwnd = gRefHoverMsgWins[i].hwnd;
-        VecRemoveAt(gRefHoverMsgWins, i);
-        if (hwnd) {
-            DestroyWindow(hwnd);
-        }
-        return;
-    }
-}
-#endif
 
 float CanvasScale(MainWindow* win);
 
@@ -128,9 +41,6 @@ RefHoverState* RefHoverCreate(MainWindow* win) {
     auto* s = new RefHoverState();
     s->win = win;
     RefHoverRegisterLiveState(s);
-#if OS_WIN
-    CreateMsgWin(s);
-#endif
     return s;
 }
 
@@ -138,9 +48,6 @@ void RefHoverDestroy(RefHoverState* s) {
     if (!s) {
         return;
     }
-#if OS_WIN
-    DestroyMsgWin(s);
-#endif
     RefHoverUnregisterLiveState(s);
     RefHoverDropQueuedRender(s);
     RefHoverFreeRenderImage(s);
@@ -323,15 +230,7 @@ bool RefHoverTakePostedWheel(MainWindow* win, bool horizontal, int delta, bool i
 }
 
 int RefHoverPopupHwndInt(RefHoverState* s) {
-#if OS_WIN
-    for (int i = 0; i < len(gRefHoverMsgWins); i++) {
-        if (gRefHoverMsgWins[i].s == s) {
-            return (int)(INT_PTR)gRefHoverMsgWins[i].hwnd;
-        }
-    }
-#else
     (void)s;
-#endif
     return 0;
 }
 

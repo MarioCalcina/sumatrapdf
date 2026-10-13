@@ -9,9 +9,6 @@
 #if IS_DEBUG
 #include "base/Zip.h"
 #endif
-#if OS_WIN
-#include "base/Win.h"
-#endif
 
 #include "DocProperties.h"
 #include "DocController.h"
@@ -21,11 +18,9 @@
 #include "MobiDoc.h"
 #include "EbookDoc.h"
 
-#if !OS_WIN
 static uint GuessTextCodepage(Str, uint defVal) {
     return defVal;
 }
-#endif
 
 template <typename T, typename... Args>
 static T* LoadEbook(Str path, Args... args) {

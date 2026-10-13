@@ -4,7 +4,6 @@
 #include "base/Base.h"
 #include "base/CmdLineArgs.h"
 #include "base/File.h"
-#include "base/Win.h"
 #include "base/Launch.h"
 
 #include "gui/UIModels.h"
@@ -20,10 +19,7 @@
 #include "MainWindow.h"
 #include "Commands.h"
 #include "Translations.h"
-#ifdef SUMATRA_NG
 #include "SumatraDialogs.h"
-#include "gui/WasmBridge.h"
-#endif
 #include "ExternalViewers.h"
 
 struct ExternalViewerInfo {
@@ -229,229 +225,9 @@ void FreeExternalViewers() {
     }
 }
 
-#if OS_WIN
-static TempStr GetAcrobatPathTemp() {
-    // Try Adobe Acrobat as a fall-back, if the Reader isn't installed
-    Str keyName = StrL(R"(Software\Microsoft\Windows\CurrentVersion\App Paths\AcroRd32.exe)");
-    TempStr path = ReadRegStrTemp(HKEY_LOCAL_MACHINE, keyName, {});
-    if (len(path) == 0) {
-        keyName = StrL(R"(Software\Microsoft\Windows\CurrentVersion\App Paths\Acrobat.exe)");
-        path = ReadRegStrTemp(HKEY_LOCAL_MACHINE, keyName, {});
-    }
-    if (path && file::Exists(path)) {
-        return path;
-    }
-    return {};
-}
-
-static TempStr GetFoxitPathTemp() {
-    Str keyName = StrL(R"(Software\Microsoft\Windows\CurrentVersion\Uninstall\Foxit Reader)");
-    TempStr path = ReadRegStrTemp(HKEY_LOCAL_MACHINE, keyName, StrL("DisplayIcon"));
-    if (path && file::Exists(path)) {
-        return path;
-    }
-    // Registry value for Foxit 5 (and maybe later)
-    keyName = StrL(R"(Software\Microsoft\Windows\CurrentVersion\Uninstall\Foxit Reader_is1)");
-    path = ReadRegStrTemp(HKEY_LOCAL_MACHINE, keyName, StrL("DisplayIcon"));
-    if (path && file::Exists(path)) {
-        return path;
-    }
-    // Registry value for Foxit 5.5 MSI installer
-    keyName = StrL(R"(Software\Foxit Software\Foxit Reader)");
-    path = ReadRegStrTemp(HKEY_LOCAL_MACHINE, keyName, StrL("InstallPath"));
-    if (path) {
-        path = path::JoinTemp(path, StrL("Foxit Reader.exe"));
-    }
-    if (path && file::Exists(path)) {
-        return path;
-    }
-    // Registry value for Foxit PDF Reader 12.1.3.15356 (The last version with Add Bookmark function without bugs in
-    // single-key accelerator)
-    keyName = StrL(R"(SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\FoxitPDFReader.exe)");
-    path = ReadRegStrTemp(HKEY_LOCAL_MACHINE, keyName, StrL("Path"));
-    if (path) {
-        path = path::JoinTemp(path, StrL("FoxitPDFReader.exe"));
-    }
-    if (path && file::Exists(path)) {
-        return path;
-    }
-    return {};
-}
-
-static TempStr GetAppPathExeTemp(Str exeName) {
-    TempStr keyName = fmt(R"(Software\Microsoft\Windows\CurrentVersion\App Paths\%s)", exeName);
-    TempStr path = ReadRegStr2Temp(keyName, {});
-    if (path && file::Exists(path)) {
-        return path;
-    }
-    return {};
-}
-
-static TempStr GetRegisteredOpenExeTemp(Str progId) {
-    TempStr keyName = fmt(R"(%s\shell\open\command)", progId);
-    TempStr command = ReadRegStrTemp(HKEY_CLASSES_ROOT, keyName, {});
-    if (len(command) == 0) {
-        return {};
-    }
-    StrNode* args = ParseCmdLine(command);
-    defer {
-        FreeStrNode(nullptr, args);
-    };
-    if (!args || !file::Exists(args->s)) {
-        return {};
-    }
-    return str::DupTemp(args->s);
-}
-
-static TempStr FindPDFXChangeInProgramDirsTemp(const StrVec& programDirs) {
-    Str partialPaths[] = {
-        StrL(R"(PDF-XChange\PDF Editor\PXCEditor.exe)"),
-        StrL(R"(Tracker Software\PDF Editor\PXCEditor.exe)"),
-        StrL(R"(PDF-XChange\PDF Editor\PDFXEdit.exe)"),
-        StrL(R"(Tracker Software\PDF Editor\PDFXEdit.exe)"),
-    };
-    for (Str partialPath : partialPaths) {
-        for (Str dir : programDirs) {
-            TempStr exePath = path::JoinTemp(dir, partialPath);
-            if (file::Exists(exePath)) {
-                return exePath;
-            }
-        }
-    }
-    return {};
-}
-
-static TempStr GetPDFXChangePathTemp() {
-    // V11 renamed both the vendor directory and the executable. Prefer paths
-    // registered by the installer, then cover clean and upgraded installations.
-    TempStr exePath = GetAppPathExeTemp(StrL("PXCEditor.exe"));
-    if (len(exePath) == 0) {
-        exePath = GetAppPathExeTemp(StrL("PDFXEdit.exe"));
-    }
-    if (len(exePath) == 0) {
-        exePath = GetRegisteredOpenExeTemp(StrL("PXCEditor.PDF"));
-    }
-    if (len(exePath) == 0) {
-        exePath = GetRegisteredOpenExeTemp(StrL("PDFXEdit.PDF"));
-    }
-    if (exePath) {
-        return exePath;
-    }
-
-    StrVec programDirs;
-    int csidls[] = {CSIDL_PROGRAM_FILES, CSIDL_PROGRAM_FILESX86};
-    for (int csidl : csidls) {
-        TempStr dir = GetSpecialFolderTemp(csidl);
-        if (dir) {
-            programDirs.Append(dir);
-        }
-    }
-    exePath = FindPDFXChangeInProgramDirsTemp(programDirs);
-    if (exePath) {
-        return exePath;
-    }
-
-    // Legacy PDF-XChange Viewer registry entry.
-    Str keyName = StrL(R"(Software\Tracker Software\PDFViewer)");
-    TempStr path = ReadRegStr2Temp(keyName, StrL("InstallPath"));
-    if (len(path) == 0) {
-        return {};
-    }
-    exePath = path::JoinTemp(path, StrL("PDFXCview.exe"));
-    if (file::Exists(exePath)) {
-        return exePath;
-    }
-    return {};
-}
-
-#if IS_DEBUG
-bool ExternalViewers_UnitTestPDFXChangePaths() {
-    TempStr testDir = GetTempFilePathTemp(StrL("issue-5941"));
-    if (len(testDir) == 0 || !file::Delete(testDir) || !dir::Create(testDir)) {
-        return false;
-    }
-    defer {
-        dir::RemoveAll(testDir);
-    };
-
-    StrVec programDirs;
-    programDirs.Append(testDir);
-    Str partialPaths[] = {
-        StrL(R"(PDF-XChange\PDF Editor\PXCEditor.exe)"),
-        StrL(R"(Tracker Software\PDF Editor\PXCEditor.exe)"),
-        StrL(R"(Tracker Software\PDF Editor\PDFXEdit.exe)"),
-    };
-    for (Str partialPath : partialPaths) {
-        TempStr expected = path::JoinTemp(testDir, partialPath);
-        if (!dir::CreateForFile(expected) || !file::WriteFile(expected, StrL("test"))) {
-            return false;
-        }
-        TempStr found = FindPDFXChangeInProgramDirsTemp(programDirs);
-        if (len(found) == 0 || !path::IsSame(found, expected) || !file::Delete(expected)) {
-            return false;
-        }
-    }
-    return true;
-}
-#endif
-
-static void SetKnownExternalViewerExePath(int cmdId, Str exePath) {
-    if (len(exePath) == 0) {
-        return;
-    }
-    ExternalViewerInfo* info = FindKnownExternalViewerInfoByCmdId(cmdId);
-    if (info && len(info->exeFullPath) == 0) {
-        info->exeFullPath = str::Dup(exePath);
-    }
-}
-
-static bool DetectExternalViewer(ExternalViewerInfo* ev) {
-    if (ev->exeFullPath) {
-        return true;
-    }
-    if (len(ev->exePartialPath) == 0) {
-        return false;
-    }
-
-    static int const csidls[] = {CSIDL_PROGRAM_FILES, CSIDL_PROGRAM_FILESX86, CSIDL_WINDOWS, CSIDL_SYSTEM};
-    for (int csidl : csidls) {
-        TempStr dir = GetSpecialFolderTemp(csidl);
-        TempStr path = path::JoinTemp(dir, ev->exePartialPath);
-        if (file::Exists(path)) {
-            ev->exeFullPath = str::Dup(path);
-            return true;
-        }
-    }
-    return false;
-}
-
-void DetectExternalViewers() {
-    ReportIf(gExternalViewersCount > 0); // only call once
-
-    if (!CanAccessDisk()) {
-        return;
-    }
-
-    TempStr exePath = GetPDFXChangePathTemp();
-    SetKnownExternalViewerExePath(CmdOpenWithPdfXchange, exePath);
-
-    for (ExternalViewerInfo& i : gExternalViewers) {
-        if (DetectExternalViewer(&i)) {
-            gExternalViewersCount++;
-        }
-    }
-
-    exePath = GetAcrobatPathTemp();
-    SetKnownExternalViewerExePath(CmdOpenWithAcrobat, exePath);
-
-    exePath = GetFoxitPathTemp();
-    SetKnownExternalViewerExePath(CmdOpenWithFoxit, exePath);
-}
-#else
 void DetectExternalViewers() {
     (void)gExternalViewersCount;
 }
-#endif
 
 static bool filterMatchesEverything(Str ext) {
     return str::IsEmptyOrWhiteSpace(ext) || str::EqIS(ext, StrL("*"));
@@ -676,11 +452,7 @@ bool RunWithExe(WindowTab* tab, Str cmdLine, Str filter) {
         TempStr msg =
             fmt("External viewer executable not found: %s. Fix ExternalViewers in advanced settings.", exePath);
         auto caption = Tr("Error");
-#ifdef SUMATRA_NG
         MsgBox(tab ? tab->win : nullptr, msg, caption, MbOk | MbIconError);
-#else
-        MsgBox(nullptr, msg, caption, MB_OK | MB_ICONERROR);
-#endif
         return false;
     }
     if (str::IsEmptyOrWhiteSpace(rest)) {
@@ -693,121 +465,12 @@ bool RunWithExe(WindowTab* tab, Str cmdLine, Str filter) {
 
 // --- send as e-mail attachment (step 14a) -----------------------------------
 
-#if OS_WIN
-
-static bool IsMapiSendMailAvailable() {
-    HMODULE hMapi = LoadLibraryW(L"mapi32.dll");
-    if (!hMapi) {
-        return false;
-    }
-    bool ok = GetProcAddress(hMapi, "MAPISendMailW") != nullptr;
-    FreeLibrary(hMapi);
-    return ok;
-}
-
-static bool IsEmailAttachmentSendAvailable() {
-    static int cached = -1;
-    if (cached >= 0) {
-        return cached != 0;
-    }
-    bool ok = IsMapiSendMailAvailable();
-    cached = ok ? 1 : 0;
-    return ok;
-}
-
-// Use MAPISendMailW to send email with attachment.
-// Works with Outlook, Thunderbird and other MAPI-registered email clients.
-static bool SendAsEmailAttachmentWithMapi(HWND hwndParent, Str filePath) {
-    HMODULE hMapi = LoadLibraryW(L"mapi32.dll");
-    if (!hMapi) {
-        return false;
-    }
-
-    // MapiFileDescW and MapiMessageW structs matching Windows SDK definitions
-    struct MapiFileDescW {
-        ULONG ulReserved;
-        ULONG flFlags;
-        ULONG nPosition;
-        PWSTR lpszPathName;
-        PWSTR lpszFileName;
-        PVOID lpFileType;
-    };
-
-    struct MapiMessageW {
-        ULONG ulReserved;
-        PWSTR lpszSubject;
-        PWSTR lpszNoteText;
-        PWSTR lpszMessageType;
-        PWSTR lpszDateReceived;
-        PWSTR lpszConversationID;
-        ULONG flFlags;
-        PVOID lpOriginator;
-        ULONG nRecipCount;
-        PVOID lpRecips;
-        ULONG nFileCount;
-        MapiFileDescW* lpFiles;
-    };
-
-    using MAPISendMailWFn = ULONG(WINAPI*)(ULONG_PTR, ULONG_PTR, MapiMessageW*, ULONG, ULONG);
-    auto fnSendMailW = (MAPISendMailWFn)GetProcAddress(hMapi, "MAPISendMailW");
-    if (!fnSendMailW) {
-        FreeLibrary(hMapi);
-        return false;
-    }
-
-    WCHAR* filePathW = CWStrTemp(filePath);
-    TempStr fileName = path::GetBaseNameTemp(filePath);
-    WCHAR* fileNameW = CWStrTemp(fileName);
-
-    MapiFileDescW fileDesc{};
-    fileDesc.nPosition = (ULONG)-1;
-    fileDesc.lpszPathName = filePathW;
-    fileDesc.lpszFileName = fileNameW;
-
-    MapiMessageW msg{};
-    msg.nFileCount = 1;
-    msg.lpFiles = &fileDesc;
-
-    constexpr ULONG kMapiDialog = 0x8;
-    constexpr ULONG kMapiLogonUI = 0x1;
-    ULONG result = fnSendMailW(0, (ULONG_PTR)hwndParent, &msg, kMapiDialog | kMapiLogonUI, 0);
-
-    FreeLibrary(hMapi);
-    // SUCCESS_SUCCESS = 0, MAPI_E_USER_ABORT = 1
-    return result <= 1;
-}
-
-#else
-
-// ng: no MAPI off Windows. Linux's xdg-email supports attachments; other
-// desktops get a mailto naming the file so the user can attach it.
+// ng: Mail gets the file as an attachment; without it, a mailto names the
+// file so the user can attach it.
 static bool IsEmailAttachmentSendAvailable() {
     return true;
 }
 
-#if OS_LINUX
-static Str XdgEmailPath() {
-    static const Str paths[] = {StrL("/usr/bin/xdg-email"), StrL("/bin/xdg-email")};
-    for (Str path : paths) {
-        if (file::Exists(path)) {
-            return path;
-        }
-    }
-    return {};
-}
-
-static bool SendAsEmailAttachmentWithXdg(Str filePath) {
-    Str exe = XdgEmailPath();
-    if (len(exe) == 0) {
-        return false;
-    }
-    TempStr name = path::GetBaseNameTemp(filePath);
-    TempStr params = fmt("--attach \"%s\" --subject \"%s\"", filePath, name);
-    return LaunchFileShell(exe, params);
-}
-#endif
-
-#if OS_DARWIN
 static bool SendAsEmailAttachmentWithMail(Str filePath) {
     TempStr name = path::GetBaseNameTemp(filePath);
     StrVec args;
@@ -838,15 +501,12 @@ static bool SendAsEmailAttachmentWithMail(Str filePath) {
     args.Append(name);
     return LaunchFileShellArgs(args);
 }
-#endif
 
 static bool SendAsEmailAttachmentWithMailto(Str filePath) {
     TempStr name = path::GetBaseNameTemp(filePath);
     TempStr url = fmt("mailto:?subject=%s&body=%s", name, filePath);
     return LaunchBrowser(url);
 }
-
-#endif
 
 bool CanSendAsEmailAttachment(WindowTab* tab) {
     // Requirements: a valid filename and a working way to send it
@@ -860,22 +520,8 @@ bool SendAsEmailAttachment(WindowTab* tab) {
     if (!tab || !CanSendAsEmailAttachment(tab)) {
         return false;
     }
-#if OS_WIN
-    return SendAsEmailAttachmentWithMapi(MainWindowHwnd(tab->win), tab->filePath);
-#else
-#if OS_LINUX
-    if (SendAsEmailAttachmentWithXdg(tab->filePath)) {
-        return true;
-    }
-#elif OS_DARWIN
     if (SendAsEmailAttachmentWithMail(tab->filePath)) {
         return true;
     }
-#elif OS_WASM
-    if (WasmShareFile(tab->filePath)) {
-        return true;
-    }
-#endif
     return SendAsEmailAttachmentWithMailto(tab->filePath);
-#endif
 }

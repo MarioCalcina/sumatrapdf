@@ -3,10 +3,8 @@
 
 #include "base/Base.h"
 
-#if !OS_WIN
 #include <errno.h>
 #include <iconv.h>
-#endif
 
 Kind kindNone = "none";
 
@@ -295,49 +293,6 @@ Rect ToRect(const RectF& r) {
 }
 
 // conversions to and from the Win32 / GDI+ geometry types; see Geom.h
-#if OS_WIN
-POINT ToPOINT(const Point& p) {
-    return {p.x, p.y};
-}
-
-RECT ToRECT(const Rect& r) {
-    return {r.x, r.y, r.x + r.dx, r.y + r.dy};
-}
-
-RECT ToRECT(const RectF& r) {
-    return {(int)r.x, (int)r.y, (int)(r.x + r.dx), (int)(r.y + r.dy)};
-}
-
-int RectDx(const RECT& r) {
-    return r.right - r.left;
-}
-int RectDy(const RECT& r) {
-    return r.bottom - r.top;
-}
-
-Rect ToRect(const RECT& r) {
-    Rect r2 = {r.left, r.top, RectDx(r), RectDy(r)};
-    return r2;
-}
-
-Gdiplus::Rect ToGdipRect(const Rect& r) {
-    return {r.x, r.y, r.dx, r.dy};
-}
-
-Gdiplus::RectF ToGdipRectF(const Rect& r) {
-    return {(float)r.x, (float)r.y, (float)r.dx, (float)r.dy};
-}
-
-Gdiplus::Rect ToGdipRect(const RectF& r) {
-    Rect rect = ToRect(r);
-    return {rect.x, rect.y, rect.dx, rect.dy};
-}
-
-Gdiplus::RectF ToGdipRectF(const RectF& r) {
-    return {r.x, r.y, r.dx, r.dy};
-}
-
-#endif
 
 int NormalizeRotation(int rotation) {
     while (rotation < 0) {
@@ -355,43 +310,12 @@ int NormalizeRotation(int rotation) {
 
 //--- Thread.cpp ----------------------------------------------------------------
 
-#if OS_WIN
-#include "base/WinDynCalls.h"
-#else
 #include <unistd.h>
-#if OS_LINUX
-#include <sys/syscall.h>
-#endif
-#endif
-
-#if OS_WIN
-
-void SetThreadName(Str threadName, ThreadId threadId) {
-    if (len(threadName) == 0 || !DynSetThreadDescription) {
-        return;
-    }
-    HANDLE h = threadId ? OpenThread(THREAD_SET_LIMITED_INFORMATION, FALSE, threadId) : GetCurrentThread();
-    if (!h) {
-        return;
-    }
-    DynSetThreadDescription(h, CWStrTemp(threadName));
-    if (threadId) {
-        CloseHandle(h);
-    }
-}
-
-#else
 
 ThreadId GetCurrentThreadId() {
-#if OS_DARWIN
     u64 tid = 0;
     pthread_threadid_np(nullptr, &tid);
     return tid;
-#elif OS_LINUX
-    return (ThreadId)syscall(SYS_gettid);
-#else
-    return (ThreadId)pthread_self();
-#endif
 }
 
 void SetThreadName(Str threadName, ThreadId threadId) {
@@ -401,57 +325,19 @@ void SetThreadName(Str threadName, ThreadId threadId) {
     if (threadId != 0 && threadId != GetCurrentThreadId()) {
         return;
     }
-#if OS_DARWIN
     char buf[64];
     size_t n = (size_t)std::min(threadName.len, sizeofi(buf) - 1);
     memcpy(buf, threadName.s, n);
     buf[n] = 0;
     pthread_setname_np(buf);
-#elif OS_LINUX
-    char buf[16];
-    size_t n = (size_t)std::min(threadName.len, sizeofi(buf) - 1);
-    memcpy(buf, threadName.s, n);
-    buf[n] = 0;
-    pthread_setname_np(pthread_self(), buf);
-#endif
 }
-
-#endif
-
-#if OS_WIN
-
-static DWORD WINAPI ThreadFunc0(void* data) {
-    auto* fn = (Func0*)data;
-    fn->Call();
-    delete fn;
-    DestroyTempArena();
-    return 0;
-}
-
-ThreadHandle StartThread(const Func0& fn, Str threadName) {
-    auto* fp = new Func0(fn);
-    ThreadId threadId = 0;
-    ThreadHandle hThread = CreateThread(nullptr, 0, ThreadFunc0, (void*)fp, 0, &threadId);
-    if (!hThread) {
-        delete fp;
-        return nullptr;
-    }
-    if (threadName) {
-        SetThreadName(threadName, threadId);
-    }
-    return hThread;
-}
-
-#else
 
 struct ThreadHandlePosix {
     pthread_t thread;
-#if !OS_WASM
     pthread_mutex_t mutex;
     pthread_cond_t cond;
     bool finished = false;
     bool abandoned = false;
-#endif
 };
 
 struct ThreadFuncData {
@@ -465,13 +351,11 @@ struct ThreadFuncData {
     ~ThreadFuncData() { str::Free(threadName); }
 };
 
-#if !OS_WASM
 static void DeleteThreadHandle(ThreadHandlePosix* h) {
     pthread_cond_destroy(&h->cond);
     pthread_mutex_destroy(&h->mutex);
     delete h;
 }
-#endif
 
 static void* ThreadFunc0(void* data) {
     auto* threadData = (ThreadFuncData*)data;
@@ -482,7 +366,6 @@ static void* ThreadFunc0(void* data) {
     threadData->fn.Call();
     delete threadData;
     DestroyTempArena();
-#if !OS_WASM
     pthread_mutex_lock(&handle->mutex);
     handle->finished = true;
     pthread_cond_signal(&handle->cond);
@@ -491,22 +374,10 @@ static void* ThreadFunc0(void* data) {
     if (deleteHandle) {
         DeleteThreadHandle(handle);
     }
-#endif
     return nullptr;
 }
 
-#if OS_WASM
-// see kHasThreads: a "thread" is the function, run inline, and this stands in
-// for its handle so join and close have something non-null to answer about
-static ThreadHandlePosix gInlineThread{};
-#endif
-
 ThreadHandle StartThread(const Func0& fn, Str threadName) {
-#if OS_WASM
-    (void)threadName;
-    fn.Call();
-    return &gInlineThread;
-#else
     auto hThread = new ThreadHandlePosix();
     pthread_mutex_init(&hThread->mutex, nullptr);
     pthread_cond_init(&hThread->cond, nullptr);
@@ -518,7 +389,6 @@ ThreadHandle StartThread(const Func0& fn, Str threadName) {
         return nullptr;
     }
     return hThread;
-#endif
 }
 
 bool SafeCloseThreadHandle(ThreadHandle* hPtr) {
@@ -526,10 +396,6 @@ bool SafeCloseThreadHandle(ThreadHandle* hPtr) {
     if (!h) {
         return false;
     }
-#if OS_WASM
-    *hPtr = nullptr;
-    return true;
-#else
     pthread_mutex_lock(&h->mutex);
     int err = pthread_detach(h->thread);
     bool deleteHandle = h->finished;
@@ -540,10 +406,7 @@ bool SafeCloseThreadHandle(ThreadHandle* hPtr) {
     }
     *hPtr = nullptr;
     return err == 0;
-#endif
 }
-
-#endif
 
 void RunAsync(const Func0& fn, Str threadName) {
     ThreadHandle hThread = StartThread(fn, threadName);
@@ -567,17 +430,10 @@ void Semaphore::Wait() {
 }
 
 int CpuCoreCount() {
-#if OS_WIN
-    SYSTEM_INFO si;
-    GetSystemInfo(&si);
-    int n = (int)si.dwNumberOfProcessors;
-#else
     int n = (int)sysconf(_SC_NPROCESSORS_ONLN);
-#endif
     return n < 1 ? 1 : n;
 }
 
-#if !OS_WIN && !OS_WASM
 // Waits for the thread to finish, up to timeoutMs (forever if negative).
 // Called with h->mutex held.
 static bool WaitFinishedLocked(ThreadHandlePosix* h, int timeoutMs) {
@@ -601,7 +457,6 @@ static bool WaitFinishedLocked(ThreadHandlePosix* h, int timeoutMs) {
     }
     return h->finished;
 }
-#endif
 
 // Waits up to timeoutMs (forever if negative) for the thread to finish. Unlike
 // JoinThread() the handle stays open, for whoever owns it to close.
@@ -609,39 +464,17 @@ bool WaitThread(ThreadHandle h, int timeoutMs) {
     if (!h) {
         return false;
     }
-#if OS_WIN
-    return WaitForSingleObject(h, (DWORD)timeoutMs) == WAIT_OBJECT_0;
-#elif OS_WASM
-    // it already ran to completion inside StartThread()
-    return true;
-#else
     pthread_mutex_lock(&h->mutex);
     bool finished = WaitFinishedLocked(h, timeoutMs);
     pthread_mutex_unlock(&h->mutex);
     return finished;
-#endif
 }
 
 bool JoinThread(ThreadHandle* hPtr, int timeoutMs) {
-#if OS_WIN
-    ThreadHandle h = *hPtr;
-    if (!h || h == INVALID_HANDLE_VALUE) {
-        *hPtr = nullptr;
-        return false;
-    }
-    DWORD res = WaitForSingleObject(h, (DWORD)timeoutMs);
-    SafeCloseThreadHandle(hPtr);
-    return res == WAIT_OBJECT_0;
-#else
     ThreadHandle h = *hPtr;
     if (!h) {
         return false;
     }
-#if OS_WASM
-    // it already ran to completion inside StartThread()
-    *hPtr = nullptr;
-    return true;
-#else
     pthread_mutex_lock(&h->mutex);
     bool finished = WaitFinishedLocked(h, timeoutMs);
     int err = 0;
@@ -657,19 +490,13 @@ bool JoinThread(ThreadHandle* hPtr, int timeoutMs) {
     err = pthread_join(h->thread, nullptr);
     DeleteThreadHandle(h);
     return err == 0;
-#endif
-#endif
 }
 
 void SleepInMs(int ms) {
     if (ms <= 0) {
         return;
     }
-#if OS_WIN
-    Sleep((DWORD)ms);
-#else
     usleep((useconds_t)ms * 1000);
-#endif
 }
 
 AtomicInt gDangerousThreadCount = 0;
@@ -681,13 +508,7 @@ bool AreDangerousThreadsPending() {
 
 //--- Arena.cpp ----------------------------------------------------------------
 
-#if OS_WASM
-// ng: wasm has no address-space reservation, so a block's reserve is really
-// allocated (see Arena_wasm.cpp). Keep it small and let the arena chain.
-u64 gArenaDefaultReserveSize = 1ull * 1024ull * 1024ull;
-#else
 u64 gArenaDefaultReserveSize = 64ull * 1024ull * 1024ull;
-#endif
 u64 gArenaDefaultCommitSize = 64ull * 1024ull;
 ArenaFlags gArenaDefaultFlags = 0;
 
@@ -1702,11 +1523,9 @@ int NormalizeWSInPlace(WStr s) {
 
 } // namespace wstr
 
-#ifndef _MSC_VER
 #define _strdup strdup
 #define _stricmp strcasecmp
 #define _strnicmp strncasecmp
-#endif
 
 // StrArena: u32 handle from ArenaPtrCompress. Arena layout is unsigned LEB128
 // length, length bytes of payload, trailing 0 for C APIs. 0 is the null handle.
@@ -1714,15 +1533,6 @@ int NormalizeWSInPlace(WStr s) {
 // Unicode lowercase for one BMP code unit. ASCII is a fast path; Windows uses
 // CharLowerW, other platforms a Latin/Cyrillic/Greek table then towlower.
 wchar_t WCharToLower(wchar_t c) {
-#if OS_WIN
-    if (c < 0x80) {
-        if (c >= 'A' && c <= 'Z') {
-            return c + ('a' - 'A');
-        }
-        return c;
-    }
-    return (wchar_t)(uintptr_t)CharLowerW((LPWSTR)(uintptr_t)c);
-#else
     if (c >= L'A' && c <= L'Z') {
         return c + 32;
     }
@@ -1755,7 +1565,6 @@ wchar_t WCharToLower(wchar_t c) {
         return c + 32;
     }
     return (wchar_t)towlower((wint_t)c);
-#endif
 }
 
 // locale-independent lowercase of a codepoint for case-insensitive matching
@@ -1775,7 +1584,6 @@ bool IsCombiningMark(int c) {
 }
 
 // strip diacritics from a codepoint: 'é' -> 'e', 'ł' -> 'l'. Case is preserved
-#if !OS_WIN
 // What FoldStringW(MAP_COMPOSITE) returns on Windows, for the Latin ranges
 // U+00C0..U+024F: the base letter of a canonical decomposition that is a base
 // letter plus a combining mark, 0 when there is none. Generated from the
@@ -1834,7 +1642,6 @@ static const u16 kFoldLatin[] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, // U+0248
 };
 #include "base/FoldDiacriticsData.inc"
-#endif
 
 int FoldDiacriticsRune(int c) {
     if (c < 0x80 || c > 0xffff) {
@@ -1863,15 +1670,6 @@ int FoldDiacriticsRune(int c) {
             return 'i';
     }
 
-#if OS_WIN
-    // 'é' -> 'e' + U+0301
-    WCHAR w = (WCHAR)c;
-    WCHAR decomposed[8];
-    int n = FoldStringW(MAP_COMPOSITE, &w, 1, decomposed, dimofi(decomposed));
-    if (n > 1 && IsCombiningMark(decomposed[1])) {
-        return decomposed[0];
-    }
-#else
     int idx = c - kFoldLatinFirst;
     if (idx >= 0 && idx < dimofi(kFoldLatin) && kFoldLatin[idx] != 0) {
         return kFoldLatin[idx];
@@ -1891,19 +1689,14 @@ int FoldDiacriticsRune(int c) {
     if (lo < dimofi(kFoldDiacritics) / 2 && kFoldDiacritics[lo * 2] == c) {
         return kFoldDiacritics[lo * 2 + 1];
     }
-#endif
     return c;
 }
 
 // Locale-independent Unicode lowercase folding for case-insensitive matching.
 static void FoldCaseWInPlace(WStr s) {
-#if OS_WIN
-    CharLowerBuffW(s.s, (DWORD)s.len);
-#else
     for (int i = 0; i < s.len; i++) {
         s.s[i] = WCharToLower(s.s[i]);
     }
-#endif
     for (int i = 0; i < s.len; i++) {
         if (s.s[i] == 0x0130) {
             s.s[i] = L'i';
@@ -3775,7 +3568,6 @@ int CompareProgramVersion(Str ver1, Str ver2) {
 // ascii version that doesn't handle UTF-8
 // IsTextRtl is optimized version of checking if a string is rtl
 // we look at max first 40 chars and
-#if !OS_WIN
 static bool IsRtlCodepoint(wchar_t c) {
     return (c >= 0x0590 && c <= 0x08ff) || (c >= 0xfb1d && c <= 0xfdff) || (c >= 0xfe70 && c <= 0xfeff) ||
            (c >= 0x10800 && c <= 0x10fff) || (c >= 0x1e800 && c <= 0x1edff);
@@ -3785,7 +3577,6 @@ static bool IsLtrCodepoint(wchar_t c) {
     return (c >= L'A' && c <= L'Z') || (c >= L'a' && c <= L'z') || (c >= 0x00c0 && c <= 0x02af) ||
            (c >= 0x0370 && c <= 0x052f) || (c >= 0x1e00 && c <= 0x1fff);
 }
-#endif
 
 bool IsTextRtl(WStr s) {
     if (len(s) == 0) {
@@ -3794,20 +3585,6 @@ bool IsTextRtl(WStr s) {
     int n = s.len > 40 ? 40 : s.len;
     int nRtl = 0;
     int nLtr = 0;
-#if OS_WIN
-    WORD* charTypes = AllocArrayTemp<WORD>(n + 1);
-    if (!GetStringTypeExW(LOCALE_INVARIANT, CT_CTYPE2, s.s, n, charTypes)) {
-        return false; // API failure
-    }
-    for (int i = 0; i < n; ++i) {
-        WORD type = charTypes[i];
-        if (type == C2_LEFTTORIGHT) {
-            nLtr++;
-        } else if (type == C2_RIGHTTOLEFT) {
-            nRtl++;
-        }
-    }
-#else
     for (int i = 0; i < n; i++) {
         wchar_t c = s.s[i];
         if (IsRtlCodepoint(c)) {
@@ -3816,7 +3593,6 @@ bool IsTextRtl(WStr s) {
             nLtr++;
         }
     }
-#endif
     return nRtl > nLtr;
 }
 
@@ -3996,49 +3772,16 @@ static const struct {
 
 #include <locale.h>
 
-#ifdef _MSC_VER
-static _locale_t GetUtf8FormatLocale() {
-    // wrapped in a struct so the locale is freed at exit (keeps leak
-    // detectors quiet); after the destructor runs, callers see nullptr
-    // and fall back to plain vsnprintf
-    struct Locale {
-        _locale_t loc = _create_locale(LC_ALL, ".UTF-8");
-        ~Locale() {
-            if (loc) {
-                _free_locale(loc);
-                loc = nullptr;
-            }
-        }
-    };
-    static Locale l;
-    return l.loc;
-}
-#endif
-
 // The format string is a plain const char* because this is a thin wrapper around
 // vsnprintf and is almost always called with a string literal.
 int str::VsnprintfUtf8(Str buf, const char* fmt, va_list args) {
-#ifdef _MSC_VER
-    _locale_t loc = GetUtf8FormatLocale();
-    if (loc) {
-        return _vsnprintf_l(buf.s, (size_t)buf.len, fmt, loc, args);
-    }
-#endif
     return vsnprintf(buf.s, (size_t)buf.len, fmt, args);
 }
 
 // How long the formatted output will be. vsnprintf reports it on the platforms
 // whose vsnprintf does; MSVC keeps it in a call of its own.
 static int VscprintfUtf8(const char* fmt, va_list args) {
-#ifdef _MSC_VER
-    _locale_t loc = GetUtf8FormatLocale();
-    if (loc) {
-        return _vscprintf_l(fmt, loc, args);
-    }
-    return _vscprintf(fmt, args);
-#else
     return vsnprintf(nullptr, 0, fmt, args);
-#endif
 }
 
 // --- copyright for utf8 code below
@@ -4407,7 +4150,6 @@ TempStr ShortenStringUtf8InTheMiddleTemp(Str s, int maxRunes) {
 
 static wchar_t emptyWideStr[1] = {0};
 
-#if !OS_WIN
 static int Utf8BytesForCodepoint(int c) {
     if (c < 0x80) {
         return 1;
@@ -4438,17 +4180,11 @@ static int WStrCodepointAt(WStr s, int& idx) {
     }
     return c;
 }
-#endif
 
 Str ToUtf8(Arena* arena, WStr wide) {
     if (len(wide) == 0) {
         return {};
     }
-#if OS_WIN
-    int n = WideCharToMultiByte(CP_UTF8, 0, wide.s, wide.len, nullptr, 0, nullptr, nullptr);
-    char* utf8 = (char*)Alloc(arena, n + 1);
-    WideCharToMultiByte(CP_UTF8, 0, wide.s, wide.len, utf8, n, nullptr, nullptr);
-#else
     int n = 0;
     for (int i = 0; i < wide.len;) {
         int c = WStrCodepointAt(wide, i);
@@ -4460,7 +4196,6 @@ Str ToUtf8(Arena* arena, WStr wide) {
         int c = WStrCodepointAt(wide, i);
         str::Utf8Encode(utf8, off, c);
     }
-#endif
     utf8[n] = 0;
     return Str(utf8, n);
 }
@@ -4473,11 +4208,6 @@ WStr ToWStrTemp(Str s) {
     if (len(s) == 0) {
         return WStr(&emptyWideStr[0], 0);
     }
-#if OS_WIN
-    int wideLen = MultiByteToWideChar(CP_UTF8, 0, s.s, s.len, nullptr, 0);
-    wchar_t* wide = (wchar_t*)AllocTemp((int)((wideLen + 1) * sizeof(wchar_t)));
-    MultiByteToWideChar(CP_UTF8, 0, s.s, s.len, wide, wideLen);
-#else
     int wideLen = 0;
     for (int byteIdx = 0; byteIdx < s.len;) {
         int c = Utf8CodepointNext(s, byteIdx);
@@ -4499,7 +4229,6 @@ WStr ToWStrTemp(Str s) {
             wide[dst++] = (WCHAR)c;
         }
     }
-#endif
     wide[wideLen] = 0;
     return WStr(wide, wideLen);
 }
@@ -5357,18 +5086,7 @@ Str ParseArgs(Str str, const char* fmt, const ParseArg* args, int nArgs) {
 // format a number with a given thousand separator e.g. it turns 1234 into "1,234"
 // Caller needs to free() the result.
 TempStr FormatNumWithThousandSepTemp(i64 num, LCID locale) {
-#if OS_WIN
-    WCHAR thousandSepW[4]{};
-    if (!GetLocaleInfoW(locale, LOCALE_STHOUSAND, thousandSepW, dimof(thousandSepW))) {
-        str::BufSet(thousandSepW, dimof(thousandSepW), StrL(","));
-    }
-    TempStr thousandSep = ToUtf8Temp(thousandSepW);
-#elif OS_DARWIN
     TempStr thousandSep = locale == LOCALE_INVARIANT ? StrL(",") : LocaleThousandSepTemp();
-#else
-    (void)locale;
-    TempStr thousandSep = StrL(",");
-#endif
     TempStr buf = str::FormatTemp("%d", num);
 
     // i64 with thousand seps is well under 48 bytes (e.g. "9,223,372,036,854,775,807").
@@ -5393,23 +5111,7 @@ TempStr FormatFloatWithThousandSepTemp(double number, LCID locale, bool stripTra
     i64 num = (i64)llround(number * 100);
 
     TempStr tmp = FormatNumWithThousandSepTemp(num / 100, locale);
-#if OS_WIN
-    WCHAR decimalW[4] = {};
-    if (!GetLocaleInfoW(locale, LOCALE_SDECIMAL, decimalW, dimof(decimalW))) {
-        decimalW[0] = '.';
-        decimalW[1] = 0;
-    }
-    char decimal[4];
-    int i = 0;
-    for (WCHAR c : decimalW) {
-        decimal[i++] = (char)c;
-    }
-
-#elif OS_DARWIN
     Str decimal = locale == LOCALE_INVARIANT ? StrL(".") : LocaleDecimalSepTemp();
-#else
-    char decimal[4] = {'.', 0};
-#endif
     // add between one and two decimals after the point
     TempStr buf = str::FormatTemp("%s%s%02d", tmp, Str(decimal), num % 100);
     if (stripTrailingZero && str::EndsWith(buf, StrL("0"))) {
@@ -6295,7 +5997,6 @@ TempStr JoinTemp(StrVec* v, Str sep) {
 
 namespace strconv {
 
-#if !OS_WIN
 static TempStr CodePageNameTemp(uint codePage) {
     if (codePage == CP_ACP || codePage == CP_UTF8) {
         return str::DupTemp(StrL("UTF-8"));
@@ -6343,36 +6044,11 @@ static TempStr IconvTemp(Str src, uint codePageSrc, uint codePageDest) {
     *outPtr = 0;
     return Str(out, (int)(outPtr - out));
 }
-#endif
-
-#if OS_WIN
-static WStr WrapAllocatedWStr(WCHAR* s, int n) {
-    if (!s) {
-        return {};
-    }
-    return WStr(s, n);
-}
-
-static Str WrapAllocatedStr(char* s, int n) {
-    if (!s) {
-        return {};
-    }
-    return Str(s, n);
-}
-#endif
 
 WStr CodePageToWStr(uint codePage, Str s, Arena* a) {
     if (str::IsNull(s)) return {};
-#if OS_WIN
-    int n = len(s) == 0 ? 0 : MultiByteToWideChar(codePage, 0, s.s, len(s), nullptr, 0);
-    WCHAR* res = AllocArray<WCHAR>(a, n + 1);
-    if (!res) return {};
-    if (n > 0) MultiByteToWideChar(codePage, 0, s.s, len(s), res, n);
-    return WStr(res, n);
-#else
     TempStr utf8 = IconvTemp(s, codePage, CP_UTF8);
     return wstr::Dup(a, ToWStrTemp(utf8));
-#endif
 }
 
 WStr Utf8ToWStr(Str s, Arena* a) {
@@ -6380,24 +6056,8 @@ WStr Utf8ToWStr(Str s, Arena* a) {
     if (str::IsNull(s)) {
         return {};
     }
-#if OS_WIN
-    if (len(s) == 0) {
-        WCHAR* res = AllocArray<WCHAR>(a, 1);
-        return WrapAllocatedWStr(res, 0);
-    }
-    // ask for the size of buffer needed for converted string
-    int cchNeeded = MultiByteToWideChar(CP_UTF8, 0, s.s, s.len, nullptr, 0);
-    WCHAR* res = AllocArray<WCHAR>(a, cchNeeded + 1);
-    if (!res) {
-        return {};
-    }
-    int cchConverted = MultiByteToWideChar(CP_UTF8, 0, s.s, s.len, res, cchNeeded);
-    ReportIf(cchConverted != cchNeeded);
-    return WrapAllocatedWStr(res, cchConverted);
-#else
     TempWStr res = ToWStrTemp(s);
     return wstr::Dup(a, res);
-#endif
 }
 
 Str WStrToCodePage(uint codePage, WStr s, Arena* a) {
@@ -6405,31 +6065,12 @@ Str WStrToCodePage(uint codePage, WStr s, Arena* a) {
     if (wstr::IsNull(s)) {
         return {};
     }
-#if OS_WIN
-    if (len(s) == 0) {
-        char* res = AllocArray<char>(a, 1);
-        return WrapAllocatedStr(res, 0);
-    }
-    // ask for the size of buffer needed for converted string
-    int cbNeeded = WideCharToMultiByte(codePage, 0, s.s, s.len, nullptr, 0, nullptr, nullptr);
-    if (cbNeeded == 0) {
-        return {};
-    }
-    char* res = AllocArray<char>(a, cbNeeded + 1);
-    if (!res) {
-        return {};
-    }
-    int cbConverted = WideCharToMultiByte(codePage, 0, s.s, s.len, res, cbNeeded, nullptr, nullptr);
-    ReportIf(cbConverted != cbNeeded);
-    return WrapAllocatedStr(res, cbConverted);
-#else
     TempStr utf8 = ToUtf8Temp(s);
     if (codePage == CP_ACP || codePage == CP_UTF8) {
         return str::Dup(a, utf8);
     }
     TempStr encoded = IconvTemp(utf8, CP_UTF8, codePage);
     return str::Dup(a, encoded);
-#endif
 }
 
 Str WStrToUtf8(WStr s, Arena* a) {
@@ -6443,18 +6084,6 @@ WStr StrCPToWStr(Str src, uint codePage) {
         return {};
     }
 
-#if OS_WIN
-    int requiredBufSize = MultiByteToWideChar(codePage, 0, src.s, src.len, nullptr, 0);
-    if (0 == requiredBufSize) {
-        return {};
-    }
-    WCHAR* res = AllocArray<WCHAR>(requiredBufSize + 1);
-    if (!res) {
-        return {};
-    }
-    MultiByteToWideChar(codePage, 0, src.s, src.len, res, requiredBufSize);
-    return WrapAllocatedWStr(res, requiredBufSize);
-#else
     if (codePage == CP_ACP || codePage == CP_UTF8) {
         TempWStr res = ToWStrTemp(src);
         return wstr::Dup(nullptr, res);
@@ -6462,7 +6091,6 @@ WStr StrCPToWStr(Str src, uint codePage) {
     TempStr utf8 = IconvTemp(src, codePage, CP_UTF8);
     TempWStr res = ToWStrTemp(utf8);
     return wstr::Dup(nullptr, res);
-#endif
 }
 
 TempWStr StrCPToWStrTemp(Str src, uint codePage) {
@@ -6471,24 +6099,11 @@ TempWStr StrCPToWStrTemp(Str src, uint codePage) {
         return {};
     }
 
-#if OS_WIN
-    int requiredBufSize = MultiByteToWideChar(codePage, 0, src.s, src.len, nullptr, 0);
-    if (0 == requiredBufSize) {
-        return {};
-    }
-    WCHAR* res = AllocArrayTemp<WCHAR>(requiredBufSize + 1);
-    if (!res) {
-        return {};
-    }
-    MultiByteToWideChar(codePage, 0, src.s, src.len, res, requiredBufSize);
-    return WrapAllocatedWStr(res, requiredBufSize);
-#else
     if (codePage == CP_ACP || codePage == CP_UTF8) {
         return ToWStrTemp(src);
     }
     TempStr utf8 = IconvTemp(src, codePage, CP_UTF8);
     return ToWStrTemp(utf8);
-#endif
 }
 
 TempStr ToMultiByteTemp(Str src, uint codePageSrc, uint codePageDest) {
@@ -6626,31 +6241,6 @@ void UnpackColor(Color c, u8& r, u8& g, u8& b) {
     c = c >> 8;
     b = (u8)(c & 0xff);
 }
-
-#if OS_WIN
-// TODO: use AdjustLightness instead to compensate for the alpha?
-Gdiplus::Color Unblend(Color c, u8 alpha) {
-    u8 r, g, b, a;
-    UnpackColor(c, r, g, b, a);
-    u8 ralpha = (u8)((float)alpha * (float)a / 255.f);
-    float falpha = ((float)alpha * (float)a / 255.f);
-    float tmp = 255.0f / (falpha + 0.5f);
-    u8 R = (u8)floorf((float)std::max(r - (255 - ralpha), 0) * tmp);
-    u8 G = (u8)floorf((float)std::max(g - (255 - ralpha), 0) * tmp);
-    u8 B = (u8)floorf((float)std::max(b - (255 - ralpha), 0) * tmp);
-    return {alpha, R, G, B};
-}
-
-Gdiplus::Color GdiRgbFromColor(Color c) {
-    u8 r, g, b;
-    UnpackColor(c, r, g, b);
-    return {r, g, b};
-}
-
-Gdiplus::Color GdiRgbaFromColor(Color c) {
-    return {c};
-}
-#endif
 
 TempStr SerializeColorTemp(Color c) {
     u8 r, g, b, a;
@@ -6915,80 +6505,6 @@ u8 GetAlpha(Color rgb) {
     rgb = (rgb >> 24) & 0xff;
     return (u8)rgb;
 }
-
-#if OS_WIN
-
-int AtomicRefCountAdd(AtomicRefCount* v) {
-    return (int)InterlockedIncrement(v);
-}
-
-int AtomicRefCountDec(AtomicRefCount* v) {
-    return (int)InterlockedDecrement(v);
-}
-
-bool AtomicBoolGet(AtomicBool* p) {
-    return InterlockedOr(p, 0) != 0;
-}
-
-void AtomicBoolSet(AtomicBool* p, bool v) {
-    InterlockedExchange(p, v ? 1 : 0);
-}
-
-bool AtomicBoolSwap(AtomicBool* p, bool v) {
-    return InterlockedExchange(p, v ? 1 : 0) != 0;
-}
-
-int AtomicIntGet(AtomicInt* p) {
-    return (int)InterlockedOr(p, 0);
-}
-
-void AtomicIntSet(AtomicInt* p, int v) {
-    InterlockedExchange(p, (LONG)v);
-}
-
-int AtomicIntAdd(AtomicInt* p, int v) {
-    return (int)InterlockedAdd(p, (LONG)v);
-}
-
-int AtomicIntInc(AtomicInt* p) {
-    return (int)InterlockedIncrement(p);
-}
-
-int AtomicIntDec(AtomicInt* p) {
-    return (int)InterlockedDecrement(p);
-}
-
-// stores v and returns what was there before
-void* AtomicPtrExchange(AtomicPtr* p, void* v) {
-    return InterlockedExchangePointer(p, v);
-}
-
-// milliseconds since the unix epoch (1970-01-01), for timestamps we persist.
-// FILETIME counts 100 ns ticks since 1601-01-01, hence the constant.
-i64 UnixTimeMsNow() {
-    FILETIME ft;
-    GetSystemTimeAsFileTime(&ft);
-    ULARGE_INTEGER value;
-    value.LowPart = ft.dwLowDateTime;
-    value.HighPart = ft.dwHighDateTime;
-    return ((i64)value.QuadPart - (i64)kFileTimeUnixEpoch) / 10000;
-}
-
-bool GetPhysMemoryInfo(u64* availPhysOut, int* loadPercentOut, u64* totalPhysOut) {
-    MEMORYSTATUSEX ms{};
-    ms.dwLength = sizeof(ms);
-    if (!GlobalMemoryStatusEx(&ms)) {
-        return false;
-    }
-    *availPhysOut = ms.ullAvailPhys;
-    *loadPercentOut = (int)ms.dwMemoryLoad;
-    if (totalPhysOut) {
-        *totalPhysOut = ms.ullTotalPhys;
-    }
-    return true;
-}
-
-#endif
 
 void str::BuilderUseExternalBuffer(Builder& b, Str buf) {
     b.UseExternalBuffer(buf);

@@ -1,6 +1,6 @@
-// Regenerates src/gfx/mac/SumatraPDF.icns from src/gfx/appx/fileicon.png,
-// the 256 px image of the Windows app icon, so both platforms share one
-// artwork (issue #6317). Pure TypeScript: no sips / iconutil needed.
+// Regenerates src/gfx/mac/SumatraPDF.icns from src/gfx/mac/icon.png, the
+// 256 px app icon artwork (issue #6317). Pure TypeScript: no sips / iconutil
+// needed.
 //
 // Usage: bun cmd/update-mac-icon.ts
 
@@ -9,7 +9,7 @@ import { join } from "node:path";
 import { decodePngRgba, downsampleRgba, encodePngRgba, type Rgba } from "./helper/png";
 
 const ROOT = join(import.meta.dir, "..");
-const SRC_PNG = join(ROOT, "src", "gfx", "appx", "fileicon.png");
+const SRC_PNG = join(ROOT, "src", "gfx", "mac", "icon.png");
 const DST_ICNS = join(ROOT, "src", "gfx", "mac", "SumatraPDF.icns");
 
 // .icns element types holding a PNG, by pixel size. 1x and 2x entries of the

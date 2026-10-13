@@ -3,8 +3,6 @@
 
 #include "base/Base.h"
 #include "base/Pixmap.h"
-#include "base/Win.h"
-#include "base/GdiPlusUtil.h"
 
 extern "C" {
 #include <mupdf/pdf.h>
@@ -55,53 +53,6 @@ static fz_image* FzImageFromRgbData(fz_context* ctx, u8* data, int width, int he
 
 // TODO: the resulting pdf is big, even though we tell it to compress images
 // maybe encode bitmaps to *.png or .jp2 and use AddPageFromImageData
-#if OS_WIN
-static fz_image* render_to_pixmap(fz_context* ctx, HBITMAP hbmp, Size size) {
-    int w = size.dx;
-    int h = size.dy;
-    int stride = (((w * 3) + 3) / 4) * 4;
-
-    size_t totalSize = (size_t)stride * (size_t)h;
-    u8* data = (u8*)fz_malloc(ctx, totalSize);
-    if (!data) {
-        fz_throw(ctx, FZ_ERROR_GENERIC, "render_to_pixmap: failed to allocate %d bytes", stride * h);
-    }
-
-    BITMAPINFO bmi{};
-    bmi.bmiHeader.biSize = sizeof(bmi.bmiHeader);
-    bmi.bmiHeader.biWidth = w;
-    bmi.bmiHeader.biHeight = -h;
-    bmi.bmiHeader.biPlanes = 1;
-    bmi.bmiHeader.biBitCount = 24;
-    bmi.bmiHeader.biCompression = BI_RGB;
-
-    HDC hDC = GetDC(nullptr);
-    int res = GetDIBits(hDC, hbmp, 0, h, data, &bmi, DIB_RGB_COLORS);
-    ReleaseDC(nullptr, hDC);
-    if (res == 0) {
-        fz_free(ctx, data);
-        fz_throw(ctx, FZ_ERROR_GENERIC, "GetDIBits failed");
-    }
-
-    // convert BGR to RGB without padding (fz_new_pixmap_with_data handles stride)
-    u8 r, b;
-    for (int y = 0; y < h; y++) {
-        u8* d = data + ((size_t)y * stride);
-        for (int x = 0; x < w; x++) {
-            b = d[0];
-            // gree in the middle, stays in place
-            r = d[2];
-            d[0] = r;
-            // gree in the middle, stays in place
-            d[2] = b;
-            d += 3;
-        }
-    }
-
-    return FzImageFromRgbData(ctx, data, w, h, stride);
-}
-
-#endif
 
 // ng: the portable path into mupdf: read the Pixmap's own pixels instead of
 // asking GDI for the bits of a DIB. A Native pixmap has no readable layout,
@@ -198,51 +149,12 @@ bool PdfCreator::AddPageFromFzImage(fz_image* image, float imgDpi) const {
     return ok;
 }
 
-#if OS_WIN
-static bool AddPageFromHBITMAP(PdfCreator* c, HBITMAP hbmp, Size size, float imgDpi) {
-    if (!c->ctx || !c->doc) {
-        return false;
-    }
-
-    bool ok = false;
-    fz_var(ok);
-    fz_try(c->ctx) {
-        fz_image* image = render_to_pixmap(c->ctx, hbmp, size);
-        ok = c->AddPageFromFzImage(image, imgDpi);
-        fz_drop_image(c->ctx, image);
-    }
-    fz_catch(c->ctx) {
-        fz_report_error(c->ctx);
-        return false;
-    }
-    return ok;
-}
-
-bool PdfCreator::AddPageFromGdiplusBitmap(Gdiplus::Bitmap* bmp, float imgDpi) {
-    HBITMAP hbmp;
-    if (bmp->GetHBITMAP((Gdiplus::ARGB)Gdiplus::Color::White, &hbmp) != Gdiplus::Ok) {
-        return false;
-    }
-    if (!(bool)imgDpi) {
-        imgDpi = bmp->GetHorizontalResolution();
-    }
-    bool ok = AddPageFromHBITMAP(this, hbmp, Size((int)bmp->GetWidth(), (int)bmp->GetHeight()), imgDpi);
-    DeleteObject(hbmp);
-    return ok;
-}
-#endif
-
 // One page from a rendered Pixmap: the DIB it is backed by on Windows (which
 // is the only way to read a Native one), its pixels everywhere else.
 static bool AddPageFromPixmap(PdfCreator* c, Pixmap* px, float imgDpi) {
     if (!c->ctx || !c->doc || !px) {
         return false;
     }
-#if OS_WIN
-    if (px->hbmp) {
-        return AddPageFromHBITMAP(c, px->hbmp, Size(px->width, px->height), imgDpi);
-    }
-#endif
     if (px->format == PixmapFormat::Native || !px->data) {
         return false;
     }
@@ -435,15 +347,6 @@ bool PdfCreator::SaveImageCollectionAsPdf(Str pdfFileName, EngineBase* engine,
             RenderPageArgs args(i, 1.0f, 0, nullptr, RenderTarget::Export);
             Pixmap* bmp = engine->RenderPage(args);
             pageOk = AddPageFromPixmap(c, bmp, dpi);
-#if OS_WIN
-            if (!pageOk && bmp) {
-                Gdiplus::Bitmap* gp = WrapPixmapGdiplus(bmp);
-                if (gp) {
-                    pageOk = c->AddPageFromGdiplusBitmap(gp, dpi);
-                    delete gp;
-                }
-            }
-#endif
             FreePixmap(bmp);
         }
 

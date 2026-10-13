@@ -19,15 +19,11 @@
 #include "base/UITask.h"
 #include "base/File.h"
 #include "base/GuessFileType.h"
-#if OS_WIN
-#include "base/Win.h"
-#elif !OS_WASM
 #include <poll.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
 #include <errno.h>
-#endif
 #include "base/CrashHandler.h"
 
 #include "gui/UIModels.h"
@@ -49,10 +45,6 @@
 #include "Menu.h"
 #include "AppSettings.h"
 #include "Flags.h"
-#if OS_WIN
-#include "Installer.h"
-#include "InstallerUtil.h"
-#endif
 #include "SumatraPDF.h"
 #include "MainWindow.h"
 #include "WindowTab.h"
@@ -85,10 +77,6 @@
 #include "gui/NativeMsgBox.h"
 #include "gui/DocCanvas.h"
 #include "gui/Sidebar.h"
-#if OS_WIN
-#include "gui/Dpi.h"
-#include "gui/PlatformFont.h"
-#endif
 #include "SumatraDialogs.h"
 #include "DocumentProperties.h"
 #include "NavFilesInFolder.h"
@@ -108,12 +96,9 @@ extern "C" {
 #include "AnnotFilterToolbar.h"
 #include "SelectionToolbar.h"
 #include "RefHover.h"
-#include "PerfLog.h"
 #include "ReadAloud.h"
 #include "ReadingAutoScroll.h"
 #include "ReadingBar.h"
-#include "gui/OleDragDrop.h"
-#include "gui/NativeCursors.h"
 #include "SumatraControl.h"
 #include "SumatraControlCommon.h"
 
@@ -126,9 +111,6 @@ void LayoutProbeNote(MainWindow* win) {
         gLayoutProbe.count++;
     }
 }
-
-// ng: the channel needs a listener thread, which wasm does not have
-#if !OS_WASM
 
 // action: "add" | "goto" | "goto-fav" | "next" | "prev" | "page"
 // Adds a favorite without the name dialog.
@@ -1306,20 +1288,11 @@ TempStr ImageOrientationResultTemp(Str pdfPath, int pageNo, int* exitCodeOut) {
         return fail(StrL("ERROR no-image-element"));
     }
     Pixmap* px = nullptr;
-#if OS_WIN
-    RenderedBitmap* bmp = engine->GetImageForPageElement(imgEl);
-    SafeEngineRelease(&engine);
-    if (!bmp) {
-        return fail(StrL("ERROR no-image"));
-    }
-    px = PixmapToBgra(PixmapFromRenderedBitmap(bmp));
-#else
     px = EngineMupdfPageImagePixmap(engine, imgEl);
     SafeEngineRelease(&engine);
     if (!px) {
         return fail(StrL("ERROR no-image"));
     }
-#endif
     if (!px || !px->data) {
         FreePixmap(px);
         return fail(StrL("ERROR no-pixmap"));
@@ -1423,22 +1396,6 @@ TempStr FrameNcStripsResultTemp(int* exitCodeOut) {
     int clientDx = 0;
     int clientDy = 0;
     bool zoomed = false;
-#if OS_WIN
-    HWND hwnd = win ? AppShellNativeHwnd(win) : nullptr;
-    if (!hwnd) {
-        return finish(2, str::DupTemp(StrL("NOTREADY no-window")));
-    }
-    zoomed = IsZoomed(hwnd);
-    if (!zoomed) {
-        wr = HwndWindowRect(hwnd);
-        Rect cr = HwndClientRect(hwnd);
-        Point clientScreen = HwndClientToScreen(hwnd, Point(0, 0));
-        clientX = clientScreen.x - wr.x;
-        clientY = clientScreen.y - wr.y;
-        clientDx = cr.dx;
-        clientDy = cr.dy;
-    }
-#else
     if (!win || !win->gpuiWin) {
         return finish(2, str::DupTemp(StrL("NOTREADY no-window")));
     }
@@ -1451,7 +1408,6 @@ TempStr FrameNcStripsResultTemp(int* exitCodeOut) {
     clientY = cr.y - wr.y;
     clientDx = cr.dx;
     clientDy = cr.dy;
-#endif
     Vec<Rect> strips;
     if (!zoomed) {
         int bottomNcTop = clientY + clientDy;
@@ -1489,75 +1445,10 @@ TempStr WheelWhileClosingResultTemp(int* exitCodeOut) {
     if (!win || !win->IsDocLoaded()) {
         return finish(2, str::DupTemp(StrL("NOTREADY no-document")));
     }
-#if OS_WIN
-    HWND hwnd = AppShellNativeHwnd(win);
-    if (!hwnd) {
-        return finish(2, str::DupTemp(StrL("NOTREADY no-window")));
-    }
-    win->isBeingClosed = true;
-    SendMessageW(hwnd, WM_MOUSEWHEEL, MAKEWPARAM(0, -WHEEL_DELTA), 0);
-    if (IsMainWindowValid(win)) {
-        win->isBeingClosed = false;
-    }
-#endif
     return finish(0, str::DupTemp(StrL("OK")));
 }
 
 int HomeSearchFontPx(MainWindow* win);
-
-#if OS_WIN
-static int DpiFontHeight(PlatformFont* font) {
-    return font ? PlatformFontLineHeight(font) : 0;
-}
-
-// orig's DpiResultTemp. The hidden window is created after DpiSet, so a
-// not-yet-visible root reports that layout DPI instead of the monitor.
-static TempStr DpiResultTemp(Str action, int* exitCodeOut) {
-    str::Builder out;
-    auto finish = [&](int code) -> TempStr {
-        if (exitCodeOut) {
-            *exitCodeOut = code;
-        }
-        return ToStrTemp(out);
-    };
-
-    if (str::Eq(action, StrL("hidden"))) {
-        int prevX = dpiX;
-        int prevY = dpiY;
-        DpiSet(240, 240);
-        HWND hwnd = CreateWindowExW(0, L"STATIC", L"DPI test", WS_POPUP, 0, 0, 10, 10, nullptr, nullptr,
-                                    GetModuleHandleW(nullptr), nullptr);
-        int layoutDpi = DpiGet();
-        int windowDpi = hwnd ? RoundUp(DpiGetForHwnd(hwnd), 4) : 0;
-        int fontDy = DpiFontHeight(GetDefaultGuiFont());
-        if (hwnd) {
-            DestroyWindow(hwnd);
-        }
-        DpiSet(prevX, prevY);
-        out.Append(fmt("layout=%d window=%d font=%d\n", layoutDpi, windowDpi, fontDy));
-        return finish(layoutDpi == 240 && windowDpi == 240 && fontDy >= 24 ? 0 : 1);
-    }
-
-    if (!str::Eq(action, StrL("state")) || len(gWindows) == 0) {
-        out.Append(StrL("ERROR TestDpi expects hidden or state\n"));
-        return finish(1);
-    }
-    MainWindow* win = gWindows[0];
-    int findH = FindWindowFontHeight(win);
-    if (findH <= 0) {
-        findH = FindBarFontHeight(win);
-    }
-    int findBarDy = FindBarWindowHeight(win);
-    // the header's view icons and its close button share one pixel size
-    int iconDy = SidebarIconDy(win);
-    out.Append(
-        fmt("frame=%d current=%d home=%d tocIcon=%d tocEdit=%d tocClose=%d favClose=%d aiLabel=%d aiInput=%d "
-            "aiCheckbox=%d aiClose=%d find=%d findBarDy=%d\n",
-            AppShellFrameDpi(win), DpiGet(), HomeSearchFontPx(win), iconDy, SidebarFilterFont(win), iconDy, iconDy, 0,
-            0, 0, 0, findH, findBarDy));
-    return finish(0);
-}
-#endif
 
 // Mouse-drag text selection of rotated glyphs (issue #4839). Finds `word`,
 // presses the first glyph and drags to the last.
@@ -2048,19 +1939,6 @@ static void ExecuteControlRequest(ControlRequest* req) {
             break;
         }
 
-#if OS_WIN
-        case ControlCmd::TestQuitProcess: {
-            i32 pid = 0;
-            if (!IntArg(req, 0, pid) || pid <= 0) {
-                AppendError(req, StrL("TestQuitProcess expects a process id"));
-                break;
-            }
-            bool gone = KillProcWithId((DWORD)pid, true);
-            AppendTestResult(req, gone ? 0 : 1, gone ? StrL("OK") : StrL("still running"));
-            break;
-        }
-#endif
-
         case ControlCmd::TestRenameFile: {
             Str dstPath = StringArg(req, 0);
             if (len(dstPath) == 0) {
@@ -2547,12 +2425,10 @@ static void ExecuteControlRequest(ControlRequest* req) {
             WindowTab* titleTab = win->CurrentTab();
             Str frameTitle = titleTab ? titleTab->frameTitle : Str{};
             out.Append(fmt("windowTitle=%s\n", frameTitle));
-#if !OS_WIN && !OS_WASM
             // frame-client dips plus this origin are screen pixels, which is
             // what a drop-down's box is reported in
             Rect content = ToolWinNativeContentRect(win->gpuiWin);
             out.Append(fmt("content origin=%d,%d\n", content.x, content.y));
-#endif
             Rect sysMenu;
             if (AppShellSysMenuRect(win, &sysMenu)) {
                 // orig's caption tree: row 0, child 0 is the app icon. visibility 0 is Visible.
@@ -2814,21 +2690,6 @@ static void ExecuteControlRequest(ControlRequest* req) {
             break;
         }
 
-#if OS_WIN
-        case ControlCmd::TestDefaultAppNotif: {
-            MainWindow* win = FirstWindow();
-            if (!win) {
-                AppendTestResult(req, 2, StrL("NOTREADY no-window"));
-                break;
-            }
-            StrVec exts;
-            Split(&exts, StringArg(req, 0), StrL(","), true);
-            ShowDefaultAppNotification(win, exts);
-            AppendTestResult(req, 0, fmt("OK exts=%d", len(exts)));
-            break;
-        }
-#endif
-
         case ControlCmd::TestAdvSettingsRows: {
             Str action = StringArg(req, 0);
             i32 arg = 0;
@@ -2970,35 +2831,6 @@ static void ExecuteControlRequest(ControlRequest* req) {
             AppendTestResult(req, 0, res);
             break;
         }
-
-#if OS_WIN
-        case ControlCmd::TestNativeMsgBox: {
-            i32 id = 0;
-            IntArg(req, 1, id);
-            AppendTestResult(req, 0, NativeMsgBoxTestTemp(StringArg(req, 0), id));
-            break;
-        }
-
-        case ControlCmd::TestNativeFileDlg: {
-            AppendTestResult(req, 0, NativeFileDlgTestTemp(FirstWindow(), StringArg(req, 0), StringArg(req, 1)));
-            break;
-        }
-
-        case ControlCmd::TestOleDragDrop: {
-            i32 x = 0, y = 0;
-            IntArg(req, 2, x);
-            IntArg(req, 3, y);
-            if (str::Eq(StringArg(req, 0), StrL("cursor"))) {
-                AppendTestResult(req, 0, NativeCursorTestTemp(FirstWindow(), StringArg(req, 1)));
-                break;
-            }
-            // ng: a fifth argument names the tool window to drop on
-            AppendTestResult(
-                req, 0,
-                OleDragDropTestTemp(FirstWindow(), StringArg(req, 0), StringArg(req, 1), x, y, StringArg(req, 4)));
-            break;
-        }
-#endif
 
         case ControlCmd::TestToolbarButtons: {
             int exitCode = 0;
@@ -3219,13 +3051,10 @@ static void ExecuteControlRequest(ControlRequest* req) {
             break;
         }
 
+        // the profiler is orig's Windows-only build; the commands stay for the
+        // tests that send them
         case ControlCmd::StartPerfLog:
-            StartPerfLog();
-            AppendTestResult(req, 0, StrL("OK"));
-            break;
-
         case ControlCmd::StopPerfLog:
-            StopPerfLog();
             AppendTestResult(req, 0, StrL("OK"));
             break;
 
@@ -3268,14 +3097,7 @@ static void ExecuteControlRequest(ControlRequest* req) {
         }
 
         case ControlCmd::TestDpi: {
-#if OS_WIN
-            Str action = StringArg(req, 0);
-            int exitCode = 0;
-            Str res = DpiResultTemp(action, &exitCode);
-            AppendTestResult(req, exitCode, res);
-#else
             AppendTestResult(req, 1, StrL("NOTPORTED 71"));
-#endif
             break;
         }
 
@@ -3291,15 +3113,6 @@ static void ExecuteControlRequest(ControlRequest* req) {
 void SnapshotRenderIdle(ControlRequest* req) {
     req->idleState = RenderIdleState::NotReady;
     req->idleInfo[0] = 0;
-#if OS_WIN
-    if (gIsStartup) {
-        // LoadOnStartup applies -zoom after the first paint; a snapshot
-        // during that window would see the default-zoom tiles as "done"
-        str::BufSet(Str(req->idleInfo, dimofi(req->idleInfo)), StrL("startup"));
-        req->done.Set();
-        return;
-    }
-#endif
     MainWindow* win = FirstWindow();
     if (!win || !win->IsDocLoaded()) {
         str::BufSet(Str(req->idleInfo, dimofi(req->idleInfo)), StrL("no-doc"));
@@ -3317,11 +3130,6 @@ void SnapshotRenderIdle(ControlRequest* req) {
     // A posted invalidate has not drawn yet. Paint so missing tiles get
     // requested, then drain the ones that finished during that paint.
     AppShellInvalidate(win);
-#if OS_WIN
-    if (HWND hwnd = MainWindowHwnd(win)) {
-        UpdateWindow(hwnd);
-    }
-#endif
     uitask::DrainQueue();
 
     float zoomV = dm->GetZoomVirtual(true);
@@ -3352,16 +3160,7 @@ void SnapshotRenderIdle(ControlRequest* req) {
     // The test captures as soon as this returns. Present the ready frame into
     // each swapchain buffer; one present leaves PrintWindow on the previous one.
     if (ready) {
-#if OS_WIN
-        if (HWND hwnd = MainWindowHwnd(win)) {
-            for (int i = 0; i < 3; i++) {
-                AppShellInvalidate(win);
-                UpdateWindow(hwnd);
-            }
-        }
-#else
         AppShellInvalidate(win);
-#endif
     }
     int nQ = gRenderCache ? gRenderCache->requestCount : -1;
     TempStr busyInfo = gRenderCache ? gRenderCache->BusyInfoTemp(dm) : str::DupTemp(StrL(""));
@@ -3374,11 +3173,6 @@ void SnapshotRenderIdle(ControlRequest* req) {
 
 // A tab is still coming in, or startup has not finished opening the session.
 static bool SessionRestorePending() {
-#if OS_WIN
-    if (gIsStartup) {
-        return true;
-    }
-#endif
     if (len(gWindows) == 0) {
         return true;
     }
@@ -3403,11 +3197,7 @@ void SnapshotSessionRestore(ControlRequest* req) {
     req->idleState = RenderIdleState::NotReady;
     req->idleInfo[0] = 0;
     if (SessionRestorePending()) {
-#if OS_WIN
-        str::BufSet(Str(req->idleInfo, dimofi(req->idleInfo)), gIsStartup ? StrL("startup") : StrL("loading"));
-#else
         str::BufSet(Str(req->idleInfo, dimofi(req->idleInfo)), StrL("loading"));
-#endif
         req->done.Set();
         return;
     }
@@ -3416,9 +3206,6 @@ void SnapshotSessionRestore(ControlRequest* req) {
     req->done.Set();
 }
 
-#if OS_WIN
-
-#else
 bool ReadExact(int fd, void* data, u32 n) {
     u8* d = (u8*)data;
     u32 total = 0;
@@ -3449,7 +3236,6 @@ bool WriteExact(int fd, Str data) {
     }
     return true;
 }
-#endif
 
 // One request. false closes the connection. *stop ends the listener thread
 // (Quit), which otherwise blocks in ConnectNamedPipe through ASan shutdown.
@@ -3494,10 +3280,6 @@ bool ProcessControlConnection(ControlConn h) {
         }
     }
 }
-
-#if OS_WIN
-
-#else
 
 // ng: off Windows the channel is a unix domain socket: <name> is its path, or,
 // without a '/', /tmp/<name>.sock (cmd/dbg-control.ts does the same)
@@ -3607,33 +3389,14 @@ void SumatraControlThread(ControlThreadArg* arg) {
     close(listener);
     unlink(addr.sun_path);
 }
-#endif
 
 void StartSumatraControl(Str pipeName) {
     if (len(pipeName) == 0) {
         return;
     }
     logf("StartSumatraControl: pipe '%s'\n", pipeName);
-#if OS_WIN
-    // a script cannot answer a system message box: it gets the port's own
-    // until it asks for the system's (TestNativeMsgBox on)
-    NativeMsgBoxSetEnabled(false);
-#endif
-#if OS_DARWIN
     // nor macOS's save panel: it gets the port's dialog (TestFinishSavePathDialog)
     NativeFileDlgSetEnabled(false);
-#endif
     auto* arg = new ControlThreadArg{str::Dup(pipeName)};
     RunAsync(MkFunc0(SumatraControlThread, arg), StrL("SumatraControl"));
 }
-
-#else
-
-// ng: no threads, so nothing to listen on
-void StartSumatraControl(Str pipeName) {
-    if (len(pipeName) > 0) {
-        log(StrL("-dbg-control is not supported on this platform\n"));
-    }
-}
-
-#endif

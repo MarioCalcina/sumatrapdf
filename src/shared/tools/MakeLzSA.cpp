@@ -20,8 +20,8 @@ constexpr int kLzmaHeaderSize = 1 + LZMA_PROPS_SIZE;
 // first byte of an entry stored as is
 constexpr u8 kStoredMarker = (u8)-1;
 
-// Store: for an archive that is compressed as a whole later, e.g. inside
-// a .wasm the web server sends with brotli. Compressing twice gains nothing.
+// Store: for an archive that is compressed as a whole later. Compressing
+// twice gains nothing.
 enum class Packing {
     Lzma,
     Store
@@ -206,18 +206,6 @@ bool CreateArchiveFromDir(Str archivePath, Str dir, StrVec& extraFiles, Packing 
         return errorStep;                       \
     }
 
-#if OS_WIN
-static void MyParseCmdLine(WStr cmdLine, StrVec& args) {
-    int nArgs = 0;
-    WCHAR** argsArr = CommandLineToArgvW(cmdLine.s, &nArgs);
-    for (int i = 0; i < nArgs; i++) {
-        Str arg = ToUtf8Temp(argsArr[i]);
-        args.Append(arg);
-    }
-    LocalFree((void*)argsArr);
-}
-#endif
-
 int mainVerify(Str archivePath) {
     int errorStep = 1;
     Str fileData = file::ReadFile(archivePath);
@@ -252,21 +240,10 @@ int printUsage(Str exeName) {
 }
 
 int main(__unused int argc, __unused char** argv) {
-#if OS_WIN && IS_DEBUG
-    // report memory leaks on stderr
-    _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_FILE);
-    _CrtSetReportFile(_CRT_WARN, _CRTDBG_FILE_STDERR);
-    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-#endif
-
     StrVec args;
-#if OS_WIN
-    MyParseCmdLine(GetCommandLine(), args);
-#else
     for (int i = 0; i < argc; i++) {
         args.Append(Str(argv[i]));
     }
-#endif
     int errorStep = 1;
 
     auto exeName = path::GetBaseNameTemp(args[0]);

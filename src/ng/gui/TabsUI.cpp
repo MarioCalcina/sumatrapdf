@@ -32,6 +32,7 @@
 #include "WindowTab.h"
 #include "Tabs.h"
 #include "gui/AppShell.h"
+#include "gui/ToolWindowPlat.h"
 #include "gui/DocCanvas.h"
 #include "gui/TabSwitcher.h"
 #include "gui/DialogWidgets.h"
@@ -319,31 +320,24 @@ static gp::El* BuildTabDragImage(MainWindow* win, gp::Ctx* cx, int tabDx) {
     return el->Fixed()->Left(cx->win->mouseX - off.x)->Top(cx->win->mouseY - off.y)->Deferred();
 }
 
-// orig's MainWindowTabMigration: the window the tab was released over
+// orig's MainWindowTabMigration: the window the tab was released over. ng:
+// gpui does not say which window is under the pointer; the window server does
 static MainWindow* MainWindowUnderCursor() {
-#if OS_WIN
-    POINT pt{};
-    if (!GetCursorPos(&pt)) {
+    int num = ToolWinNativeNumberUnderMouse();
+    if (num <= 0) {
         return nullptr;
     }
-    HWND hwnd = WindowFromPoint(pt);
-    if (hwnd) {
-        hwnd = GetAncestor(hwnd, GA_ROOT);
-    }
     for (MainWindow* w : gWindows) {
-        if (hwnd && AppShellNativeHwnd(w) == hwnd) {
+        if (w->gpuiWin && !w->isBeingClosed && ToolWinNativeNumber(w->gpuiWin) == num) {
             return w;
         }
     }
-#endif
-    // ng: gpui does not say which window is under the pointer
     return nullptr;
 }
 
 // ng: orig's TabsCtrl::MigrationEvent - a tab released outside the strip.
 // gpui's drag is confined to the window the press started in, so the window
-// under the cursor is asked of the OS (Windows only; elsewhere the tab always
-// gets a window of its own).
+// under the cursor is asked of the window server.
 void TabsView::OnBarUpOut(TabsView* self, gp::Ctx* cx, const gp::MouseUpEvent*) {
     MainWindow* win = self->win;
     const gp::DragPayload* drag = gp::WindowActiveDrag(cx);
@@ -504,13 +498,7 @@ static uint32_t ActMenuCmd() {
 
 // "Underline access keys when available" (off until Alt, by default)
 static bool MenuCuesOn() {
-#if OS_WIN
-    BOOL on = FALSE;
-    SystemParametersInfoW(SPI_GETKEYBOARDCUES, 0, &on, 0);
-    return on != FALSE;
-#else
     return false;
-#endif
 }
 
 static void SetMenuCue(gp::Ctx* cx, gpc::PopupMenu* menu, gp::Str label, const MenuAccelText& at, bool disabled) {

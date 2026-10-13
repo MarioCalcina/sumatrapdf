@@ -1,21 +1,11 @@
 /* Copyright 2026 the SumatraPDF project authors (see AUTHORS file).
    License: GPLv3 */
 
-#if defined(SUMATRA_NG)
 #include "gui/GpuiBridge.h"
 #include "VirtKeys.h"
-#else
-#include "base/Base.h"
-#endif
 #include "gui/Dpi.h"
 
 #include "gui/UIModels.h"
-#if !defined(SUMATRA_NG)
-#include "gui/Layout.h"
-#include "gui/win/WinGui.h"
-#include "gui/Gfx.h"
-#include "gui/PlatformFont.h"
-#endif
 
 #include "Settings.h"
 #include "AppSettings.h"
@@ -28,12 +18,8 @@
 #include "SumatraPDF.h"
 #include "MainWindow.h"
 #include "WindowTab.h"
-#if defined(SUMATRA_NG)
 #include "gui/AppShell.h"
 #include "gui/DocCanvas.h"
-#else
-#include "Canvas.h"
-#endif
 #include "Commands.h"
 #include "ShortcutParse.h"
 #include "Accelerators.h"
@@ -42,9 +28,7 @@
 #include "Translations.h"
 #include "LinkFollow.h"
 
-#if defined(SUMATRA_NG)
 #include "SumatraLog.h"
-#endif
 
 Kind kNotifLinkFollow = "notifLinkFollow";
 
@@ -57,9 +41,7 @@ Kind kNotifLinkFollow = "notifLinkFollow";
 // of multi-letter hints first.
 static constexpr char kLinkHintChars[] = "SADFJKLEWCMPGH";
 
-#if defined(SUMATRA_NG)
 constexpr int kLinkFollowRecomputeDelayInMs = 300;
-#endif
 
 struct LinkHint {
     char s[kMaxKeyboardLinkHintLength + 1]{};
@@ -229,9 +211,6 @@ bool StopKeyboardLinkFollowing(MainWindow* win) {
     win->linkFollowActive = false;
     VecReset(win->linkFollowTargets);
     win->linkFollowInputLen = 0;
-#if !defined(SUMATRA_NG)
-    KillTimer(win->hwndCanvas, kLinkFollowTimerID);
-#endif
     win->RedrawCanvas();
     return true;
 }
@@ -263,7 +242,6 @@ void ToggleKeyboardLinkFollowing(MainWindow* win) {
 // elements at wheel/animation rate, so coalesce into one recompute 300ms after
 // scrolling stops. The badges stay glued to their links meanwhile because they
 // are stored in page coordinates.
-#if defined(SUMATRA_NG)
 static int gRecomputePendingMs = -1;
 
 void KeyboardLinkFollowingViewportChanged(MainWindow* win, int elapsedMs) {
@@ -286,14 +264,6 @@ void KeyboardLinkFollowingViewportChanged(MainWindow* win, int elapsedMs) {
     KeyboardLinkFollowingRecompute(win);
     AppShellInvalidate(win);
 }
-#else
-void KeyboardLinkFollowingViewportChanged(MainWindow* win) {
-    if (!KeyboardLinkFollowingActive(win) || !win->hwndCanvas) {
-        return;
-    }
-    SetTimer(win->hwndCanvas, kLinkFollowTimerID, kLinkFollowRecomputeDelayInMs, nullptr);
-}
-#endif
 
 // mirrors what a left click on a link does in OnMouseLeftButtonUp
 static void FollowKeyboardLinkTarget(MainWindow* win, const KeyboardLinkTarget& target) {
@@ -425,7 +395,6 @@ TempStr KeyboardLinkFollowResultTemp(Str action, Str chars, int* exitCodeOut) {
     for (int i = 0; i < n; i++) {
         const KeyboardLinkTarget& t = win->linkFollowTargets[i];
         Rect r = dm ? dm->CvtToScreen(t.pageNo, t.rect) : Rect{};
-#if defined(SUMATRA_NG)
         // tests click the frame; CvtToScreen is canvas pixels and ToDoc
         // subtracts the canvas origin
         if (dm) {
@@ -436,7 +405,6 @@ TempStr KeyboardLinkFollowResultTemp(Str action, Str chars, int* exitCodeOut) {
             r.x += (int)((float)win->canvasRc.x / s + 0.5f);
             r.y += (int)((float)win->canvasRc.y / s + 0.5f);
         }
-#endif
         Str hint(t.hint, t.hintLen);
         out.Append(fmt("link=%d page=%d rect=%d,%d,%d,%d hint=%s\n", i + 1, t.pageNo, r.x, r.y, r.dx, r.dy, hint));
     }
@@ -481,7 +449,6 @@ static Rect LinkBadgeRect(const Rect& linkRect, Size textSize, int& padX) {
     return {x, y, dx, dy};
 }
 
-#if defined(SUMATRA_NG)
 constexpr float kLinkFollowBadgeFontSize = 11;
 
 static void PaintLinkBadge(gp::PaintCtx* ctx, const Rect& linkRect, Str label) {
@@ -506,27 +473,3 @@ void PaintKeyboardLinkTargets(MainWindow* win, gp::PaintCtx* ctx) {
         PaintLinkBadge(ctx, rects[i], labels[i]);
     }
 }
-#else
-static void PaintLinkBadge(Gfx* gfx, PlatformFont* font, const Rect& linkRect, Str label) {
-    Size textSize = gfx->MeasureText(label, font);
-    int padX;
-    Rect badge = LinkBadgeRect(linkRect, textSize, padX);
-    gfx->FillRects(&badge, 1, kLinkFollowBadgeBgCol, 235);
-    gfx->DrawTextAt(label, {badge.x + padX, badge.y}, gfxTextSingleLine | gfxTextNoClip, font, kLinkFollowBadgeTextCol);
-}
-
-void PaintKeyboardLinkTargets(MainWindow* win, Gfx* gfx) {
-    Vec<Rect> rects;
-    Vec<Str> labels;
-    if (!CollectLinkTargets(win, rects, labels)) {
-        return;
-    }
-
-    PaintTransparentRectangles(gfx, win->canvasRc, rects, kLinkFollowHighlightCol, 90, 2, false);
-
-    PlatformFont* font = GetBoldPlatformFont(GetUserGuiFont(StrL("Segoe UI"), DpiScale(11)));
-    for (int i = 0; i < len(rects); i++) {
-        PaintLinkBadge(gfx, font, rects[i], labels[i]);
-    }
-}
-#endif

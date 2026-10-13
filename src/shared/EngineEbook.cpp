@@ -26,32 +26,11 @@
 #include "HtmlFormatter.h"
 #include "EbookFormatter.h"
 
-#if OS_WIN
-#include "base/ScopedWin.h"
-#include "base/GdiPlusUtil.h"
-#include "base/Win.h"
-#include "base/Zip.h"
-#elif OS_LINUX
-#include <cairo/cairo.h>
-#elif OS_DARWIN
 #include "base/MacTypesHide.h"
 #include <CoreGraphics/CoreGraphics.h>
 #include "base/MacTypesShow.h"
-#endif
 
 #include "EngineAll.h"
-
-#if OS_WIN
-using Gdiplus::ARGB;
-using Gdiplus::Bitmap;
-using Gdiplus::FontFamily;
-using Gdiplus::Graphics;
-using Gdiplus::Matrix;
-using Gdiplus::MatrixOrderAppend;
-using Gdiplus::Ok;
-using Gdiplus::SolidBrush;
-using Gdiplus::Status;
-#endif
 
 Kind kindEngineEpub = "engineEpub";
 Kind kindEngineFb2 = "engineFb2";
@@ -186,9 +165,6 @@ class EngineEbook : public EngineBase {
     RectF pageRect;
     float pageBorder;
 
-#if OS_WIN
-    void GetTransform(Matrix& m, float zoom, int rotation);
-#endif
     bool ExtractPageAnchors();
     void InitFormatterArgs(HtmlFormatterArgs& args, Str html, WStr fontName);
     bool SetFormattedPages(Vec<HtmlPage*>* formatted);
@@ -320,12 +296,6 @@ bool EngineEbook::BenchLoadPage(int) {
     return true;
 }
 
-#if OS_WIN
-void EngineEbook::GetTransform(Matrix& m, float zoom, int rotation) {
-    GetBaseTransform(m, ToGdipRectF(pageRect), zoom, rotation);
-}
-#endif
-
 Vec<DrawInstr>* EngineEbook::GetHtmlPage(int pageNo) {
     return GetHtmlPage(LocationFromPageNo(pageNo));
 }
@@ -406,52 +376,6 @@ Pixmap* EngineEbook::RenderPage(RenderPageArgs& args) {
         return nullptr;
     }
 
-#if OS_LINUX
-    Pixmap* pixmap = AllocPixmap(screen.dx, screen.dy, PixmapFormat::BGRA8, true);
-    if (!pixmap) {
-        return nullptr;
-    }
-    cairo_surface_t* surface = cairo_image_surface_create_for_data(pixmap->data, CAIRO_FORMAT_ARGB32, pixmap->width,
-                                                                   pixmap->height, pixmap->stride);
-    cairo_t* cairo = cairo_create(surface);
-    if (cairo_surface_status(surface) != CAIRO_STATUS_SUCCESS || cairo_status(cairo) != CAIRO_STATUS_SUCCESS) {
-        cairo_destroy(cairo);
-        cairo_surface_destroy(surface);
-        FreePixmap(pixmap);
-        return nullptr;
-    }
-    cairo_set_source_rgb(cairo, 1, 1, 1);
-    cairo_paint(cairo);
-
-    float w = pageRect.dx;
-    float h = pageRect.dy;
-    cairo_matrix_t matrix;
-    rotation = NormalizeRotation(rotation);
-    if (rotation == 90) {
-        cairo_matrix_init(&matrix, 0, zoom, -zoom, 0, zoom * h - screenTL.x, -screenTL.y);
-    } else if (rotation == 180) {
-        cairo_matrix_init(&matrix, -zoom, 0, 0, -zoom, zoom * w - screenTL.x, zoom * h - screenTL.y);
-    } else if (rotation == 270) {
-        cairo_matrix_init(&matrix, 0, -zoom, zoom, 0, -screenTL.x, zoom * w - screenTL.y);
-    } else {
-        cairo_matrix_init(&matrix, zoom, 0, 0, zoom, -screenTL.x, -screenTL.y);
-    }
-    cairo_set_matrix(cairo, &matrix);
-
-    ScopedRecursiveMutex scope(&pagesAccess);
-    PlatformTextRender* textDraw = CreateCairoTextRender(cairo);
-    DrawHtmlPage(cairo, textDraw, GetHtmlPage(loc), pageBorder, pageBorder, false, kColBlack,
-                 cookie ? &cookie->abort : nullptr);
-    delete textDraw;
-    cairo_surface_flush(surface);
-    cairo_destroy(cairo);
-    cairo_surface_destroy(surface);
-    if (cookie && cookie->abort) {
-        FreePixmap(pixmap);
-        return nullptr;
-    }
-    return pixmap;
-#elif OS_DARWIN
     Pixmap* pixmap = AllocPixmap(screen.dx, screen.dy, PixmapFormat::BGRA8, true);
     if (!pixmap) {
         return nullptr;
@@ -498,58 +422,6 @@ Pixmap* EngineEbook::RenderPage(RenderPageArgs& args) {
         return nullptr;
     }
     return pixmap;
-#elif !OS_WIN
-    Pixmap* pixmap = AllocPixmap(screen.dx, screen.dy);
-    if (!pixmap) {
-        return nullptr;
-    }
-    for (int y = 0; y < pixmap->height; y++) {
-        u8* dst = pixmap->data + (size_t)y * pixmap->stride;
-        for (int x = 0; x < pixmap->width; x++) {
-            dst[0] = 0xff;
-            dst[1] = 0xff;
-            dst[2] = 0xff;
-            dst[3] = 0xff;
-            dst += 4;
-        }
-    }
-    return pixmap;
-#else
-    HANDLE hMap = nullptr;
-    HBITMAP hbmp = CreateMemoryBitmap(screen.Size(), &hMap);
-    HDC hDC = CreateCompatibleDC(nullptr);
-    DeleteObject(SelectObject(hDC, hbmp));
-
-    Graphics g(hDC);
-    InitGraphicsMode(&g);
-
-    Gdiplus::Color white(0xFF, 0xFF, 0xFF);
-    SolidBrush tmpBrush(white);
-    Gdiplus::Rect screenR(ToGdipRect(screen));
-    screenR.Inflate(1, 1);
-    g.FillRectangle(&tmpBrush, screenR);
-
-    Matrix m;
-    GetTransform(m, zoom, rotation);
-    m.Translate((float)-screenTL.x, (float)-screenTL.y, MatrixOrderAppend);
-    g.SetTransform(&m);
-
-    ScopedRecursiveMutex scope(&pagesAccess);
-
-    PlatformTextRender* textDraw = CreateGdiplusTextRender(&g);
-    DrawHtmlPage(&g, textDraw, GetHtmlPage(loc), pageBorder, pageBorder, false, kColBlack,
-                 cookie ? &cookie->abort : nullptr);
-    delete textDraw;
-    DeleteDC(hDC);
-
-    if (cookie && cookie->abort) {
-        DeleteObject(hbmp);
-        CloseHandle(hMap);
-        return nullptr;
-    }
-
-    return PixmapFromHBITMAP(hbmp, screen.Size(), hMap);
-#endif
 }
 
 static Rect GetInstrBbox(DrawInstr& instr, float pageBorder) {
@@ -684,33 +556,9 @@ Vec<IPageElement*> EngineEbook::GetElements(int pageNo) {
     return els;
 }
 
-#if OS_WIN
-static RenderedBitmap* getImageFromData(Str imageData) {
-    HBITMAP hbmp = nullptr;
-    Bitmap* bmp = NewGdiplusBitmapFromPixmap(PixmapFromData(imageData));
-    if (!bmp || bmp->GetHBITMAP((ARGB)Gdiplus::Color::White, &hbmp) != Ok) {
-        delete bmp;
-        return nullptr;
-    }
-    Size size((int)bmp->GetWidth(), (int)bmp->GetHeight());
-    delete bmp;
-    return new RenderedBitmap(hbmp, size);
-}
-#endif
-
 RenderedBitmap* EngineEbook::GetImageForPageElement(IPageElement* iel) {
-#if !OS_WIN
     (void)iel;
     return nullptr;
-#else
-    ReportIf(iel->GetKind() != kindPageElementImage);
-    PageElementImage* el = (PageElementImage*)iel;
-    int idx = el->imageID;
-    Vec<DrawInstr>* pageInstrs = el->loc.IsValid() ? GetHtmlPage(el->loc) : GetHtmlPage(el->pageNo);
-    auto&& i = (*pageInstrs)[idx];
-    ReportIf(i.type != DrawInstrType::Image);
-    return getImageFromData(i.GetImage());
-#endif
 }
 
 Str EngineEbook::GetImageDataForPageElement(IPageElement* iel) {
@@ -834,28 +682,7 @@ void EngineEbook::ExtractFontListFromPage(Location loc, Vec<PlatformFont*>& seen
         }
         VecAppend(seenFonts, i.font);
 
-#if OS_WIN
-        PlatformFont* font = i.font;
-        FontFamily family;
-        if (!font || !font->gdiFont) {
-            // TODO: handle gdi
-            ReportIf(font && !font->GetHFont());
-            continue;
-        }
-        Status ok = font->gdiFont->GetFamily(&family);
-        if (ok != Ok) {
-            continue;
-        }
-        WCHAR fontNameW[LF_FACESIZE];
-        ok = family.GetFamilyName(fontNameW);
-        if (ok != Ok) {
-            continue;
-        }
-        TempStr fontName = ToUtf8Temp(fontNameW);
-        AppendIfNotExists(&fonts, fontName);
-#else
         AppendIfNotExists(&fonts, i.font->GetName());
-#endif
     }
 }
 
@@ -1020,18 +847,6 @@ EngineBase* EngineEpub::Clone() {
 
 bool EngineEpub::Load(Str fileName) {
     SetFilePath(fileName);
-#if OS_WIN
-    if (dir::Exists(fileName)) {
-        // load uncompressed documents as recompressed ZIP data
-        Str data = ZipDirToData(fileName, true);
-        if (len(data) == 0) {
-            return false;
-        }
-        bool ok = LoadFromData(data);
-        str::Free(data);
-        return ok;
-    }
-#endif
     doc = EpubDoc::CreateFromFile(fileName);
     return FinishLoading();
 }

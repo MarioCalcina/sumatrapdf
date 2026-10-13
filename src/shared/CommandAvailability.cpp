@@ -356,11 +356,6 @@ CommandVisibility GetCommandVisibility(int cmdId, const AppCommandCtx& ctx, Comm
     if (cmdId == CmdDebugToggleDpiOverride && !ctx.debugDpiOverrideAvailable) {
         return CommandVisibility::Hide;
     }
-#if !OS_WIN && !OS_DARWIN && !defined(SUMATRA_HAVE_OPENSSL)
-    if (cmdId == CmdSignDocument) {
-        return CommandVisibility::Hide;
-    }
-#endif
 
     CustomCommand* cmd = FindCustomCommand(cmdId);
     int origCmdId = cmd ? cmd->origId : 0;
@@ -689,7 +684,7 @@ CommandVisibility GetCommandVisibility(int cmdId, const AppCommandCtx& ctx, Comm
         return ctx.hideAnnotations ? MapForSurface(CommandVisibility::Disable, surface) : CommandVisibility::Show;
     }
 
-    if (cmdId == CmdCreateAnnotImageFromClipboard && !ctx.clipboardHasImage && !ctx.clipboardReadAsync) {
+    if (cmdId == CmdCreateAnnotImageFromClipboard && !ctx.clipboardHasImage) {
         return MapForSurface(CommandVisibility::Disable, surface);
     }
 

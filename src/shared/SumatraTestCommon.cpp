@@ -46,8 +46,6 @@ extern "C" {
 #include "SumatraLog.h"
 
 // Answers to -dbg-control test commands that orig and ng compute the same way.
-// ng has no listener thread on wasm, so nothing calls them there.
-#if !OS_WASM
 
 // Headless inverse-search test for issue #5702. Loads the pdf, creates a
 // Synchronizer, and resolves (page, point) -> (srcfile, line, col) via
@@ -1224,11 +1222,7 @@ Pixmap* EnsureReadablePixmap(Pixmap* p) {
     if (p->data && p->format == PixmapFormat::BGRA8) {
         return p;
     }
-#if OS_WIN
-    return PixmapCopyAs32bppDIB(p);
-#else
     return nullptr;
-#endif
 }
 
 // a spot on pageNo with no text under it, in canvas pixels
@@ -1661,5 +1655,3 @@ TempStr HiddenTabGoToPageResultTemp(int* exitCodeOut) {
     }
     return ToStrTemp(out);
 }
-
-#endif // !OS_WASM

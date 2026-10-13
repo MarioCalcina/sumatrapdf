@@ -10,7 +10,7 @@ permissions:
 jobs:
   build:
     # macos-latest is Apple Silicon; the Xcode command line tools are
-    # preinstalled, so clang++ is on PATH. On a mac host -mac is implied
+    # preinstalled, so clang++ is on PATH. The x86_64 half runs under Rosetta
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
@@ -19,18 +19,26 @@ jobs:
       - name: Translations
         run: bun cmd/trans-dl.ts
       - name: test_util
-        run: bun cmd/ng-build.ts -dbg test_util -run -- -for-ai
+        run: .github/scripts/run.sh bun cmd/ng-build.ts -dbg test_util -run -- -for-ai
       - name: SumatraPDF
-        run: bun cmd/ng-build.ts -dbg SumatraPDF
+        run: .github/scripts/run.sh bun cmd/ng-build.ts -dbg SumatraPDF
+      - name: Rosetta
+        run: /usr/bin/pgrep -q oahd || softwareupdate --install-rosetta --agree-to-license
+      - name: test_util (x86_64)
+        run: |
+          .github/scripts/run.sh bun cmd/ng-build.ts -dbg -arch x86_64 test_util
+          .github/scripts/run.sh arch -x86_64 out/mac/dbg-x86_64/test_util -for-ai
 
-      - name: Release build
-        run: bun cmd/ng-build.ts -rel SumatraPDF
+      - name: Release build (universal)
+        run: |
+          .github/scripts/run.sh bun cmd/ng-build.ts -rel -universal SumatraPDF
+          lipo -archs out/mac/rel-universal/SumatraPDF
       - name: Upload ng binaries
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: ng-mac
           path: |
             out/mac/dbg/SumatraPDF
-            out/mac/rel/SumatraPDF
+            out/mac/rel-universal/SumatraPDF
           if-no-files-found: error
           retention-days: 7

@@ -131,11 +131,9 @@ void OpenPopupMenuAt(gp::Ctx* cx, gp::Entity<gp::PopupMenuState> menu, float x, 
 
 // macOS control-click is the context click. It arrives as the left button.
 bool IsContextClick(gp::MouseButton button, gp::Modifiers mods) {
-#if OS_DARWIN
     if (button == gp::MouseButton::Left && mods.control && !mods.shift && !mods.alt && !mods.platform) {
         return true;
     }
-#endif
     return button == gp::MouseButton::Right;
 }
 
@@ -633,13 +631,7 @@ static bool gDlgCues = false;
 // Windows underlines the access keys always or only once Alt was pressed
 // ("Underline access keys when available", off by default)
 static bool DlgCuesAlways() {
-#if OS_WIN
-    BOOL on = FALSE;
-    SystemParametersInfoW(SPI_GETKEYBOARDCUES, 0, &on, 0);
-    return on != FALSE;
-#else
     return false;
-#endif
 }
 
 struct DlgDefault {

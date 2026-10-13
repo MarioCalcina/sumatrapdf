@@ -4,7 +4,6 @@
 #include "base/Base.h"
 #include <errno.h>
 #include <synctex_parser.h>
-#include "base/Win.h"
 #include "base/File.h"
 #include "base/Zip.h"
 
@@ -487,23 +486,7 @@ static Str ConvertLocalToUTF8(Str localStr) {
     if (len(localStr) == 0) {
         return {};
     }
-#if !OS_WIN
     return str::Dup(localStr);
-#else
-    UINT acp = GetACP();
-    int wLen = MultiByteToWideChar(acp, MB_ERR_INVALID_CHARS, localStr.s, -1, nullptr, 0);
-    if (wLen == 0) {
-        return {};
-    }
-    WCHAR* wBuf = AllocArrayTemp<WCHAR>(wLen);
-    if (!wBuf) {
-        return {};
-    }
-    if (MultiByteToWideChar(acp, MB_ERR_INVALID_CHARS, localStr.s, -1, wBuf, wLen) == 0) {
-        return {};
-    }
-    return strconv::WStrToUtf8(WStr(wBuf, wLen - 1));
-#endif
 }
 
 // The temp files WriteTempSyncFile() wrote. A synctex scanner reads its file
@@ -555,12 +538,8 @@ static TempStr PrepareSyncFile(TempStr pathSync) {
         logf("PrepareSyncFile: '%s' failed\n", pathSync);
         return {};
     }
-#if OS_WIN
-    bool isUtf8 = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, src.s, -1, nullptr, 0) != 0;
-#else
     const u8* scan = (const u8*)src.s;
     bool isUtf8 = isLegalUTF8String(&scan, scan + len(src));
-#endif
     if (isUtf8) {
         logf("PrepareSyncFile: '%s' is utf-8 (created by lualatex)\n", pathSync);
         // SyncTeX's narrow file API needs an ASCII path.

@@ -6,7 +6,7 @@ description: Regenerate the amalgamated FreeType copy in ext/a-freetype from ups
 # Update amalgamated FreeType
 
 `ext/a-freetype/` is generated — never hand-edit it. `bun cmd/amalgam.ts -freetype` clones upstream into
-`.work/deps/freetype`, amalgamates it, and validates the result by compiling it with `cl.exe`.
+`.work/deps/freetype`, amalgamates it, and validates the result by compiling it for arm64 and x86_64 with its build target's flags.
 
 ## Steps
 
@@ -31,7 +31,7 @@ description: Regenerate the amalgamated FreeType copy in ext/a-freetype from ups
 2. Check `ext/a-freetype/version.txt` — it records the project homepage, source repo URL, requested
    revision, resolved commit SHA-1 and GitHub commit URL. Confirm it is the revision you meant.
 
-3. Build on a Mac (or push and run the `mac-app` workflow):
+3. Build on a Mac (or push and run the `mac-daily` workflow):
 
    ```sh
    bun cmd/ng-build.ts -dbg -all

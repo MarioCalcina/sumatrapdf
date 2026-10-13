@@ -859,11 +859,7 @@ bool SidebarOnKeyDown(MainWindow* win, int vkey, bool ctrl, bool shift, bool alt
 // again steps through the rows that start with it. The time-out is comctl32's
 // (four double-click times; not documented).
 static int TypeAheadTimeoutMs() {
-#if OS_WIN
-    return (int)GetDoubleClickTime() * 4;
-#else
     return 2000;
-#endif
 }
 
 // cap is the allocated count; len alone can point past it
@@ -1992,9 +1988,6 @@ TempStr SidebarThumbnailsResultTemp(int* exitCodeOut) {
     bool thumbsBottom = win->uiState.favVisible && win->sidebarBottomContent == SidebarContent::Thumbnails;
     bool ring = (thumbsTop && SidebarPanelHasFocus(win, true)) || (thumbsBottom && SidebarPanelHasFocus(win, false));
     int hwnd = 0;
-#if OS_WIN
-    hwnd = (int)(intptr_t)AppShellNativeHwnd(win);
-#endif
     str::Builder sb;
     sb.Append(fmt("hwnd=%d thumbnails=%d count=%d current=%d rendered=%d ring=%d", hwnd, showing ? 1 : 0, pageCount,
                   current, rendered, ring ? 1 : 0));

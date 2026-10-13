@@ -2,17 +2,14 @@
    License: GPLv3 */
 
 // ng: orig's ChangeThemeDialog.cpp is a WS_POPUPWINDOW placed beside the main
-// window so the page stays visible while the theme is previewed. On wasm this
-// is a gpui Dialog with the same rows: the theme list
+// window so the page stays visible while the theme is previewed. Here it is
+// a gpui window with the same rows: the theme list
 // ("Follow Windows" first), the "Document colors follow theme" label and its
 // drop-down, and Cancel / Change. The 300 ms preview debounce is orig's, run
 // off the shell's tick instead of a WM_TIMER.
 
 #include "gui/GpuiBridge.h"
 #include "VirtKeys.h"
-#if OS_WIN
-#include "base/Win.h"
-#endif
 
 #include "gui/UIModels.h"
 
@@ -62,11 +59,7 @@ static ChangeThemeDlg gChangeTheme;
 
 // the list row of the System theme, which follows the OS light/dark mode
 static Str FollowSystemThemeLabel() {
-#if OS_DARWIN
     return Tr("Follow macOS");
-#else
-    return Tr("Follow Windows");
-#endif
 }
 
 static void ChangeThemeOpenToolWindow(MainWindow* win);

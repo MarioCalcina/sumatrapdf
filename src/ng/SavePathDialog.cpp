@@ -26,7 +26,6 @@
 #include "AppTools.h"
 #include "gui/AppShell.h"
 #include "gui/DialogWidgets.h"
-#include "gui/WasmBridge.h"
 #include "SumatraDialogs.h"
 #include "gui/NativeFileDlg.h"
 
@@ -158,12 +157,6 @@ static void FinishSavePathDialog(Str path) {
     if (args) {
         args->path = path;
         args->onDone.Call(args);
-#if OS_WASM
-        // a file in MEMFS is not a file the user has; hand it to the browser
-        if (len(path) > 0) {
-            WasmDownloadFile(path);
-        }
-#endif
         str::Free(args->title);
         str::Free(args->initialPath);
         str::Free(args->defExt);
@@ -203,12 +196,10 @@ void ShowSavePathDialog(SavePathArgs* args) {
         delete args;
         return;
     }
-#if OS_WIN || OS_DARWIN
     if (NativeFileDlgEnabled() && !args->openExisting) {
         NativeSaveFileDlg(args);
         return;
     }
-#endif
     // the port's dialog does not report a filter
     args->filterIndex = 0;
     gSave.args = args;

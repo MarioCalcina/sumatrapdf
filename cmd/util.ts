@@ -5,152 +5,8 @@ import { join, dirname, extname, resolve } from "node:path";
 export const websiteDir = resolve(import.meta.dir, "..", "..", "hack", "webapps", "sumatra-website");
 export const websiteDocsDir = join(websiteDir, "www", "docs");
 
-const msBuildRelPath = String.raw`MSBuild\Current\Bin\MSBuild.exe`;
-// VS 2022 ships llvm tools in Llvm\bin, VS 18 in Llvm\x64\bin
-const clangFormatRelPaths = [
-  String.raw`VC\Tools\Llvm\bin\clang-format.exe`,
-  String.raw`VC\Tools\Llvm\x64\bin\clang-format.exe`,
-];
-const clangTidyRelPaths = [
-  String.raw`VC\Tools\Llvm\bin\clang-tidy.exe`,
-  String.raw`VC\Tools\Llvm\x64\bin\clang-tidy.exe`,
-];
-
-const vsEditions = ["Community", "Professional", "Enterprise"];
-
-export interface VisualStudioInfo {
-  vsRoot: string;
-  msbuildPath: string;
-  clangFormatPath: string;
-  clangTidyPath: string;
-  llvmPdbutilPath?: string;
-}
-
-// llvm-pdbutil.exe doesn't work when invoked using absolute path
-// so it must be in %PATH% to work
-function findLlvmPdbUtil(): string | undefined {
-  try {
-    const result = Bun.spawnSync(["llvm-pdbutil", "--help"], {
-      stdout: "pipe",
-      stderr: "pipe",
-    });
-    if (result.exitCode === 0) {
-      return "llvm-pdbutil.exe";
-    }
-  } catch {}
-  return;
-}
-
-function findVsRootVer(ver: string): string {
-  // try PATH first
-  try {
-    const result = Bun.spawnSync(["msbuild", "-h"], {
-      stdout: "pipe",
-      stderr: "pipe",
-    });
-    if (result.exitCode === 0) {
-      const pathEnv = process.env.PATH ?? "";
-      for (const dir of pathEnv.split(";")) {
-        if (!dir) continue;
-        const p = join(dir, "MSBuild.exe");
-        if (existsSync(p)) {
-          // walk up from e.g. .../MSBuild/Current/Bin or .../MSBuild/Current/Bin/amd64
-          // until we pass the "MSBuild" directory to get vsRoot
-          let d = dir;
-          while (d && d !== dirname(d)) {
-            const base = d.split(/[\\/]/).pop()!;
-            if (base.toLowerCase() === "msbuild") {
-              return dirname(d);
-            }
-            d = dirname(d);
-          }
-        }
-      }
-    }
-  } catch {
-    // msbuild not in PATH
-  }
-
-  // try known Program Files locations
-  const programFiles = process.env["ProgramFiles"] ?? String.raw`C:\Program Files`;
-  const vsBase = join(programFiles, "Microsoft Visual Studio", ver);
-  for (const edition of vsEditions) {
-    const vsRoot = join(vsBase, edition);
-    if (existsSync(join(vsRoot, msBuildRelPath))) {
-      return vsRoot;
-    }
-  }
-  return "";
-}
-
-function findTool(vsRoot: string, relPath: string): string {
-  const p = join(vsRoot, relPath);
-  if (existsSync(p)) {
-    return p;
-  }
-  return "";
-}
-
-function findToolMulti(vsRoot: string, relPaths: string[]): string {
-  for (const relPath of relPaths) {
-    const p = findTool(vsRoot, relPath);
-    if (p) {
-      return p;
-    }
-  }
-  return "";
-}
-
-export function detectVisualStudioVer(ver: string): VisualStudioInfo | undefined {
-  const vsRoot = findVsRootVer(ver);
-  if (vsRoot == "") return;
-
-  const msbuildPath = findTool(vsRoot, msBuildRelPath);
-  if (!msbuildPath) {
-    return;
-  }
-
-  const clangFormatPath = findToolMulti(vsRoot, clangFormatRelPaths);
-  const clangTidyPath = findToolMulti(vsRoot, clangTidyRelPaths);
-  const llvmPdbutilPath = findLlvmPdbUtil();
-
-  console.log(`vsRoot: ${vsRoot}`);
-  console.log(`msbuildPath: ${msbuildPath}`);
-  if (clangFormatPath) console.log(`clangFormatPath: ${clangFormatPath}`);
-  if (clangTidyPath) console.log(`clangTidyPath: ${clangTidyPath}`);
-  if (llvmPdbutilPath) console.log(`llvmPdbutilPath: ${llvmPdbutilPath}`);
-
-  return { vsRoot, msbuildPath, clangFormatPath, clangTidyPath, llvmPdbutilPath };
-}
-
-export function detectVisualStudio2022(): VisualStudioInfo {
-  let res = detectVisualStudioVer("2022");
-  if (!res) {
-    throw new Error(`couldn't find vs 2022 msbuild.exe `);
-  }
-  return res;
-}
-
-export function detectVisualStudio2026(): VisualStudioInfo {
-  let res = detectVisualStudioVer("18");
-  if (!res) {
-    throw new Error(`couldn't find vs 2026 msbuild.exe `);
-  }
-  return res;
-}
-
-export function detectVisualStudio(): VisualStudioInfo {
-  let res = detectVisualStudioVer("2022");
-  if (res) return res;
-  res = detectVisualStudioVer("18");
-  if (!res) {
-    throw new Error(`couldn't find vs 2026 or vs 2022`);
-  }
-  return res;
-}
-
 export async function runLogged(cmd: string, args: string[], cwd?: string): Promise<void> {
-  const short = [cmd.split("\\").pop(), ...args].join(" ");
+  const short = [cmd.split("/").pop(), ...args].join(" ");
   console.log(`> ${short}`);
   const proc = Bun.spawn([cmd, ...args], {
     cwd,
@@ -164,34 +20,14 @@ export async function runLogged(cmd: string, args: string[], cwd?: string): Prom
   }
 }
 
-// Visual Studio ships clang-format on Windows; elsewhere it is on PATH or,
-// on mac, inside the Xcode toolchain.
-// msbuild arg passing #defines (PRE_RELEASE_VER, GIT_COMMIT_ID; see
-// src/shared/Version.h) to the projects calling build_defines() in premake5.lua
-// e.g. /p:SumatraBuildDefines=GIT_COMMIT_ID=70cdc0%3BPRE_RELEASE_VER=10175
-export function msbuildDefinesArg(defines: Record<string, string>): string {
-  const pairs = Object.entries(defines).map(([name, value]) => `${name}=${value}`);
-  // %3B: a raw ";" would start the next msbuild property
-  return "/p:SumatraBuildDefines=" + pairs.join("%3B");
-}
-
-export function preReleaseDefines(sha1: string, preRelVer: string): Record<string, string> {
-  return { GIT_COMMIT_ID: sha1, PRE_RELEASE_VER: preRelVer };
-}
-
+// clang-format on PATH or inside the Xcode toolchain
 export function findClangFormat(): string {
-  if (process.platform === "win32") {
-    const { clangFormatPath } = detectVisualStudio();
-    if (clangFormatPath) return clangFormatPath;
-  }
   const onPath = Bun.which("clang-format");
   if (onPath) return onPath;
-  if (process.platform === "darwin") {
-    const r = Bun.spawnSync(["xcrun", "--find", "clang-format"], { stdout: "pipe", stderr: "ignore" });
-    const path = r.stdout.toString().trim();
-    if (r.exitCode === 0 && path) return path;
-  }
-  throw new Error("couldn't find clang-format (install LLVM or the Visual Studio C++ Clang tools)");
+  const r = Bun.spawnSync(["xcrun", "--find", "clang-format"], { stdout: "pipe", stderr: "ignore" });
+  const path = r.stdout.toString().trim();
+  if (r.exitCode === 0 && path) return path;
+  throw new Error("couldn't find clang-format (brew install clang-format)");
 }
 
 // clang-format every generated C++ file so gen-code output matches cmd/format.ts
@@ -215,24 +51,6 @@ export async function isGitClean(dir: string): Promise<boolean> {
     console.log(`git status --porcelain returned:\n'${out}'`);
   }
   return out.length === 0;
-}
-
-export async function getGitSha1(): Promise<string> {
-  const proc = Bun.spawn(["git", "rev-parse", "HEAD"], { stdout: "pipe", stderr: "inherit" });
-  const s = (await new Response(proc.stdout).text()).trim();
-  await proc.exited;
-  if (s.length !== 40) throw new Error(`getGitSha1: '${s}' doesn't look like sha1`);
-  return s;
-}
-
-export async function getGitLinearVersion(): Promise<number> {
-  const proc = Bun.spawn(["git", "log", "--oneline"], { stdout: "pipe", stderr: "inherit" });
-  const out = await new Response(proc.stdout).text();
-  await proc.exited;
-  const lines = out.split("\n").filter((l) => l.trim() !== "");
-  const n = lines.length + 1000;
-  if (n < 10000) throw new Error(`getGitLinearVersion: n is ${n} (should be > 10000)`);
-  return n;
 }
 
 export function extractSumatraVersion(): string {

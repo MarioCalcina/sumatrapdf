@@ -12,7 +12,6 @@
 // must be last to over-write assert()
 #include "base/tests/UtAssert.h"
 
-#if !OS_WIN
 static void WriteTiffIfd(ByteWriterLE& w, u32 nextIfd, u32 pixelOffset) {
     constexpr u16 kLong = 4;
     constexpr u16 kShort = 3;
@@ -34,7 +33,6 @@ static void WriteTiffIfd(ByteWriterLE& w, u32 nextIfd, u32 pixelOffset) {
     entry(279, kLong, 1);           // StripByteCounts
     w.Write32(nextIfd);
 }
-#endif
 
 void ImageReader_UnitTests() {
     Pixmap* gifSrc = AllocPixmap(64, 64, PixmapFormat::RGBA8);
@@ -76,7 +74,6 @@ void ImageReader_UnitTests() {
     str::Free(tiff);
     FreePixmap(tiffSrc);
 
-#if !OS_WIN
     Str pngData = file::ReadFile(StrL("docs/test/test.png"));
     utassert(len(pngData) > 0);
     Pixmap* png = PixmapFromData(pngData);
@@ -104,7 +101,6 @@ void ImageReader_UnitTests() {
         FreePixmap(frame);
     }
 
-#if !OS_WIN
     // Pillow's duplicate_frame.gif: three visually identical animation frames.
     const u8 gif[] = {
         0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 0x0a, 0x00, 0x0a, 0x00, 0xf0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -143,7 +139,6 @@ void ImageReader_UnitTests() {
     for (Pixmap* frame : frames) {
         FreePixmap(frame);
     }
-#endif
 
     Str icoData = file::ReadFile(StrL("src/shared/gfx/SumatraPDF-smaller.ico"));
     FileTypeInfo icoInfo = GuessFileInfoFromData(icoData);
@@ -167,5 +162,4 @@ void ImageReader_UnitTests() {
     }
     FreeFileTypeInfo(&icoInfo);
     str::Free(icoData);
-#endif
 }

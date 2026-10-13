@@ -6,20 +6,9 @@
 #include "base/File.h"
 #include "base/Http.h"
 
-#if OS_WIN
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-#include <windows.h>
-#include <wincrypt.h>
-#endif
-
 #include "EutlTrust.h"
 
 TempStr GetSumatraDataDirTemp();
-#if OS_WIN
-void SetEutlLookupFn(bool (*fn)(const u8* der, int derLen));
-#endif
 
 constexpr const char* kLotlUrl = "https://ec.europa.eu/tools/lotl/eu-lotl.xml";
 constexpr int kMaxTslLists = 40;
@@ -65,25 +54,9 @@ static void CollectTagContents(Str xml, Str openNeedle, Str closeNeedle, StrVec&
     }
 }
 
-#if OS_WIN
-static Str DecodeBase64Owned(Str b64) {
-    DWORD n = 0;
-    if (!CryptStringToBinaryA(CStrTemp(b64), (DWORD)len(b64), CRYPT_STRING_BASE64, nullptr, &n, nullptr, nullptr) ||
-        n == 0) {
-        return {};
-    }
-    u8* buf = AllocArray<u8>((int)n);
-    if (!CryptStringToBinaryA(CStrTemp(b64), (DWORD)len(b64), CRYPT_STRING_BASE64, buf, &n, nullptr, nullptr)) {
-        free(buf);
-        return {};
-    }
-    return Str((char*)buf, (int)n);
-}
-#else
 static Str DecodeBase64Owned(Str) {
     return {};
 }
-#endif
 
 static void AddCertFingerprint(Str der, StrVec& fps) {
     if (len(der) == 0) {
@@ -235,8 +208,4 @@ static bool EutlLookupThunk(const u8* der, int derLen) {
     return EutlCertIsEuTrusted(der, derLen);
 }
 
-void EutlRegisterLookup() {
-#if OS_WIN
-    SetEutlLookupFn(EutlLookupThunk);
-#endif
-}
+void EutlRegisterLookup() {}

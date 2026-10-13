@@ -196,11 +196,6 @@ struct RenderCache {
     Semaphore startRendering; // signaled once per queued request
     AtomicBool shouldExit = 0;
 
-    // no threads (wasm): the queue is drained on the main thread instead, see
-    // RenderCache::SchedulePump()
-    struct RenderCachePump* pump = nullptr;
-    bool pumpPosted = false;
-
     RenderCache();
     RenderCache(RenderCache const&) = delete;
     RenderCache& operator=(RenderCache const&) = delete;
@@ -224,17 +219,12 @@ struct RenderCache {
     void KeepForDisplayModel(DisplayModel* oldDm, DisplayModel* newDm);
     void RekeyForLayoutChange(DisplayModel* dm);
     void Invalidate(DisplayModel* dm, int pageNo, RectF rect);
-#if OS_WIN
-    int Paint(HDC hdc, Rect bounds, DisplayModel* dm, int pageNo, PageInfo* pi, bool* renderOutOfDateCue);
-#endif
     // ng: orig paints the cached tiles with GDI into an HDC; here they go
     // through the gpui canvas (src/gui/DocCanvas.cpp)
     int Paint(gpui::PaintCtx* ctx, Rect bounds, DisplayModel* dm, int pageNo, PageInfo* pi, bool* renderOutOfDateCue);
 
     bool ClearCurrentRequest(int threadIdx);
     bool GetNextRequest(PageRenderRequest* req, int threadIdx);
-    // no-op when there are threads; see the pump comment above
-    void SchedulePump();
     void Add(PageRenderRequest& req, Pixmap* bmp);
 
     u16 GetTileRes(DisplayModel* dm, int pageNo) const;
@@ -259,10 +249,6 @@ struct RenderCache {
     void FreePage(DisplayModel* dm, int pageNo, TilePosition* tile = nullptr);
     void FreeNotVisible();
 
-#if OS_WIN
-    int PaintTile(HDC hdc, Rect bounds, DisplayModel* dm, int pageNo, TilePosition tile, Rect tileOnScreen,
-                  bool renderMissing, bool* renderOutOfDateCue, bool* renderedReplacement);
-#endif
     int PaintTile(gpui::PaintCtx* ctx, Rect bounds, DisplayModel* dm, int pageNo, TilePosition tile, Rect tileOnScreen,
                   bool renderMissing, bool* renderOutOfDateCue, bool* renderedReplacement);
     void LogCacheSize();

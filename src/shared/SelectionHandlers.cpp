@@ -2,24 +2,14 @@
    License: GPLv3 */
 
 // Sends selected text with GET, POST, or a browser-submitted POST form.
-#ifdef SUMATRA_NG
 #include "gui/GpuiBridge.h"
-#else
-#include "base/Base.h"
-#include "base/AutoWin.h"
-#endif
 #include "base/File.h"
 #include "base/JsonParser.h"
 #include "base/Http.h"
-#include "base/Win.h"
 #include "base/Launch.h"
 #include "base/UITask.h"
 
 #include "gui/UIModels.h"
-#ifndef SUMATRA_NG
-#include "gui/Layout.h"
-#include "gui/win/WinGui.h"
-#endif
 
 #include "Settings.h"
 #include "DisplayMode.h"
@@ -187,55 +177,6 @@ static void PostRequestThread(PostRequest* req) {
     uitask::Post(fn, "SelectionHandlerPostFinished");
 }
 
-#if OS_WASM
-static void PostRequestWasmDone(PostRequest* req, gp::HttpAsyncResult result) {
-    gp::HttpRsp* rsp = result.response;
-    req->statusCode = rsp ? (uint)rsp->status : 0;
-    req->winErr = result.ok ? 0 : 1;
-    if (rsp && rsp->body.len > 0) {
-        req->response = str::Dup(Str((char*)rsp->body.els, rsp->body.len));
-    }
-    PostRequestFinished(req);
-}
-
-static void PostRequestWasm(PostRequest* req) {
-    Vec<gp::HttpHeader> headers;
-    gp::HttpHeader contentType{GStrL("Content-Type"), ToGpui(req->contentType)};
-    VecAppend(headers, contentType);
-
-    TempStr normalized = HttpNormalizeHeadersTemp(req->headers);
-    StrVec lines;
-    Split(&lines, normalized, StrL("\n"), true);
-    for (Str line : lines) {
-        Str trimmed = str::DupTemp(line);
-        str::TrimWSInPlace(trimmed, str::TrimOpt::Both);
-        int colon = str::IndexOfChar(trimmed, ':');
-        if (colon <= 0) {
-            continue;
-        }
-        Str name(trimmed.s, colon);
-        Str value(trimmed.s + colon + 1, len(trimmed) - colon - 1);
-        str::TrimWSInPlace(name, str::TrimOpt::Both);
-        str::TrimWSInPlace(value, str::TrimOpt::Both);
-        gp::HttpHeader header{ToGpui(name), ToGpui(value)};
-        VecAppend(headers, header);
-    }
-
-    gp::HttpReq greq;
-    greq.url = ToGpui(req->url);
-    greq.method = GStrL("POST");
-    greq.headers = headers.els;
-    greq.nHeaders = len(headers);
-    greq.body = ToGpui(req->body);
-    bool started = gp::HttpSendAsync(greq, gp::MkFunc1<PostRequest, gp::HttpAsyncResult>(PostRequestWasmDone, req));
-    VecReset(headers);
-    if (!started) {
-        req->winErr = 1;
-        PostRequestFinished(req);
-    }
-}
-#endif
-
 // Runs a POST selection handler. Returns immediately; the request runs on a
 // background thread and reports the outcome in a notification.
 void SelectionHandlerPost(WindowTab* tab, Str url, Str bodyPattern, Str contentType, Str headers, Str selection) {
@@ -251,12 +192,8 @@ void SelectionHandlerPost(WindowTab* tab, Str url, Str bodyPattern, Str contentT
     req->contentType = str::Dup(ct);
     req->headers = str::Dup(headers);
 
-#if OS_WASM
-    PostRequestWasm(req);
-#else
     auto fn = MkFunc0<PostRequest>(PostRequestThread, req);
     RunAsync(fn, StrL("SelectionHandlerPost"));
-#endif
 }
 
 //--- Method = POST-VIA-BROWSER (self-submitting html form)

@@ -16,17 +16,9 @@
 
 #include <csignal>
 #include <unistd.h>
-#if OS_WASM
-#include <emscripten/emscripten.h>
-#else
 #include <execinfo.h>
-#endif
-#if OS_DARWIN
 #include <sys/sysctl.h>
 #include <sys/types.h>
-#elif OS_LINUX
-#include <fcntl.h>
-#endif
 
 static Arena* gCrashHandlerArena = nullptr;
 static CrashHandlerConfig gCfg{};
@@ -53,27 +45,9 @@ constexpr int kPendingMaxAgeSecs = 7 * 24 * 60 * 60;
 constexpr int kHttpClientErrorMin = 400;
 constexpr int kHttpClientErrorMax = 499;
 
-#if OS_DARWIN
 void MacAppendSignalInfo(str::Builder& b, int sig, void* sigInfo);
 void MacAppendStacks(str::Builder& b, void* uctx);
 TempStr MacSysInfoTemp();
-#endif
-
-#if OS_WASM
-
-// emscripten has no execinfo.h; the runtime formats the JS/wasm stack instead
-static void AppendBacktrace(str::Builder& b) {
-    constexpr int kMaxStackChars = 8 * 1024;
-    char* buf = AllocArrayTemp<char>(kMaxStackChars);
-    if (emscripten_get_callstack(EM_LOG_C_STACK, buf, kMaxStackChars) <= 0) {
-        b.Append(StrL("(no backtrace)\n"));
-        return;
-    }
-    b.Append(Str(buf));
-    b.Append(StrL("\n"));
-}
-
-#else
 
 static void AppendBacktrace(str::Builder& b) {
     void* frames[kMaxFrames];
@@ -89,8 +63,6 @@ static void AppendBacktrace(str::Builder& b) {
     }
     free(syms);
 }
-
-#endif
 
 // the report path is the .dmp path with the extension swapped: a POSIX crash
 // has no minidump, only text
@@ -119,24 +91,13 @@ static void WriteCrashReport(Str condStr, Str fileLine, bool isCrash, int sig, v
     str::Builder b(gCrashHandlerArena);
     b.Reserve(16 * 1024);
     b.Append(StrL(kCrashReportMagic));
-#if OS_DARWIN
     if (sig != 0) {
         MacAppendSignalInfo(b, sig, sigInfo);
     }
-#else
-    (void)sig;
-    (void)sigInfo;
-    (void)uctx;
-#endif
     if (gCfg.getCrashComment) {
         b.Append(gCfg.getCrashComment(gCrashHandlerArena, condStr, fileLine, isCrash));
     }
-#if OS_DARWIN
     MacAppendStacks(b, uctx);
-#else
-    b.Append(StrL("\n--- backtrace ---\n"));
-    AppendBacktrace(b);
-#endif
     Str report = ToStr(b);
     TempStr path = ReportPathTemp(StrL(".txt"));
     if (len(path) > 0) {
@@ -177,7 +138,6 @@ NO_INLINE void _uploadDebugReport(Str condStr, Str fileLine, bool isCrash) {
 // lldb/gdb are already attached when ng-dbg launches the process. Leave the
 // signal to them so the stop is the fault, not this handler.
 static bool DebuggerAttached() {
-#if OS_DARWIN
     struct kinfo_proc info{};
     int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid()};
     size_t size = sizeof(info);
@@ -185,30 +145,6 @@ static bool DebuggerAttached() {
         return false;
     }
     return (info.kp_proc.p_flag & P_TRACED) != 0;
-#elif OS_LINUX
-    int fd = open("/proc/self/status", O_RDONLY);
-    if (fd < 0) {
-        return false;
-    }
-    char buf[4096];
-    int n = (int)read(fd, buf, sizeof(buf) - 1);
-    close(fd);
-    if (n <= 0) {
-        return false;
-    }
-    buf[n] = 0;
-    const char* p = strstr(buf, "TracerPid:");
-    if (!p) {
-        return false;
-    }
-    p += 10;
-    while (*p == ' ' || *p == '\t') {
-        p++;
-    }
-    return *p != '0';
-#else
-    return false;
-#endif
 }
 
 static const int kSignals[] = {SIGSEGV, SIGBUS, SIGILL, SIGFPE, SIGABRT, SIGTRAP};
@@ -218,7 +154,6 @@ static void SetSignalHandlers() {
     sa.sa_sigaction = SignalHandler;
     sa.sa_flags = SA_SIGINFO;
     sigemptyset(&sa.sa_mask);
-#if !OS_WASM
     // a stack overflow leaves no room on the thread's own stack
     static char altStack[kAltStackSize];
     stack_t ss{};
@@ -227,13 +162,11 @@ static void SetSignalHandlers() {
     if (sigaltstack(&ss, nullptr) == 0) {
         sa.sa_flags |= SA_ONSTACK;
     }
-#endif
     for (int sig : kSignals) {
         sigaction(sig, &sa, nullptr);
     }
 }
 
-#if !OS_WASM
 struct PendingUpload {
     Str path;
     Str url;
@@ -276,7 +209,6 @@ static void UploadPendingReport() {
     d->url = str::Dup(gCfg.submitUrl);
     RunAsync(MkFunc0<PendingUpload>(UploadPendingThread, d), StrL("UploadCrashReport"));
 }
-#endif
 
 void InstallCrashHandler(const CrashHandlerConfig& cfg) {
     if (gCrashHandlerArena || DebuggerAttached()) {
@@ -287,16 +219,10 @@ void InstallCrashHandler(const CrashHandlerConfig& cfg) {
     gCfg.crashDumpPath = str::Dup(gCrashHandlerArena, cfg.crashDumpPath);
     gCfg.submitUrl = str::Dup(gCrashHandlerArena, cfg.submitUrl);
     gCfg.fullDumpEnvVar = str::Dup(gCrashHandlerArena, cfg.fullDumpEnvVar);
-#if OS_DARWIN
     gSysInfo = str::Dup(gCrashHandlerArena, MacSysInfoTemp());
-#else
-    gSysInfo = str::Dup(gCrashHandlerArena, StrL("Os: posix\n"));
-#endif
 
     SetSignalHandlers();
-#if !OS_WASM
     UploadPendingReport();
-#endif
 }
 
 void UninstallCrashHandler() {

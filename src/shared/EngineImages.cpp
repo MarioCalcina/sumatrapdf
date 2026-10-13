@@ -13,11 +13,6 @@
 #include "base/Timer.h"
 #include "base/DirScan.h"
 
-#if OS_WIN
-#include "base/Win.h"
-#include "base/GdiPlusUtil.h"
-#endif
-
 extern "C" {
 #include <mupdf/fitz.h>
 }
@@ -833,57 +828,6 @@ Pixmap* EngineImages::RenderPage(RenderPageArgs& args) {
         return nullptr;
     }
 
-#if OS_WIN
-    // read before DropPage() below, which can free page->pixmap, i.e. src
-    bool srcHasAlpha = src->format == PixmapFormat::BGRA8;
-
-    // High-quality scale via GDI+ bicubic. The old per-pixel nearest-neighbor
-    // path looked blocky for Pixmap-only formats (HEIC/AVIF/WebP/JXL) whenever
-    // zoom != 100%. Rotation still uses the fallback below (rare for images).
-    if (NormalizeRotation(rotation) == 0 && screen.dx > 0 && screen.dy > 0) {
-        Gdiplus::Bitmap* srcBmp = WrapPixmapGdiplus(src);
-        if (srcBmp) {
-            auto* dstBmp = new Gdiplus::Bitmap(screen.dx, screen.dy, PixelFormat32bppPARGB);
-            if (dstBmp && dstBmp->GetLastStatus() == Gdiplus::Ok) {
-                Gdiplus::Graphics g(dstBmp);
-                g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
-                // HighQuality/Half offsets samples by -0.5px, so a 1:1 or
-                // integer-scaled image lands a half-pixel off and looks
-                // fuzzy (issue #3434). None keeps the image on the pixel grid.
-                g.SetPixelOffsetMode(Gdiplus::PixelOffsetModeNone);
-                // start transparent, not white: the transparent parts of the
-                // image have to stay transparent so the canvas can put the
-                // document background behind them (#5844)
-                g.Clear(Gdiplus::Color(0, 0, 0, 0));
-                // pageRc is in page-pixel coords; screen is the zoomed dest size.
-                Gdiplus::RectF dest(0, 0, (float)screen.dx, (float)screen.dy);
-                // Bicubic samples outside the source rect. Without a wrap mode
-                // GDI+ treats those samples as transparent, so the edge pixels
-                // composite toward the cleared dest and show as a 1-2px dark
-                // seam when comic pages sit on the black canvas at PageSpacing
-                // 0 0 (issue #6018).
-                Gdiplus::ImageAttributes imgAttrs;
-                imgAttrs.SetWrapMode(Gdiplus::WrapModeTileFlipXY);
-                g.DrawImage(srcBmp, dest, pageRc.x, pageRc.y, pageRc.dx, pageRc.dy, Gdiplus::UnitPixel, &imgAttrs);
-                Pixmap* result = PixmapFromGdiplus(dstBmp);
-                delete dstBmp;
-                delete srcBmp;
-                DropPage(page, false);
-                if (result) {
-                    // PixmapFromGdiplus reads back as straight (not premultiplied) ARGB
-                    result->premultiplied = false;
-                    result->hasAlpha = srcHasAlpha;
-                    return FinishRenderedPage(result, args.keepAlpha);
-                }
-            } else {
-                delete dstBmp;
-                delete srcBmp;
-            }
-        }
-    }
-
-#endif
-
     // Fallback: nearest-neighbor (rotation, non-Windows, or GDI+ failure).
     Pixmap* result = AllocPixmap(screen.dx, screen.dy, PixmapFormat::BGRA8, true);
     if (!result) {
@@ -974,31 +918,8 @@ IPageElement* EngineImages::GetElementAtPos(int pageNo, PointF pt) {
 }
 
 RenderedBitmap* EngineImages::GetImageForPageElement(IPageElement* pel) {
-#if !OS_WIN
     (void)pel;
     return nullptr;
-#else
-    ReportIf(pel->GetKind() != kindPageElementImage);
-    auto* ipel = (PageElementImage*)pel;
-    int pageNo = ipel->pageNo;
-    auto* page = GetPage(pageNo);
-    if (!page || page->failedToLoad) {
-        if (page) {
-            DropPage(page, false);
-        }
-        return nullptr;
-    }
-
-    EnsurePixmap(page, pageNo, PixmapDecode::AllowHuge);
-    if (!page->pixmap) {
-        DropPage(page, false);
-        return nullptr;
-    }
-
-    Pixmap* pixmap = ClonePixmap(page->pixmap);
-    DropPage(page, false);
-    return RenderedBitmapFromPixmap(pixmap);
-#endif
 }
 
 Str EngineImages::GetImageDataForPageElement(IPageElement* pel) {
@@ -1896,9 +1817,6 @@ static EngineBase* CreateImageEngine(Str source, bool (EngineImage::*load)(Str))
     bool ok = (engine->*load)(source);
     // decoding might run a 3rd-party WIC codec (e.g. CopyTrans HEIC) that
     // unmasks fp exceptions on this thread, which would crash later float math
-#if OS_WIN
-    MaskFpExceptions();
-#endif
     if (!ok) {
         SafeEngineRelease(&engine);
         return nullptr;

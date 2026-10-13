@@ -7,18 +7,16 @@
 // 404 page has nothing to scroll. Folder names with a space already worked
 // (they never appear in the virtual URL); the file name is what is in the path.
 //
-// Covered for both embedded browsers (-html-backend): the IE control resolves
-// the same url through its own its:// protocol handler, so it can 404 on its
-// own. Names beyond the reported space cover the rest of the url-special
-// characters a Windows file name may hold, which break the same way: a raw '#'
-// in the name used to make everything after it read as a fragment.
+// Names beyond the reported space cover the rest of the url-special characters
+// a file name may hold, which break the same way: a raw '#' in the name used to
+// make everything after it read as a fragment.
 
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlClient, ControlCommand, withControlledSumatra } from "./control.ts";
 import { EXE, pollUntil, runStandalone, SLOW_BUILD_FACTOR, tmpPath } from "./util.ts";
 
-const BACKENDS = ["webview2", "ie"];
+const BACKENDS = ["webview"];
 const MD_NAMES = ["Test Test.md", "100% & C#1 (v2)+[a]@b;c=d!.md", "Ünïcode Tëst.md"];
 const TARGET_DEST_NO = 3; // the file, "Start", then "Target Heading"
 const MIN_TARGET_SCROLL_Y = 500;
@@ -124,7 +122,7 @@ export async function testit(): Promise<void> {
           }
         }
       },
-      ["-appdata", appdata, "-html-backend", backend, "-new-window-tabs", ...mdPaths],
+      ["-appdata", appdata, "-new-window-tabs", ...mdPaths],
     );
   }
 

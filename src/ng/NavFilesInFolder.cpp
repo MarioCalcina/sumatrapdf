@@ -11,9 +11,6 @@
 #include "base/File.h"
 #include "base/GuessFileType.h"
 #include "base/Timer.h"
-#if OS_WIN
-#include "base/Win.h"
-#endif
 
 #include "gui/UIModels.h"
 
@@ -52,7 +49,6 @@ Str NavEntryBaseName(const NavFileEntry& e) {
     return name;
 }
 
-#if !OS_WIN
 // ng: orig's are in base/Win.cpp. Off Windows the "drives" are the root and
 // the user's home directory, and there is no Quick access.
 void ListDriveRoots(StrVec& out) {
@@ -67,25 +63,16 @@ void ListDriveRoots(StrVec& out) {
 bool ListShellQuickAccess(StrVec&, StrVec&) {
     return false;
 }
-#endif
 
 void AppendHomeFileEntry(Vec<NavFileEntry>& out, Str path) {
     if (!CanOpenFile(path)) {
         return;
     }
     // Quick access keeps listing files after they are deleted
-#if OS_WIN
-    WIN32_FILE_ATTRIBUTE_DATA fad{};
-    if (!path::GetCachedAttributesEx(path, &fad)) {
-        return;
-    }
-    i64 size = ((i64)fad.nFileSizeHigh << 32) | (i64)fad.nFileSizeLow;
-#else
     if (!file::Exists(path)) {
         return;
     }
     i64 size = file::GetSize(path);
-#endif
     NavFileEntry e;
     e.path = str::Dup(path);
     e.name = str::Dup(path);
@@ -112,16 +99,9 @@ void CollectNavEntriesForDir(Str dir, Vec<NavFileEntry>& out) {
         if (len(leaf) == 0) {
             continue;
         }
-#if OS_WIN
-        DWORD attrs = de->fd->dwFileAttributes;
-        if (attrs & FILE_ATTRIBUTE_HIDDEN) {
-            continue;
-        }
-#else
         if (leaf.s[0] == '.') {
             continue;
         }
-#endif
         // own path/name before any further temp allocations
         Str fullPath = str::Dup(de->filePath);
 
@@ -139,14 +119,6 @@ void CollectNavEntriesForDir(Str dir, Vec<NavFileEntry>& out) {
             e.size = GetFileSize(de);
             // FindFirstFile size is sometimes 0 on network/cloud providers even
             // when the file has content; attributes are cached for network paths.
-#if OS_WIN
-            if (e.size == 0) {
-                WIN32_FILE_ATTRIBUTE_DATA fad{};
-                if (path::GetCachedAttributesEx(fullPath, &fad) && !(fad.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
-                    e.size = ((i64)fad.nFileSizeHigh << 32) | (i64)fad.nFileSizeLow;
-                }
-            }
-#endif
         }
         VecAppend(out, e);
     }
@@ -155,9 +127,6 @@ void CollectNavEntriesForDir(Str dir, Vec<NavFileEntry>& out) {
 }
 
 bool NavFiles_UnitTestHidden() {
-#if OS_WIN
-    return true;
-#else
     TempStr root = GetTempFilePathTemp(StrL("nav-hidden-ut"));
     file::Delete(root);
     if (!dir::Create(root)) {
@@ -181,5 +150,4 @@ bool NavFiles_UnitTestHidden() {
     FreeNavEntries(entries);
     ok = dir::RemoveAll(root) && ok;
     return ok;
-#endif
 }

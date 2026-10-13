@@ -14,30 +14,11 @@ using str::FormatTemp;
 // is itself replaced by FormatTemp(). FmtVTemp and the helpers it depends on
 // used to live in Str.cpp; they moved here once fmt() was the only caller.
 
-#ifdef _MSC_VER
-static _locale_t GetUtf8FormatLocale() {
-    static _locale_t loc = _create_locale(LC_ALL, ".UTF-8");
-    return loc;
-}
-#endif
-
 static int VsnprintfUtf8(char* buf, size_t bufCchSize, const char* f, va_list args) {
-#ifdef _MSC_VER
-    _locale_t loc = GetUtf8FormatLocale();
-    if (loc) {
-        return _vsnprintf_l(buf, bufCchSize, f, loc, args);
-    }
-#endif
     return vsnprintf(buf, bufCchSize, f, args);
 }
 
 static int VscprintfUtf8(const char* f, va_list args) {
-#ifdef _MSC_VER
-    _locale_t loc = GetUtf8FormatLocale();
-    if (loc) {
-        return _vscprintf_l(f, loc, args);
-    }
-#endif
     va_list argsCopy;
     va_copy(argsCopy, args);
     int res = vsnprintf(nullptr, 0, f, argsCopy);

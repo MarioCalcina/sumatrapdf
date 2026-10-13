@@ -4,17 +4,10 @@
 void WriteStdout(Str data);
 void WriteStdoutLn(Str data);
 
-#if OS_WIN
-#define kPathSep "\\"
-constexpr char kPathSepChar = '\\';
-constexpr const WCHAR* kPathSepWStr = L"\\";
-constexpr WCHAR kPathSepWChar = L'\\';
-#else
 #define kPathSep "/"
 constexpr char kPathSepChar = '/';
 constexpr const WCHAR* kPathSepWStr = L"/";
 constexpr WCHAR kPathSepWChar = L'/';
-#endif
 
 namespace path {
 
@@ -38,9 +31,6 @@ TempWStr JoinTemp(WStr dir, WStr name, WStr name2 = WStr());
 bool IsDirectory(Str path);
 
 DWORD GetCachedAttributes(Str path);
-#if OS_WIN
-bool GetCachedAttributesEx(Str path, WIN32_FILE_ATTRIBUTE_DATA* out);
-#endif
 
 TempStr NormalizeTemp(Str path);
 TempStr ToOSTemp(Str path);
@@ -77,25 +67,14 @@ Type GetType(Str path);
 
 TempStr GetTempFilePathTemp(Str filePrefix = Str());
 TempStr GetSelfExePathTemp();
-#if OS_WIN
-TempWStr GetSelfExePathW();
-// initialCch is only a starting guess; the buffer grows until the path fits.
-// Tests pass a tiny value to exercise that.
-TempWStr GetModulePathTemp(HMODULE mod, int initialCch);
-#endif
 TempStr GetSelfExeDirTemp();
 TempStr GetPathInExeDirTemp(Str fileName = Str());
 TempStr MakeUniqueFilePathTemp(Str path);
 
 namespace file {
 
-#if OS_WIN
-using FileHandle = HANDLE;
-inline const FileHandle kInvalidFileHandle = INVALID_HANDLE_VALUE;
-#else
 using FileHandle = int;
 constexpr FileHandle kInvalidFileHandle = -1;
-#endif
 
 bool Exists(Str path);
 

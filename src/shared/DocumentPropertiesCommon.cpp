@@ -193,7 +193,7 @@ static Str FileTypeDisplayName(FileType ft) {
 // own, an embedded PDF stream isn't a file, and in plugin mode the "path" is
 // a URL we can't read.
 void AppendFileType(str::Builder& out, Str path) {
-    if (gPluginMode || len(path) == 0) {
+    if (len(path) == 0) {
         return;
     }
     if (path::IsDirectory(path) || !file::Exists(path)) {
@@ -450,11 +450,11 @@ static void AddImageProperties(EngineBase* engine, int pageNo, str::Builder& out
 void GetPropsText(DocController* ctrl, str::Builder& out) {
     ReportIf(!ctrl);
 
-    Str path = gPluginMode ? gPluginURL : Str(ctrl->GetFilePath());
+    Str path = ctrl->GetFilePath();
     AppendProp(out, Tr("File:"), len(path) == 0 ? StrL("(not available)") : path);
 
     DisplayModel* dm = ctrl->AsFixed();
-    i64 fileSize = file::GetSize(path); // can be gPluginURL
+    i64 fileSize = file::GetSize(path);
     if (-1 == fileSize && dm) {
         EngineBase* engine = dm->GetEngine();
         Str d = engine->GetFileData();
@@ -552,89 +552,6 @@ void GetPropsText(DocController* ctrl, str::Builder& out) {
     out.AppendChar('\n');
     AppendPropTranslated(out, DocProp::Files, GetPropValueTemp(props, DocProp::Files));
 }
-
-#if OS_WIN
-
-static TempStr HexBytesTemp(const BYTE* p, int n, bool reverse) {
-    if (!p || n <= 0) {
-        return {};
-    }
-    char* buf = AllocArrayTemp<char>((n * 2) + 1);
-    for (int i = 0; i < n; i++) {
-        BYTE v = reverse ? p[n - 1 - i] : p[i];
-        buf[(size_t)i * 2] = "0123456789ABCDEF"[v >> 4];
-        buf[(i * 2) + 1] = "0123456789ABCDEF"[v & 0xf];
-    }
-    return Str(buf, n * 2);
-}
-
-static TempStr CertNameTemp(PCCERT_CONTEXT cert, DWORD flags) {
-    char buf[512];
-    DWORD n = CertGetNameStringA(cert, CERT_NAME_SIMPLE_DISPLAY_TYPE, flags, nullptr, buf, dimof(buf));
-    if (n <= 1) {
-        return {};
-    }
-    return str::DupTemp(Str(buf));
-}
-
-static void AppendOneCert(str::Builder& out, PdfSigCert* c) {
-    out.Append(c->label);
-    out.AppendChar('\n');
-    if (len(c->der) == 0) {
-        return;
-    }
-    PCCERT_CONTEXT cert = CertCreateCertificateContext(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING, (const BYTE*)c->der.s,
-                                                       (DWORD)len(c->der));
-    if (!cert) {
-        return;
-    }
-    AppendProp(out, Tr("Subject:"), CertNameTemp(cert, 0));
-    AppendProp(out, Tr("Issuer:"), CertNameTemp(cert, CERT_NAME_ISSUER_FLAG));
-    if (cert->pCertInfo) {
-        AppendProp(out, Tr("Serial Number:"),
-                   HexBytesTemp(cert->pCertInfo->SerialNumber.pbData, (int)cert->pCertInfo->SerialNumber.cbData, true));
-        AppendProp(out, Tr("Valid From:"), FileTimeLocalTemp(cert->pCertInfo->NotBefore));
-        AppendProp(out, Tr("Valid To:"), FileTimeLocalTemp(cert->pCertInfo->NotAfter));
-    }
-    BYTE hash[20];
-    DWORD hashLen = sizeof(hash);
-    if (CertGetCertificateContextProperty(cert, CERT_HASH_PROP_ID, hash, &hashLen) && hashLen > 0) {
-        AppendProp(out, Tr("SHA-1:"), HexBytesTemp(hash, (int)hashLen, false));
-    }
-    Str trust = EutlCertIsEuTrusted((const u8*)c->der.s, len(c->der)) ? StrL("European Union Trusted List (EUTL)")
-                                                                      : StrL("Windows Certificate Store");
-    AppendProp(out, Tr("Trust:"), trust);
-    CertFreeCertificateContext(cert);
-}
-
-void AppendCertsText(str::Builder& out, PdfSigCert* certs) {
-    if (!certs) {
-        return;
-    }
-    out.AppendChar('\n');
-    out.Append(Tr("Certificates:"));
-    out.AppendChar('\n');
-    for (PdfSigCert* c = certs; c; c = c->next) {
-        AppendOneCert(out, c);
-        if (c->next) {
-            out.AppendChar('\n');
-        }
-    }
-}
-
-#endif // OS_WIN
-
-#if OS_WIN
-void EutlUpdateThread(EutlUpdateJob* job) {
-    Str err;
-    job->ok = EutlUpdate(&err);
-    TempStr msg = job->ok ? EutlCacheInfoTemp() : (err ? str::DupTemp(err) : StrL("update failed"));
-    job->msg = str::Dup(msg);
-    str::Free(err);
-    auto fn = MkFunc0<EutlUpdateJob>(OnEutlUpdateDone, job);
-    uitask::Post(fn, "EutlUpdateDone");
-}
-#endif
 
 void GetFontsThread(GetFontsData* data) {
     TempStr val = data->engine->GetPropertyTemp(DocProp::FontList);

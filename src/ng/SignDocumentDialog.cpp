@@ -7,8 +7,7 @@
 // file + browse, password, reason, location, where to sign, the appearance
 // check boxes and the optional image), and the same "hide the dialog and let
 // the user click or drag on the page" placement mode.
-// Signing uses wincrypt on Windows; with a certificate file, the Security
-// framework on macOS and OpenSSL on Linux.
+// Signing uses the Security framework.
 
 #include "gui/GpuiBridge.h"
 #include "base/File.h"
@@ -282,9 +281,6 @@ static bool UsingCertFile() {
 static void FillCertificates() {
     gSign.certThumbs.Reset();
     StrVec labels;
-#if OS_WIN
-    ListWindowsSigningCertificates(gSign.certThumbs, labels);
-#endif
     StrVec items;
     for (int i = 0; i < len(labels); i++) {
         items.Append(labels[i]);
@@ -483,12 +479,7 @@ static void DoSign(const PdfSignArgs& args) {
     }
     Str err;
     bool ok = false;
-#if OS_WIN || OS_DARWIN || defined(SUMATRA_HAVE_OPENSSL)
     ok = EngineMupdfSignDocument(engine, args, &err);
-#else
-    (void)args;
-    err = str::Dup(StrL("signing is not available on this platform"));
-#endif
     if (!ok) {
         gSign.placing = false;
         SignDocumentSyncWindow();
@@ -616,28 +607,9 @@ void SignDocumentView::OnToggle(SignDocumentView*, gp::Ctx* cx, const gp::ClickE
     AppShellInvalidate(gSign.win);
 }
 
-// ng: for the platforms whose picker answers later (AppShellPickFileAsync)
-static void OnCertPicked(MainWindow* win, Str path) {
-    if (gSign.win == win && gSign.editCert) {
-        gp::InputSetValue(gSign.editCert, ToGpui(path));
-        AppShellInvalidate(win);
-    }
-}
-
-static void OnSignImagePicked(MainWindow* win, Str path) {
-    if (gSign.win == win && gSign.editImage) {
-        gp::InputSetValue(gSign.editImage, ToGpui(path));
-        AppShellInvalidate(win);
-    }
-}
-
 void SignDocumentView::OnBrowse(SignDocumentView*, gp::Ctx* cx, const gp::ClickEvent*) {
     TempStr filter = fmt("%s\1*.pfx;*.p12\1%s\1*.*\1", Tr("Certificate files"), Tr("All files"));
     TempStr curr = gSign.editCert ? str::DupTemp(FromGpui(gp::InputValue(gSign.editCert))) : TempStr{};
-    if (AppShellPickFileAsync(gSign.win, Tr("Certificate files"), filter, MkFunc1(OnCertPicked, gSign.win))) {
-        gp::Notify(cx);
-        return;
-    }
     TempStr path = AppShellPromptForPathTemp(gSign.win, Tr("Certificate files"), filter, curr);
     if (len(path) > 0 && gSign.editCert) {
         gp::InputSetValue(gSign.editCert, ToGpui(path));
@@ -649,10 +621,6 @@ void SignDocumentView::OnBrowse(SignDocumentView*, gp::Ctx* cx, const gp::ClickE
 void SignDocumentView::OnBrowseImage(SignDocumentView*, gp::Ctx* cx, const gp::ClickEvent*) {
     TempStr filter = fmt("%s\1*.png;*.jpg;*.jpeg\1%s\1*.*\1", Tr("Image files"), Tr("All files"));
     TempStr curr = gSign.editImage ? str::DupTemp(FromGpui(gp::InputValue(gSign.editImage))) : TempStr{};
-    if (AppShellPickFileAsync(gSign.win, Tr("Image files"), filter, MkFunc1(OnSignImagePicked, gSign.win))) {
-        gp::Notify(cx);
-        return;
-    }
     TempStr path = AppShellPromptForPathTemp(gSign.win, Tr("Image files"), filter, curr);
     if (len(path) > 0 && gSign.editImage) {
         gp::InputSetValue(gSign.editImage, ToGpui(path));

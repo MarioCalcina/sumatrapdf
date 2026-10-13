@@ -2,11 +2,8 @@
    License: GPLv3 */
 
 #include "base/Base.h"
-#if defined(SUMATRA_NG)
 #include "VirtKeys.h"
-#endif
 #include "base/Pixmap.h"
-#include "base/WinDynCalls.h"
 #include "base/DirScan.h"
 #include "gui/Dpi.h"
 #include "base/File.h"
@@ -14,7 +11,6 @@
 #include "base/GuessFileType.h"
 #include "base/SquareTreeParser.h"
 #include "base/UITask.h"
-#include "base/Win.h"
 #include "base/Launch.h"
 #include "base/Http.h"
 #include "base/Archive.h"
@@ -93,24 +89,19 @@
 #include "CommandPalette.h"
 #include "SumatraDialogs.h"
 #include "NavFilesInFolder.h"
-#include "Installer.h"
 #include "Theme.h"
 #include "ReadAloud.h"
 #include "ReadingAutoScroll.h"
 #include "ReadingBar.h"
-#include "ExplorerQuickLook.h"
 #include "PagePosition.h"
 #include "Accelerators.h"
 #include "ChmDump.h"
 #include "ExifDump.h"
 #include "HangDetector.h"
-#include "PrintWin11.h"
 #include "SumatraControl.h"
 #include "Version.h"
 #include "SumatraPDF.h"
-#include "PerfLog.h"
 #include "SumatraPDFCommon.h"
-#include "VirtualDesktop.h"
 
 #include "SumatraLog.h"
 
@@ -1656,7 +1647,7 @@ bool AutoReloadFileStillChanging(WindowTab* tab) {
 }
 
 void EnsureNextPrevDirScan(Str filePath) {
-    if (len(filePath) == 0 || !CanAccessDisk() || gPluginMode) {
+    if (len(filePath) == 0 || !CanAccessDisk()) {
         return;
     }
     TempStr dir = path::GetDirTemp(filePath);
@@ -1681,81 +1672,6 @@ StrVec* GetNextPrevFilesReady(Str path) {
     return &gNextPrevDirCache;
 }
 
-#if OS_WIN
-
-// {AA509086-5CA9-4C25-8F95-589D3C07B48A}
-static const GUID kClsidVirtualDesktopManager = {0xAA509086,
-                                                 0x5CA9,
-                                                 0x4C25,
-                                                 {0x8F, 0x95, 0x58, 0x9D, 0x3C, 0x07, 0xB4, 0x8A}};
-
-// {A5CD92FF-29BE-454C-8D04-D82879FB3F1B}
-static const GUID kIidVirtualDesktopManager = {0xA5CD92FF,
-                                               0x29BE,
-                                               0x454C,
-                                               {0x8D, 0x04, 0xD8, 0x28, 0x79, 0xFB, 0x3F, 0x1B}};
-
-// returns nullptr on Windows without virtual desktops (e.g. Win7) or on failure.
-// COM is already initialized (AutoOleUninitialize in WinMain) by the time we call this.
-ISumatraVirtualDesktopManager* CreateVirtualDesktopManager() {
-    ISumatraVirtualDesktopManager* mgr = nullptr;
-    CoCreateInstance(kClsidVirtualDesktopManager, nullptr, CLSCTX_ALL, kIidVirtualDesktopManager, (void**)&mgr);
-    return mgr;
-}
-
-// true if hwnd is on the user's current virtual desktop. Defaults to true when
-// we can't tell (no manager on Win7, or the query fails), preserving the old
-// "reuse the first instance window" behavior.
-bool IsWindowOnCurrentDesktop(ISumatraVirtualDesktopManager* vdm, HWND hwnd) {
-    if (!vdm || !hwnd) {
-        return true;
-    }
-    BOOL onCurrent = FALSE;
-    HRESULT hr = vdm->IsWindowOnCurrentVirtualDesktop(hwnd, &onCurrent);
-    if (FAILED(hr)) {
-        return true;
-    }
-    return onCurrent != FALSE;
-}
-
-// the virtual desktop hwnd is on, as "{GUID}". Empty when the shell can't
-// tell (no manager, hidden window).
-TempStr GetWindowDesktopIdTemp(ISumatraVirtualDesktopManager* vdm, HWND hwnd) {
-    if (!vdm || !hwnd) {
-        return {};
-    }
-    GUID id{};
-    HRESULT hr = vdm->GetWindowDesktopId(hwnd, &id);
-    if (FAILED(hr) || IsEqualGUID(id, GUID{})) {
-        return {};
-    }
-    WCHAR buf[40];
-    if (StringFromGUID2(id, buf, dimofi(buf)) == 0) {
-        return {};
-    }
-    return ToUtf8Temp(WStr(buf));
-}
-
-// puts hwnd on the virtual desktop a session saved it on. False when that
-// desktop is gone or there's no manager: the window stays where it is.
-bool MoveWindowToVirtualDesktop(ISumatraVirtualDesktopManager* vdm, HWND hwnd, Str desktopId) {
-    if (!vdm || !hwnd || len(desktopId) == 0) {
-        return false;
-    }
-    GUID id{};
-    if (FAILED(CLSIDFromString(desktopId, &id))) {
-        logf("MoveWindowToVirtualDesktop: invalid desktop id '%s'\n", desktopId);
-        return false;
-    }
-    HRESULT hr = vdm->MoveWindowToDesktop(hwnd, id);
-    bool ok = SUCCEEDED(hr);
-    logf("MoveWindowToVirtualDesktop: %s, hwnd: 0x%p, desktop: %s, hr: 0x%x\n", ok ? StrL("ok") : StrL("failed"), hwnd,
-         desktopId, (int)hr);
-    return ok;
-}
-
-#endif // OS_WIN
-
 // next openable file after the current tab's path (no wrap), or empty if none.
 // outN/outM are 1-based index of the next file and total count when non-null.
 TempStr PeekNextFileInFolderTemp(MainWindow* win, int* outN, int* outM) {
@@ -1765,7 +1681,7 @@ TempStr PeekNextFileInFolderTemp(MainWindow* win, int* outN, int* outM) {
     if (outM) {
         *outM = 0;
     }
-    if (!win || win->IsCurrentTabAbout() || !CanAccessDisk() || gPluginMode) {
+    if (!win || win->IsCurrentTabAbout() || !CanAccessDisk()) {
         return {};
     }
     WindowTab* tab = win->CurrentTab();
@@ -1870,63 +1786,10 @@ void SwitchToFullScreen(MainWindow* win, bool presentation) {
     EnterFullScreen(win, presentation);
 }
 
-#if OS_WIN
-
-// Send just the path + newWindow flag to an already-running SumatraPDF via
-// WM_COPYDATA. Receiver (OnCopyData) handles it asynchronously so this
-// SendMessageW returns fast. Returns true if the message was handled.
-bool SendOpenFileToExistingInstance(HWND targetHwnd, Str fullPath, u32 newWindow) {
-    size_t pathLen = (size_t)len(fullPath);
-    size_t cbData = sizeof(SumatraOpenCopyData) + pathLen + 1;
-    auto* payload = (SumatraOpenCopyData*)malloc(cbData);
-    if (!payload) {
-        return false;
-    }
-    payload->newWindow = newWindow;
-    memcpy(payload + 1, fullPath.s, pathLen + 1);
-    COPYDATASTRUCT cds = {kCopyDataOpen, (DWORD)cbData, payload};
-    LRESULT res = SendMessageW(targetHwnd, WM_COPYDATA, 0, (LPARAM)&cds);
-    free(payload);
-    return res != 0;
-}
-
-bool SendOpenFilesToExistingInstance(HWND targetHwnd, StrVec& paths, u32 newWindow) {
-    size_t cbData = sizeof(SumatraOpenManyCopyData);
-    for (Str path : paths) {
-        cbData += (size_t)path.len + 1;
-    }
-    if (cbData > MAXDWORD) {
-        return false;
-    }
-
-    u8* payload = (u8*)malloc(cbData);
-    if (!payload) {
-        return false;
-    }
-    auto* data = (SumatraOpenManyCopyData*)payload;
-    data->newWindow = newWindow;
-    data->pathCount = (u32)len(paths);
-    u8* dst = payload + sizeof(*data);
-    for (Str path : paths) {
-        memcpy(dst, path.s, (size_t)path.len);
-        dst += path.len;
-        *dst++ = 0;
-    }
-    COPYDATASTRUCT cds = {kCopyDataOpenMany, (DWORD)cbData, payload};
-    LRESULT res = SendMessageW(targetHwnd, WM_COPYDATA, 0, (LPARAM)&cds);
-    free(payload);
-    return res != 0;
-}
-
-#endif // OS_WIN
-
 // Windows keeps a file type's perceived type in the registry; elsewhere
 // it comes from a short list of extensions
 static TempStr PerceivedTypeTemp(Str path) {
     TempStr ext = path::GetExtTemp(path);
-#if OS_WIN
-    return ReadRegStrTemp(HKEY_CLASSES_ROOT, ext, StrL("PerceivedType"));
-#else
     static SeqStrings audioExts = ".mp3\0.wav\0.ogg\0.oga\0.flac\0.m4a\0.aac\0.opus\0.wma\0.mid\0.midi\0";
     static SeqStrings videoExts = ".mp4\0.m4v\0.mkv\0.webm\0.avi\0.mov\0.mpg\0.mpeg\0.wmv\0.ogv\0";
     TempStr extLower = str::DupTemp(ext);
@@ -1938,13 +1801,12 @@ static TempStr PerceivedTypeTemp(Str path) {
         return str::DupTemp(StrL("video"));
     }
     return {};
-#endif
 }
 
 // lets the shell open a file of any supported perceived type
 // in the default application for opening such files
 bool OpenFileExternally(Str path) {
-    if (!CanAccessDisk() || gPluginMode) {
+    if (!CanAccessDisk()) {
         return false;
     }
 
@@ -2007,7 +1869,7 @@ void CreateThumbnailForFile(MainWindow* win, FileState* ds) {
 }
 
 void DeleteCurrentFileAndOpenNext(MainWindow* win) {
-    if (!CanAccessDisk() || !win->IsDocLoaded() || gPluginMode) {
+    if (!CanAccessDisk() || !win->IsDocLoaded()) {
         return;
     }
     Str path = str::Dup(win->ctrl->GetFilePath());
@@ -2370,174 +2232,6 @@ void ApplyRedactionsInTab(WindowTab* tab) {
 // the values of the Scrollbars setting, in ScrollbarMode order
 SeqStrings gScrollbarModeNames = "windows\0smart\0overlay\0hidden\0";
 
-// in plugin mode, the window's frame isn't drawn and closing and
-// fullscreen are disabled, so that SumatraPDF can be displayed
-// embedded (e.g. in a web browser)
-Str gPluginURL; // owned by Flags in WinMain
-
-#if OS_WIN
-
-void SendMyselfDDE(Str cmdA, HWND targetHwnd) {
-    TempWStr cmd = ToWStrTemp(cmdA);
-    if (targetHwnd) {
-        // try WM_COPYDATA first, as that allows targetting a specific window
-        size_t cbData = (size_t)(len(cmd) + 1) * sizeof(WCHAR);
-        COPYDATASTRUCT cds = {kCopyDataDdeW, (DWORD)cbData, (void*)cmd.s};
-        LRESULT res = SendMessageW(targetHwnd, WM_COPYDATA, 0, (LPARAM)&cds);
-        if (res) {
-            return;
-        }
-        // fall-through to DDEExecute if wasn't handled
-    }
-    DDEExecute(WStr((WCHAR*)kSumatraDdeServer), WStr((WCHAR*)kSumatraDdeTopic), cmd);
-}
-
-// Returns true if the only thing the caller wants is to open a file (no
-// goto-page, no forward search, no view overrides, etc.). In that case we
-// can use the cheaper kCopyDataOpen fast path instead of building a DDE
-// grammar string and blocking the caller in SendMessageW while the
-// receiver loads the document.
-bool IsSimpleOpenCase(const Flags& i, bool isFirstWin) {
-    if (!isFirstWin) {
-        return true; // extras only apply to the first window
-    }
-    if (i.namedDest || i.pageNumber > 0) {
-        return false;
-    }
-    if (i.startView != DisplayMode::Automatic || i.startZoom != kInvalidZoom) {
-        return false;
-    }
-    if (i.startScroll.x != -1 && i.startScroll.y != -1) {
-        return false;
-    }
-    if (i.forwardSearchOrigin && i.forwardSearchLine) {
-        return false;
-    }
-    if (i.search) {
-        return false;
-    }
-    if (i.enterPresentation || i.enterFullScreen) {
-        return false;
-    }
-    return true;
-}
-
-// delegate file opening to a previously running instance by sending a DDE message
-void OpenUsingDDE(HWND targetHwnd, Str path, Flags& i, bool isFirstWin) {
-    TempStr fullPath = path::NormalizeTemp(path);
-
-    u32 newWindow = 0;
-    if (i.inNewWindow) {
-        // 2 forces opening a new window
-        newWindow = 2;
-    }
-
-    // Common case: Explorer double-clicks a file while SumatraPDF is already
-    // running (reuseInstance). Use the simpler kCopyDataOpen format; the
-    // receiver loads async so Explorer's child SumatraPDF process can exit
-    // instantly instead of blocking on the file load.
-    if (targetHwnd && !i.reuseDdeInstance && IsSimpleOpenCase(i, isFirstWin)) {
-        if (SendOpenFileToExistingInstance(targetHwnd, fullPath, newWindow)) {
-            return;
-        }
-        // fall through to the DDE grammar path if WM_COPYDATA wasn't handled
-    }
-
-    str::Builder cmd;
-    cmd.Append(fmt("[Open(\"%s\", %d, 1, 0)]", fullPath, newWindow));
-    if (i.namedDest && isFirstWin) {
-        cmd.Append(fmt("[GotoNamedDest(\"%s\", \"%s\")]", fullPath, i.namedDest));
-    } else if (i.pageNumber > 0 && isFirstWin) {
-        cmd.Append(fmt("[GotoPage(\"%s\", %d)]", fullPath, i.pageNumber));
-    }
-    if ((i.startView != DisplayMode::Automatic || i.startZoom != kInvalidZoom ||
-         i.startScroll.x != -1 && i.startScroll.y != -1) &&
-        isFirstWin) {
-        Str viewModeStr = DisplayModeToString(i.startView);
-        cmd.Append(fmt("[SetView(\"%s\", \"%s\", %.2f, %d, %d)]", fullPath, viewModeStr, i.startZoom, i.startScroll.x,
-                       i.startScroll.y));
-    }
-    if (i.forwardSearchOrigin && i.forwardSearchLine) {
-        TempStr srcPath = path::NormalizeTemp(i.forwardSearchOrigin);
-        cmd.Append(fmt("[ForwardSearch(\"%s\", \"%s\", %d, 0, 0, 1)]", fullPath, srcPath, i.forwardSearchLine));
-    }
-    if (i.search) {
-        // TODO: quote if i.search has '"' in it
-        cmd.Append(fmt("[Search(\"%s\",\"%s\")]", fullPath, i.search));
-    }
-    if ((i.enterPresentation || i.enterFullScreen) && isFirstWin) {
-        Str name = i.enterPresentation ? StrL("Presentation") : StrL("FullScreen");
-        cmd.Append(fmt("[%s(\"%s\")]", name, fullPath));
-    }
-
-    if (i.reuseDdeInstance) {
-        targetHwnd = nullptr; // force DDEExecute
-    }
-    SendMyselfDDE(ToStr(cmd), targetHwnd);
-}
-
-bool SetupPluginMode(Flags& i) {
-    if (!IsWindow(i.hwndPluginParent) || len(i.fileNames) == 0) {
-        return false;
-    }
-
-    gPluginURL = Str(i.pluginURL);
-    if (len(gPluginURL) == 0) {
-        gPluginURL = Str(i.fileNames[0]);
-    }
-
-    // don't save preferences for plugin windows (and don't allow fullscreen mode)
-    // TODO: Perm::DiskAccess is required for saving viewed files and printing and
-    //       Perm::InternetAccess is required for crash reports
-    // (they can still be disabled through sumatrapdfrestrict.ini or -restrict)
-    RestrictPolicies(Perm::SavePreferences | Perm::FullscreenAccess);
-
-    i.reuseDdeInstance = i.exitWhenDone = false;
-    gSettings->reuseInstance = false;
-    // don't allow tabbed navigation
-    gSettings->useTabs = false;
-    // always display the toolbar when embedded (as there's no menubar in that case)
-    gSettings->showToolbar = true;
-    // never allow esc as a shortcut to quit
-    gSettings->escToExit = false;
-    // never show the sidebar by default
-    gSettings->showToc = false;
-    if (DisplayMode::Automatic == gSettings->defaultDisplayModeEnum) {
-        // if the user hasn't changed the default display mode,
-        // display documents as single page/continuous/fit width
-        // (similar to Adobe Reader, Google Chrome and how browsers display HTML)
-        gSettings->defaultDisplayModeEnum = DisplayMode::Continuous;
-        gSettings->defaultZoomFloat = kZoomFitWidth;
-    }
-    // use fixed page UI for all document types (so that the context menu always
-    // contains all plugin specific entries and the main window is never closed)
-    gSettings->chmUI.useFixedPageUI = true;
-
-    // extract some command line arguments from the URL's hash fragment where available
-    // see http://www.adobe.com/devnet/acrobat/pdfs/pdf_open_parameters.pdf#nameddest=G4.1501531
-    int hashIdx = i.pluginURL ? str::IndexOfChar(i.pluginURL, '#') : -1;
-    if (hashIdx >= 0) {
-        TempStr args = str::DupTemp(Str(i.pluginURL.s + hashIdx + 1));
-        str::TransCharsInPlace(args, StrL("#"), StrL("&"));
-        StrVec parts;
-        Split(&parts, args, StrL("&"), true);
-        for (int k = 0; k < len(parts); k++) {
-            Str part = parts[k];
-            Str pageArg = part;
-            int pageNo;
-            if (str::TrimPrefixI(pageArg, StrL("page=")) && !str::IsNull(str::Parse(pageArg, "%d%$", &pageNo))) {
-                i.pageNumber = pageNo;
-            } else if ((str::TrimPrefixI(part, StrL("nameddest=")) || !str::ContainsChar(part, '=')) && part) {
-                // "nameddest=foo" or a bare fragment with no '='
-                i.namedDest = str::Dup(GetPermArena(), part);
-            }
-        }
-    }
-    return true;
-}
-
-#endif // OS_WIN
-
 void OnFrameKeyB(MainWindow* win, bool isShift) {
     auto* ctrl = win->ctrl;
     bool isSinglePage = IsSingle(ctrl->GetDisplayMode());
@@ -2695,7 +2389,7 @@ static void RegenerateThumbnailsThread(RegenerateThumbnailsData* data) {
     DestroyTempArena();
 }
 
-// where the app can't run itself in the background (wasm, a failed launch)
+// where the app can't run itself in the background (a failed launch)
 static void RegenerateThumbnailsAsync() {
     Vec<FileState*> list;
     CollectThumbnailFiles(list);

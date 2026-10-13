@@ -75,8 +75,7 @@ UINT GetACP() {
     return CP_UTF8;
 }
 
-// ng: sysconf instead of GlobalMemoryStatusEx. Emscripten has neither, so
-// there the caller sees "unknown" and assumes no memory pressure.
+// ng: sysconf instead of GlobalMemoryStatusEx
 bool GetPhysMemoryInfo(u64* availPhysOut, int* loadPercentOut, u64* totalPhysOut) {
 #if defined(_SC_PHYS_PAGES) && defined(_SC_AVPHYS_PAGES)
     long pageSize = sysconf(_SC_PAGESIZE);

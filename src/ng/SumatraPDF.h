@@ -8,11 +8,6 @@
 constexpr const char* kWebsiteURL = "https://www.sumatrapdfreader.org/";
 constexpr const char* kContributeTranslationsURL = "https://www.sumatrapdfreader.org/docs/Contribute-translation";
 
-// in plugin mode the "file path" is the URL the document came from. ng: the
-// plugin host is step 17, so this is always empty for now
-extern Str gPluginURL;
-#define gPluginMode (len(gPluginURL) > 0)
-
 #include "Permissions.h"
 
 struct RenderCache;
@@ -132,11 +127,6 @@ void OpenNextPrevFileInFolder(MainWindow* win, bool forward, Str pathToDelete = 
 // the page-info tip (CmdTogglePageInfo): put it up or refresh it when the
 // user asked for it and a document is loaded
 void ShowPageInfoIfWanted(MainWindow* win);
-#if OS_WIN
-void ShowDefaultAppNotification(MainWindow* win, const StrVec& missing);
-// orig's window picker. hwndRestore gets focus back when the picker closes.
-void ShowScreenshotPicker(HWND hwndRestore);
-#endif
 bool DismissNotificationsOnEsc(MainWindow* win);
 // the cursor-position tip (CmdToggleCursorPosition), refreshed on mouse move
 struct NotificationWnd;

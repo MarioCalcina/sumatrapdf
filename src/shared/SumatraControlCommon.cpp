@@ -53,13 +53,10 @@
 #include "ReadingAutoScroll.h"
 #include "ReadingBar.h"
 #include "NavFilesInFolder.h"
-#include "PerfLog.h"
 #include "SumatraControl.h"
 #include "SumatraControlCommon.h"
 
-// Parts of the -dbg-control channel that orig and ng have in common. ng has no
-// listener thread on wasm, so nothing calls them there.
-#if !OS_WASM
+// Parts of the -dbg-control channel that orig and ng have in common.
 
 // Boxes the current page actually declares (issue #814). Optional int arg is pageNo.
 TempStr PageBoxesResultTemp(int pageNo, int* exitCodeOut) {
@@ -398,72 +395,6 @@ void RunWaitSessionRestored(ControlRequest* req) {
     }
 }
 
-#if OS_WIN
-
-bool ReadExact(HANDLE h, void* data, DWORD n) {
-    u8* d = (u8*)data;
-    DWORD total = 0;
-    while (total < n) {
-        DWORD nRead = 0;
-        if (!ReadFile(h, d + total, n - total, &nRead, nullptr) || nRead == 0) {
-            return false;
-        }
-        total += nRead;
-    }
-    return true;
-}
-
-bool WriteExact(HANDLE h, Str data) {
-    const u8* d = (const u8*)data.s;
-    int total = 0;
-    while (total < data.len) {
-        DWORD nWritten = 0;
-        if (!WriteFile(h, d + total, (DWORD)(data.len - total), &nWritten, nullptr) || nWritten == 0) {
-            return false;
-        }
-        total += (int)nWritten;
-    }
-    return true;
-}
-
-static WStr FullPipeNameOwned(Str pipeName) {
-    if (str::StartsWith(pipeName, StrL(R"(\\.\pipe\)"))) {
-        return ToWStr(pipeName);
-    }
-    TempStr fullName = str::JoinTemp(StrL(R"(\\.\pipe\)"), pipeName);
-    return ToWStr(fullName);
-}
-
-void SumatraControlThread(ControlThreadArg* arg) {
-    WStr pipeNameW = FullPipeNameOwned(arg->pipeName);
-    str::FreePtr(&arg->pipeName);
-    delete arg;
-
-    for (;;) {
-        HANDLE pipe = CreateNamedPipeW(pipeNameW.s, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
-                                       1, 64 * 1024, 64 * 1024, 0, nullptr);
-        if (pipe == INVALID_HANDLE_VALUE) {
-            logf("CreateNamedPipeW failed for control pipe, err=%u\n", (unsigned)GetLastError());
-            return;
-        }
-        BOOL connected = ConnectNamedPipe(pipe, nullptr) ? TRUE : (GetLastError() == ERROR_PIPE_CONNECTED);
-        bool stop = false;
-        if (connected) {
-            stop = ProcessControlConnection(pipe);
-        }
-        // DisconnectNamedPipe discards data the client hasn't read yet; wait
-        // until it has, or the Quit reply is lost and the client sees EPIPE
-        FlushFileBuffers(pipe);
-        DisconnectNamedPipe(pipe);
-        CloseHandle(pipe);
-        if (stop) {
-            return;
-        }
-    }
-}
-
-#endif // OS_WIN
-
 ControlRequest* ReadControlRequest(ControlConn h) {
     u32 size = 0;
     if (!ReadExact(h, &size, sizeof(size))) {
@@ -626,5 +557,3 @@ TempStr DisplayModeResultTemp(Str action, int* exitCodeOut) {
     str::Free(zoomLabel);
     return finish(res, 0);
 }
-
-#endif // !OS_WASM

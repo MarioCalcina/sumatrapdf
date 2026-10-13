@@ -18,7 +18,7 @@ saves and restores settings. Pass `-- -for-testing` for a throwaway run.
 
 `src/shared/Accelerators.cpp` holds the Windows defaults and a per-platform
 layer over them. Shortcut strings in the settings take `Cmd` (also `Command`,
-`Super`, `Meta`) off Windows: Command on macOS, Super on Linux.
+`Super`, `Meta`) for the Command key.
 
 macOS: `Ctrl` in a default becomes `Cmd`, except for switching tabs
 (`Ctrl + Tab`, `Ctrl + Page Up / Down`). `Alt + Left / Right`, `Ctrl + F4` and
@@ -103,9 +103,30 @@ AppKit code lives in `*_mac.mm` files, mostly `gui/NativeWindow_mac.mm`:
   rendered one for a selection, a rotation or unsaved annotations
 - Save As (and every other save) is the macOS save panel; a `-dbg-control`
   script gets the port's dialog, which it can drive
+- File > Open is the macOS open panel (`gui/FilePanels_mac.mm`): several files
+  at once and orig's file-type filters in a popup; the other open prompts
+  (images, certificates, attachments, Merge PDF) get their filters too. A
+  `-dbg-control` script gets gpui's one-file prompt
+- copied images (screenshots, Copy Selection as image, the image editor) go on
+  the pasteboard as PNG and TIFF (`gui/MacServices_mac.mm`); gpui writes text
+  only
+- Fullscreen.PreventSleep holds an IOKit assertion against display sleep
+- the window opens where it was closed, on the display it was on
+  (`AppShellKeepOnScreen`)
+- a tab dragged out of its strip and dropped on another window joins that
+  window; the window server says which one is under the pointer
+- the Home page lists recent files with Finder's icon for their type
 - File > Open Recent and Show in Finder; About, Settings and Quit only in the
   app menu
 - tabs sit in the title bar beside the traffic lights
+- one universal app for Apple Silicon and Intel, macOS 11 or later
 
-gpui gap: a text field's context menu (Cut, Copy, Paste, Select All) is
-gpui's and stays English.
+gpui gaps, not fixable from this repo (the framework is vendored from
+gpui-kit-cpp):
+
+- a text field's context menu (Cut, Copy, Paste, Select All) is gpui's and
+  stays English
+- the note and ink annotation tools show the cross cursor, not orig's icon
+  cursors: gpui sets the cursor itself on every mouse move
+- a text selection can't be dragged out of the window: gpui has no drag
+  source

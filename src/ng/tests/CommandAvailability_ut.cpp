@@ -111,9 +111,6 @@ void CommandAvailability_UnitTests() {
     utassert(PaletteVis(snippet->id, doc) == CommandVisibility::Hide);
     doc.supportsAnnots = true;
     utassert(MenuVis(CmdCreateAnnotImageFromClipboard, doc) == CommandVisibility::Disable);
-    doc.clipboardReadAsync = true;
-    utassert(MenuVis(CmdCreateAnnotImageFromClipboard, doc) == CommandVisibility::Show);
-    doc.clipboardReadAsync = false;
     doc.clipboardHasImage = true;
     utassert(MenuVis(CmdCreateAnnotImageFromClipboard, doc) == CommandVisibility::Show);
     utassert(PaletteVis(CmdSignWithImage, doc) == CommandVisibility::Show);

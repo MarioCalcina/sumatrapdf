@@ -10,9 +10,6 @@ License: GPLv3 */
 #include "Commands.h"
 #include "Translations.h"
 #include "PdfDarkMode.h"
-#if OS_WIN
-#include "base/Win.h"
-#endif
 
 #include "Theme.h"
 
@@ -516,18 +513,8 @@ static bool gIsHighContrast = false;
 static bool gUseHighContrast = false;
 
 static void DetectHighContrastMode() {
-#if OS_WIN
-    HIGHCONTRASTW hc{};
-    hc.cbSize = sizeof(hc);
-    if (!SystemParametersInfoW(SPI_GETHIGHCONTRAST, sizeof(hc), &hc, 0)) {
-        gIsHighContrast = false;
-        return;
-    }
-    gIsHighContrast = (hc.dwFlags & HCF_HIGHCONTRASTON) != 0;
-#else
     // ng: no system-wide high contrast palette off Windows
     gIsHighContrast = false;
-#endif
 }
 
 // call whenever the OS high contrast setting or the current theme changes
@@ -713,24 +700,11 @@ static bool IsDefaultMainWinColor(ParsedColor* col) {
     return col->parsedOk && col->col == kMainWinBgColDefault;
 }
 
-#if OS_DARWIN
 bool AppShellSystemIsDark(); // ng's gui/NativeWindow_mac.mm
-#endif
 
 // true if Windows "choose your default app mode" is set to dark
 static bool OsAppsUseDarkMode() {
-#if OS_WIN
-    DWORD val = 1; // AppsUseLightTheme defaults to 1 (light)
-    DWORD cb = sizeof(val);
-    RegGetValueW(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
-                 L"AppsUseLightTheme", RRF_RT_REG_DWORD, nullptr, &val, &cb);
-    return val == 0;
-#elif OS_DARWIN
     return AppShellSystemIsDark();
-#else
-    // ng: gpui reports the system appearance; step 12 asks it here
-    return false;
-#endif
 }
 
 static int GetPreferredLightThemeIndex() {
@@ -1129,43 +1103,6 @@ bool ThemeColorizeControls() {
     return !IsMenuFontSizeDefault();
 }
 
-#if OS_WIN
-
-// The colors Windows draws its own UI in. The default theme defers to them so
-// the app follows the system appearance, and every theme defers to them in high
-// contrast mode, where the user's palette is the whole point. The rest of the
-// file asks for them by name so it doesn't have to know the OS palette itself.
-
-Color SysWindowBgColor() {
-    return GetSysColor(COLOR_WINDOW);
-}
-
-Color SysWindowTextColor() {
-    return GetSysColor(COLOR_WINDOWTEXT);
-}
-
-Color SysControlTextColor() {
-    return GetSysColor(COLOR_BTNTEXT);
-}
-
-Color SysDisabledTextColor() {
-    return GetSysColor(COLOR_GRAYTEXT);
-}
-
-Color SysLinkColor() {
-    return GetSysColor(COLOR_HOTLIGHT);
-}
-
-Color SysHighlightBgColor() {
-    return GetSysColor(COLOR_HIGHLIGHT);
-}
-
-Color SysHighlightTextColor() {
-    return GetSysColor(COLOR_HIGHLIGHTTEXT);
-}
-
-#else
-
 // ng: no system palette off Windows. These are the Windows light-mode defaults;
 // step 12 takes them from gpui's theme tokens.
 Color SysWindowBgColor() {
@@ -1195,5 +1132,3 @@ Color SysHighlightBgColor() {
 Color SysHighlightTextColor() {
     return kColWhite;
 }
-
-#endif

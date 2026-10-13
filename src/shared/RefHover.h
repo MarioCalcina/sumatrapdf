@@ -7,12 +7,10 @@
 
 //--- public API
 
-#if defined(SUMATRA_NG)
 namespace gpui {
 struct Ctx;
 struct El;
 } // namespace gpui
-#endif
 
 class EngineBase;
 struct DocController;
@@ -26,7 +24,6 @@ struct Pixmap;
 struct RefLookupCache;
 
 struct RefHoverState {
-#if defined(SUMATRA_NG)
     // ng: orig's popup is a WS_POPUP tool window over the canvas HWND. gpui has
     // no child windows, so the popup is an element drawn over the canvas and
     // its geometry is canvas-relative: `visible` + `popupRc` replace the HWND,
@@ -45,10 +42,6 @@ struct RefHoverState {
     int hideLeftMs = -1;
     // `bmp` as something gpui can draw, made on first paint, dropped with it
     void* renderImage = nullptr;
-#else
-    HWND hwndPopup = nullptr;
-    HWND hwndCanvas = nullptr;
-#endif
     // kept current by Canvas on mouse-move so popup clicks can open links
     DocController* ctrl = nullptr;
     ILinkHandler* linkHandler = nullptr;
@@ -159,7 +152,6 @@ struct RefHoverState {
 void RefHoverDestroy(RefHoverState* s);
 bool RefHoverIsInternalLink(IPageElement* el, DisplayModel* dm);
 
-#if defined(SUMATRA_NG)
 RefHoverState* RefHoverCreate(MainWindow* win);
 void RefHoverOnCanvasMouseMove(RefHoverState*& s, MainWindow* win, DocController* ctrl, ILinkHandler* linkHandler,
                                DisplayModel* dm, int x, int y, IPageElement* el, int srcPageNo, int hoverDelayMs);
@@ -176,25 +168,6 @@ gpui::El* RefHoverBuild(MainWindow* win, gpui::Ctx* cx);
 bool RefHoverTakePostedWheel(MainWindow* win, bool horizontal, int delta, bool isCtrl, bool isShift, int clientX,
                              int clientY);
 int RefHoverPopupHwndInt(RefHoverState* s);
-#else
-constexpr UINT_PTR kRefHoverTimerID = 9;
-constexpr UINT_PTR kRefHoverHideTimerID = 10;
-
-RefHoverState* RefHoverCreate(HWND hwndCanvas);
-bool RefHoverScheduleLink(RefHoverState* s, HWND hwndCanvas, DisplayModel* dm, int x, int y, IPageElement* el,
-                          int delayMs);
-void RefHoverOnCanvasMouseMove(RefHoverState*& s, HWND hwndCanvas, DocController* ctrl, ILinkHandler* linkHandler,
-                               DisplayModel* dm, int x, int y, IPageElement* el, int srcPageNo, int hoverDelayMs);
-void RefHoverOnCanvasMouseLeave(RefHoverState* s, HWND hwndCanvas, int hoverDelayMs);
-void RefHoverOnCanvasLeftButtonDown(RefHoverState* s, HWND hwndCanvas);
-bool RefHoverOnCanvasTimer(RefHoverState* s, HWND hwndCanvas, DisplayModel* dm, UINT_PTR timerId);
-void RefHoverSchedule(RefHoverState* s, HWND hwndCanvas, int delayMs, Point screenPt, int destPage, float destX,
-                      float destY, float destZoom, int srcPage, RectF srcRect, Rect pageScreenRect);
-void RefHoverHide(RefHoverState* s, HWND hwndCanvas);
-void RefHoverScheduleHide(RefHoverState* s, HWND hwndCanvas, int delayMs);
-void RefHoverOnHideTimer(RefHoverState* s, HWND hwndCanvas);
-void RefHoverOnWheel(RefHoverState* s, EngineBase* engine, UINT msg, WPARAM wp);
-#endif
 
 void RefHoverHandlePopupClick(RefHoverState* s, IPageDestination* dest);
 void RefHoverOnTimer(RefHoverState* s, EngineBase* engine, float pageZoom);
@@ -280,13 +253,8 @@ void RefHoverUnregisterLiveState(RefHoverState* s);
 void RefHoverDropQueuedRender(RefHoverState* s);
 TempWStr RefHoverPageTextToWStrTemp(Str text);
 
-#if defined(SUMATRA_NG)
 // drops the gpui image made from `bmp` (the popup's bitmap changed or went)
 void RefHoverFreeRenderImage(RefHoverState* s);
-#else
-constexpr const WCHAR* kRefHoverClass = L"SumatraPDFRefHover";
-bool RefHoverPopupCreate(RefHoverState* s, HWND hwndCanvas);
-#endif
 
 void RefHoverShowPopup(RefHoverState* s, Point screenPt);
 void RefHoverRequestRender(RefHoverState* s, EngineBase* engine, RefHoverState::RenderRequest req);

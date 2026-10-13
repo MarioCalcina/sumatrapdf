@@ -9,10 +9,6 @@
 // must be last due to assert() over-write
 #include "base/tests/UtAssert.h"
 
-#if OS_WASM
-void FileWatcherCheckNowForTests();
-#endif
-
 static void NoteFileWatcherChange(AtomicInt* count) {
     AtomicIntInc(count);
 }
@@ -24,13 +20,9 @@ void FileWatcher_UnitTests() {
     WatchedFile* watched = FileWatcherSubscribe(tempPath, MkFunc0(NoteFileWatcherChange, &changeCount));
     utassert(watched != nullptr);
     utassert(file::WriteFile(tempPath, StrL("changed")));
-#if OS_WASM
-    FileWatcherCheckNowForTests();
-#else
     for (int i = 0; i < 300 && AtomicIntGet(&changeCount) == 0; i++) {
         SleepInMs(10);
     }
-#endif
     utassert(AtomicIntGet(&changeCount) > 0);
     FileWatcherUnsubscribe(watched);
     FileWatcherWaitForShutdown();

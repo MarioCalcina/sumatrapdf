@@ -54,8 +54,4 @@ constexpr const char* kSettingsDocsUrl = "https://www.sumatrapdfreader.org/setti
 constexpr int kAdvSettingsMinClientDx = 480;
 
 // the key that restores a setting's default, for the help line
-#if OS_DARWIN
 #define kRestoreDefaultKeyName "\u2318\u232b"
-#else
-#define kRestoreDefaultKeyName "Del"
-#endif

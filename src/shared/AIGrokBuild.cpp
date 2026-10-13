@@ -8,9 +8,6 @@
 #include "base/CmdLineArgs.h"
 #include "base/DirScan.h"
 #include "base/File.h"
-#if OS_WIN
-#include "base/Win.h"
-#endif
 
 #include "gui/UIModels.h"
 
@@ -35,13 +32,8 @@ static TempStr FindGrokExecutableTemp() {
     StrVec candidates;
     TempStr userProfile = AIChatHomeDirTemp();
     if (len(userProfile) > 0) {
-#if OS_WIN
-        candidates.Append(fmt("%s\\.grok\\bin\\grok.exe", userProfile));
-        candidates.Append(fmt("%s\\.local\\bin\\grok.exe", userProfile));
-#else
         candidates.Append(path::JoinTemp(userProfile, StrL(".grok/bin/grok")));
         candidates.Append(path::JoinTemp(userProfile, StrL(".local/bin/grok")));
-#endif
     }
     gGrokExecutablePath = str::Dup(AIChatFindExecutableTemp(candidates, StrL("grok.exe"), StrL("grok")));
     return gGrokExecutablePath;

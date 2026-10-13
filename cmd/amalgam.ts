@@ -1,10 +1,12 @@
 // Amalgamates a vendored third-party library into a single .c/.cpp plus its
 // public headers under ext/a-<lib>/. One library per run, selected by a -<lib>
 // flag. Everything except the per-library recipe (source list, include rules,
-// cl.exe flags) is shared.
+// the build target that compiles it) is shared.
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
-import { basename, dirname, join, normalize, relative } from "node:path";
-import { detectVisualStudio2026, runLogged } from "./util";
+import { basename, dirname, join, normalize, relative, resolve as resolvePath } from "node:path";
+import { runLogged } from "./util";
+import { checkCompile } from "./helper/ng-compile";
+import { findToolchain, macArchs } from "./helper/ng-toolchain";
 
 // ---------------------------------------------------------------------------
 // generic text / file helpers
@@ -328,11 +330,10 @@ type Lib = {
   copies?: string[];
   // wipe outDir before writing (libs whose header set can shrink upstream)
   wipeOutDir?: boolean;
-  // the amalgamated file to compile, plus its extra cl.exe flags
-  compile: { file: string; args: string[] };
+  // the amalgamated file to compile, with the flags of the build target that
+  // compiles it
+  compile: { file: string; target: string };
 };
-
-const clCommonArgs = ["/nologo", "/c", "/W4", "/WX", "/O2", "/MT"];
 
 // --- unrar -----------------------------------------------------------------
 
@@ -1207,9 +1208,9 @@ const libarchiveSeals: Record<string, string[]> = {
 function genLibarchive(ctx: Ctx): void {
   const srcDir = findSrcDir(ctx.checkoutDir, ["libarchive", ""], ["archive.h", "archive_entry.h"]);
 
-  // config_windows.h is hand-written (not upstream) and lives in the output dir
-  // already; archive_platform.h reaches it through `#include PLATFORM_CONFIG_H`,
-  // a macro the inliner leaves alone.
+  // The config is config_posix.h, which the build writes (libarchivePosixConfig
+  // in cmd/helper/ng-targets.ts); archive_platform.h reaches it through
+  // `#include PLATFORM_CONFIG_H`, a macro the inliner leaves alone.
   // Under libarchive/ because mupdf and src/base/Archive.cpp include
   // "libarchive/archive.h"; both ext/a-libarchive and ext/a-libarchive/libarchive
   // are on the include path, as the vendored tree's two dirs were.
@@ -1524,15 +1525,7 @@ const libs: Lib[] = [
     copies: ["LICENSE"],
     compile: {
       file: "brotli.c",
-      args: [
-        ...defines("WIN32", "_WIN32", "NDEBUG", "_CRT_SECURE_NO_WARNINGS", "_HAS_ITERATOR_DEBUGGING=0"),
-        "/I",
-        ".",
-        "/wd4100",
-        "/wd4127",
-        "/wd4189",
-        "/wd4201",
-      ],
+      target: "a-brotli",
     },
   },
   {
@@ -1545,16 +1538,7 @@ const libs: Lib[] = [
     copies: ["LICENSE"],
     compile: {
       file: "bzip2.c",
-      args: [
-        ...defines("WIN32", "_WIN32", "NDEBUG", "BZ_NO_STDIO", "_CRT_SECURE_NO_WARNINGS", "_HAS_ITERATOR_DEBUGGING=0"),
-        "/wd4018",
-        "/wd4100",
-        "/wd4127",
-        "/wd4244",
-        "/wd4267",
-        "/wd4701",
-        "/wd4706",
-      ],
+      target: "a-libarchive",
     },
   },
   {
@@ -1566,25 +1550,7 @@ const libs: Lib[] = [
     generate: genExtract,
     compile: {
       file: "extract.c",
-      args: [
-        ...defines("WIN32", "_WIN32", "NDEBUG", "_CRT_SECURE_NO_WARNINGS", "_HAS_ITERATOR_DEBUGGING=0"),
-        "/I",
-        ".",
-        "/I",
-        "..\\..\\..\\ext\\a-zlib",
-        "/wd4005",
-        "/wd4100",
-        "/wd4127",
-        "/wd4130",
-        "/wd4201",
-        "/wd4245",
-        "/wd4310",
-        "/wd4389",
-        "/wd4456",
-        "/wd4457",
-        "/wd4701",
-        "/wd4996",
-      ],
+      target: "a-extract",
     },
   },
   {
@@ -1600,27 +1566,7 @@ const libs: Lib[] = [
     wipeOutDir: true,
     compile: {
       file: "freetype.c",
-      args: [
-        ...defines("WIN32", "_WIN32", "NDEBUG", "_CRT_SECURE_NO_WARNINGS", "FT2_BUILD_LIBRARY"),
-        // mupdf's trimmed module/option set, same as the build defines
-        '/DFT_CONFIG_MODULES_H="slimftmodules.h"',
-        '/DFT_CONFIG_OPTIONS_H="slimftoptions.h"',
-        "/I",
-        "include",
-        "/I",
-        "..\\..\\..\\ext\\mupdf\\scripts\\freetype",
-        "/I",
-        "..\\..\\..\\ext\\a-brotli",
-        "/wd4018",
-        "/wd4100",
-        "/wd4101",
-        "/wd4244",
-        "/wd4267",
-        "/wd4312",
-        "/wd4701",
-        "/wd4706",
-        "/wd4996",
-      ],
+      target: "a-freetype",
     },
   },
   {
@@ -1632,23 +1578,7 @@ const libs: Lib[] = [
     generate: genGumbo,
     compile: {
       file: "gumbo.c",
-      args: [
-        ...defines("WIN32", "_WIN32", "NDEBUG", "_HAS_ITERATOR_DEBUGGING=0"),
-        "/wd4018",
-        "/wd4100",
-        "/wd4132",
-        "/wd4189",
-        "/wd4204",
-        "/wd4244",
-        "/wd4245",
-        "/wd4267",
-        "/wd4305",
-        "/wd4306",
-        "/wd4389",
-        "/wd4456",
-        "/wd4701",
-        "/wd4702",
-      ],
+      target: "a-gumbo",
     },
   },
   {
@@ -1663,37 +1593,7 @@ const libs: Lib[] = [
     wipeOutDir: true,
     compile: {
       file: "harfbuzz.cc",
-      args: [
-        "/TP",
-        "/EHsc",
-        "/std:c++latest",
-        // one TU of templated OpenType tables blows past the 64k section limit
-        "/bigobj",
-        ...defines("_CRT_SECURE_NO_WARNINGS", "HAVE_FALLBACK=1", "HAVE_OT", "HAVE_FREETYPE"),
-        "/I",
-        ".",
-        "/I",
-        "..\\..\\..\\ext\\mupdf\\scripts\\freetype",
-        "/I",
-        "..\\..\\..\\ext\\a-freetype\\include",
-        "/wd4100",
-        "/wd4127",
-        "/wd4146",
-        "/wd4244",
-        "/wd4245",
-        "/wd4267",
-        "/wd4310",
-        "/wd4456",
-        "/wd4457",
-        "/wd4458",
-        "/wd4459",
-        "/wd4505",
-        "/wd4701",
-        "/wd4702",
-        "/wd4706",
-        "/wd4805",
-        "/wd4996",
-      ],
+      target: "a-harfbuzz",
     },
   },
   {
@@ -1709,24 +1609,7 @@ const libs: Lib[] = [
     copies: ["COPYING", "LICENSE"],
     compile: {
       file: "jbig2dec.c",
-      args: [
-        ...defines(
-          "WIN32",
-          "_WIN32",
-          "NDEBUG",
-          "_CRT_SECURE_NO_WARNINGS",
-          "HAVE_STRING_H=1",
-          "JBIG_NO_MEMENTO",
-          "_HAS_ITERATOR_DEBUGGING=0",
-        ),
-        "/wd4018",
-        "/wd4100",
-        "/wd4146",
-        "/wd4244",
-        "/wd4267",
-        "/wd4456",
-        "/wd4701",
-      ],
+      target: "a-jbig2dec",
     },
   },
   {
@@ -1739,13 +1622,7 @@ const libs: Lib[] = [
     copies: ["LICENSE", "AUTHORS"],
     compile: {
       file: "lcms2.c",
-      args: [
-        ...defines("WIN32", "_WIN32", "NDEBUG", "_CRT_SECURE_NO_WARNINGS", "_HAS_ITERATOR_DEBUGGING=0"),
-        "/I",
-        ".",
-        "/wd4100",
-        "/wd4244",
-      ],
+      target: "a-lcms2",
     },
   },
   {
@@ -1758,54 +1635,7 @@ const libs: Lib[] = [
     copies: ["COPYING"],
     compile: {
       file: "libarchive.c",
-      args: [
-        ...defines(
-          "WIN32",
-          "_WIN32",
-          "NDEBUG",
-          "_CRT_SECURE_NO_WARNINGS",
-          "LIBARCHIVE_STATIC",
-          'PLATFORM_CONFIG_H="config_windows.h"',
-          "BZ_NO_STDIO",
-          "LZMA_API_STATIC",
-        ),
-        "/I",
-        ".",
-        "/I",
-        "libarchive",
-        // config_windows.h is hand-maintained there, not generated
-        "/I",
-        "..\\..\\..\\ext\\a-libarchive",
-        "/I",
-        "..\\..\\..\\ext\\a-zlib",
-        "/I",
-        "..\\..\\..\\ext\\a-bzip2",
-        "/I",
-        "..\\..\\..\\ext\\liblzma\\api",
-        "/wd4018",
-        "/wd4054",
-        "/wd4055",
-        "/wd4090",
-        "/wd4098",
-        "/wd4100",
-        "/wd4127",
-        "/wd4130",
-        "/wd4146",
-        "/wd4152",
-        "/wd4200",
-        "/wd4201",
-        "/wd4244",
-        "/wd4245",
-        "/wd4267",
-        "/wd4305",
-        "/wd4389",
-        "/wd4456",
-        "/wd4457",
-        "/wd4701",
-        "/wd4703",
-        "/wd4706",
-        "/wd4996",
-      ],
+      target: "a-libarchive",
     },
   },
   {
@@ -1818,18 +1648,7 @@ const libs: Lib[] = [
     copies: ["COPYING", "PATENTS", "AUTHORS"],
     compile: {
       file: "libwebp.c",
-      args: [
-        ...defines("WIN32", "_WIN32", "NDEBUG", "_CRT_SECURE_NO_WARNINGS", "_HAS_ITERATOR_DEBUGGING=0"),
-        "/I",
-        ".",
-        "/wd4057",
-        "/wd4127",
-        "/wd4204",
-        "/wd4244",
-        "/wd4245",
-        "/wd4310",
-        "/wd4701",
-      ],
+      target: "a-libwebp",
     },
   },
   {
@@ -1842,17 +1661,7 @@ const libs: Lib[] = [
     copies: ["COPYING"],
     compile: {
       file: "mujs.c",
-      args: [
-        ...defines("WIN32", "_WIN32", "NDEBUG", "_HAS_ITERATOR_DEBUGGING=0"),
-        "/wd4090",
-        "/wd4100",
-        "/wd4127",
-        "/wd4146",
-        "/wd4310",
-        "/wd4324",
-        "/wd4702",
-        "/wd4706",
-      ],
+      target: "a-mujs",
     },
   },
   {
@@ -1867,19 +1676,7 @@ const libs: Lib[] = [
     wipeOutDir: true,
     compile: {
       file: "openjpeg.c",
-      args: [
-        ...defines("_CRT_SECURE_NO_WARNINGS", "USE_JPIP", "OPJ_STATIC", "OPJ_EXPORTS"),
-        "/I",
-        ".",
-        "/wd4005",
-        "/wd4100",
-        "/wd4127",
-        "/wd4244",
-        "/wd4310",
-        "/wd4389",
-        "/wd4456",
-        "/wd4702",
-      ],
+      target: "a-openjpeg",
     },
   },
   {
@@ -1893,33 +1690,7 @@ const libs: Lib[] = [
     copies: ["license.txt", "acknow.txt"],
     compile: {
       file: "unrar.cpp",
-      args: [
-        "/TP",
-        "/EHsc",
-        ...defines("WIN32", "_WIN32", "NDEBUG", "UNRAR", "RARDLL", "SILENT"),
-        "/I",
-        ".",
-        "/wd4005",
-        "/wd4100",
-        "/wd4127",
-        "/wd4189",
-        "/wd4201",
-        "/wd4211",
-        "/wd4244",
-        "/wd4310",
-        "/wd4389",
-        "/wd4456",
-        "/wd4458",
-        "/wd4459",
-        "/wd4505",
-        "/wd4701",
-        "/wd4702",
-        "/wd4706",
-        "/wd4709",
-        "/wd4731",
-        "/wd4828",
-        "/wd4996",
-      ],
+      target: "a-unrar",
     },
   },
   {
@@ -1932,15 +1703,7 @@ const libs: Lib[] = [
     copies: ["LICENSE"],
     compile: {
       file: "zlib.c",
-      args: [
-        ...defines("WIN32", "_WIN32", "NDEBUG", "_CRT_SECURE_NO_WARNINGS", "_HAS_ITERATOR_DEBUGGING=0"),
-        "/wd4131",
-        "/wd4005",
-        "/wd4244",
-        "/wd4245",
-        "/wd4267",
-        "/wd4996",
-      ],
+      target: "a-zlib",
     },
   },
   {
@@ -1953,33 +1716,11 @@ const libs: Lib[] = [
     copies: ["COPYING"],
     compile: {
       file: "zopfli.cpp",
-      args: [
-        "/TP",
-        "/EHsc",
-        ...defines("WIN32", "_WIN32", "NDEBUG", "_CRT_SECURE_NO_WARNINGS", "_HAS_ITERATOR_DEBUGGING=0"),
-        "/I",
-        ".",
-        "/wd4018",
-        "/wd4100",
-        "/wd4127",
-        "/wd4244",
-        "/wd4267",
-        "/wd4334",
-        "/wd4305",
-        "/wd4457",
-        "/wd4459",
-        "/wd4477",
-        "/wd4530",
-        "/wd4702",
-        "/wd4996",
-      ],
+      target: "a-zopfli",
     },
   },
 ];
 
-function defines(...names: string[]): string[] {
-  return names.flatMap((name) => ["/D", name]);
-}
 
 // ---------------------------------------------------------------------------
 // driver
@@ -2002,7 +1743,8 @@ function usage(err?: string): never {
   console.error(`Usage: bun cmd/amalgam.ts -<library> [repo-url] [git-tag-or-checkin] [-keep]
 
 Clones the library under .work/deps/<library>, amalgamates it into ext/a-<library>/,
-validates the result with cl.exe, and writes version.txt next to it.
+compiles the result for arm64 and x86_64 with the flags of its build target,
+and writes version.txt next to it.
 
 Libraries (and what each writes into ext/a-<library>/):
 ${list}
@@ -2106,39 +1848,23 @@ function writeFiles(dir: string, files: Map<string, string>): string[] {
   return written;
 }
 
-// The ARM64 cross compiler next to the x64 cl.exe on PATH. Same toolset
-// version, so the INCLUDE set by the developer prompt still applies (we only
-// compile, never link, so LIB doesn't matter).
-function findArm64Cl(): string {
-  const found = whichExe("cl.exe");
-  if (!found) {
-    throw new Error("cl.exe not in PATH, run from a Visual Studio developer prompt");
-  }
-  const arm64 = found.replace(/\\x64\\cl\.exe$/i, "\\arm64\\cl.exe");
-  if (arm64 === found || !existsSync(arm64)) {
-    throw new Error(`no ARM64 cl.exe next to ${found}, install the VS ARM64 build tools`);
-  }
-  return arm64;
-}
-
-function whichExe(exe: string): string {
-  const proc = Bun.spawnSync(["where", exe], { stdout: "pipe", stderr: "pipe" });
-  return proc.exitCode === 0 ? proc.stdout.toString().split("\n")[0]!.trim() : "";
-}
-
-// Compiles for x64 and ARM64: each arch takes different #ifdef branches (SSE
-// vs NEON), so only building both catches a chunk that breaks the other one.
+// Compiles for arm64 and x86_64: each arch takes different #ifdef branches
+// (SSE vs NEON), so only building both catches a chunk that breaks the other.
 async function validateCompile(lib: Lib, tmpDir: string, files: Map<string, string>): Promise<void> {
   rmSync(tmpDir, { recursive: true, force: true });
   mkdirSync(tmpDir, { recursive: true });
   writeFiles(tmpDir, files);
 
-  detectVisualStudio2026();
-  const args = [...clCommonArgs, ...lib.compile.args, lib.compile.file];
-  console.log("compiling for x64");
-  await runLogged("cl.exe", args, tmpDir);
-  console.log("compiling for arm64");
-  await runLogged(findArm64Cl(), args, tmpDir);
+  const fail = (msg: string): never => {
+    throw new Error(msg);
+  };
+  const tc = findToolchain(fail);
+  const file = join(tmpDir, lib.compile.file);
+  const asSource = join("ext", `a-${lib.name}`, lib.compile.file);
+  for (const arch of macArchs) {
+    console.log(`compiling for ${arch}`);
+    await checkCompile(tc, lib.compile.target, file, asSource, [resolvePath(tmpDir)], arch, fail);
+  }
 }
 
 // Licenses and hand-picked headers copied straight from upstream. Several are

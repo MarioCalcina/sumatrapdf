@@ -47,7 +47,6 @@
 #include "base/GuessFileType.h"
 #include "base/Timer.h"
 #include "base/UITask.h"
-#include "base/Win.h"
 #include "gui/Dpi.h"
 
 #include "gui/UIModels.h"
@@ -1700,8 +1699,8 @@ void DisplayModel::CalcZoomReal(float newZoomVirtual) {
 
 // A viewport narrower than the window margins (squeezed or DPI-changed window)
 // has no fit zoom; keep the zoom the pages were last laid out with.
-// Tile bitmaps on a scaled framebuffer (macOS backing scale, wasm device
-// pixel ratio). Layout, hit testing and the zoom label stay on GetZoomReal.
+// Tile bitmaps on a scaled framebuffer (the display's backing scale).
+// Layout, hit testing and the zoom label stay on GetZoomReal.
 float DisplayModel::GetRenderZoom(int pageNo) const {
     float zoom = GetZoomReal(pageNo);
     float scale = renderScale;

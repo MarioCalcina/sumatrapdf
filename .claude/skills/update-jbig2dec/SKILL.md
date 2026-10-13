@@ -6,7 +6,7 @@ description: Regenerate the amalgamated jbig2dec copy in ext/a-jbig2dec from ups
 # Update amalgamated jbig2dec
 
 `ext/a-jbig2dec/` is generated — never hand-edit it. `bun cmd/amalgam.ts -jbig2dec` clones upstream into
-`.work/deps/jbig2dec`, amalgamates it, and validates the result by compiling it with `cl.exe`.
+`.work/deps/jbig2dec`, amalgamates it, and validates the result by compiling it for arm64 and x86_64 with its build target's flags.
 
 ## Steps
 
@@ -29,7 +29,7 @@ description: Regenerate the amalgamated jbig2dec copy in ext/a-jbig2dec from ups
 2. Check `ext/a-jbig2dec/version.txt` — it records the project homepage, source repo URL, requested
    revision, resolved commit SHA-1 and GitHub commit URL. Confirm it is the revision you meant.
 
-3. Build on a Mac (or push and run the `mac-app` workflow):
+3. Build on a Mac (or push and run the `mac-daily` workflow):
 
    ```sh
    bun cmd/ng-build.ts -dbg -all

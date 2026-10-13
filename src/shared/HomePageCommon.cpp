@@ -46,12 +46,10 @@ void CollectTipsFromString(Str src, StrVec* out) {
         if (str::IsEmptyOrWhiteSpace(line)) {
             continue;
         }
-#if OS_DARWIN
         // the macOS menu bar is the system's: it can't be toggled
         if (str::Contains(line, StrL("(CmdToggleMenuBar)"))) {
             continue;
         }
-#endif
         out->Append(line);
     }
 }

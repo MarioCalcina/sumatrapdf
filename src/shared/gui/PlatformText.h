@@ -43,16 +43,8 @@ struct PlatformTextRender {
 // is nothing to initialize first
 PlatformTextRender* CreatePlatformTextRender();
 
-#if OS_WIN
-// draws into a Graphics owned by the caller
-PlatformTextRender* CreateGdiplusTextRender(Gdiplus::Graphics* gfx);
-#elif OS_LINUX
-struct _cairo;
-PlatformTextRender* CreateCairoTextRender(struct _cairo* cairo);
-#elif OS_DARWIN
 struct CGContext;
 PlatformTextRender* CreateCoreTextRender(struct CGContext* context);
-#endif
 
 // frees what measuring text allocated along the way. Only worth calling at
 // shutdown; measuring after it just allocates again

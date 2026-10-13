@@ -15,9 +15,6 @@
 #include "base/File.h"
 #include "base/Pixmap.h"
 #include "base/UITask.h"
-#if OS_WIN
-#include "base/Win.h"
-#endif
 
 #include "gui/UIModels.h"
 #include "VirtKeys.h"
@@ -50,7 +47,6 @@
 #include "gui/PlatformFont.h"
 #include "gui/ToolWindow.h"
 #include "gui/DocCanvas.h"
-#include "gui/WasmBridge.h"
 #include "ImageSaveCropResize.h"
 #include "SumatraDialogs.h"
 #include "PdfTools.h"
@@ -98,9 +94,6 @@ bool SavePixmapAsImageFile(Pixmap* px, Str path) {
     Pixmap* converted = nullptr;
     Pixmap* use = px;
     if (px->format == PixmapFormat::Native) {
-#if OS_WIN
-        converted = PixmapCopyAs32bppDIB(px);
-#endif
         if (!converted) {
             return false;
         }
@@ -1695,23 +1688,10 @@ static void OnMergeSaveAsPicked(SavePathArgs* args) {
 // items like "0,2", n: in front of that item), "remove" / "restore" (arg: items), "select"
 // (ng: arg: items), "save" / "saveas" (arg: the path), "close" or "" (report
 // only). Reports the items as src:page (r: removed, s: selected).
-// ng: for the platforms whose picker answers later (AppShellPickFileAsync)
-static void OnMergePicked(MainWindow* win, Str path) {
-    if (!gTool.visible || gTool.win != win || !IsMainWindowValidAndNotClosing(win)) {
-        return;
-    }
-    StrVec paths;
-    paths.Append(path);
-    MergeAskInsertPosition(paths);
-}
-
 // orig's MergePdfWnd::OnAdd. ng: the prompt runs a message loop, so it is
 // shown from the ui task queue, after gpui has unwound from the click
 static void MergeAddPromptNow(MainWindow* win) {
     if (!gTool.visible || gTool.win != win || !IsMainWindowValidAndNotClosing(win)) {
-        return;
-    }
-    if (AppShellPickFileAsync(win, Tr("Open"), StrL("PDF documents\1*.pdf\1"), MkFunc1(OnMergePicked, win))) {
         return;
     }
     StrVec paths;
@@ -1805,14 +1785,7 @@ TempStr MergePdfResultTemp(Str action, Str arg, int n, int* exitCodeOut) {
     AppShellInvalidate(gTool.win);
     int hwnd = 0;
     int focused = 0;
-#if OS_WIN
-    HWND native = ToolWindowHwnd(gTool.tw);
-    hwnd = (int)(intptr_t)native;
-    int dpi = native ? (int)GetDpiForWindow(native) : 96;
-    focused = (native && GetFocus() == native) ? 1 : 0;
-#else
     int dpi = AppShellWindowDpi(gTool.win);
-#endif
     if (dpi < 96) {
         dpi = 96;
     }

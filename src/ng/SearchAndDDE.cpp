@@ -12,10 +12,6 @@
 #include "base/UITask.h"
 #include "base/Timer.h"
 #include "base/File.h"
-#if OS_WIN
-#include "base/Win.h"
-#include "base/ScopedWin.h"
-#endif
 
 #include "gui/UIModels.h"
 
@@ -37,7 +33,6 @@
 #include "Commands.h"
 #include "Version.h"
 #include "SumatraConfig.h"
-#include "ExplorerQuickLook.h"
 #include "Tabs.h"
 #include "Selection.h"
 #include "PdfSync.h"
@@ -431,26 +426,14 @@ TempStr FindStateResultTemp(MainWindow* win) {
 // ─── DDE command grammar (orig's). Window messages stay Windows-only. ───
 
 MainWindow* WindowFromHwnd(HWND hwnd) {
-#if OS_WIN
-    return AppShellWindowFromHwnd(hwnd);
-#else
     (void)hwnd;
     return len(gWindows) > 0 ? gWindows[0] : nullptr;
-#endif
 }
 
 // ng: orig tracks the window the user last worked in with gLastActiveFrameHwnd;
 // here the foreground window answers the same question
 MainWindow* LastActiveWindow() {
-#if OS_WIN
-    MainWindow* win = AppShellWindowFromHwnd(GetForegroundWindow());
-    if (!win && len(gWindows) > 0) {
-        win = gWindows[0];
-    }
-    return win;
-#else
     return len(gWindows) > 0 ? gWindows[0] : nullptr;
-#endif
 }
 
 // the window an Open with newWindow set should land in: an existing empty one,
@@ -647,176 +630,6 @@ void DdeExecuteBegin() {}
 bool ExecuteDdeCmds(Str cmd) {
     MainWindow* win = len(gWindows) > 0 ? gWindows[0] : nullptr;
     HWND hwnd = nullptr;
-#if OS_WIN
-    hwnd = win ? AppShellNativeHwnd(win) : nullptr;
-#else
     (void)win;
-#endif
     return HandleExecuteCmds(hwnd, cmd);
 }
-
-#if OS_WIN
-
-// ng answers no requests of its own
-Str HandleAppRequestCmd(Str, bool*, str::Builder&) {
-    return {};
-}
-
-static void OpenManyCopyDataAsyncRun(OpenManyCopyDataAsync* d) {
-    MainWindow* win = d->newWindow ? WindowForNewWindowOpen() : AppShellWindowFromHwnd(d->hwnd);
-    if (!win) {
-        win = LastActiveWindow();
-    }
-    if (win) {
-        win->Focus();
-        for (Str path : d->paths) {
-            LoadDocument(win, path);
-        }
-    }
-    delete d;
-}
-
-static void OpenCopyDataAsyncRun(OpenCopyDataAsync* d) {
-    // Pick a target window the same way HandleOpenCmd would, then load. We are
-    // off the sender's clock: it already returned from SendMessageW.
-    MainWindow* win = nullptr;
-    if (d->newWindow) {
-        win = WindowForNewWindowOpen();
-    } else {
-        win = FindMainWindowByFile(d->path, true);
-        if (win) {
-            // Already open: just focus (matches activateExisting).
-            win->Focus();
-            str::Free(d->path);
-            delete d;
-            return;
-        }
-        win = LastActiveWindow();
-    }
-    // Match the legacy DDE Open(..., setFocus=1) behavior used by
-    // shell/reuseInstance launches: opening into an existing instance should
-    // bring that window to the foreground.
-    if (win) {
-        win->Focus();
-        LoadDocument(win, d->path);
-    }
-
-    str::Free(d->path);
-    delete d;
-}
-
-LRESULT OnCopyData(HWND hwnd, WPARAM wp, LPARAM lp) {
-    COPYDATASTRUCT* cds = (COPYDATASTRUCT*)lp;
-    if (!cds || wp) {
-        return FALSE;
-    }
-
-    if (HandleExplorerQuickLookCopyData(cds)) {
-        return TRUE;
-    }
-
-    if (cds->dwData == kCopyDataOpen) {
-        // Simple-open fast path used by the reuseInstance handshake: the
-        // sibling SumatraPDF that Explorer just spawned is blocked in
-        // SendMessageW. Copy the path out, post an async task, return
-        // immediately so the sender unblocks and exits.
-        if (cds->cbData < sizeof(SumatraOpenCopyData) + 1) {
-            return FALSE;
-        }
-        const auto* data = (const SumatraOpenCopyData*)cds->lpData;
-        size_t pathMax = cds->cbData - sizeof(SumatraOpenCopyData);
-        // cbData includes the trailing NUL. Counting it makes the path miss
-        // the tab that is already open (issue #4576).
-        const char* pathS = (const char*)(const u8*)(data + 1);
-        size_t pathLen = strnlen_s(pathS, pathMax);
-        if (pathLen >= pathMax) {
-            return FALSE;
-        }
-        Str pathZ((char*)pathS, (int)pathLen);
-        // during startup the message pump can deliver COPYDATA opens; match
-        // HandleOpenCmd and queue them instead of racing the command line
-        if (gIsStartup) {
-            TempStr path = path::NormalizeTemp(pathZ);
-            if (!FindTabByFilePath(path)) {
-                AppendIfNotExists(&gDdeOpenOnStartup, path);
-            }
-            return TRUE;
-        }
-        auto* d = new OpenCopyDataAsync;
-        d->path = str::Dup(pathZ);
-        d->newWindow = data->newWindow;
-        auto fn = MkFunc0<OpenCopyDataAsync>(OpenCopyDataAsyncRun, d);
-        uitask::Post(fn, "OnCopyData/Open");
-        return TRUE;
-    }
-
-    if (cds->dwData == kCopyDataOpenMany) {
-        if (cds->cbData < sizeof(SumatraOpenManyCopyData) + 1) {
-            return FALSE;
-        }
-        const auto* data = (const SumatraOpenManyCopyData*)cds->lpData;
-        if (data->pathCount == 0) {
-            return FALSE;
-        }
-        const char* s = (const char*)(data + 1);
-        size_t bytesLeft = cds->cbData - sizeof(*data);
-        StrVec paths;
-        for (u32 i = 0; i < data->pathCount; i++) {
-            size_t pathLen = strnlen_s(s, bytesLeft);
-            if (pathLen >= bytesLeft) {
-                return FALSE;
-            }
-            paths.Append(Str(s, (int)pathLen));
-            s += pathLen + 1;
-            bytesLeft -= pathLen + 1;
-        }
-        if (gIsStartup) {
-            for (Str path : paths) {
-                TempStr normalized = path::NormalizeTemp(path);
-                if (!FindTabByFilePath(normalized)) {
-                    AppendIfNotExists(&gDdeOpenOnStartup, normalized);
-                }
-            }
-            return TRUE;
-        }
-        auto* d = new OpenManyCopyDataAsync;
-        d->paths = paths;
-        d->hwnd = hwnd;
-        d->newWindow = data->newWindow;
-        auto fn = MkFunc0<OpenManyCopyDataAsync>(OpenManyCopyDataAsyncRun, d);
-        uitask::Post(fn, "OnCopyData/OpenMany");
-        return TRUE;
-    }
-
-    if (cds->dwData == kCopyDataDdeW) {
-        int cmdCch = (int)(cds->cbData / sizeof(WCHAR));
-        if (cmdCch == 0 || ((WCHAR*)cds->lpData)[cmdCch - 1] != 0) {
-            return FALSE;
-        }
-        WStr cmdW((WCHAR*)cds->lpData, cmdCch - 1);
-        // legacy DDE grammar: callers expect synchronous handling
-        TempStr cmd = ToUtf8Temp(cmdW);
-        bool didHandle = HandleExecuteCmds(hwnd, cmd);
-        return didHandle ? TRUE : FALSE;
-    }
-
-    return FALSE;
-}
-
-void LoadDdeOpenOnStartup(MainWindow* win) {
-    int n = len(gDdeOpenOnStartup);
-    if (n == 0) {
-        return;
-    }
-    logf("Loading %d documents queued by dde open\n", n);
-    SortNatural(&gDdeOpenOnStartup);
-    for (Str path : gDdeOpenOnStartup) {
-        if (FindTabByFilePath(path)) {
-            continue;
-        }
-        LoadDocument(win, path);
-    }
-    gDdeOpenOnStartup.Reset();
-}
-
-#endif // OS_WIN

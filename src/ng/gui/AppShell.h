@@ -60,15 +60,8 @@ void AppShellReapClosedWindows();
 // the open-file dialog; empty when cancelled
 TempStr AppShellPromptForFileTemp(MainWindow* win);
 // the same prompt with a title of its own (certificate, image, ...); filter is
-// orig's lpstrFilter with \1 for \0, which only Windows' dialog can apply
+// orig's lpstrFilter with \1 for \0 ("PDF documents\1*.pdf\1")
 TempStr AppShellPromptForPathTemp(MainWindow* win, Str title, Str filter, Str initialPath = {});
-// false on a Linux without zenity / kdialog, which gpui's prompt runs
-bool AppShellHasOsFilePicker();
-// ng: where the platform's open prompt cannot answer at once (the browser's
-// file input) or does not exist (see above), the pick comes back in onPicked
-// later and this returns true; otherwise false, and the caller prompts.
-// filter as AppShellPromptForPathTemp's
-bool AppShellPickFileAsync(MainWindow* win, Str title, Str filter, const Func1<Str>& onPicked);
 // File / Open style prompt taking several files where the platform can
 bool AppShellPromptForFiles(MainWindow* win, Str filter, StrVec* pathsOut);
 void AppShellSetTitle(MainWindow* win, Str title);
@@ -115,13 +108,12 @@ void AppShellForgetNativeHwnd(MainWindow* win);
 // `restoreMaximized` re-maximizes on the way out (orig: the window was
 // maximized before presentation mode).
 void AppShellSetFullScreen(MainWindow* win, bool fullScreen, bool restoreMaximized);
-// screen rect of the window, for the -dbg-control layout snapshot. On wasm,
-// the frame size at 0,0.
+// screen rect of the window, for the -dbg-control layout snapshot
 Rect AppShellWindowScreenRect(MainWindow* win);
-// the canvas (MainWindow::canvasRc) in screen pixels; empty on wasm
+// the canvas (MainWindow::canvasRc) in screen points
 Rect AppShellCanvasScreenRect(MainWindow* win);
-// moves / sizes the frame to `r` (outer rectangle, screen pixels; empty: leave
-// it) and maximizes it. False on wasm.
+// moves / sizes the frame to `r` (outer rectangle, screen points; empty: leave
+// it) and maximizes it
 bool AppShellPlaceWindow(MainWindow* win, Rect r, bool maximize);
 // Current: the canvas as the frame is now. DocumentTab: a document tab is
 // about to exist, so a UseTabs strip counts before the tab does.
@@ -135,23 +127,18 @@ void AppShellSyncCanvasSize(MainWindow* win);
 Rect AppShellWorkArea(MainWindow* win);
 // full bounds of that monitor, including the dock or taskbar
 Rect AppShellMonitorRect(MainWindow* win);
+// a remembered frame kept on the display it overlaps most
+Rect AppShellKeepOnScreen(Rect rect);
 // shift rect into the work area. fully: the whole rect must be inside
 Rect AppShellShiftToWorkArea(Rect rect, MainWindow* win, bool fully);
 // the frame's rectangle while it is not maximized. False when it is not known
-// (minimized, fullscreen, no native handle, or not Windows)
 bool AppShellNormalWindowRect(MainWindow* win, Rect* out);
 // dpi of the monitor the frame is on; 96 where it is not known
 int AppShellWindowDpi(MainWindow* win);
 int AppShellFrameDpi(MainWindow* win);
 int AppShellDpiPx(MainWindow* win, int px);
 void AppShellOnDpiChanged(MainWindow* win, int dpi);
-#if OS_WIN
-void AppShellToggleDpiOverride();
-#endif
-#if OS_DARWIN || OS_WASM
 float AppShellRenderScale(gpui::Window* win);
-#endif
-#if OS_DARWIN
 void AppShellDisableAutoTermination();
 void AppShellHandleOpenDocs();
 void AppShellOpenDocsReady();
@@ -167,17 +154,7 @@ enum class PrintedPdf {
     Keep
 };
 bool AppShellPrintPdf(MainWindow* win, Str path, Str jobTitle, PrintedPdf after);
-#endif
 // presentation mode's auto-hidden cursor (orig hides it with SetCursor(null))
 void AppShellShowCursor(MainWindow* win, bool show);
-// Fullscreen.PreventSleep: keep the display awake (Windows only for now)
+// Fullscreen.PreventSleep: keep the display awake
 void AppShellPreventSleep(bool on);
-#if OS_WIN
-// the native handle of a window, or null; orig's MainWindow::hwndFrame
-HWND AppShellNativeHwnd(MainWindow* win);
-HWND TestingCanvasHwnd(HWND frame);
-MainWindow* AppShellWindowFromHwnd(HWND hwnd);
-// the top-level windows of another SumatraPDF process: `procId`, or with 0 any
-// process running this exe (orig: FindWindowW(kFrameClassName))
-void AppShellFindOtherInstanceWindows(DWORD procId, Vec<HWND>& out);
-#endif

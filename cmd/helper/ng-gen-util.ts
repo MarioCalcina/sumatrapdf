@@ -6,7 +6,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 export async function runLogged(cmd: string, args: string[], cwd?: string): Promise<void> {
-  const short = [cmd.split("\\").pop(), ...args].join(" ");
+  const short = [cmd.split("/").pop(), ...args].join(" ");
   console.log(`> ${short}`);
   const proc = Bun.spawn([cmd, ...args], { cwd, stdout: "inherit", stderr: "inherit", stdin: "inherit" });
   const exitCode = await proc.exited;
@@ -18,14 +18,9 @@ export async function runLogged(cmd: string, args: string[], cwd?: string): Prom
 export function findClangFormat(): string | null {
   const onPath = Bun.which("clang-format");
   if (onPath) return onPath;
-  const pf = process.env["ProgramFiles"] ?? "C:\\Program Files";
-  for (const v of ["18", "2026", "17", "2022"]) {
-    for (const ed of ["Community", "Professional", "Enterprise", "BuildTools", "Preview"]) {
-      const p = join(pf, "Microsoft Visual Studio", v, ed, "VC", "Tools", "Llvm", "x64", "bin", "clang-format.exe");
-      if (Bun.file(p).size > 0) return p;
-    }
-  }
-  return null;
+  const r = Bun.spawnSync(["xcrun", "--find", "clang-format"], { stdout: "pipe", stderr: "ignore" });
+  const path = r.stdout.toString().trim();
+  return r.exitCode === 0 && path ? path : null;
 }
 
 // clang-format every generated C++ file so the output matches cmd/format.ts
@@ -37,10 +32,6 @@ export async function clangFormatFiles(rootDir: string, relativePaths: string[])
   for (const rel of [...new Set(relativePaths)]) {
     const path = join(rootDir, rel);
     await runLogged(exe, ["-i", "-style=file", path]);
-    // the repo uses LF; clang-format on Windows may leave CRLF behind
-    const text = await Bun.file(path).text();
-    const lf = text.replace(/\r\n/g, "\n");
-    if (lf !== text) await Bun.write(path, lf);
   }
 }
 

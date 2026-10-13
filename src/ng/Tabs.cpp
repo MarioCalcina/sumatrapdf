@@ -9,7 +9,6 @@
 
 #include "base/Base.h"
 #include "base/File.h"
-#include "base/Win.h"
 
 #include "gui/UIModels.h"
 
@@ -72,9 +71,6 @@ bool TabIsDirty(WindowTab* tab) {
 // Hide a lone Home tab. Favorites is a closable tab, so it must remain visible
 // even when it is the only tab left.
 bool TabsAreVisible(MainWindow* win) {
-    if (win->isQuickLook) {
-        return false;
-    }
     // orig's showTabsBar: fullscreen and presentation hide the strip
     if (win->isFullScreen || win->InPresentation()) {
         return false;
@@ -293,9 +289,9 @@ void RemoveTab(WindowTab* tab) {
 
 // orig's MaybeMigrateTab: a tab dropped outside its strip moves to `newWin`,
 // or to a window of its own when there is none.
-// ng: gpui captures the mouse for the window the drag started in, so a drop on
-// another window's strip never arrives; `newWin` is always null here (see
-// "gpui gaps"). Everything else is orig's.
+// ng: gpui captures the mouse for the window the drag started in, so the
+// window under the pointer comes from the window server (TabsUI.cpp).
+// Everything else is orig's.
 void MaybeMigrateTab(WindowTab* tab, MainWindow* newWin) {
     MainWindow* oldWin = tab->win;
     if (tab->IsNonDocumentTab()) {
@@ -321,32 +317,7 @@ void MaybeMigrateTab(WindowTab* tab, MainWindow* newWin) {
     delete tab;
 
     if (!newWin) {
-#if OS_WIN
-        // dragging a tab out of a maximized window: like Chrome, create a
-        // normal (non-maximized) window with the size the source window
-        // would have when restored, positioned at the cursor so it lands
-        // on the new window's tab strip
-        HWND oldHwnd = AppShellNativeHwnd(oldWin);
-        Rect normal;
-        bool wasZoomed = oldHwnd && IsZoomed(oldHwnd) && AppShellNormalWindowRect(oldWin, &normal);
-        Rect rect;
-        if (wasZoomed) {
-            int dpi = AppShellWindowDpi(oldWin);
-            POINT releasePt{};
-            GetCursorPos(&releasePt);
-            int x = releasePt.x - MulDiv(100, dpi, 96);
-            int y = releasePt.y - (MulDiv(kTabBarDy, dpi, 96) / 2);
-            rect = ShiftRectToWorkArea(Rect(x, y, normal.dx, normal.dy), oldHwnd, true);
-        }
-#endif
         newWin = CreateAndShowMainWindow(nullptr);
-#if OS_WIN
-        if (newWin && wasZoomed) {
-            // after the placement CreateAndShowMainWindow posted, which may
-            // maximize it (the remembered state is the old window's)
-            PlaceMainWindowLater(newWin, rect, false);
-        }
-#endif
     }
     if (!newWin) {
         DeleteTabState(state);

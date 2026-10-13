@@ -11,9 +11,6 @@
 #include "gui/GpuiBridge.h"
 #include "base/File.h"
 #include "base/Pixmap.h"
-#if OS_WIN
-#include "base/GdiPlusUtil.h"
-#endif
 
 #include "gui/UIModels.h"
 
@@ -31,6 +28,7 @@
 #include "Theme.h"
 #include "Translations.h"
 #include "ImageSaveCropResize.h"
+#include "gui/MacServices.h"
 #include "AppHelpersCommon.h"
 
 extern "C" {
@@ -56,20 +54,12 @@ static Pixmap* LoadImageFile(Str path) {
 static TempStr FormatPdfDateTemp() {
     i64 t = time(nullptr);
     struct tm lt{};
-#if OS_WIN
-    localtime_s(&lt, (const time_t*)&t);
-#else
     time_t tt = (time_t)t;
     localtime_r(&tt, &lt);
-#endif
     // ng: orig reads the bias out of TIME_ZONE_INFORMATION; mktime of the
     // broken-down local time against timegm-style arithmetic is portable
     struct tm gt{};
-#if OS_WIN
-    gmtime_s(&gt, (const time_t*)&t);
-#else
     gmtime_r(&tt, &gt);
-#endif
     int off = (lt.tm_hour - gt.tm_hour) * 60 + (lt.tm_min - gt.tm_min);
     int dayDiff = lt.tm_yday - gt.tm_yday;
     if (dayDiff == 1 || dayDiff < -1) {
@@ -156,36 +146,6 @@ static bool SavePixmapAsJpeg(Pixmap* px, Str destPath) {
     return ok;
 }
 
-#if OS_WIN
-// WebP has no portable encoder here; Windows 10+ adds one, which is what orig
-// probes WIC for.
-static WStr GdiPlusMimeForExt(Str ext) {
-    if (str::EqI(ext, StrL(".webp"))) {
-        return WStrL(L"image/webp");
-    }
-    return {};
-}
-
-static bool SavePixmapWithGdiPlus(Pixmap* px, Str destPath, Str ext) {
-    WStr mime = GdiPlusMimeForExt(ext);
-    if (len(mime) == 0) {
-        return false;
-    }
-    CLSID clsid = GetGdiPlusEncoderClsid(mime);
-    static const CLSID kNoEncoder{};
-    if (memcmp(&clsid, &kNoEncoder, sizeof(CLSID)) == 0) {
-        return false;
-    }
-    Gdiplus::Bitmap* bmp = NewGdiplusBitmapFromPixmap(px);
-    if (!bmp) {
-        return false;
-    }
-    Gdiplus::Status st = bmp->Save(CWStrTemp(destPath), &clsid, nullptr);
-    delete bmp;
-    return st == Gdiplus::Ok;
-}
-#endif
-
 static bool SavePixmapAsImage(Pixmap* px, Str destPath, Str ext) {
     if (!px || len(destPath) == 0) {
         return false;
@@ -229,11 +189,7 @@ static bool SavePixmapAsImage(Pixmap* px, Str destPath, Str ext) {
         str::Free(gif);
         return ok;
     }
-#if OS_WIN
-    return SavePixmapWithGdiPlus(px, destPath, ext);
-#else
     return false;
-#endif
 }
 
 static bool ImageFormatAvailable(Str ext) {
@@ -242,33 +198,21 @@ static bool ImageFormatAvailable(Str ext) {
         str::EqI(ext, StrL(".pdf"))) {
         return true;
     }
-#if OS_WIN
-    WStr mime = GdiPlusMimeForExt(ext);
-    if (len(mime) == 0) {
-        return false;
-    }
-    CLSID clsid = GetGdiPlusEncoderClsid(mime);
-    static const CLSID kNoEncoder{};
-    return memcmp(&clsid, &kNoEncoder, sizeof(CLSID)) != 0;
-#else
     return false;
-#endif
 }
 
-// ng: gpui cannot write images; Windows keeps orig's PNG + CF_DIBV5 pair.
+// ng: gpui's clipboard writes text only, so the PNG goes on AppKit's pasteboard
 bool ImageEditCopyToClipboard(Pixmap* px) {
     if (!px) {
         return false;
     }
-#if OS_WIN
-    return CopyPixmapToClipboard(px, false);
-#else
-    return false;
-#endif
+    Str png = EncodePngFromPixmap(px);
+    bool ok = MacPasteboardSetPng(png);
+    str::Free(png);
+    return ok;
 }
 
 Pixmap* ImageEditGetClipboard(MainWindow* win) {
-#if !OS_WIN
     if (!win || !win->gpuiWin) {
         return nullptr;
     }
@@ -277,22 +221,13 @@ Pixmap* ImageEditGetClipboard(MainWindow* win) {
         return nullptr;
     }
     return PixmapFromData(Str((char*)item.imageBytes, item.imageBytesLen));
-#else
-    (void)win;
-    return GetClipboardImageAsPixmap();
-#endif
 }
 
 bool ImageEditHasClipboard(MainWindow* win) {
-#if OS_WIN
-    (void)win;
-    return IsClipboardFormatAvailable(CF_BITMAP) != 0;
-#else
     if (!win || !win->gpuiWin) {
         return false;
     }
     return gp::ClipboardGetItem(gp::GetTempArena(), win->gpuiWin).HasImage();
-#endif
 }
 
 static void OpenSavedFile(MainWindow* parent, Str path) {

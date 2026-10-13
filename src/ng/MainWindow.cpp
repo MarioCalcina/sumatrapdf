@@ -9,7 +9,6 @@
 #include "gui/GpuiBridge.h"
 #include "base/File.h"
 #include "base/Launch.h"
-#include "base/Win.h"
 
 #include "gui/UIModels.h"
 
@@ -241,25 +240,12 @@ void LinkHandler::LaunchFile(Str pathOrig, IPageDestination* remoteLink) {
         return;
     }
 
-#if OS_WIN
-    TempStr path = str::ReplaceTemp(pathOrig, StrL("/"), StrL("\\"));
-    str::TrimPrefix(path, StrL(".\\"));
-#else
     // A native absolute path. Rewriting '/' to '\\' makes it miss the file.
     TempStr path = str::DupTemp(pathOrig);
     str::TrimPrefix(path, StrL("./"));
-#endif
 
     TempStr fullPath = path;
-#if OS_WIN
-    bool isAbsPath = str::StartsWith(path, StrL("\\"));
-    if (len(path) >= 2 && path.s[1] == ':') {
-        /* technically c: is not abs, only c:\\ */
-        isAbsPath = true;
-    }
-#else
     bool isAbsPath = path::IsAbsolute(path);
-#endif
     if (!isAbsPath) {
         auto dir = path::GetDirTemp(win->ctrl->GetFilePath());
         fullPath = path::JoinTemp(dir, path);
@@ -520,7 +506,6 @@ AppCommandCtx NewAppCommandCtx(MainWindow* win, Point cursorPos) {
     ctx.ttsAvailable = TtsIsAvailable();
     ctx.isSpeaking = TtsIsSpeaking();
     ctx.clipboardHasImage = ImageEditHasClipboard(win);
-    ctx.clipboardReadAsync = OS_WASM;
 
     ctx.aiChatAvailable = IsAIChatAvailable();
     ctx.aiChatSupported = IsAIChatSupportedForTab(ctx.tab);
@@ -579,16 +564,6 @@ AppCommandCtx NewAppCommandCtx(MainWindow* win, Point cursorPos) {
     PopulateTabCloseFlags(ctx);
     return ctx;
 }
-
-#if OS_WIN
-HWND MainWindowHwnd(MainWindow* win) {
-    return AppShellNativeHwnd(win);
-}
-
-MainWindow* FindMainWindowByHwnd(HWND hwnd) {
-    return AppShellWindowFromHwnd(hwnd);
-}
-#endif
 
 // ng: orig's FindMainWindowByHwnd; the gpui window is what identifies a window
 MainWindow* FindMainWindowByGpuiWindow(gpui::Window* gw) {

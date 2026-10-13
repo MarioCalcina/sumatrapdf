@@ -1,11 +1,7 @@
 /* Copyright 2022 the SumatraPDF project authors (see AUTHORS file).
    License: GPLv3 */
 
-#if defined(SUMATRA_NG)
 #include "gui/GpuiBridge.h"
-#else
-#include "base/Base.h"
-#endif
 #include "gui/Dpi.h"
 #include "Theme.h"
 #include "OverlayScrollbar.h"

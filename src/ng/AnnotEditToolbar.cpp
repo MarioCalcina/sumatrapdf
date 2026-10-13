@@ -42,7 +42,6 @@
 #include "gui/AppShell.h"
 #include "gui/DocCanvas.h"
 #include "gui/ToolWindowPlat.h"
-#include "gui/WasmBridge.h"
 #include "AnnotFilterToolbar.h"
 #include "AnnotTextPopup.h"
 #include "AnnotPlacement.h"
@@ -308,18 +307,6 @@ void DeleteAnnotEditToolbar(MainWindow* win) {
     delete tb;
 }
 
-// ng: for the platforms whose picker answers later (AppShellPickFileAsync)
-static void OnAttachPicked(MainWindow* win, Str path) {
-    if (!IsMainWindowValidAndNotClosing(win)) {
-        return;
-    }
-    AnnotEditToolbar* tb = win->annotEditToolbar;
-    Annotation* annot = LiveToolbarAnnot(tb);
-    if (annot && SetEmbeddedFileFromPath(annot, path)) {
-        AnnotChanged(win->CurrentTab());
-    }
-}
-
 // --- the contents editor ----------------------------------------------------
 
 bool IsEditingAnnotContents(MainWindow* win) {
@@ -479,21 +466,9 @@ bool FreeTextInPlaceCommitOnChar(MainWindow* win, int ch) {
 constexpr float kInPlaceLineHeight = 1.2f;
 
 static Str InPlaceMeasureFamily(Str family) {
-#if OS_WIN
-    if (str::EqI(family, StrL("Courier"))) {
-        return StrL("Courier New");
-    }
-    if (str::EqI(family, StrL("Times")) || str::EqI(family, StrL("TimesRoman"))) {
-        return StrL("Times New Roman");
-    }
-    if (len(family) == 0 || str::EqI(family, StrL("Helvetica"))) {
-        return StrL("Arial");
-    }
-#else
     if (len(family) == 0) {
         return StrL("Helvetica");
     }
-#endif
     return family;
 }
 
@@ -949,9 +924,6 @@ static void OnChipClick(AnnotEditToolbar* tb, int chipIdx) {
             break;
         case AnnotEditKind::AttachFile: {
             if (!CanAccessDisk()) {
-                break;
-            }
-            if (AppShellPickFileAsync(tb->win, Tr("Open"), {}, MkFunc1(OnAttachPicked, tb->win))) {
                 break;
             }
             TempStr path = AppShellPromptForPathTemp(tb->win, Tr("Open"), {});
@@ -2316,21 +2288,12 @@ TempStr AnnotationHoverOverlayStateTemp(MainWindow* win) {
     }
     int ox = 0;
     int oy = 0;
-#if OS_WIN
-    POINT origin{0, 0};
-    if (HWND hwnd = MainWindowHwnd(win)) {
-        ClientToScreen(hwnd, &origin);
-    }
-    ox = origin.x;
-    oy = origin.y;
-#else
     Rect content = win->gpuiWin ? ToolWinNativeContentRect(win->gpuiWin) : Rect{};
     if (content.IsEmpty()) {
         content = AppShellWindowScreenRect(win);
     }
     ox = content.x;
     oy = content.y;
-#endif
     // measured is window dips. screen= is frame pixels, and tests add the
     // content origin on top of that.
     gp::Bounds b = overlay->measured;
