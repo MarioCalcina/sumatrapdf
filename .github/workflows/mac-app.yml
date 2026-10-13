@@ -65,27 +65,34 @@ jobs:
       # AppKit's print and open panels among them, to spot untranslated text
       - name: Spanish screenshots
         continue-on-error: true
+        timeout-minutes: 10
         run: |
           hdiutil attach SumatraPDF-mac.dmg -nobrowse -mountpoint /Volumes/SumatraPDF
           APP=/Volumes/SumatraPDF/SumatraPDF.app
+          # runs a command for at most $1 seconds: a reply that never comes once held the job 90 minutes
+          t() { perl -e 'alarm shift; exec @ARGV' "$@"; }
           defaults write -g AppleLanguages -array es
           for c in CmdCommandPalette CmdToggleKeyboardHelp CmdOptions CmdAdvancedSettings CmdChangeTheme \
             CmdChangeLanguage CmdProperties CmdHelpAbout CmdGoToPage CmdFindFirst CmdPrint CmdOpenFile; do
-            open -n -a "$APP" "$PWD/ext/a-zlib/zlib.3.pdf" --args -for-testing -dbg-control "es-$c"
+            open -n -a "$APP" "$PWD/ext/a-zlib/zlib.3.pdf" --args -for-testing -dbg-control "es-$c" \
+              -log-to-file "$PWD/shots/es-$c.log"
             sleep 8
             if [ $c = CmdCommandPalette ]; then
-              bun cmd/ng-dbg-control.ts -pipe "es-$c" -- TestMainMenu > shots/es-menu.txt
-              osascript -e 'tell application "System Events" to tell process "SumatraPDF" to get name of every menu item of menu 1 of menu bar item 2 of menu bar 1' > shots/es-appmenu.txt 2>&1
+              t 20 bun cmd/ng-dbg-control.ts -pipe "es-$c" -- TestMainMenu > shots/es-menu.txt 2>&1 \
+                || echo "TestMainMenu: exit $?"
+              t 20 osascript -e 'tell application "System Events" to tell process "SumatraPDF" to get name of every menu item of menu 1 of menu bar item 2 of menu bar 1' > shots/es-appmenu.txt 2>&1 \
+                || echo "osascript: exit $?"
             fi
             # a modal panel holds the reply back, so don't wait for it
-            bun cmd/ng-dbg-control.ts -pipe "es-$c" -- TestInvokeCommand $c > /dev/null 2>&1 &
+            t 20 bun cmd/ng-dbg-control.ts -pipe "es-$c" -- TestInvokeCommand $c > /dev/null 2>&1 &
             sleep 4
             screencapture -x shots/es-$c.png
             pkill -f "SumatraPDF -for-testing" || true
             sleep 2
           done
+          cp -R "$HOME/Library/Application Support/SumatraPDF/crashinfo" shots/ || true
           defaults delete -g AppleLanguages
-          hdiutil detach /Volumes/SumatraPDF
+          hdiutil detach /Volumes/SumatraPDF || true
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         if: always()
         with:

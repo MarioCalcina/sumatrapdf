@@ -6,6 +6,8 @@
 # keeps its key as the first word.
 :%s: restore default
 es:%s: restaurar valor predeterminado
+:a note
+es:una nota
 :About %s
 es:Acerca de %s
 :Agent is working...
