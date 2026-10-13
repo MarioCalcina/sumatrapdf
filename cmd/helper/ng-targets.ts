@@ -579,7 +579,6 @@ export const targets: Target[] = [
       "ext/libjpeg-turbo/src/jpeg_nbits.c",
       // 8-bit precision wrappers; each #includes ../<name>.c
       "ext/libjpeg-turbo/src/wrapper/*-8.c",
-      "ext/libjpeg-turbo/simd/x86_64/jsimd.c",
     ],
     // the readers/writers belong to cjpeg/djpeg, not to the library
     exclude: [
@@ -728,7 +727,7 @@ export const targets: Target[] = [
     deps: ["a-zlib"],
     strict: false,
     alwaysOptimize: true,
-    // ext/liblzma/config.h is the Windows one; the generated copy shadows it
+    // liblzma reads config.h (HAVE_CONFIG_H); this is the macOS one
     generated: [
       { name: "config.h", from: "ext/liblzma/config_macos.h" },
       { name: "config_posix.h", content: libarchivePosixConfig },

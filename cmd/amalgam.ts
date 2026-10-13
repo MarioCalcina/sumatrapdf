@@ -1208,9 +1208,9 @@ const libarchiveSeals: Record<string, string[]> = {
 function genLibarchive(ctx: Ctx): void {
   const srcDir = findSrcDir(ctx.checkoutDir, ["libarchive", ""], ["archive.h", "archive_entry.h"]);
 
-  // config_windows.h is hand-written (not upstream) and lives in the output dir
-  // already; archive_platform.h reaches it through `#include PLATFORM_CONFIG_H`,
-  // a macro the inliner leaves alone.
+  // The config is config_posix.h, which the build writes (libarchivePosixConfig
+  // in cmd/helper/ng-targets.ts); archive_platform.h reaches it through
+  // `#include PLATFORM_CONFIG_H`, a macro the inliner leaves alone.
   // Under libarchive/ because mupdf and src/base/Archive.cpp include
   // "libarchive/archive.h"; both ext/a-libarchive and ext/a-libarchive/libarchive
   // are on the include path, as the vendored tree's two dirs were.

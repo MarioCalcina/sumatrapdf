@@ -40,5 +40,5 @@ description: Regenerate the amalgamated libarchive copy in ext/a-libarchive from
 ## Notes
 
 - Only the read side is built: no write formats, no write filters, no disk-write or POSIX backends. That list is `libarchiveSources` in `cmd/amalgam.ts`.
-- `ext/a-libarchive/config_windows.h` is **hand-written, not generated** — the script never overwrites it. `PLATFORM_CONFIG_H` selects it. An upstream update that adds a new `HAVE_*` probe may need a matching line there.
+- The config header is `config_posix.h`, written by the build from `libarchivePosixConfig` in `cmd/helper/ng-targets.ts`; `PLATFORM_CONFIG_H` selects it. An upstream update that adds a new `HAVE_*` probe may need a matching line there.
 - libarchive has many same-named file-local statics (each read filter has its own `struct private_data`, `archive_ppmd8.c` is a near-copy of `archive_ppmd7.c`). `libarchiveRenames` gives one side of each pair a per-file prefix and `libarchiveSeals` `#undef`s macros that would otherwise leak into a later file. A new collision after an update shows up as a redefinition error from the script's own `cl.exe` validation.
