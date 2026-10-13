@@ -195,8 +195,7 @@ function extractTips(): string[] {
     if (!m) throw new Error(`sumatraPromos not found in ${path}`);
     tips.push(
       ...m[1]
-        .split("
-")
+        .split("\n")
         .map((s) => s.trim())
         .filter((s) => s.length > 0),
     );
