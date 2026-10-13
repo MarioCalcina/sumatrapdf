@@ -913,7 +913,8 @@ function linkCmd(
     const ld: string[] = [];
     if (tc.plat === "mac") {
       if (t.systemDeps === "archive") {
-        ld.push("-liconv");
+        // base's number formatting asks Foundation for the region's separators
+        ld.push("-liconv", "-framework", "Foundation");
       } else {
         for (const fw of macFrameworks) ld.push("-framework", fw);
         ld.push(...macLibs);
