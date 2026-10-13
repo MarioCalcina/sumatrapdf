@@ -54,7 +54,6 @@
 #include "AnnotEditToolbar.h"
 #include "AnnotFilterToolbar.h"
 #include "AnnotPlacement.h"
-#include "gui/OleDragDrop.h"
 #include "AnnotTextPopup.h"
 #include "RefHover.h"
 #include "FormFields.h"
@@ -171,17 +170,7 @@ gp::RenderImage* RenderImageFromPixmap(gp::PaintApp* pa, Pixmap* px) {
     if (px->format != PixmapFormat::Native) {
         return RenderImageFromBgraPixmap(pa, px);
     }
-#if OS_WIN
-    Pixmap* copy = PixmapCopyAs32bppDIB(px);
-    if (!copy) {
-        return nullptr;
-    }
-    gp::RenderImage* img = RenderImageFromBgraPixmap(pa, copy);
-    FreePixmap(copy);
-    return img;
-#else
     return nullptr;
-#endif
 }
 
 static gp::RenderImage* RenderImageFromBgraPixmap(gp::PaintApp* pa, Pixmap* px) {
@@ -414,11 +403,7 @@ static void SetCanvasModifiers(const gp::Modifiers& m) {
 // On macOS Command is the modifier orig's Ctrl+click uses. Control-click is
 // the context click, so it never arrives here as a left click.
 bool CanvasCtrlPressed() {
-#if OS_DARWIN
     return gPlatformPressed;
-#else
-    return gCtrlPressed;
-#endif
 }
 
 bool CanvasShiftPressed() {
@@ -470,18 +455,9 @@ void CanvasSetCursor(MainWindow* win, int cursorKind) {
 }
 
 bool CanvasSetNativeCursor(MainWindow* win, NativeCursor cursor) {
-#if OS_WIN
-    // ng: the stand-in kind; gpui's Windows backend draws OpenHand as the
-    // arrow, and the frame's subclass replaces it (gui/NativeWindow.cpp)
-    CanvasSetCursor(win, (int)gp::CursorKind::OpenHand);
-    win->nativeCursor = cursor;
-    AppShellApplyNativeCursor(win);
-    return true;
-#else
     (void)win;
     (void)cursor;
     return false;
-#endif
 }
 
 // the thread that paints; nothing else may touch a RenderImage
@@ -975,27 +951,6 @@ static bool DrawDocument(MainWindow* win, gp::PaintCtx* ctx, Rect rcArea) {
 
 // --- scrollbars -------------------------------------------------------------
 
-#if OS_WIN
-static void WriteScrollInfo(HWND hwnd, int bar, const CanvasScrollInfo& si) {
-    SCROLLINFO info{};
-    info.cbSize = sizeof(info);
-    info.fMask = SIF_RANGE | SIF_PAGE | SIF_POS;
-    info.nMin = si.nMin;
-    info.nMax = si.nMax;
-    info.nPage = (UINT)si.nPage;
-    info.nPos = si.nPos;
-    SetScrollInfo(hwnd, bar, &info, FALSE);
-}
-
-static void PublishScrollInfo(HWND hwnd, int bar, const CanvasScrollInfo& si) {
-    WriteScrollInfo(hwnd, bar, si);
-    LONG style = GetWindowLongW(hwnd, GWL_STYLE);
-    if (style & (WS_HSCROLL | WS_VSCROLL)) {
-        SetWindowLongW(hwnd, GWL_STYLE, style & ~(WS_HSCROLL | WS_VSCROLL));
-    }
-}
-#endif
-
 static void MakeFullScrollbar(CanvasScrollInfo& si) {
     si.nPos = 0;
     si.nMin = 0;
@@ -1058,23 +1013,6 @@ void CanvasUpdateScrollbars(MainWindow* win, DisplayModel* dm, Size canvas) {
     // orig's OverlayScrollbarSetInfo: a changed position re-reveals the bar
     OverlayScrollbarsNotifyScroll(win);
     AppShellInvalidate(win);
-#if OS_WIN
-    // Tests read the canvas scroll with GetScrollInfo. gpui has no scroll
-    // styles; publish the range and strip the styles SetScrollInfo adds.
-    // The window they query is the pixel mirror, not the frame.
-    HWND hwnd = AppShellNativeHwnd(win);
-    if (hwnd) {
-        PublishScrollInfo(hwnd, SB_HORZ, win->scrollH);
-        PublishScrollInfo(hwnd, SB_VERT, win->scrollV);
-        if (HWND canvas = TestingCanvasHwnd(hwnd)) {
-            WriteScrollInfo(canvas, SB_HORZ, win->scrollH);
-            WriteScrollInfo(canvas, SB_VERT, win->scrollV);
-            // SetWindowLong would leave the mirror client shrunk. Hiding the
-            // bars restores it and keeps the range GetScrollInfo just stored.
-            ShowScrollBar(canvas, SB_BOTH, FALSE);
-        }
-    }
-#endif
 }
 
 // what SetScrollInfo would have clamped the new position to
@@ -1360,19 +1298,6 @@ void CanvasOnHScroll(MainWindow* win, ScrollMsg msg, int nTrackPos) {
 static int gDeltaPerLine = kWheelDelta / 3;
 
 void UpdateDeltaPerLine() {
-#if OS_WIN
-    ULONG ulScrollLines;
-    BOOL ok = SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0, &ulScrollLines, 0);
-    if (!ok) {
-        return;
-    }
-    gDeltaPerLine = 0;
-    if (ulScrollLines == (ULONG)-1) {
-        gDeltaPerLine = -1;
-    } else if (ulScrollLines != 0) {
-        gDeltaPerLine = kWheelDelta / (int)ulScrollLines;
-    }
-#endif
 }
 
 static int WheelScrollPosOrTarget(MainWindow* win) {
@@ -1831,10 +1756,6 @@ void StartAutoScrollAtCursor(MainWindow* win) {
 
 constexpr int kLaserPointerSize = 32;
 
-// ng: where the system cursor can be a bitmap (Windows) the dot is orig's
-// cursor; elsewhere it is painted on the canvas under a hidden cursor
-constexpr bool kLaserPointerIsCursor = OS_WIN;
-
 static void OnSetCursor(MainWindow* win, Point pt);
 
 void ToggleLaserPointer(MainWindow* win) {
@@ -1865,7 +1786,7 @@ static bool SetLaserPointerCursor(MainWindow* win) {
 
 // a white-hot center inside a saturated red core, surrounded by a soft halo
 static void PaintLaserPointer(MainWindow* win, gp::PaintCtx* ctx) {
-    if (!gLaserPointer || kLaserPointerIsCursor) {
+    if (!gLaserPointer) {
         return;
     }
     Point pt = win->dragPrevPos;
@@ -1882,11 +1803,7 @@ static void PaintLaserPointer(MainWindow* win, gp::PaintCtx* ctx) {
 bool IsDragDistance(int x1, int x2, int y1, int y2) {
     int dx = abs(x1 - x2);
     int dy = abs(y1 - y2);
-#if OS_WIN
-    return dx > GetSystemMetrics(SM_CXDRAG) || dy > GetSystemMetrics(SM_CYDRAG);
-#else
     return dx > DpiScale(4) || dy > DpiScale(4);
-#endif
 }
 
 // --- links: cursor, tooltip, follow ------------------------------------------
@@ -1898,11 +1815,7 @@ constexpr int kCurCross = (int)gp::CursorKind::Crosshair;
 // orig's IDC_SIZEALL (middle-button auto-scroll, a line end or polygon vertex
 // handle). ng: gpui has no "move" cursor kind; its ClosedHand is IDC_SIZEALL in
 // the Windows backend, a closed hand elsewhere, where the crosshair stays
-#if OS_WIN
-constexpr int kCurSizeAll = (int)gp::CursorKind::ClosedHand;
-#else
 constexpr int kCurSizeAll = (int)gp::CursorKind::Crosshair;
-#endif
 
 static void SetLinkTooltip(MainWindow* win, Str text, Rect rc) {
     if (str::Eq(win->linkTooltip, text) && win->linkTooltipRc == rc) {
@@ -2526,9 +2439,6 @@ static void PaintAnnotationMove(MainWindow* win, gp::PaintCtx* ctx) {
     CanvasDrawRect(ctx, r, kAnnotMarkBlue, 2);
 }
 
-#if OS_WIN
-#endif
-
 // --- left button ------------------------------------------------------------
 
 // orig's OnMouseLeftButtonDown, minus the annotation, form-field, signature,
@@ -2579,11 +2489,6 @@ static void OnMouseLeftButtonDown(MainWindow* win, int x, int y) {
     // orig's HwndSetFocus(hwndFrame): a page click takes the keys back from
     // a floating Find window
     AppShellFocusFrame(win);
-#if OS_WIN
-    if (HWND hwnd = AppShellNativeHwnd(win)) {
-        SetFocus(hwnd);
-    }
-#endif
 
     DisplayModel* dm = win->AsFixed();
     if (!dm) {
@@ -2765,23 +2670,6 @@ static void OnMouseLeftButtonDown(MainWindow* win, int x, int y) {
         CanvasSetCapture(win, true);
         return;
     }
-
-#if OS_WIN
-    // if clicking on an image, prepare for image drag-out. skip full-page
-    // images (e.g. scanned pages), where click-and-drag should pan instead.
-    if (canCopy && !isShift && !isCtrl && !isOverText) {
-        int elPageNo = -1;
-        IPageElement* imageEl = dm->GetElementAtPos(pt, &elPageNo);
-        if (imageEl && imageEl->Is(kindPageElementImage) && !IsFullPageImage(dm, imageEl, elPageNo)) {
-            win->imageDragPending = true;
-            win->imageDragElement = imageEl;
-            win->imageDragPageNo = elPageNo;
-            win->linkOnLastButtonDown = nullptr;
-            CanvasSetCapture(win, true);
-            return;
-        }
-    }
-#endif
 
     bool startDrag = !canCopy || ((isShift || !isOverText) && !isCtrl);
     logf("OnMouseLeftButtonDown: %d,%d overText %d ctrl %d shift %d -> %s\n", x, y, isOverText ? 1 : 0, isCtrl ? 1 : 0,
@@ -3218,7 +3106,7 @@ static void OnMouseMove(MainWindow* win, int x, int y) {
             win->presCursorHideLeftMs = win->dragPrevPos.Eq(-2, -3) ? 1 : kHideCursorDelayInMs;
         }
     }
-    if (gLaserPointer && !kLaserPointerIsCursor) {
+    if (gLaserPointer) {
         AppShellShowCursor(win, false);
         AppShellInvalidate(win);
     }
@@ -3233,33 +3121,9 @@ static void OnMouseMove(MainWindow* win, int x, int y) {
     }
 
     if (win->textDragPending) {
-#if OS_WIN
-        if (!IsDragDistance(x, win->dragStart.x, y, win->dragStart.y)) {
-            return;
-        }
-        // threshold met: initiate OLE drag-drop of selected text
-        win->textDragPending = false;
-        win->dragStartPending = false;
-        CanvasSetCapture(win, false);
-        StartTextDragDrop(win);
-#endif
         // ng: no drag out of the window off Windows; the release clears the selection
         return;
     }
-
-#if OS_WIN
-    if (win->imageDragPending) {
-        if (!IsDragDistance(x, win->dragStart.x, y, win->dragStart.y)) {
-            return;
-        }
-        win->imageDragPending = false;
-        win->dragStartPending = false;
-        CanvasSetCapture(win, false);
-        // ng: the drag is posted; it clears imageDragElement when it is over
-        StartImageDragDrop(win);
-        return;
-    }
-#endif
 
     if (win->dragStartPending) {
         if (!IsDragDistance(x, win->dragStart.x, y, win->dragStart.y)) {
@@ -3462,7 +3326,6 @@ void DocCanvasSwipePage(MainWindow* win, int dir) {
     AppShellInvalidate(win);
 }
 
-#if OS_DARWIN
 // travel that tells a sideways swipe from a scroll, and that turns the page
 constexpr float kSwipeDecidePx = 8;
 constexpr float kSwipeTurnPx = 50;
@@ -3523,7 +3386,6 @@ static bool SwipeTakesWheel(MainWindow* win, const gp::ScrollWheelEvent* ev) {
     }
     return true;
 }
-#endif
 
 void DocCanvasView::OnPaint(gp::PaintCtx* ctx, gp::El* e, void* user) {
     auto* win = (MainWindow*)user;
@@ -3593,12 +3455,10 @@ void DocCanvasView::OnWheel(DocCanvasView* self, gp::Ctx* cx, const gp::ScrollWh
     if (!IsMainWindowValid(win) || !win->AsFixed()) {
         return;
     }
-#if OS_DARWIN
     if (SwipeTakesWheel(win, ev)) {
         gp::Notify(cx);
         return;
     }
-#endif
     float notch = gp::WheelNotchPixels(cx->app);
     if (notch <= 0) {
         notch = 1;
@@ -3674,79 +3534,6 @@ static void OnWindowContextMenu(MainWindow* win, gp::Ctx* cx, int x, int y) {
     float k = CanvasScale(win);
     OpenPopupMenuAt(cx, ui->ctxPopup, (float)x * k, (float)y * k);
 }
-
-#if OS_WIN
-// A posted WM_CONTEXTMENU looks for a Win32 popup (#32768) and types its
-// access key. A gpui menu is not that window.
-static HMENU HmenuFromModel(MenuModel* m) {
-    if (!m) {
-        return nullptr;
-    }
-    HMENU menu = CreatePopupMenu();
-    for (MenuItemModel& it : m->items) {
-        if (it.separator) {
-            AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
-            continue;
-        }
-        UINT flags = MF_STRING;
-        if (it.disabled) {
-            flags |= MF_GRAYED;
-        }
-        if (it.checked) {
-            flags |= MF_CHECKED;
-        }
-        WStr label = len(it.accel) > 0 ? ToWStrTemp(fmt("%s\t%s", it.title, it.accel)) : ToWStrTemp(it.title);
-        if (it.submenu) {
-            AppendMenuW(menu, flags | MF_POPUP, (UINT_PTR)HmenuFromModel(it.submenu), label.s);
-            continue;
-        }
-        AppendMenuW(menu, flags, (UINT_PTR)it.cmdId, label.s);
-    }
-    return menu;
-}
-
-void DocCanvasOnWmContextMenu(MainWindow* win, int screenX, int screenY) {
-    if (!IsMainWindowValid(win) || !win->AsFixed()) {
-        return;
-    }
-    HWND hwnd = AppShellNativeHwnd(win);
-    if (!hwnd) {
-        return;
-    }
-    POINT sp{(LONG)screenX, (LONG)screenY};
-    if (screenX == -1 && screenY == -1) {
-        GetCursorPos(&sp);
-    }
-    POINT client = sp;
-    ScreenToClient(hwnd, &client);
-    float k = CanvasScale(win);
-    Point doc;
-    ToDoc(win, (float)client.x * k, (float)client.y * k, &doc);
-    if (doc.x < 0) {
-        doc.x = 0;
-    }
-    if (doc.y < 0) {
-        doc.y = 0;
-    }
-
-    MenuModel* model = BuildWindowContextMenu(win, doc);
-    if (!model) {
-        return;
-    }
-    HMENU popup = HmenuFromModel(model);
-    int cmdId = (int)TrackPopupMenu(popup, TPM_RETURNCMD | TPM_RIGHTBUTTON, sp.x, sp.y, 0, hwnd, nullptr);
-    DestroyMenu(popup);
-    DeleteMenuModel(model);
-    if (!IsMainWindowValidAndNotClosing(win)) {
-        return;
-    }
-    if (cmdId == 0) {
-        win->contextMenuHighlightPageNo = 0;
-        return;
-    }
-    WindowContextMenuCommand(win, cmdId);
-}
-#endif
 
 void DocCanvasContextMenuFromKey(MainWindow* win, gp::Ctx* cx) {
     if (!IsMainWindowValid(win) || !win->AsFixed() || !cx->win) {

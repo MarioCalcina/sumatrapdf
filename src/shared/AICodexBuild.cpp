@@ -9,9 +9,6 @@
 #include "base/DirScan.h"
 #include "base/File.h"
 #include "base/JsonParser.h"
-#if OS_WIN
-#include "base/Win.h"
-#endif
 
 #include "gui/UIModels.h"
 
@@ -36,13 +33,8 @@ static TempStr FindCodexExecutableTemp() {
     StrVec candidates;
     TempStr userProfile = AIChatHomeDirTemp();
     if (len(userProfile) > 0) {
-#if OS_WIN
-        candidates.Append(fmt("%s\\.codex\\bin\\codex.exe", userProfile));
-        candidates.Append(fmt("%s\\.local\\bin\\codex.exe", userProfile));
-#else
         candidates.Append(path::JoinTemp(userProfile, StrL(".codex/bin/codex")));
         candidates.Append(path::JoinTemp(userProfile, StrL(".local/bin/codex")));
-#endif
     }
     gCodexExecutablePath = str::Dup(AIChatFindExecutableTemp(candidates, StrL("codex.exe"), StrL("codex")));
     return gCodexExecutablePath;
@@ -77,109 +69,9 @@ static bool ParseCodexModelsResponse(Str output, StrVec& models) {
     return false;
 }
 
-#if OS_WIN
-// Ask the authenticated Codex CLI for the same model catalog used by its picker.
-// The app-server API is experimental, so every failure leaves the built-in list in use.
-static bool QueryCodexModels(Str exePath, StrVec& models) {
-    SECURITY_ATTRIBUTES sa = {sizeof(sa), nullptr, TRUE};
-    HANDLE hStdoutRead = nullptr;
-    HANDLE hStdoutWrite = nullptr;
-    HANDLE hStdinRead = nullptr;
-    HANDLE hStdinWrite = nullptr;
-    auto closeHandle = [](HANDLE& h) {
-        if (h) {
-            CloseHandle(h);
-            h = nullptr;
-        }
-    };
-    if (!CreatePipe(&hStdoutRead, &hStdoutWrite, &sa, 0) ||
-        !SetHandleInformation(hStdoutRead, HANDLE_FLAG_INHERIT, 0) || !CreatePipe(&hStdinRead, &hStdinWrite, &sa, 0) ||
-        !SetHandleInformation(hStdinWrite, HANDLE_FLAG_INHERIT, 0)) {
-        closeHandle(hStdinRead);
-        closeHandle(hStdinWrite);
-        closeHandle(hStdoutRead);
-        closeHandle(hStdoutWrite);
-        return false;
-    }
-
-    STARTUPINFOW si = {};
-    si.cb = sizeof(si);
-    si.hStdInput = hStdinRead;
-    si.hStdOutput = hStdoutWrite;
-    si.hStdError = hStdoutWrite;
-    si.dwFlags = STARTF_USESTDHANDLES;
-
-    PROCESS_INFORMATION pi = {};
-    TempStr cmdLine = fmt("%s app-server --stdio", QuoteCmdLineArgTemp(exePath));
-    if (!CreateProcessW(nullptr, CWStrTemp(cmdLine), nullptr, nullptr, TRUE, CREATE_NO_WINDOW, nullptr, nullptr, &si,
-                        &pi)) {
-        closeHandle(hStdinRead);
-        closeHandle(hStdinWrite);
-        closeHandle(hStdoutRead);
-        closeHandle(hStdoutWrite);
-        return false;
-    }
-    CloseHandle(pi.hThread);
-    closeHandle(hStdinRead);
-    closeHandle(hStdoutWrite);
-
-    Str request = StrL(
-        "{\"method\":\"initialize\",\"id\":1,\"params\":{\"clientInfo\":{\"name\":\"SumatraPDF\",\"version\":\"3.7\"}}}"
-        "\n"
-        "{\"method\":\"model/list\",\"id\":2,\"params\":{\"limit\":100,\"includeHidden\":false}}\n");
-    DWORD nWritten = 0;
-    DWORD requestLen = (DWORD)request.len;
-    bool wroteRequest = WriteFile(hStdinWrite, request.s, requestLen, &nWritten, nullptr) && nWritten == requestLen;
-    if (!wroteRequest) {
-        closeHandle(hStdinWrite);
-        TerminateProcess(pi.hProcess, 0);
-        CloseHandle(pi.hProcess);
-        closeHandle(hStdoutRead);
-        return false;
-    }
-
-    str::Builder output;
-    u64 deadline = GetTickCount64() + 3000;
-    while (GetTickCount64() < deadline && output.len < 1024 * 1024) {
-        DWORD available = 0;
-        if (!PeekNamedPipe(hStdoutRead, nullptr, 0, nullptr, &available, nullptr)) {
-            break;
-        }
-        if (available > 0) {
-            char buf[4096];
-            DWORD nRead = 0;
-            DWORD toRead = std::min<DWORD>(available, dimof(buf));
-            if (!ReadFile(hStdoutRead, buf, toRead, &nRead, nullptr) || nRead == 0) {
-                break;
-            }
-            output.Append(Str(buf, (int)nRead));
-            if (ParseCodexModelsResponse(ToStr(output), models)) {
-                closeHandle(hStdinWrite);
-                TerminateProcess(pi.hProcess, 0);
-                CloseHandle(pi.hProcess);
-                closeHandle(hStdoutRead);
-                return true;
-            }
-            continue;
-        }
-        if (WaitForSingleObject(pi.hProcess, 10) != WAIT_TIMEOUT) {
-            break;
-        }
-        SleepInMs(10);
-    }
-    closeHandle(hStdinWrite);
-    if (WaitForSingleObject(pi.hProcess, 0) == WAIT_TIMEOUT) {
-        TerminateProcess(pi.hProcess, 0);
-    }
-    CloseHandle(pi.hProcess);
-    closeHandle(hStdoutRead);
-    return false;
-}
-#else
 static bool QueryCodexModels(Str, StrVec&) {
     return false;
 }
-#endif
 
 // --- Session history ---
 

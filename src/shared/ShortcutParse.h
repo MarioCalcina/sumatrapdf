@@ -43,9 +43,4 @@ bool ParseShortcutString(Str shortcut, KeyShortcut& sc);
 TempStr AppendAccelKeyToMenuStringTemp(TempStr menuStr, const KeyShortcut& sc);
 TempStr ShortcutToGpuiStroke(const KeyShortcut& sc);
 
-#if OS_WIN
-bool ParseShortcutString(Str shortcut, ACCEL& accel);
-TempStr AppendAccelKeyToMenuStringTemp(TempStr menuStr, const ACCEL& a);
-#endif
-
 #endif

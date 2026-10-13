@@ -1,23 +1,10 @@
 /* Copyright 2026 the SumatraPDF project authors (see AUTHORS file).
    License: GPLv3 */
 
-#if defined(SUMATRA_NG)
 #include "gui/GpuiBridge.h"
-#else
-#include "base/Base.h"
-#endif
 #include "gui/Dpi.h"
-#if !defined(SUMATRA_NG)
-#include "base/AutoWin.h"
-#include "base/Win.h"
-#endif
 
 #include "gui/UIModels.h"
-#if !defined(SUMATRA_NG)
-#include "gui/Layout.h"
-#include "gui/win/WinGui.h"
-#include "gui/Gfx.h"
-#endif
 
 #include "Settings.h"
 #include "AppSettings.h"
@@ -30,41 +17,23 @@
 #include "SumatraPDF.h"
 #include "MainWindow.h"
 #include "WindowTab.h"
-#if !defined(SUMATRA_NG)
-#include "Canvas.h"
-#endif
 #include "Commands.h"
 #include "Accelerators.h"
 #include "Selection.h"
 #include "AnnotPlacement.h"
-#if !defined(SUMATRA_NG)
-#include "Toolbar.h"
-#endif
 #include "Notifications.h"
 #include "Translations.h"
-#if defined(SUMATRA_NG)
 #include "VirtKeys.h"
 #include "gui/DocCanvas.h"
-#endif
 #include "SelectTextKeyboard.h"
 
 Kind kNotifTextSelectMode = "notifTextSelectMode";
 
-#if defined(SUMATRA_NG)
 constexpr int kCaretBlinkDefaultMs = 530;
 
 static int CaretBlinkMs() {
-#if OS_WIN
-    uint ms = GetCaretBlinkTime();
-    if (ms == 0 || ms == INFINITE) {
-        return 0;
-    }
-    return (int)ms;
-#else
     return kCaretBlinkDefaultMs;
-#endif
 }
-#endif
 
 static void RepaintTextSelect(MainWindow* win) {
     win->RedrawCanvas();
@@ -191,51 +160,23 @@ static void ApplySelection(MainWindow* win, bool selecting) {
     if (!dm || !dm->textSelection) {
         return;
     }
-#if !defined(SUMATRA_NG)
-    bool hadTextSelection = len(dm->textSelection->result) > 0;
-#endif
     if (!selecting) {
         dm->textSelection->Reset();
         dm->textSelection->startPage = dm->textSelection->endPage = -1;
         dm->textSelection->startGlyph = dm->textSelection->endGlyph = -1;
         DeleteOldSelectionInfo(win, false);
-#if !defined(SUMATRA_NG)
-        if (hadTextSelection) {
-            ToolbarUpdateStateForWindow(win, false);
-        }
-#endif
         return;
     }
     dm->textSelection->StartAt(win->textSelectAnchorPage, win->textSelectAnchorGlyph);
     dm->textSelection->SelectUpTo(win->textSelectPage, win->textSelectGlyph);
     UpdateTextSelection(win, false);
-#if !defined(SUMATRA_NG)
-    bool hasTextSelection = len(dm->textSelection->result) > 0;
-    if (hadTextSelection != hasTextSelection) {
-        ToolbarUpdateStateForWindow(win, false);
-    }
-#endif
 }
 
 static void RestartCaretBlink(MainWindow* win) {
     win->textSelectCaretVisible = true;
-#if defined(SUMATRA_NG)
     win->textSelectBlinkLeftMs = CaretBlinkMs();
-#else
-    if (!win->hwndCanvas) {
-        return;
-    }
-    uint blinkMs = GetCaretBlinkTime();
-    if (blinkMs == 0 || blinkMs == INFINITE) {
-        // blinking turned off system-wide: leave the caret solid
-        KillTimer(win->hwndCanvas, kTextSelectCaretTimerID);
-        return;
-    }
-    SetTimer(win->hwndCanvas, kTextSelectCaretTimerID, blinkMs, nullptr);
-#endif
 }
 
-#if defined(SUMATRA_NG)
 void SelectTextWithKeyboardBlinkTick(MainWindow* win, int elapsedMs) {
     if (!SelectTextWithKeyboardActive(win) || win->textSelectBlinkLeftMs <= 0) {
         return;
@@ -248,15 +189,6 @@ void SelectTextWithKeyboardBlinkTick(MainWindow* win, int elapsedMs) {
     win->textSelectCaretVisible = !win->textSelectCaretVisible;
     RepaintTextSelect(win);
 }
-#else
-void SelectTextWithKeyboardBlinkCaret(MainWindow* win) {
-    if (!SelectTextWithKeyboardActive(win)) {
-        return;
-    }
-    win->textSelectCaretVisible = !win->textSelectCaretVisible;
-    RepaintTextSelect(win);
-}
-#endif
 
 // Where the caret goes when the mode is turned on: the glyph nearest the
 // top-left of the currently visible page area (so F7 starts where you are
@@ -303,17 +235,9 @@ bool StopSelectTextWithKeyboard(MainWindow* win) {
     }
     win->textSelectModeActive = false;
     win->textSelectModeVisual = false;
-#if defined(SUMATRA_NG)
     win->textSelectBlinkLeftMs = 0;
     RemoveNotificationsForGroup(win, kNotifTextSelectMode);
     RepaintTextSelect(win);
-#else
-    if (win->hwndCanvas) {
-        KillTimer(win->hwndCanvas, kTextSelectCaretTimerID);
-        RemoveNotificationsForGroup(win->hwndCanvas, kNotifTextSelectMode);
-    }
-    RepaintTextSelect(win);
-#endif
     return true;
 }
 
@@ -528,7 +452,6 @@ static bool IsCaretMoveKey(int key) {
            key == VK_HOME || key == VK_END;
 }
 
-#if OS_DARWIN
 struct CaretKey {
     int key;
     bool ctrl; // Command (CtrlOrCmd)
@@ -553,27 +476,17 @@ static CaretKey MacCaretKey(CaretKey k) {
     }
     return {back ? VK_HOME : VK_END, upDown, false};
 }
-#endif
 
 // Movement keys, handled before they can scroll the view. Returns true if the
 // key was consumed.
-#if defined(SUMATRA_NG)
 bool SelectTextWithKeyboardOnKeyDown(MainWindow* win, int key, bool ctrl, bool shift, bool alt) {
-#else
-bool SelectTextWithKeyboardOnKeyDown(MainWindow* win, int key) {
-    bool ctrl = IsCtrlPressed();
-    bool shift = IsShiftPressed();
-    bool alt = IsAltPressed();
-#endif
     if (!SelectTextWithKeyboardActive(win)) {
         return false;
     }
-#if OS_DARWIN
     CaretKey mac = MacCaretKey({key, ctrl, alt});
     key = mac.key;
     ctrl = mac.ctrl;
     alt = mac.alt;
-#endif
     if (!IsCaretMoveKey(key) || alt) {
         return false;
     }
@@ -699,17 +612,9 @@ static TempStr SelectTextKeyboardResult(MainWindow* win) {
     return ToStrTemp(out);
 }
 
-#if defined(SUMATRA_NG)
 TempStr SelectTextKeyboardResultTemp(MainWindow* win) {
     return SelectTextKeyboardResult(win);
 }
-#else
-TempStr SelectTextKeyboardResultTemp(int* exitCodeOut) {
-    MainWindow* win = len(gWindows) > 0 ? gWindows[0] : nullptr;
-    *exitCodeOut = win ? 0 : 2;
-    return SelectTextKeyboardResult(win);
-}
-#endif
 
 // A thin inverted bar the size of one character is hard to find on a page of
 // text, so the caret is deliberately louder than a text-editor one. In cursor
@@ -750,7 +655,6 @@ static void PaintTextCaret(MainWindow* win, GetClip getClip, PaintBand paintBand
     paintBar(bar);
 }
 
-#if defined(SUMATRA_NG)
 void PaintKeyboardTextCaret(MainWindow* win, gp::PaintCtx* ctx) {
     auto getClip = [](DisplayModel* dm) { return Rect(Point(), dm->GetViewPort().Size()); };
     auto paintBand = [ctx](Rect clip, Vec<Rect>& rects) {
@@ -759,13 +663,3 @@ void PaintKeyboardTextCaret(MainWindow* win, gp::PaintCtx* ctx) {
     auto paintBar = [ctx](Rect bar) { CanvasFillRects(ctx, &bar, 1, kCaretBarCol, 255, 0); };
     PaintTextCaret(win, getClip, paintBand, paintBar);
 }
-#else
-void PaintKeyboardTextCaret(MainWindow* win, Gfx* gfx) {
-    auto getClip = [win](DisplayModel*) { return win->canvasRc; };
-    auto paintBand = [gfx](Rect clip, Vec<Rect>& rects) {
-        PaintTransparentRectangles(gfx, clip, rects, kCaretBandCol, kCaretBandAlpha, 1, false);
-    };
-    auto paintBar = [gfx](Rect bar) { gfx->FillRect(bar, kCaretBarCol); };
-    PaintTextCaret(win, getClip, paintBand, paintBar);
-}
-#endif

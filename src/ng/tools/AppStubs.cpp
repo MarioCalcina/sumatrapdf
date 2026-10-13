@@ -220,9 +220,7 @@ bool ApplyReadAloudVoiceFromSettings() {
     return false;
 }
 
-#if OS_DARWIN
 // gui/NativeWindow_mac.mm is app-target only; Theme.cpp's System theme asks it
 bool AppShellSystemIsDark() {
     return false;
 }
-#endif

@@ -6,10 +6,6 @@
 #include "base/GuessFileType.h"
 #include "base/Pixmap.h"
 
-#ifdef _MSC_VER
-#pragma warning(disable : 4611) // interaction between '_setjmp' and C++ object destruction is non-portable
-#endif
-
 extern "C" {
 #include "mupdf/fitz.h"
 #include "../../ext/mupdf/source/fitz/color-imp.h"
@@ -21,24 +17,9 @@ extern "C" {
 #include "JxlReader.h"
 #include "WebpReader.h"
 
-#if OS_LINUX
-#include <gdk-pixbuf/gdk-pixbuf.h>
-#elif OS_DARWIN
 #include "base/MacTypesHide.h"
 #include <ImageIO/ImageIO.h>
 #include "base/MacTypesShow.h"
-#endif
-
-#if OS_WIN
-#include "base/ScopedWin.h"
-#include "base/Win.h"
-#include "base/GdiPlusUtil.h"
-
-#if COMPILER_MSVC
-#pragma warning(disable : 4668)
-#endif
-#include <wincodec.h>
-#endif
 
 #include "ImageReader.h"
 
@@ -569,13 +550,9 @@ Pixmap* PixmapFromDataFz(Str d) {
     // WebP with an ICCP chunk: mupdf applies the profile. Plain WebP stays on
     // the faster libwebp path in ImageReader_win / webp::PixmapFromData.
     bool webpIcc = FindWebpChunk(d, "ICCP", icc);
-#if defined(SUMATRA_NG)
     FileType kind = GuessFileTypeFromData(d);
     bool useFz = kind == FileType::Tiff || kind == FileType::Gif;
     if (jpegOrJp2 || webpIcc || useFz) {
-#else
-    if (jpegOrJp2 || webpIcc) {
-#endif
         result = PixmapFromImageData(ctx, data, n);
     }
 
@@ -584,7 +561,6 @@ Pixmap* PixmapFromDataFz(Str d) {
     return result;
 }
 
-#if !OS_WIN
 static Pixmap* PixmapFromDataFzAny(Str d) {
     if (len(d) <= 0 || len(d) > INT_MAX) {
         return nullptr;
@@ -597,7 +573,6 @@ static Pixmap* PixmapFromDataFzAny(Str d) {
     fz_drop_context_windows(ctx);
     return result;
 }
-#endif
 
 // adapted from http://cpansearch.perl.org/src/RJRAY/Image-Size-3.230/lib/Image/Size.pm
 // Cheap size probe (header parse, else full decode). Returns empty Size on failure.
@@ -622,385 +597,6 @@ Size ImageSizeFromData(Str d) {
     }
     return result;
 }
-
-#if OS_WIN
-
-using Gdiplus::Bitmap;
-using Gdiplus::BitmapData;
-using Gdiplus::Ok;
-using Gdiplus::Status;
-
-// WebP / JXL / HEIC/AVIF via our dedicated decoders (not GDI+/WIC).
-static Pixmap* PixmapFromExtFormatsData(Str bmpData, FileType kind) {
-    if (FileType::Webp == kind) {
-        Pixmap* px = webp::PixmapFromData(bmpData);
-        if (px) {
-            return px;
-        }
-    }
-    if (FileType::Jxl == kind) {
-        Pixmap* px = jxl::PixmapFromData(bmpData);
-        if (px) {
-            return px;
-        }
-    }
-    if (FileType::Heic == kind || FileType::Avif == kind) {
-        return PixmapFromAvifData(bmpData);
-    }
-    return nullptr;
-}
-
-static Bitmap* WICFrameToBitmap(IWICImagingFactory* pFactory, IWICBitmapFrameDecode* srcFrame) {
-    if (!pFactory || !srcFrame) {
-        return nullptr;
-    }
-    HRESULT hr;
-
-#define HR(hr) \
-    if (FAILED(hr)) return nullptr;
-    ScopedComPtr<IWICFormatConverter> pConverter;
-
-    int orientation = 0;
-    ScopedComPtr<IWICMetadataQueryReader> pMetadataReader;
-    hr = srcFrame->GetMetadataQueryReader(&pMetadataReader);
-    if (SUCCEEDED(hr)) {
-        PROPVARIANT variant;
-        PropVariantInit(&variant);
-        hr = pMetadataReader->GetMetadataByName(L"/app1/ifd/{ushort=274}", &variant);
-        if (SUCCEEDED(hr)) {
-            orientation = (int)variant.uintVal;
-        }
-    }
-
-    HR(pFactory->CreateFormatConverter(&pConverter));
-    HR(pConverter->Initialize(srcFrame, GUID_WICPixelFormat32bppBGRA, WICBitmapDitherTypeNone, nullptr, 0.f,
-                              WICBitmapPaletteTypeCustom));
-
-    uint w, h;
-    HR(pConverter->GetSize(&w, &h));
-    if (w == 0 || h == 0 || w > (uint)INT_MAX || h > (uint)INT_MAX) {
-        return nullptr;
-    }
-    if ((i64)w * (i64)h * 4 > kMaxDecodedPixmapBytes) {
-        return nullptr;
-    }
-    double xres, yres;
-    HR(pConverter->GetResolution(&xres, &yres));
-    Bitmap bmp((INT)w, (INT)h, PixelFormat32bppARGB);
-    Gdiplus::Rect bmpRect(0, 0, (INT)w, (INT)h);
-    BitmapData bmpData;
-    Status ok = bmp.LockBits(&bmpRect, Gdiplus::ImageLockModeWrite, PixelFormat32bppARGB, &bmpData);
-    if (ok != Ok) {
-        return nullptr;
-    }
-    size_t bufBytes = (size_t)bmpData.Stride * (size_t)h;
-    if (bufBytes > UINT_MAX) {
-        bmp.UnlockBits(&bmpData);
-        return nullptr;
-    }
-    HR(pConverter->CopyPixels(nullptr, bmpData.Stride, (UINT)bufBytes, (BYTE*)bmpData.Scan0));
-    bmp.UnlockBits(&bmpData);
-    bmp.SetResolution((float)xres, (float)yres);
-#undef HR
-    ApplyExifOrientation(&bmp, orientation);
-    return bmp.Clone(0, 0, (INT)bmp.GetWidth(), (INT)bmp.GetHeight(), PixelFormat32bppARGB);
-}
-
-static Bitmap* WICDecodeImageFromStream(IStream* stream) {
-    ScopedCom com;
-
-#define HR(hr) \
-    if (FAILED(hr)) return nullptr;
-    ScopedComPtr<IWICImagingFactory> pFactory;
-    if (!pFactory.Create(CLSID_WICImagingFactory)) {
-        return nullptr;
-    }
-    ScopedComPtr<IWICBitmapDecoder> pDecoder;
-    HR(pFactory->CreateDecoderFromStream(stream, nullptr, WICDecodeMetadataCacheOnDemand, &pDecoder));
-    ScopedComPtr<IWICBitmapFrameDecode> srcFrame;
-    HR(pDecoder->GetFrame(0, &srcFrame));
-#undef HR
-    return WICFrameToBitmap(pFactory, srcFrame);
-}
-
-static void MaybeFlipBitmap(Bitmap* bmp) {
-    u8 buf[64] = {}; // empirically is 26
-
-    // propSize is derived from the image's EXIF Orientation field, so a crafted
-    // TIFF can make it exceed buf (e.g. many Orientation values). GetPropertyItem
-    // would then write propSize bytes past the fixed stack buffer - a stack
-    // overflow. The ReportIf here used to be diagnostic-only and did not stop it,
-    // so reject an oversized property before calling GDI+.
-    UINT propSize = bmp->GetPropertyItemSize(PropertyTagOrientation);
-    if (propSize == 0 || propSize > dimof(buf)) {
-        bmp->GetLastStatus(); // clear last status
-        return;
-    }
-
-    auto status = bmp->GetPropertyItem(PropertyTagOrientation, propSize, (Gdiplus::PropertyItem*)buf);
-    if (status != Status::Ok) {
-        bmp->GetLastStatus(); // clear last status
-        return;
-    }
-    auto* propItem = (Gdiplus::PropertyItem*)buf;
-    // guard against a malformed/short property before reading the first value
-    if (!propItem->value || propItem->length < sizeof(u16)) {
-        return;
-    }
-    u16* propValPtr = (u16*)propItem->value;
-    ApplyExifOrientation(bmp, propValPtr[0]);
-}
-
-static Bitmap* DecodeWithWIC(Str bmpData) {
-    auto* strm = CreateStreamFromData(bmpData);
-    ScopedComPtr<IStream> stream(strm);
-    if (!stream) {
-        return nullptr;
-    }
-    return WICDecodeImageFromStream(stream);
-}
-
-static Bitmap* DecodeWithGdiplus(Str bmpData) {
-    auto* strm = CreateStreamFromData(bmpData);
-    ScopedComPtr<IStream> stream(strm);
-    if (!stream) {
-        return nullptr;
-    }
-    Bitmap* bmp = Gdiplus::Bitmap::FromStream(stream);
-    if (!bmp) {
-        return nullptr;
-    }
-    if (bmp->GetLastStatus() != Gdiplus::Ok) {
-        delete bmp;
-        return nullptr;
-    }
-    MaybeFlipBitmap(bmp);
-    return bmp;
-}
-
-static Pixmap* PixmapFromWic(Str bmpData) {
-    Gdiplus::Bitmap* bmp = DecodeWithWIC(bmpData);
-    if (!bmp) {
-        return nullptr;
-    }
-    Pixmap* px = PixmapFromGdiplus(bmp);
-    delete bmp;
-    return px;
-}
-
-// Decode an image to a single (first-frame) Pixmap via Windows paths (TGA, ext formats, GDI+/WIC).
-static Pixmap* PixmapFromDataWin(Str bmpData) {
-    FileType kind = GuessFileTypeFromData(bmpData);
-    if (FileType::Tga == kind) {
-        Pixmap* px = tga::PixmapFromData(bmpData);
-        if (px) {
-            return px;
-        }
-    }
-
-    // HEIC/AVIF: in Debug, prefer heicdec so we exercise our decoder; fall back
-    // to WIC. In Release, try WIC first — src/tools/bench_image (Release x64) found
-    // the OS HEIF codec via WIC faster than heicdec (~1.2x AVIF / ~2x HEIC when
-    // the Windows codec is installed), then fall back to heicdec.
-    if (FileType::Heic == kind || FileType::Avif == kind) {
-#if IS_DEBUG
-        Pixmap* px = PixmapFromAvifData(bmpData);
-        if (px) {
-            return px;
-        }
-        return PixmapFromWic(bmpData);
-#else
-        Pixmap* px = PixmapFromWic(bmpData);
-        if (px) {
-            return px;
-        }
-        return PixmapFromAvifData(bmpData);
-#endif
-    }
-
-    Pixmap* px = PixmapFromExtFormatsData(bmpData, kind);
-    if (px) {
-        return px;
-    }
-
-    // remaining formats (png, bmp, jxr, tiff, gif, ...) decode via GDI+/WIC. tryGdiplusFirst
-    // for potentially multi-image formats (WICDecodeImageFromStream is single-frame). The
-    // (first) frame is copied out into a uniform Pixmap.
-    bool tryGdiplusFirst = (FileType::Tiff == kind) || (FileType::Gif == kind);
-    Gdiplus::Bitmap* bmp = nullptr;
-    if (tryGdiplusFirst) {
-        bmp = DecodeWithGdiplus(bmpData);
-    }
-    if (!bmp) {
-        bmp = DecodeWithWIC(bmpData);
-    }
-    if (!bmp && !tryGdiplusFirst) {
-        bmp = DecodeWithGdiplus(bmpData);
-    }
-    if (!bmp) {
-        return nullptr;
-    }
-    px = PixmapFromGdiplus(bmp);
-    delete bmp;
-    return px;
-}
-
-constexpr UINT kMaxImageFrames = 1000;
-
-// All frames from a WIC decoder (ICO sizes, and a fallback if GDI+ multi-frame fails).
-static Vec<Pixmap*> PixmapsFromWicFrames(Str bmpData) {
-    Vec<Pixmap*> res;
-    auto* strm = CreateStreamFromData(bmpData);
-    ScopedComPtr<IStream> stream(strm);
-    if (!stream) {
-        return res;
-    }
-    ScopedCom com;
-    ScopedComPtr<IWICImagingFactory> pFactory;
-    if (!pFactory.Create(CLSID_WICImagingFactory)) {
-        return res;
-    }
-    ScopedComPtr<IWICBitmapDecoder> pDecoder;
-    HRESULT hr = pFactory->CreateDecoderFromStream(stream, nullptr, WICDecodeMetadataCacheOnDemand, &pDecoder);
-    if (FAILED(hr)) {
-        return res;
-    }
-    UINT nFrames = 0;
-    hr = pDecoder->GetFrameCount(&nFrames);
-    if (FAILED(hr) || nFrames == 0) {
-        return res;
-    }
-    nFrames = std::min(nFrames, kMaxImageFrames);
-    i64 decodedBytes = 0;
-    for (UINT i = 0; i < nFrames; i++) {
-        ScopedComPtr<IWICBitmapFrameDecode> srcFrame;
-        if (FAILED(pDecoder->GetFrame(i, &srcFrame))) {
-            break;
-        }
-        Bitmap* bmp = WICFrameToBitmap(pFactory, srcFrame);
-        if (!bmp) {
-            continue;
-        }
-        Pixmap* px = PixmapFromGdiplus(bmp);
-        delete bmp;
-        if (!px) {
-            continue;
-        }
-        if (!AppendDecodedPixmap(res, px, decodedBytes)) {
-            break;
-        }
-    }
-    return res;
-}
-
-static Vec<Pixmap*> PixmapsFromMultiFrameData(Str bmpData, FileType kind) {
-    Vec<Pixmap*> res;
-    Gdiplus::Bitmap* bmp = DecodeWithGdiplus(bmpData);
-    if (!bmp) {
-        bmp = DecodeWithWIC(bmpData);
-    }
-    if (!bmp) {
-        return res;
-    }
-    const GUID* dim = (FileType::Tiff == kind) ? &Gdiplus::FrameDimensionPage : &Gdiplus::FrameDimensionTime;
-    UINT nFrames = std::min(bmp->GetFrameCount(dim), kMaxImageFrames);
-    i64 decodedBytes = 0;
-    for (UINT i = 0; i < nFrames; i++) {
-        if (bmp->SelectActiveFrame(dim, i) != Gdiplus::Ok) {
-            break;
-        }
-        Pixmap* px = PixmapFromGdiplus(bmp);
-        if (px && !AppendDecodedPixmap(res, px, decodedBytes)) {
-            break;
-        }
-    }
-    delete bmp;
-    return res;
-}
-
-// Prefer the fastest decoder per format (see src/tools/bench_image, Release x64):
-//   JPEG/JP2 → MuPDF/libjpeg-turbo (beats WIC/GDI+)
-//   WebP     → libwebp (beats WIC; GDI+ often missing)
-//   HEIC/AVIF→ Debug: heicdec then WIC; Release: WIC then heicdec
-// Other formats: TGA / JXL / GDI+/WIC via PixmapFromDataWin.
-// Decode image bytes to a single (first-frame) Pixmap. Caller owns it (FreePixmap).
-// Windows: JPEG→turbo, WebP→libwebp, JXL→jxldec; HEIC/AVIF→heicdec then WIC in
-// Debug, WIC then heicdec in Release; else TGA/GDI+/WIC. POSIX: MuPDF for now.
-Pixmap* PixmapFromData(Str bmpData) {
-    if (ImageDecodedPixmapWouldBeHuge(bmpData)) {
-        return nullptr;
-    }
-    Pixmap* px = PixmapFromDataFz(bmpData);
-    if (px) {
-        // ICC WebP comes from mupdf, which does not apply EXIF orientation
-        if (GuessFileTypeFromData(bmpData) == FileType::Webp) {
-            px = PixmapApplyExifOrientation(px, WebpExifOrientation(bmpData));
-        }
-        return px;
-    }
-    FileType kind = GuessFileTypeFromData(bmpData);
-    if (FileType::Webp == kind) {
-        px = webp::PixmapFromData(bmpData);
-        if (px) {
-            return px;
-        }
-    }
-    return PixmapFromDataWin(bmpData);
-}
-
-// Multi-page TIFF / animated GIF / ICO: Windows multi-frame path first. Everything
-// else is a single Pixmap via PixmapFromData (native codec then Win).
-// One Pixmap per frame (multi-page TIFF / animated GIF / ICO yield >1); caller owns each.
-Vec<Pixmap*> PixmapsFromData(Str bmpData) {
-    FileType kind = GuessFileTypeFromData(bmpData);
-    if (FileType::Tiff == kind || FileType::Gif == kind) {
-        Vec<Pixmap*> res = PixmapsFromMultiFrameData(bmpData, kind);
-        if (len(res) > 0) {
-            return res;
-        }
-    }
-    if (FileType::Ico == kind) {
-        Vec<Pixmap*> res = PixmapsFromWicFrames(bmpData);
-        if (len(res) > 0) {
-            return res;
-        }
-    }
-
-    Vec<Pixmap*> res;
-    Pixmap* px = PixmapFromData(bmpData);
-    if (px) {
-        VecAppend(res, px);
-    }
-    return res;
-}
-
-// Load path into a RenderedBitmap (Windows); nullptr on POSIX for now.
-RenderedBitmap* LoadRenderedBitmap(Str path) {
-    if (len(path) == 0) {
-        return nullptr;
-    }
-    Str data = file::ReadFile(path);
-    if (len(data) == 0) {
-        return nullptr;
-    }
-
-    Gdiplus::Bitmap* bmp = NewGdiplusBitmapFromPixmap(PixmapFromData(data));
-    str::Free(data);
-    if (!bmp) {
-        return nullptr;
-    }
-
-    HBITMAP hbmp = nullptr;
-    RenderedBitmap* rendered = nullptr;
-    if (bmp->GetHBITMAP((Gdiplus::ARGB)Gdiplus::Color::White, &hbmp) == Gdiplus::Ok) {
-        rendered = new RenderedBitmap(hbmp, Size((int)bmp->GetWidth(), (int)bmp->GetHeight()));
-    }
-    delete bmp;
-
-    return rendered;
-}
-
-#else
 
 // ng: the POSIX decoders. mupdf covers png / jpeg / gif / bmp / tiff / pnm;
 // the formats it does not know go to the dedicated decoders, in the order
@@ -1074,178 +670,6 @@ static Vec<Pixmap*> PixmapsFromTiffData(Str data) {
     fz_drop_context_windows(ctx);
     return res;
 }
-
-#if OS_WASM
-static int GifSubBlocksEnd(const ByteReader& r, int offset) {
-    while (r.CanRead(offset, 1)) {
-        int size = r.UInt8(offset++);
-        if (size == 0) {
-            return offset;
-        }
-        if (!r.CanRead(offset, size)) {
-            return -1;
-        }
-        offset += size;
-    }
-    return -1;
-}
-
-static void ClearGifRect(Pixmap* canvas, Rect rect) {
-    rect = rect.Intersect(Rect(0, 0, canvas->width, canvas->height));
-    for (int y = rect.y; y < rect.y + rect.dy; y++) {
-        memset(canvas->data + y * canvas->stride + rect.x * 4, 0, (size_t)rect.dx * 4);
-    }
-}
-
-static void CompositeGifFrame(Pixmap* canvas, const Pixmap* frame, int left, int top) {
-    for (int y = 0; y < frame->height; y++) {
-        int dstY = top + y;
-        if (dstY < 0 || dstY >= canvas->height) {
-            continue;
-        }
-        const u8* src = frame->data + y * frame->stride;
-        for (int x = 0; x < frame->width; x++, src += 4) {
-            int dstX = left + x;
-            if (dstX < 0 || dstX >= canvas->width) {
-                continue;
-            }
-            u8 alpha = frame->hasAlpha ? src[3] : 255;
-            if (alpha == 0) {
-                continue;
-            }
-            u8* dst = canvas->data + dstY * canvas->stride + dstX * 4;
-            if (alpha == 255) {
-                memcpy(dst, src, 4);
-                dst[3] = 255;
-                continue;
-            }
-            u32 inverse = 255 - alpha;
-            dst[0] = (u8)(src[0] + ((u32)dst[0] * inverse + 127) / 255);
-            dst[1] = (u8)(src[1] + ((u32)dst[1] * inverse + 127) / 255);
-            dst[2] = (u8)(src[2] + ((u32)dst[2] * inverse + 127) / 255);
-            dst[3] = (u8)(alpha + ((u32)dst[3] * inverse + 127) / 255);
-        }
-    }
-}
-
-static Vec<Pixmap*> PixmapsFromGifData(Str data) {
-    Vec<Pixmap*> res;
-    ByteReader r(data);
-    if (len(data) < 13 || (!str::StartsWith(data, StrL("GIF87a")) && !str::StartsWith(data, StrL("GIF89a")))) {
-        return res;
-    }
-    int canvasWidth = r.UInt16LE(6);
-    int canvasHeight = r.UInt16LE(8);
-    int packed = r.UInt8(10);
-    int globalTableBytes = (packed & 0x80) ? 3 << ((packed & 7) + 1) : 0;
-    int prefixEnd = 13 + globalTableBytes;
-    if (canvasWidth <= 0 || canvasHeight <= 0 || !r.CanRead(0, prefixEnd) ||
-        (i64)canvasWidth * canvasHeight * 4 > kMaxDecodedPixmapBytes) {
-        return res;
-    }
-
-    Pixmap* canvas = AllocPixmap(canvasWidth, canvasHeight, PixmapFormat::BGRA8, true);
-    if (!canvas) {
-        return res;
-    }
-    memset(canvas->data, 0, (size_t)canvas->stride * canvas->height);
-    canvas->hasAlpha = true;
-    Pixmap* restore = nullptr;
-    Rect previousRect;
-    int previousDisposal = 0;
-    int gceStart = -1;
-    int gceEnd = -1;
-    int disposal = 0;
-    int offset = prefixEnd;
-    i64 decodedBytes = 0;
-    while (r.CanRead(offset, 1) && len(res) < 1000) {
-        int marker = r.UInt8(offset);
-        if (marker == 0x3b) {
-            break;
-        }
-        if (marker == 0x21) {
-            if (!r.CanRead(offset, 2)) {
-                break;
-            }
-            int end = GifSubBlocksEnd(r, offset + 2);
-            if (end < 0) {
-                break;
-            }
-            if (r.UInt8(offset + 1) == 0xf9 && r.CanRead(offset, 8) && r.UInt8(offset + 2) == 4) {
-                gceStart = offset;
-                gceEnd = end;
-                disposal = (r.UInt8(offset + 3) >> 2) & 7;
-            } else if (r.UInt8(offset + 1) == 0x01) {
-                gceStart = gceEnd = -1;
-                disposal = 0;
-            }
-            offset = end;
-            continue;
-        }
-        if (marker != 0x2c || !r.CanRead(offset, 10)) {
-            break;
-        }
-        int left = r.UInt16LE(offset + 1);
-        int top = r.UInt16LE(offset + 3);
-        int width = r.UInt16LE(offset + 5);
-        int height = r.UInt16LE(offset + 7);
-        int imagePacked = r.UInt8(offset + 9);
-        int localTableBytes = (imagePacked & 0x80) ? 3 << ((imagePacked & 7) + 1) : 0;
-        int imageData = offset + 10 + localTableBytes;
-        if (width <= 0 || height <= 0 || !r.CanRead(imageData, 1)) {
-            break;
-        }
-        int imageEnd = GifSubBlocksEnd(r, imageData + 1);
-        if (imageEnd < 0) {
-            break;
-        }
-
-        if (previousDisposal == 2) {
-            ClearGifRect(canvas, previousRect);
-        } else if (previousDisposal == 3 && restore) {
-            memcpy(canvas->data, restore->data, (size_t)canvas->stride * canvas->height);
-        }
-        FreePixmap(restore);
-        restore = disposal == 3 ? ClonePixmap(canvas) : nullptr;
-
-        ByteWriterLE one(prefixEnd + (gceEnd - gceStart) + (imageEnd - offset) + 1);
-        one.d.Append(Str(data.s, 6));
-        one.Write16((u16)width);
-        one.Write16((u16)height);
-        one.d.Append(Str(data.s + 10, prefixEnd - 10));
-        if (gceStart >= 0) {
-            one.d.Append(Str(data.s + gceStart, gceEnd - gceStart));
-        }
-        one.Write8(0x2c);
-        one.Write16(0);
-        one.Write16(0);
-        one.Write16((u16)width);
-        one.Write16((u16)height);
-        one.Write8((u8)imagePacked);
-        one.d.Append(Str(data.s + offset + 10, imageEnd - (offset + 10)));
-        one.Write8(0x3b);
-
-        Pixmap* frame = PixmapFromData(one.AsByteSlice());
-        if (!frame) {
-            break;
-        }
-        CompositeGifFrame(canvas, frame, left, top);
-        FreePixmap(frame);
-        Pixmap* snapshot = ClonePixmap(canvas);
-        if (!snapshot || !AppendDecodedPixmap(res, snapshot, decodedBytes)) {
-            break;
-        }
-        previousRect = Rect(left, top, width, height);
-        previousDisposal = disposal;
-        gceStart = gceEnd = -1;
-        disposal = 0;
-        offset = imageEnd;
-    }
-    FreePixmap(restore);
-    FreePixmap(canvas);
-    return res;
-}
-#endif
 
 static Vec<Pixmap*> PixmapsFromIcoData(Str data) {
     Vec<Pixmap*> res;
@@ -1351,94 +775,6 @@ static Vec<Pixmap*> PixmapsFromIcoData(Str data) {
     return res;
 }
 
-#if OS_LINUX
-static Pixmap* PixmapFromGdkPixbuf(GdkPixbuf* src) {
-    if (!src) {
-        return nullptr;
-    }
-    int w = gdk_pixbuf_get_width(src);
-    int h = gdk_pixbuf_get_height(src);
-    int channels = gdk_pixbuf_get_n_channels(src);
-    bool hasAlpha = gdk_pixbuf_get_has_alpha(src);
-    Pixmap* dst = AllocPixmap(w, h, PixmapFormat::BGRA8, true);
-    if (!dst) {
-        return nullptr;
-    }
-    dst->hasAlpha = hasAlpha;
-    const u8* srcData = gdk_pixbuf_get_pixels(src);
-    int srcStride = gdk_pixbuf_get_rowstride(src);
-    for (int y = 0; y < h; y++) {
-        const u8* s = srcData + ((size_t)y * srcStride);
-        u8* d = dst->data + ((size_t)y * dst->stride);
-        for (int x = 0; x < w; x++) {
-            u32 a = hasAlpha && channels > 3 ? s[3] : 255;
-            d[0] = (u8)(((u32)s[2] * a + 127) / 255);
-            d[1] = (u8)(((u32)s[1] * a + 127) / 255);
-            d[2] = (u8)(((u32)s[0] * a + 127) / 255);
-            d[3] = (u8)a;
-            s += channels;
-            d += 4;
-        }
-    }
-    return dst;
-}
-
-static Vec<Pixmap*> PixmapsFromGifData(Str data) {
-    Vec<Pixmap*> res;
-    GError* error = nullptr;
-    GdkPixbufLoader* loader = gdk_pixbuf_loader_new_with_type("gif", &error);
-    if (!loader || !gdk_pixbuf_loader_write(loader, (const guchar*)data.s, (gsize)len(data), &error) ||
-        !gdk_pixbuf_loader_close(loader, &error)) {
-        if (error) {
-            g_error_free(error);
-        }
-        if (loader) {
-            g_object_unref(loader);
-        }
-        return res;
-    }
-
-    G_GNUC_BEGIN_IGNORE_DEPRECATIONS
-    GdkPixbufAnimation* animation = gdk_pixbuf_loader_get_animation(loader);
-    GTimeVal time{};
-    GdkPixbufAnimationIter* iter = animation ? gdk_pixbuf_animation_get_iter(animation, &time) : nullptr;
-    FileTypeInfo info = GuessFileInfoFromData(data);
-    int nFrames = std::min(std::max(info.nImages, 1), 1000);
-    FreeFileTypeInfo(&info);
-    i64 decodedBytes = 0;
-    for (int i = 0; iter && i < nFrames; i++) {
-        GdkPixbuf* src = gdk_pixbuf_animation_iter_get_pixbuf(iter);
-        Pixmap* frame = PixmapFromGdkPixbuf(src);
-        if (!frame) {
-            break;
-        }
-        if (!AppendDecodedPixmap(res, frame, decodedBytes)) {
-            break;
-        }
-        if (i + 1 == nFrames) {
-            break;
-        }
-
-        int delay = gdk_pixbuf_animation_iter_get_delay_time(iter);
-        if (delay < 0) {
-            break;
-        }
-        g_time_val_add(&time, (std::max(delay, 1) + 1) * 1000);
-        if (!gdk_pixbuf_animation_iter_advance(iter, &time)) {
-            break;
-        }
-    }
-    if (iter) {
-        g_object_unref(iter);
-    }
-    G_GNUC_END_IGNORE_DEPRECATIONS
-    g_object_unref(loader);
-    return res;
-}
-
-#endif
-
-#if OS_DARWIN
 static Pixmap* PixmapFromCgImage(CGImageRef image) {
     if (!image) {
         return nullptr;
@@ -1500,7 +836,6 @@ static Vec<Pixmap*> PixmapsFromImageIo(Str data) {
     CFRelease(source);
     return result;
 }
-#endif
 
 Vec<Pixmap*> PixmapsFromData(Str bmpData) {
     FileType kind = GuessFileTypeFromData(bmpData);
@@ -1516,21 +851,12 @@ Vec<Pixmap*> PixmapsFromData(Str bmpData) {
             return frames;
         }
     }
-#if OS_LINUX || OS_WASM
-    if (kind == FileType::Gif) {
-        Vec<Pixmap*> frames = PixmapsFromGifData(bmpData);
-        if (len(frames) > 0) {
-            return frames;
-        }
-    }
-#elif OS_DARWIN
     if (kind == FileType::Gif) {
         Vec<Pixmap*> frames = PixmapsFromImageIo(bmpData);
         if (len(frames) > 0) {
             return frames;
         }
     }
-#endif
     Vec<Pixmap*> res;
     Pixmap* px = PixmapFromData(bmpData);
     if (px) {
@@ -1543,4 +869,3 @@ RenderedBitmap* LoadRenderedBitmap(Str) {
     return nullptr;
 }
 
-#endif

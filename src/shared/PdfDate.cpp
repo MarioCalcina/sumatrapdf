@@ -10,15 +10,9 @@ TempStr FormatPdfDateLocalTimeTemp(time_t secs) {
         return {};
     }
     struct tm tm;
-#if OS_WIN
-    if (localtime_s(&tm, &secs) != 0) {
-        return {};
-    }
-#else
     if (!localtime_r(&secs, &tm)) {
         return {};
     }
-#endif
     char buf[64];
     size_t n = strftime(buf, sizeof buf, "%Y-%m-%d %H:%M", &tm);
     return str::DupTemp(Str(buf, (int)n));

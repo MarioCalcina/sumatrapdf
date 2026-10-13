@@ -3,7 +3,6 @@
 
 #include "base/Base.h"
 #include "base/File.h"
-#include "base/WinDynCalls.h"
 #include "base/DbgHelpDyn.h"
 
 // must be last due to assert() over-write
@@ -62,28 +61,16 @@ bool GumboHtmlParser_UnitTest();
 bool DisplayMode_UnitTestZoom();
 extern bool Accelerators_UnitTestFolderNavIsSafe();
 extern bool NavFiles_UnitTestHidden();
-#if !OS_WIN
 extern bool MeasurementSystem_UnitTests();
 extern bool Translations_UnitTestLocales();
 extern bool DpiPosix_UnitTests();
-#if !OS_WASM
 extern bool AppToolsPosix_UnitTests();
-#endif
-#endif
 extern bool Accelerators_UnitTestTreeTakesLetters();
 extern bool Accelerators_UnitTestCreateAnnotEdit();
 extern bool Accelerators_UnitTestCustomShortcutShown();
 #endif
-#if OS_WIN
-extern void ClipboardImageTest();
-extern void WinUtilTest();
-#endif
-#if OS_POSIX
 extern void FileWatcher_UnitTests();
-#if !OS_WASM
 extern bool PlatformFontPosix_UnitTests();
-#endif
-#endif
 
 // ng: test data lives in docs/test/. Works when run from the repo root and
 // when run from out/<cfg>/, where the exe lives
@@ -95,34 +82,6 @@ TempStr TestDocPathTemp(Str relPath) {
     TempStr dir = path::JoinTemp(GetSelfExeDirTemp(), StrL("../.."));
     return path::JoinTemp(dir, relPath);
 }
-
-#if OS_WIN
-static void PrintStdout(Str s) {
-    if (str::IsNull(s)) {
-        return;
-    }
-    printf("%.*s", s.len, s.s);
-}
-
-static LONG WINAPI ForAiCrashHandler(EXCEPTION_POINTERS* exceptionInfo) {
-    printf("test_util crash\n");
-    str::Builder s;
-    dbghelp::GetExceptionInfo(s, exceptionInfo);
-    PrintStdout(ToStr(s));
-    fflush(stdout);
-    ExitProcess(7);
-    return EXCEPTION_EXECUTE_HANDLER;
-}
-
-// -for-ai: print assertion and crash callstacks to stdout instead of breaking
-// into a debugger, so a script can report the failure
-static void SetupForAi() {
-    if (!dbghelp::Initialize(ToWStrTemp(GetSelfExeDirTemp()), true)) {
-        printf("failed to initialize dbghelp symbols\n");
-    }
-    SetUnhandledExceptionFilter(ForAiCrashHandler);
-}
-#endif
 
 int main(int argc, char** argv) {
     bool forAi = false;
@@ -137,13 +96,6 @@ int main(int argc, char** argv) {
         utassert_set_for_ai(true);
     }
     printf("Running unit tests\n");
-
-    InitDynCalls();
-#if OS_WIN
-    if (forAi) {
-        SetupForAi();
-    }
-#endif
 
     AppendStoreTest();
     ArchiveTest();
@@ -197,28 +149,16 @@ int main(int argc, char** argv) {
     utassert(GumboHtmlParser_UnitTest());
     utassert(DisplayMode_UnitTestZoom());
     utassert(NavFiles_UnitTestHidden());
-#if !OS_WIN
     utassert(MeasurementSystem_UnitTests());
     utassert(Translations_UnitTestLocales());
     utassert(DpiPosix_UnitTests());
-#if !OS_WASM
     utassert(AppToolsPosix_UnitTests());
-#endif
-#endif
     utassert(Accelerators_UnitTestTreeTakesLetters());
     utassert(Accelerators_UnitTestCreateAnnotEdit());
     utassert(Accelerators_UnitTestCustomShortcutShown());
 #endif
-#if OS_WIN
-    ClipboardImageTest();
-    WinUtilTest();
-#endif
-#if OS_POSIX
     FileWatcher_UnitTests();
-#if !OS_WASM
     utassert(PlatformFontPosix_UnitTests());
-#endif
-#endif
 
     int res = utassert_print_results();
     DestroyTempArena();

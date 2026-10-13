@@ -10,9 +10,6 @@
 #include "VirtKeys.h"
 #include "base/UITask.h"
 #include "base/File.h"
-#if OS_WASM
-#include <emscripten/emscripten.h>
-#endif
 
 #include "gui/UIModels.h"
 #include "base/Pixmap.h"
@@ -45,7 +42,6 @@
 #include "Tabs.h"
 #include "gui/NativeFileDlg.h"
 #include "gui/AppShell.h"
-#include "gui/WasmBridge.h"
 #include "gui/GpuiTheme.h"
 #include "gui/DocCanvas.h"
 #include "gui/TabsUI.h"
@@ -71,9 +67,7 @@
 #include "gui/Sidebar.h"
 #include "gui/NavFilesUI.h"
 #include "gui/ToolWindow.h"
-#if !OS_WIN && !OS_WASM
 #include "gui/ToolWindowPlat.h"
-#endif
 #include "HomePage.h"
 #include "DocumentProperties.h"
 #include "TabGroupsManage.h"
@@ -212,9 +206,6 @@ static gp::El* BuildMenuBar(ShellView* self, gp::Ctx* cx);
 
 // gap in pixels between top of caption and tabs; this area allows dragging the window
 constexpr int kCaptionTopPadding = 8;
-// orig's kFrameBorderSize: with the caption the frame keeps a border around
-// everything it lays out (not when maximized or fullscreen)
-constexpr int kFrameBorderSize = 1;
 // orig's capTabsRow1: the tab strip is 2 px taller in the one-row caption
 constexpr int kCaptionTabBarDy = kTabBarDy + 2;
 constexpr int kTabsButtonGapX = 32;
@@ -232,27 +223,19 @@ enum CaptionButtons {
 // has one that the frame's resize borders, snapping and the maximize button's
 // snap layouts work with (Windows), the port draws orig's caption in it
 static bool CanHaveTabsInTitlebar() {
-#if OS_WIN
-    return !gPluginMode;
-#elif OS_DARWIN
     // a full-size content view under AppKit's own window buttons
     return true;
-#else
-    return false;
-#endif
 }
 
 // macOS: room the caption leaves at the left for the traffic lights
 static int CaptionTrafficLightsDx() {
-    return OS_DARWIN ? (int)gpc::TitleBarLeftPad() : 0;
+    return (int)gpc::TitleBarLeftPad();
 }
 
 void AppShellSetClientTitleBar(MainWindow* win, bool on) {
     if (win && win->gpuiWin) {
         win->gpuiWin->opts.clientTitleBar = on;
-#if OS_DARWIN
         AppShellMacClientTitleBar(win, on);
-#endif
     }
 }
 
@@ -284,7 +267,7 @@ static int CaptionWinBtnDy(MainWindow* win, bool twoRow) {
 
 int AppShellFrameBorder(MainWindow* win) {
     // macOS draws the window's edge itself
-    return ShowCaption(win) && !win->isMaximized && !OS_DARWIN ? kFrameBorderSize : 0;
+    return 0;
 }
 
 static int CaptionDy(MainWindow* win, bool twoRow, bool tabsVisible) {
@@ -311,7 +294,7 @@ bool AppShellCaptionRects(MainWindow* win, Rect* menuOut, Rect* tabsOut, int* dy
         return true;
     }
     *menuOut = Rect{};
-    int tabsX = OS_DARWIN ? CaptionTrafficLightsDx() : border + kTabBarDy;
+    int tabsX = CaptionTrafficLightsDx();
     *tabsOut = Rect{tabsX, border + winBtn - kCaptionTabBarDy, win->tabsAvailDx, hasTabs ? kCaptionTabBarDy : 0};
     return true;
 }
@@ -382,23 +365,6 @@ static gp::El* CaptionButton(gp::Ctx* cx, int button, int clickId, int size) {
     return b;
 }
 
-#if OS_WIN
-// the icon's pixels are premultiplied BGRA, which is what gpui takes
-static gp::ImageLoadState AppIconLoad(gp::PaintApp* pa, void* user, gp::RenderImage** imgOut) {
-    static gp::RenderImage* img = nullptr;
-    static bool tried = false;
-    auto* px = (Pixmap*)user;
-    if (!tried) {
-        tried = true;
-        if (px->stride == px->width * 4) {
-            img = gp::RenderImageFromBgra(pa, px->data, px->width, px->height);
-        }
-    }
-    *imgOut = img;
-    return img ? gp::ImageLoadState::Ready : gp::ImageLoadState::Failed;
-}
-#endif
-
 // orig's CB_SYSTEM_MENU: the app icon; a click opens the window menu under it
 static gp::El* CaptionSystemMenuButton(ShellView* self, gp::Ctx* cx, int size) {
     MainWindow* win = self->win;
@@ -415,15 +381,7 @@ static gp::El* CaptionSystemMenuButton(ShellView* self, gp::Ctx* cx, int size) {
                     ->OnMouseDown(gp::Listen(cx, &ShellView::OnSystemMenuDown))
                     ->OnDragMove(gp::Listen(cx, &ShellView::OnSystemMenuDrag))
                     ->OnClick(gp::Listen(cx, &ShellView::OnSystemMenu));
-#if OS_WIN
-    if (Pixmap* px = AppShellAppIconPixmap(win)) {
-        float k = CanvasScale(win);
-        gp::ImageSource src = gp::ImageSource::FromCustom(AppIconLoad, px);
-        b->Child(gp::ImageEl(cx->a, src, GStrL(""))->W((float)px->width * k)->H((float)px->height * k)->Shrink0());
-    }
-#else
     (void)win;
-#endif
     return b;
 }
 
@@ -448,14 +406,9 @@ static void BuildCaption(ShellView* self, gp::Ctx* cx, gp::El* root, bool twoRow
                        ->ItemsEnd()
                        ->Bg(ToGpui(ThemeControlBackgroundColor()))
                        ->Click(gp::ClickWinCaption);
-#if OS_DARWIN
     // AppKit draws the window buttons here; the space around them drags the window
     int sysButtonsDx = CaptionTrafficLightsDx();
     row1->Child(gp::Div(cx->a)->W((float)sysButtonsDx)->H((float)winBtn)->Shrink0()->Click(gp::ClickWinCaption));
-#else
-    int sysButtonsDx = tabBtn + 3 * winBtn;
-    row1->Child(CaptionSystemMenuButton(self, cx, tabBtn));
-#endif
     gp::El* tabs = nullptr;
     if (twoRow) {
         row1->Child(
@@ -479,11 +432,6 @@ static void BuildCaption(ShellView* self, gp::Ctx* cx, gp::El* root, bool twoRow
         }
         row1->Child(gp::Div(cx->a)->W((float)kTabsButtonGapX)->H((float)winBtn)->Shrink0()->Click(gp::ClickWinCaption));
     }
-#if !OS_DARWIN
-    row1->Child(CaptionButton(cx, CB_MINIMIZE, gp::ClickWinMin, winBtn));
-    row1->Child(CaptionButton(cx, maximized ? CB_RESTORE : CB_MAXIMIZE, gp::ClickWinMax, winBtn));
-    row1->Child(CaptionButton(cx, CB_CLOSE, gp::ClickWinClose, winBtn));
-#endif
     root->Child(row1);
     if (twoRow && tabs) {
         root->Child(tabs);
@@ -850,11 +798,6 @@ void AppShellFocusFrame(MainWindow* win) {
     }
     gp::FocusHandleFocus(gw, win->shell->frameFocus);
     AppShellInvalidate(win);
-#if OS_WASM
-    // gpui's key listener is on the canvas element. Focusing the frame inside
-    // the window does not focus that element, so the keys never arrive.
-    WasmFocusCanvas();
-#endif
 }
 
 void AppShellQuit() {
@@ -863,14 +806,12 @@ void AppShellQuit() {
     }
 }
 
-#if !OS_WIN
 // ng: the Windows versions drive the native frame from NativeWindow.cpp.
 void AppShellSetFullScreen(MainWindow* win, bool fullScreen, bool) {
     gp::Window* gw = win ? win->gpuiWin : nullptr;
     if (!gw) {
         return;
     }
-#if OS_DARWIN
     // toggleFullScreen refuses a client-titlebar window and can close it.
     // Cover the monitor, and put the old frame back on the way out.
     if (fullScreen) {
@@ -890,9 +831,6 @@ void AppShellSetFullScreen(MainWindow* win, bool fullScreen, bool) {
     if (!win->normalWindowRc.IsEmpty()) {
         ToolWinNativeSetFrame(gw, win->normalWindowRc, false);
     }
-#else
-    gp::WindowSetFullScreen(gw, fullScreen);
-#endif
 }
 
 bool AppShellNormalWindowRect(MainWindow*, Rect*) {
@@ -902,34 +840,6 @@ bool AppShellNormalWindowRect(MainWindow*, Rect*) {
 int AppShellWindowDpi(MainWindow*) {
     return 96;
 }
-
-#if OS_WASM
-
-Rect AppShellWindowScreenRect(MainWindow* win) {
-    return win ? win->frameRc : Rect{};
-}
-
-Rect AppShellCanvasScreenRect(MainWindow*) {
-    return {};
-}
-
-bool AppShellPlaceWindow(MainWindow*, Rect, bool) {
-    return false;
-}
-
-Rect AppShellWorkArea(MainWindow*) {
-    return {};
-}
-
-Rect AppShellMonitorRect(MainWindow*) {
-    return {};
-}
-
-Rect AppShellShiftToWorkArea(Rect rect, MainWindow*, bool) {
-    return rect;
-}
-
-#else // macOS, Linux
 
 // same rules as ShiftRectToWorkArea
 static Rect ShiftIntoWorkArea(Rect rect, Rect monitor, bool fully) {
@@ -1005,8 +915,6 @@ Rect AppShellShiftToWorkArea(Rect rect, MainWindow* win, bool fully) {
     return ShiftIntoWorkArea(rect, AppShellWorkArea(win), fully);
 }
 
-#endif // macOS, Linux
-
 void AppShellShowCursor(MainWindow* win, bool show) {
     if (win && win->gpuiWin) {
         gp::WindowSetCursorVisible(win->gpuiWin, show);
@@ -1014,7 +922,6 @@ void AppShellShowCursor(MainWindow* win, bool show) {
 }
 
 void AppShellPreventSleep(bool) {}
-#endif
 
 gp::App* AppShellGetApp() {
     return gApp;
@@ -1066,36 +973,10 @@ void AppShellSetTitle(MainWindow* win, Str title) {
     }
 }
 
-#if OS_LINUX
-static bool HasProgramInPath(Str name) {
-    const char* pathEnv = getenv("PATH");
-    if (!pathEnv) {
-        return false;
-    }
-    StrVec dirs;
-    Split(&dirs, Str(pathEnv), StrL(":"), true);
-    for (Str dir : dirs) {
-        if (file::Exists(path::JoinTemp(dir, name))) {
-            return true;
-        }
-    }
-    return false;
-}
-#endif
-
 // ng: without zenity or kdialog gpui's prompt returns nothing; the port's own
 // pickers are there for that
 bool AppShellHasOsFilePicker() {
-#if OS_LINUX
-    static int has = -1;
-    if (has < 0) {
-        has = (HasProgramInPath(StrL("zenity")) || HasProgramInPath(StrL("kdialog"))) ? 1 : 0;
-        logf("AppShellHasOsFilePicker: %d\n", has);
-    }
-    return has == 1;
-#else
     return true;
-#endif
 }
 
 struct PickFileCtx {
@@ -1115,12 +996,6 @@ bool AppShellPickFileAsync(MainWindow* win, Str title, Str filter, const Func1<S
     if (!win || !win->gpuiWin) {
         return false;
     }
-#if OS_WASM
-    (void)title;
-    (void)filter;
-    WasmPickFile(onPicked);
-    return true;
-#else
     if (AppShellHasOsFilePicker()) {
         return false;
     }
@@ -1138,7 +1013,6 @@ bool AppShellPickFileAsync(MainWindow* win, Str title, Str filter, const Func1<S
     args->onDone = MkFunc1(OnOwnPickerDone, ctx);
     ShowSavePathDialog(args);
     return true;
-#endif
 }
 
 // ng: the same open prompt with a caller-chosen title (a certificate, an
@@ -1147,16 +1021,6 @@ TempStr AppShellPromptForPathTemp(MainWindow* win, Str title, Str filter, Str in
     if (!win || !win->gpuiWin) {
         return {};
     }
-#if OS_WIN
-    if (NativeFileDlgEnabled()) {
-        // orig's GetOpenFileNameW, which has no title of its own
-        StrVec paths;
-        if (!NativeOpenFileDlg(win, filter, initialPath, false, &paths)) {
-            return {};
-        }
-        return str::DupTemp(paths[0]);
-    }
-#endif
     (void)filter;
     (void)initialPath;
     gp::PathPrompt prompt;
@@ -1166,38 +1030,16 @@ TempStr AppShellPromptForPathTemp(MainWindow* win, Str title, Str filter, Str in
     return str::DupTemp(FromGpui(path));
 }
 
-#if OS_WASM
-// WasmShell.js calls this. gpui leaves Ctrl+K / Cmd+K with the browser, so
-// the accelerator never runs.
-extern "C" EMSCRIPTEN_KEEPALIVE void sumatra_wasm_command_palette() {
-    if (len(gWindows) == 0) {
-        return;
-    }
-    ExecuteCmd(gWindows[0], CmdCommandPalette);
-}
-
-// the browser's file input answers on a later event-loop turn, so the document
-// is loaded from the callback and the prompt itself has nothing to return
-static void OnWasmFilePicked(MainWindow* win, Str path) {
-    LoadDocument(win, path);
-}
-#endif
-
 TempStr AppShellPromptForFileTemp(MainWindow* win) {
     if (!win || !win->gpuiWin) {
         return {};
     }
-#if OS_WASM
-    WasmPickFile(MkFunc1(OnWasmFilePicked, win));
-    return {};
-#else
     gp::PathPrompt prompt;
     prompt.files = true;
     prompt.title = ToGpui(Tr("Open"));
     gp::TempStr path = gp::PromptForPathTemp(win->gpuiWin, prompt);
     // gpui's temp string lives in its own arena, ours has to outlive this call
     return str::DupTemp(FromGpui(path));
-#endif
 }
 
 // ng: gpui's prompt answers one path (see "gpui gaps"); Windows' own dialog
@@ -1206,11 +1048,6 @@ bool AppShellPromptForFiles(MainWindow* win, Str filter, StrVec* pathsOut) {
     if (!win || !win->gpuiWin) {
         return false;
     }
-#if OS_WIN
-    if (NativeFileDlgEnabled()) {
-        return NativeOpenFileDlg(win, filter, {}, true, pathsOut);
-    }
-#endif
     (void)filter;
     TempStr path = AppShellPromptForFileTemp(win);
     if (len(path) == 0) {
@@ -1376,9 +1213,7 @@ static void InstallNativeMenu(MainWindow* win) {
         defs[n++] = windowDef;
     }
     gp::AppSetMenus(gApp, defs, n);
-#if OS_DARWIN
     AppShellMacFinishMenus();
-#endif
 }
 
 bool AppShellNativeMenu() {
@@ -1412,13 +1247,7 @@ void AppShellSyncMenu(MainWindow* win) {
 // Windows underlines the access keys always or only once Alt was pressed
 // ("Underline access keys when available", off by default)
 static bool MenuCuesAlways() {
-#if OS_WIN
-    BOOL on = FALSE;
-    SystemParametersInfoW(SPI_GETKEYBOARDCUES, 0, &on, 0);
-    return on != FALSE;
-#else
     return false;
-#endif
 }
 
 // the label with orig's '&' letter underlined
@@ -2245,14 +2074,6 @@ void ShellView::OnSystemMenuDrag(ShellView* self, gp::Ctx*, const gp::DragMoveEv
         return;
     }
     self->sysMenuDragged = true;
-#if OS_WIN
-    HWND hwnd = AppShellNativeHwnd(win);
-    if (!hwnd) {
-        return;
-    }
-    ReleaseCapture();
-    PostMessageW(hwnd, WM_SYSCOMMAND, SC_MOVE | HTCAPTION, 0);
-#endif
 }
 
 // orig's HandleCaptionClick(CB_SYSTEM_MENU)
@@ -2407,12 +2228,10 @@ void ShellView::OnKeyDown(ShellView* self, gp::Ctx* cx, const gp::KeyEvent* ev) 
     // the palette is a window of its own in orig and owns the keyboard while
     // it is up; here the shell hands it the keys it answers first
     int paletteVk = ev->vk;
-#if OS_DARWIN
     // Cmd+Backspace is the palette's Delete: close tab, forget, restore default
     if (paletteVk == VK_BACK && ev->platform) {
         paletteVk = VK_DELETE;
     }
-#endif
     if (CommandPaletteOnKeyDown(win, paletteVk, CtrlOrCmd(ev), ev->shift)) {
         mut->propagate = false;
         gp::Notify(cx);
@@ -2555,7 +2374,7 @@ void ShellView::OnKeyDown(ShellView* self, gp::Ctx* cx, const gp::KeyEvent* ev) 
     bool isCaretKey = ev->vk == VK_LEFT || ev->vk == VK_RIGHT || ev->vk == VK_UP || ev->vk == VK_DOWN ||
                       ev->vk == VK_HOME || ev->vk == VK_END || ev->vk == VK_PRIOR || ev->vk == VK_NEXT;
     // macOS: Option + arrows move it too
-    if (!editFocused && (!ev->alt || OS_DARWIN) && isCaretKey && SelectTextWithKeyboardActive(win) &&
+    if (!editFocused && isCaretKey && SelectTextWithKeyboardActive(win) &&
         SelectTextWithKeyboardOnKeyDown(win, ev->vk, CtrlOrCmd(ev), ev->shift, ev->alt)) {
         mut->propagate = false;
         gp::Notify(cx);
@@ -2718,7 +2537,6 @@ void ShellView::OnKeyDown(ShellView* self, gp::Ctx* cx, const gp::KeyEvent* ev) 
     // * and / rotate, Delete removes the selected annotation. Not while a
     // dialog or the palette is up.
     bool frameKeys = !self->overlayUp && DialogsAccelTable(win) == DialogAccels::All;
-#if OS_DARWIN
     // macOS Delete is Backspace. A contents editor returned above.
     if (frameKeys && ev->vk == VK_BACK && !ev->ctrl && !ev->shift && !ev->alt && !ev->platform) {
         if (FrameOnKeydown(win, VK_DELETE, false, false, false)) {
@@ -2727,7 +2545,6 @@ void ShellView::OnKeyDown(ShellView* self, gp::Ctx* cx, const gp::KeyEvent* ev) 
             return;
         }
     }
-#endif
     if (frameKeys && FrameOnKeydown(win, (int)ev->vk, CtrlOrCmd(ev), ev->shift, ev->alt)) {
         mut->propagate = false;
         gp::Notify(cx);
@@ -2742,7 +2559,6 @@ void ShellView::OnKeyDown(ShellView* self, gp::Ctx* cx, const gp::KeyEvent* ev) 
     if (ev->ctrl || ev->alt || ev->platform) {
         return;
     }
-#if !OS_WIN
     // Windows takes the character from WM_CHAR instead, so a real key and the
     // WM_CHAR that follows it do not both toggle visual mode.
     if (SelectTextWithKeyboardActive(win) && SelectTextWithKeyboardOnChar(win, ev->vk)) {
@@ -2750,7 +2566,6 @@ void ShellView::OnKeyDown(ShellView* self, gp::Ctx* cx, const gp::KeyEvent* ev) 
         gp::Notify(cx);
         return;
     }
-#endif
     // only unmodified letters type a hint: Shift + F still toggles the mode off
     if (!ev->shift && KeyboardLinkFollowingCapturesKey(win, ev->vk) && KeyboardLinkFollowingOnChar(win, ev->vk)) {
         mut->propagate = false;
@@ -2843,7 +2658,6 @@ void ShellView::OnKeyUp(ShellView* self, gp::Ctx* cx, const gp::KeyEvent* ev) {
 
 // drains the ui task queue, runs middle-button auto-scroll and repaints while
 // a page is still rendering
-#if OS_DARWIN || OS_WASM
 // The framebuffer is a scaled copy of the logical canvas. Tiles have to be
 // rendered at that scale or the page is stretched.
 static void ApplyRenderScale(MainWindow* win) {
@@ -2857,7 +2671,6 @@ static void ApplyRenderScale(MainWindow* win) {
     }
     dm->renderScale = scale;
 }
-#endif
 
 void ShellView::OnTick(ShellView* self, gp::Ctx* cx, const gp::TickEvent* ev) {
     uitask::DrainQueue();
@@ -2867,9 +2680,7 @@ void ShellView::OnTick(ShellView* self, gp::Ctx* cx, const gp::TickEvent* ev) {
     if (!IsMainWindowValidAndNotClosing(win)) {
         return;
     }
-#if OS_DARWIN || OS_WASM
     ApplyRenderScale(win);
-#endif
     // ng: gpui reports the interval asked for, not the time that passed; a
     // WM_TIMER comes about every 27 ms for a 16 ms interval and slower still
     // in a background window, so timeouts are counted in real time
@@ -2966,20 +2777,6 @@ Rect AppShellPredictCanvasRc(MainWindow* win, CanvasPredict predict) {
     int frameDx = win->frameRc.dx;
     int frameDy = win->frameRc.dy;
     bool maximized = win->isMaximized;
-#if OS_WIN
-    HWND hwnd = AppShellNativeHwnd(win);
-    if (hwnd) {
-        RECT rc{};
-        if (GetClientRect(hwnd, &rc) && rc.right > 1 && rc.bottom > 1) {
-            int dpi = std::max((int)GetDpiForWindow(hwnd), 96);
-            frameDx = MulDiv(rc.right, 96, dpi);
-            frameDy = MulDiv(rc.bottom, 96, dpi);
-        }
-        if (IsZoomed(hwnd)) {
-            maximized = true;
-        }
-    }
-#endif
     if (frameDx < 1 || frameDy < 1) {
         return {};
     }
@@ -3044,9 +2841,7 @@ gp::El* ShellView::Render(ShellView* self, gp::Ctx* cx) {
     int border = AppShellFrameBorder(win);
     bool tbAtBottom = ToolbarAtBottom();
     win->canvasRc = CanvasRcForFrame(win, win->frameRc.dx, win->frameRc.dy, menuBarShown, TabsAreVisible(win));
-#if OS_DARWIN || OS_WASM
     ApplyRenderScale(win);
-#endif
     // only when it really changed: SetViewPortSize relayouts, which repaints,
     // which would come straight back here
     Size vps = win->GetViewPortSize();

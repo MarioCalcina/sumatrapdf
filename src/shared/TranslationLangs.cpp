@@ -12,20 +12,7 @@ struct LangInfo {
     u16 winId;
 };
 
-#if OS_WIN
-#ifndef LANG_CENTRAL_KURDISH
-#define LANG_CENTRAL_KURDISH 0x92
-#endif
-
-#ifndef SUBLANG_CENTRAL_KURDISH_CENTRAL_KURDISH_IRAQ
-#define SUBLANG_CENTRAL_KURDISH_CENTRAL_KURDISH_IRAQ 0x01
-#endif
-
-#define _LANGID(lang) MAKELANGID(lang, SUBLANG_NEUTRAL)
-#define WIN_LANG_ID(id) id
-#else
 #define WIN_LANG_ID(id) 0
-#endif
 
 // clang-format off
 static const LangInfo langs[] = {
@@ -105,9 +92,6 @@ static const LangInfo langs[] = {
 };
 // clang-format on
 #undef WIN_LANG_ID
-#if OS_WIN
-#undef _LANGID
-#endif
 
 int GetLangsCount() {
     return dimofi(langs);
@@ -141,11 +125,5 @@ TempStr GetLangNameByIdxTemp(int idx) {
 bool IsLangRtl(int idx) {
     return idx >= 0 && idx < GetLangsCount() && langs[idx].isRtl;
 }
-
-#if OS_WIN
-LANGID GetLangIdByIdx(int idx) {
-    return langs[idx].winId;
-}
-#endif
 
 } // namespace trans

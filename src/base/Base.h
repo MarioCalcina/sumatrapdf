@@ -1,85 +1,12 @@
 /* Copyright 2022 the SumatraPDF project authors (see AUTHORS file).
    License: Simplified BSD (see COPYING.BSD) */
 
-/* OS_DARWIN - Any Darwin-based OS, including Mac OS X and iPhone OS */
-#ifdef __APPLE__
-#define OS_DARWIN 1
-#else
-#define OS_DARWIN 0
+#if !defined(__APPLE__) || !(defined(__arm64__) || defined(__x86_64__))
+#error "macOS on arm64 or x86_64 only"
 #endif
 
-/* OS_LINUX - Linux */
-#ifdef __linux__
-#define OS_LINUX 1
-#else
-#define OS_LINUX 0
-#endif
-
-#ifdef _WIN32
-#define OS_WIN 1
-#else
-#define OS_WIN 0
-#endif
-
-// https://learn.microsoft.com/en-us/cpp/preprocessor/predefined-macros
-#if defined(_M_IX86) || defined(__i386__)
-#define IS_INTEL_32 1
-#define IS_INTEL_64 0
-#define IS_ARM_64 0
-#elif defined(_M_X64) || defined(__x86_64__)
-#define IS_INTEL_64 1
-#define IS_INTEL_32 0
-#define IS_ARM_64 0
-#elif defined(_M_ARM64) || defined(__aarch64__) || defined(__arm64__)
-#define IS_INTEL_64 0
-#define IS_INTEL_32 0
-#define IS_ARM_64 1
-#elif defined(__wasm32__)
-// ng: wasm32 is 32-bit but not x86; only the Windows crash handler branches on
-// the arch, so all three answer 0
-#define IS_INTEL_64 0
-#define IS_INTEL_32 0
-#define IS_ARM_64 0
-#else
-#error "unsupported arch"
-#endif
-
-/* OS_WASM - emscripten; also OS_POSIX, but single-threaded and without
-   most of the file system */
-#ifdef __EMSCRIPTEN__
-#define OS_WASM 1
-#else
-#define OS_WASM 0
-#endif
-
-/* OS_POSIX - Any POSIX-like system */
-#if OS_DARWIN || OS_LINUX || OS_WASM || defined(unix) || defined(__unix) || defined(__unix__)
-#define OS_POSIX 1
-#else
-#define OS_POSIX 0
-#endif
-
-#ifdef _MSC_VER
-#define COMPILER_MSVC 1
-#else
-#define COMPILER_MSVC 0
-#endif
-
-#ifdef __GNUC__
-#define COMPILER_GCC 1
-#else
-#define COMPILER_GCC 0
-#endif
-
-#ifdef __clang__
-#define COMPILER_CLANG 1
-#else
-#define COMPILER_CLANG 0
-#endif
-
-// Always 0 or 1 so `#if IS_DEBUG` / `#if IS_ASAN` compile under /W4 /WX (C4668).
-// The build may pass IS_DEBUG=1 / IS_ASAN=1; otherwise IS_DEBUG follows DEBUG
-// and IS_ASAN follows the compiler (/fsanitize=address, -fsanitize=address).
+// Always 0 or 1. The build may pass IS_DEBUG=1 / IS_ASAN=1; otherwise IS_DEBUG
+// follows DEBUG and IS_ASAN follows the compiler (-fsanitize=address).
 #ifndef IS_DEBUG
 #ifdef DEBUG
 #define IS_DEBUG 1
@@ -106,14 +33,6 @@
 #endif
 #endif
 
-#ifndef UNICODE
-#define UNICODE
-#endif
-
-#ifndef _CRT_SECURE_NO_WARNINGS
-#define _CRT_SECURE_NO_WARNINGS
-#endif
-
 // C/C++ standard headers  we use often
 #include <cctype>
 #include <climits>
@@ -129,11 +48,9 @@
 #include <new>       // for placement new
 #include <algorithm> // for std::min, std::max
 #include <utility>   // for std::forward
-#if OS_POSIX
 // pthread.h first: glibc mutex structs have a field named __unused
 #include <pthread.h>
 #include <strings.h>
-#endif
 
 // after system headers so we don't rewrite pthread's __unused field.
 // mac's <sys/cdefs.h> already defines it as __attribute__((__unused__)),
@@ -146,41 +63,6 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-#if OS_WIN
-#define NOMINMAX
-#include <winsock2.h> // must include before <windows.h>
-#include <windows.h>
-#include <ws2def.h>
-#include <unknwn.h>
-#include <shlwapi.h>
-#include <shlobj.h>
-#include <commctrl.h>
-#include <windowsx.h>
-#include <winsafer.h>
-#include <wininet.h>
-#include <versionhelpers.h>
-#include <tlhelp32.h>
-#include <shellapi.h>
-#include <ole2.h>
-#include <uxtheme.h>
-
-// nasty but necessary
-#if defined(min) || defined(max)
-#error "min or max defined"
-#endif
-#define min(x, y) ((x) < (y) ? (x) : (y))
-#define max(x, y) ((x) > (y) ? (x) : (y))
-// /analyze flags a bogus C6385 (invalid read) inside GdiplusFontCollection.h;
-// it's a false positive in the SDK header, so silence it at the include site.
-#pragma warning(push)
-#pragma warning(disable : 6385)
-#include <gdiplus.h>
-#pragma warning(pop)
-#undef NOMINMAX
-#undef min
-#undef max
-
-#else
 using BYTE = uint8_t;
 // rpcndr.h spells it this way on Windows and ported code uses both
 using byte = uint8_t;
@@ -240,7 +122,6 @@ constexpr int URLZONE_INVALID = -1;
 constexpr int URLZONE_INTERNET = 3;
 
 #define ZeroMemory(Destination, Length) memset((Destination), 0, (Length))
-#endif
 
 using i8 = int8_t;
 using u8 = uint8_t;
@@ -263,17 +144,10 @@ inline FILETIME FileTimeFromU64(u64 value) {
     return {(DWORD)value, (DWORD)(value >> 32)};
 }
 
-#if OS_WIN
-using AtomicBool = volatile LONG;
-using AtomicInt = volatile LONG;
-using AtomicRefCount = volatile LONG;
-using AtomicPtr = void* volatile;
-#else
 using AtomicBool = volatile int;
 using AtomicInt = volatile int;
 using AtomicRefCount = volatile int;
 using AtomicPtr = void* volatile;
-#endif
 
 bool AtomicBoolGet(AtomicBool* p);
 void AtomicBoolSet(AtomicBool* p, bool v);
@@ -288,9 +162,7 @@ int AtomicRefCountAdd(AtomicRefCount* v);
 int AtomicRefCountDec(AtomicRefCount* v);
 void* AtomicPtrExchange(AtomicPtr* p, void* v);
 
-#if !OS_WIN
 u64 GetTickCount64();
-#endif
 
 i64 UnixTimeMsNow();
 
@@ -369,14 +241,9 @@ inline int len(const wchar_t* s) {
     return n;
 }
 
-#if COMPILER_MSVC
-#define NO_INLINE __declspec(noinline)
-#define FORCEINLINE __forceinline
-#else
 // assuming gcc or similar
 #define NO_INLINE __attribute__((noinline))
 #define FORCEINLINE inline __attribute__((always_inline))
-#endif
 
 template <typename T, size_t N>
 char (&DimofSizeHelper(T (&array)[N]))[N];
@@ -384,22 +251,11 @@ char (&DimofSizeHelper(T (&array)[N]))[N];
 #define dimofi(array) (int)(sizeof(DimofSizeHelper(array)))
 #define sizeofi(x) ((int)sizeof(x))
 
-#if COMPILER_MSVC
-// https://msdn.microsoft.com/en-us/library/4dt9kyhy.aspx
-// enable msvc equivalent of -Wundef gcc option, warns when doing "#if FOO" and FOO is not defined
-// can't be turned on globally because windows headers have those
-#pragma warning(default : 4668)
-#endif
-
 // __analysis_assume is defined by msvc for prefast analysis
 #ifndef __analysis_assume
 #define __analysis_assume(x)
 #endif
 
-#if COMPILER_MSVC
-#pragma warning(push)
-#pragma warning(disable : 6011) // silence /analyze: de-referencing a nullptr pointer
-#endif
 // Note: it's inlined to make it easier on crash reports analyzer (if wasn't inlined
 // CrashMe() would show up as the cause of several different crash sites)
 //
@@ -410,9 +266,6 @@ inline void CrashMe() {
     // cppcheck-suppress nullPointer
     *p = 0; // NOLINT
 }
-#if COMPILER_MSVC
-#pragma warning(pop)
-#endif
 
 // ReportIf() is like assert() except it sends crash report in pre-release and debug
 // builds.
@@ -986,12 +839,6 @@ struct RectG {
     T dy = 0;
 
     RectG() = default;
-#if OS_WIN
-    // implicit for Rect, explicit for RectF, as before
-    explicit(!std::is_same_v<T, int>) RectG(RECT r)
-        : x((T)r.left), y((T)r.top), dx((T)(r.right - r.left)), dy((T)(r.bottom - r.top)) {}
-    RectG(Gdiplus::RectF r) : x((T)r.X), y((T)r.Y), dx((T)r.Width), dy((T)r.Height) {} // NOLINT
-#endif
     RectG(T x, T y, T dx, T dy) : x(x), y(y), dx(dx), dy(dy) {}
     RectG(PointG<T> pt, SizeG<T> sz) : x(pt.x), y(pt.y), dx(sz.dx), dy(sz.dy) {}
     RectG(PointG<T> min, PointG<T> max) : x(min.x), y(min.y), dx(max.x - min.x), dy(max.y - min.y) {}
@@ -1053,66 +900,11 @@ Rect ToRect(const RectF& r);
 // conversions to and from the Win32 / GDI+ geometry types. Those types only
 // exist on Windows, so the whole group is Windows-only; portable code uses the
 // types above
-#if OS_WIN
-int RectDx(const RECT& r);
-int RectDy(const RECT& r);
-
-POINT ToPOINT(const Point& p);
-
-RECT ToRECT(const Rect& r);
-RECT ToRECT(const RectF& r);
-
-Rect ToRect(const RECT& r);
-
-Gdiplus::Rect ToGdipRect(const Rect& r);
-Gdiplus::RectF ToGdipRectF(const Rect& r);
-
-Gdiplus::Rect ToGdipRect(const RectF& r);
-Gdiplus::RectF ToGdipRectF(const RectF& r);
-
-#endif
 
 int NormalizeRotation(int rotation);
 
 //--- Thread.h ------------------------------------------------------------------
 
-#if OS_WIN
-using ThreadId = DWORD;
-using ThreadHandle = HANDLE;
-
-struct Mutex : NonCopyable {
-    SRWLOCK lock = SRWLOCK_INIT;
-
-    Mutex() = default;
-    ~Mutex() = default;
-
-    void Lock() { AcquireSRWLockExclusive(&lock); }
-    void Unlock() { ReleaseSRWLockExclusive(&lock); }
-    bool TryLock() { return TryAcquireSRWLockExclusive(&lock); }
-};
-
-struct ConditionVariable : NonCopyable {
-    CONDITION_VARIABLE cond = CONDITION_VARIABLE_INIT;
-
-    ConditionVariable() = default;
-    ~ConditionVariable() = default;
-
-    void Wait(Mutex* mutex) { SleepConditionVariableSRW(&cond, &mutex->lock, INFINITE, 0); }
-    void Wake() { WakeConditionVariable(&cond); }
-    void WakeAll() { WakeAllConditionVariable(&cond); }
-};
-
-struct RecursiveMutex : NonCopyable {
-    CRITICAL_SECTION lock;
-
-    RecursiveMutex() { InitializeCriticalSection(&lock); }
-    ~RecursiveMutex() { DeleteCriticalSection(&lock); }
-
-    void Lock() { EnterCriticalSection(&lock); }
-    void Unlock() { LeaveCriticalSection(&lock); }
-    bool TryLock() { return TryEnterCriticalSection(&lock); }
-};
-#else
 using ThreadId = u64;
 
 struct ThreadHandlePosix;
@@ -1158,7 +950,6 @@ struct RecursiveMutex : NonCopyable {
 };
 
 ThreadId GetCurrentThreadId();
-#endif
 
 // ng: counting semaphore. Windows has CreateSemaphore, posix has sem_t (with
 // no timed wait on mac); one portable implementation over Mutex and
@@ -1188,14 +979,12 @@ struct AutoUnlockRecursiveMutex : NonCopyable {
 
 // 0 = metric (A4), 1 = imperial (Letter). ng: orig declares it in Win.h
 int GetMeasurementSystem();
-#if OS_DARWIN
 struct StrVec;
 void GetUserLanguages(StrVec& out);
 TempStr LocaleThousandSepTemp();
 TempStr LocaleDecimalSepTemp();
 enum class DateStyle { Date, DateTime };
 TempStr FormatLocaleDateTemp(int year, int month, int day, int hour, int minute, int second, DateStyle style);
-#endif
 
 // physical memory still free and how loaded memory is, 0..100. False when the
 // system does not say; the caller then assumes no pressure.
@@ -1207,7 +996,6 @@ void SleepInMs(int ms);
 // ng: the wasm build has no pthreads (emscripten without -pthread), so
 // StartThread() runs the function inline and returns a handle that joins
 // immediately. RenderCache checks this and drains on the main thread instead.
-constexpr bool kHasThreads = OS_WASM == 0;
 
 void RunAsync(const Func0&, Str threadName = {});
 ThreadHandle StartThread(const Func0&, Str threadName = {});
@@ -1217,20 +1005,7 @@ int CpuCoreCount();
 // Returns false on timeout.
 bool JoinThread(ThreadHandle*, int timeoutMs);
 bool WaitThread(ThreadHandle, int timeoutMs);
-#if OS_WIN
-inline bool SafeCloseThreadHandle(ThreadHandle* hPtr) {
-    ThreadHandle h = *hPtr;
-    if (!h || h == INVALID_HANDLE_VALUE) {
-        *hPtr = nullptr;
-        return false;
-    }
-    BOOL ok = CloseHandle(h);
-    *hPtr = nullptr;
-    return !!ok;
-}
-#else
 bool SafeCloseThreadHandle(ThreadHandle*);
-#endif
 
 extern AtomicInt gDangerousThreadCount;
 bool AreDangerousThreadsPending();
@@ -1242,7 +1017,7 @@ using ScopedRecursiveMutex = AutoUnlockRecursiveMutex;
 
 // Reserve/commit arena allocator (implemented in Arena.cpp).
 // Not self-sufficient: include after the part of utils/Base.h that defines
-// u64 and pulls in <windows.h> / <utility>. Base.h includes this header.
+// u64 and pulls in <utility>. Base.h includes this header.
 
 // Standalone reserve/commit arena
 // 256 (not 128) to leave room in the header for the allocation stats below
@@ -2676,11 +2451,7 @@ AutoCall(Result(__stdcall*)(Arg), Arg) -> AutoCall<Result(__stdcall*)(Arg)>;
 //--- Color.h ------------------------------------------------------------------
 
 // Win32 COLORREF layout (0x00bbggrr); typically no alpha
-#if OS_WIN
-using Color = COLORREF;
-#else
 using Color = uint32_t;
-#endif
 
 // a "unset" state for Color value. technically all colors are valid
 // this one is hopefully not used in practice
@@ -2755,11 +2526,6 @@ bool IsNearBlack(Color c);
 DWORD PremultiplyPixel(Color c, u8 alpha);
 
 // GDI+ only exists on Windows; portable code works with Color
-#if OS_WIN
-Gdiplus::Color Unblend(Color c, u8 alpha);
-Gdiplus::Color GdiRgbFromColor(Color c);
-Gdiplus::Color GdiRgbaFromColor(Color c);
-#endif
 
 constexpr Color RgbToColor(Color rgb) {
     return ((rgb & 0x0000FF) << 16) | (rgb & 0x00FF00) | ((rgb & 0xFF0000) >> 16);

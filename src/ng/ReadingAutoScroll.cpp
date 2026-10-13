@@ -385,9 +385,6 @@ TempStr ReadingAutoScrollBarStateTemp(int* exitCodeOut) {
     }
     // ng draws the bar in the frame. hwnd is that frame on Windows, 0 elsewhere.
     int hwnd = 0;
-#if OS_WIN
-    hwnd = (int)(uintptr_t)MainWindowHwnd(win);
-#endif
     out.Append(fmt("OK visible=1 paused=%d atEnd=%d dir=%d speed=%d scrollY=%d page=%d pages=%d hwnd=%d\n",
                    (int)tab->autoScroll.paused, (int)tab->autoScroll.atEnd, tab->autoScroll.dir,
                    (int)(CurrentSpeed() + 0.5f), scrollY, page, pages, hwnd));

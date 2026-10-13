@@ -21,7 +21,6 @@ static FILETIME FileTimeFromTimespec(time_t sec, long nsec) {
     return FileTimeFromU64(ticks);
 }
 
-#if OS_DARWIN
 static FILETIME StatModTime(const struct stat& st) {
     return FileTimeFromTimespec(st.st_mtimespec.tv_sec, st.st_mtimespec.tv_nsec);
 }
@@ -33,19 +32,6 @@ static FILETIME StatAccessTime(const struct stat& st) {
 static FILETIME StatCreateTime(const struct stat& st) {
     return FileTimeFromTimespec(st.st_birthtimespec.tv_sec, st.st_birthtimespec.tv_nsec);
 }
-#else
-static FILETIME StatModTime(const struct stat& st) {
-    return FileTimeFromTimespec(st.st_mtim.tv_sec, st.st_mtim.tv_nsec);
-}
-
-static FILETIME StatAccessTime(const struct stat& st) {
-    return FileTimeFromTimespec(st.st_atim.tv_sec, st.st_atim.tv_nsec);
-}
-
-static FILETIME StatCreateTime(const struct stat& st) {
-    return StatModTime(st);
-}
-#endif
 
 static DIR* DirHandle(DirIter::iterator* it) {
     return (DIR*)it->dirHandle;

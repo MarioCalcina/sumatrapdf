@@ -14,25 +14,6 @@
 // So on both platforms a single tick is well under a microsecond, and printing
 // TimeSinceInMs() with 3 decimals (microseconds) is meaningful.
 
-#if OS_WIN
-using TimeStamp = LARGE_INTEGER;
-
-inline TimeStamp TimeGet() {
-    LARGE_INTEGER t;
-    QueryPerformanceCounter(&t);
-    return t;
-}
-
-inline double TimeSinceInMs(TimeStamp start) {
-    static LARGE_INTEGER freq = [] {
-        LARGE_INTEGER f;
-        QueryPerformanceFrequency(&f);
-        return f;
-    }();
-    LARGE_INTEGER t = TimeGet();
-    return (double)(t.QuadPart - start.QuadPart) * 1000.0 / (double)freq.QuadPart;
-}
-#else
 struct TimeStamp {
     timespec t;
 };
@@ -49,4 +30,3 @@ inline double TimeSinceInMs(TimeStamp start) {
     double nsecs = (double)(now.t.tv_nsec - start.t.tv_nsec);
     return secs * 1000.0 + nsecs / 1000000.0;
 }
-#endif

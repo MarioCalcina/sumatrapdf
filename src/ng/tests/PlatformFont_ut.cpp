@@ -14,14 +14,9 @@
 
 #include "base/tests/UtAssert.h"
 
-#if OS_POSIX && !OS_WASM
-#if OS_LINUX
-#include <cairo/cairo.h>
-#elif OS_DARWIN
 #include "base/MacTypesHide.h"
 #include <CoreGraphics/CoreGraphics.h>
 #include "base/MacTypesShow.h"
-#endif
 
 extern TempStr TestDocPathTemp(Str relPath);
 
@@ -38,26 +33,6 @@ static bool HasInk(Pixmap* pixmap) {
     return false;
 }
 
-#if OS_LINUX
-static void TestTextRender(PlatformFont* font) {
-    Pixmap* pixmap = AllocPixmap(160, 50, PixmapFormat::BGRA8, true);
-    cairo_surface_t* surface = cairo_image_surface_create_for_data(pixmap->data, CAIRO_FORMAT_ARGB32, pixmap->width,
-                                                                   pixmap->height, pixmap->stride);
-    cairo_t* cairo = cairo_create(surface);
-    cairo_set_source_rgb(cairo, 1, 1, 1);
-    cairo_paint(cairo);
-    PlatformTextRender* text = CreateCairoTextRender(cairo);
-    text->SetFont(font);
-    text->SetTextColor(kColBlack);
-    text->Draw(StrL("Pango text"), RectF(4, 4, 150, 40), false);
-    delete text;
-    cairo_surface_flush(surface);
-    cairo_destroy(cairo);
-    cairo_surface_destroy(surface);
-    utassert(HasInk(pixmap));
-    FreePixmap(pixmap);
-}
-#elif OS_DARWIN
 static void TestTextRender(PlatformFont* font) {
     Pixmap* pixmap = AllocPixmap(160, 50, PixmapFormat::BGRA8, true);
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
@@ -80,7 +55,6 @@ static void TestTextRender(PlatformFont* font) {
     utassert(HasInk(pixmap));
     FreePixmap(pixmap);
 }
-#endif
 
 static void TestEbookRender() {
     Str data = file::ReadFile(TestDocPathTemp(StrL("docs/test/test.epub")));
@@ -113,4 +87,3 @@ bool PlatformFontPosix_UnitTests() {
     TestEbookRender();
     return true;
 }
-#endif

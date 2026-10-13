@@ -13,9 +13,6 @@
 #include "VirtKeys.h"
 #include "base/File.h"
 #include "base/UITask.h"
-#if OS_WIN
-#include "base/Win.h"
-#endif
 
 #include "gui/Dpi.h"
 #include "gui/UIModels.h"
@@ -520,22 +517,11 @@ static void FinishNavDirScan(NavDirScanResult* r) {
 static void NavDirScanThread(NavDirScanReq* req) {
     AutoDelete delReq(req);
     // the home view enumerates a shell folder, which needs COM on this thread
-#if OS_WIN
-    bool comInited = false;
-    if (len(req->dir) == 0) {
-        comInited = SUCCEEDED(CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED));
-    }
-#endif
     auto* r = new NavDirScanResult;
     r->gen = req->gen;
     r->isRefresh = req->isRefresh;
     r->dir = str::Dup(req->dir);
     CollectNavEntriesForDir(req->dir, r->entries);
-#if OS_WIN
-    if (comInited) {
-        CoUninitialize();
-    }
-#endif
     uitask::Post(MkFunc0<NavDirScanResult>(FinishNavDirScan, r), "FinishNavDirScan");
 }
 
@@ -965,7 +951,6 @@ static bool NavOnKey(int vk, bool ctrl, bool alt, NavFocus focus) {
                 return false;
         }
     }
-#if OS_DARWIN
     // Finder's keys: Cmd + Up goes up, Cmd + [ / ] go back / forward
     if (vk == VK_UP && ctrl) {
         GoUp();
@@ -979,7 +964,6 @@ static bool NavOnKey(int vk, bool ctrl, bool alt, NavFocus focus) {
         GoForward();
         return true;
     }
-#endif
     // Alt + Up / Left / Right go up / back / forward, like Explorer.
     // Backspace goes up, like the classic Explorer / file dialogs
     if ((vk == VK_UP && alt) || vk == VK_BACK) {
@@ -1367,12 +1351,8 @@ static TempStr NavStartDirNoDocTemp() {
             return dir;
         }
     }
-#if OS_WIN
-    TempStr docs = GetSpecialFolderTemp(CSIDL_PERSONAL);
-#else
     const char* home = getenv("HOME");
     TempStr docs = str::DupTemp(Str((char*)(home ? home : "")));
-#endif
     if (len(docs) > 0 && dir::Exists(docs)) {
         return docs;
     }
@@ -1508,11 +1488,7 @@ static gp::El* NavRowEl(gp::Ctx* cx, int idx, Color colBg, Color colText) {
 // a key cap as this platform writes it: "Ctrl + Enter" is Command + Return on
 // macOS, whatever the translation calls the key
 static Str NavKeyCap(Str key) {
-#if OS_DARWIN
     return MacKeyCapTemp(key);
-#else
-    return Tr(key);
-#endif
 }
 
 // one wrapping line of key-cap hints, like the command palette help row

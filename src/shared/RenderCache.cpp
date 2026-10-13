@@ -3,26 +3,16 @@
 
 #include "base/Base.h"
 #include "base/Pixmap.h"
-#include "base/ScopedWin.h"
 #include "gui/Dpi.h"
-#include "base/Win.h"
 #include "base/File.h"
 #include "base/UITask.h"
 #include "base/Timer.h"
 
 #include "gui/UIModels.h"
-#if !defined(SUMATRA_NG)
-#include "gui/Layout.h"
-#include "gui/PlatformFont.h"
-#include "gui/win/WinGui.h"
-#endif
 
 #include "Settings.h"
 #include "AppSettings.h"
 #include "Theme.h"
-#if !defined(SUMATRA_NG)
-#include "DarkMode.h"
-#endif
 #include "SumatraConfig.h"
 #include "DocController.h"
 #include "EngineBase.h"
@@ -30,16 +20,10 @@
 #include "DisplayModel.h"
 #include "RenderCache.h"
 #include "CachedObjects.h"
-#if defined(SUMATRA_NG)
 #include "gui/DocCanvas.h"
 #include "TextViewWnd.h"
-#else
-#include "Canvas.h"
-#endif
 
-#if defined(SUMATRA_NG)
 bool ShowTransparencyGrid();
-#endif
 
 struct RenderThreadData;
 static void RenderCacheThread(RenderThreadData* data);
@@ -64,16 +48,7 @@ static Pixmap* GrayscalePagePixmap(Pixmap* bmp) {
         return nullptr;
     }
     if (bmp->format == PixmapFormat::Native) {
-#if OS_WIN
-        Pixmap* converted = PixmapCopyAs32bppDIB(bmp);
-        if (!converted) {
-            return bmp;
-        }
-        FreePixmap(bmp);
-        bmp = converted;
-#else
         return bmp;
-#endif
     }
     if (!bmp->data) {
         return bmp;
@@ -115,42 +90,14 @@ struct RenderThreadData {
     int threadIdx;
 };
 
-// ng: with no threads (wasm) there is no render thread, so the queue is
-// drained on the main thread in slices: the pump renders until its budget is
-// spent and reposts itself while requests remain, so the frame loop keeps
-// running between pages. Slot 0 of curReqs is the pump's, as a thread's would
-// be. `active` is cleared when the cache goes away, so a pump still in the
-// queue finds nothing to touch.
-constexpr int kPumpSliceMs = 20;
-
-struct RenderCachePump {
-    AtomicInt refs = 1;
-    AtomicInt active = 1;
-    RenderCache* cache = nullptr;
-};
-
-static void ReleasePump(RenderCachePump* pump) {
-    if (AtomicIntDec(&pump->refs) == 0) {
-        delete pump;
-    }
-}
-
 // ng: orig sizes the tiles from the primary screen and asks win32 whether this
 // is a remote session. gpui owns the display (step 7 passes the real size in)
 static Size DefaultMaxTileSize() {
-#if OS_WIN
-    return {GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN)};
-#else
     return {1920, 1080};
-#endif
 }
 
 static bool IsRemoteSession() {
-#if OS_WIN
-    return GetSystemMetrics(SM_REMOTESESSION) != 0;
-#else
     return false;
-#endif
 }
 
 RenderCache::RenderCache() : maxTileSize(DefaultMaxTileSize()) {
@@ -169,13 +116,6 @@ RenderCache::RenderCache() : maxTileSize(DefaultMaxTileSize()) {
     // threads themselves are spawned lazily in Render() when work appears
     // and no idle thread is available -- many sessions only ever need a
     // couple of render threads, so creating 8+ upfront is wasteful.
-    if (!kHasThreads) {
-        pump = new RenderCachePump();
-        pump->cache = this;
-        // slot 0 belongs to the pump, so everything that reports on a render
-        // in progress sees it
-        nRenderThreads = 1;
-    }
 }
 
 RenderCache::~RenderCache() {
@@ -185,17 +125,6 @@ RenderCache::~RenderCache() {
     // timeout fires -- after which destroying a still-in-use lock would
     // access-violate.
     AtomicBoolSet(&shouldExit, true);
-
-    // no render thread ever ran; drop what the pump would have rendered
-    if (pump) {
-        AtomicIntSet(&pump->active, 0);
-        ReleasePump(pump);
-        pump = nullptr;
-        ClearCurrentRequest(0);
-        nRenderThreads = 0;
-        ScopedRecursiveMutex scope(&requestAccess);
-        requestCount = 0;
-    }
 
     if (nRenderThreads > 0) {
         // wake all threads waiting on the semaphore
@@ -228,9 +157,7 @@ RenderCache::~RenderCache() {
    no longer need a found entry. */
 // out-of-line so RenderCache.h needn't include Pixmap.h (only forward-declare it)
 BitmapCacheEntry::~BitmapCacheEntry() {
-#if defined(SUMATRA_NG)
     CanvasFreeTileImage(this);
-#endif
     FreePixmap(bitmap);
 }
 
@@ -962,9 +889,7 @@ bool RenderCache::Render(DisplayModel* dm, int pageNo, int rotation, float zoom,
     // Lazy thread spawn: if no thread is currently waiting and we're below
     // the cap, start a new one. Existing busy threads will pick up the work
     // when they finish their current task.
-    if (pump) {
-        SchedulePump();
-    } else if (idleThreads == 0 && nRenderThreads < maxRenderThreads) {
+    if (idleThreads == 0 && nRenderThreads < maxRenderThreads) {
         int idx = nRenderThreads;
         auto* td = new RenderThreadData{this, idx};
         renderThreads[idx] = StartThread(MkFunc0(RenderCacheThread, td), StrL("render-cache"));
@@ -1301,9 +1226,6 @@ static bool RenderCacheRunOne(RenderCache* cache, int threadIdx, PageRenderReque
     // a previous render might have run a 3rd-party WIC codec that unmasked
     // fp exceptions on this thread, which would crash mupdf float math
     // ng: WIC is win32; nothing unmasks them on the other platforms
-#if OS_WIN
-    MaskFpExceptions();
-#endif
     auto timeStart = TimeGet();
     Pixmap* bmp = engine->RenderPage(args);
     if (req.abort || req.darkModeEpoch != cache->darkModeEpoch) {
@@ -1403,41 +1325,10 @@ static void RenderCacheThread(RenderThreadData* td) {
     DestroyTempArena();
 }
 
-static void RunPump(RenderCachePump* pump) {
-    if (AtomicIntGet(&pump->active)) {
-        RenderCache* cache = pump->cache;
-        cache->pumpPosted = false;
-        auto timeStart = TimeGet();
-        PageRenderRequest req;
-        while (!AtomicBoolGet(&cache->shouldExit) && RenderCacheRunOne(cache, 0, req)) {
-            if (TimeSinceInMs(timeStart) >= kPumpSliceMs) {
-                break;
-            }
-        }
-        cache->ClearCurrentRequest(0);
-        cache->SchedulePump();
-    }
-    ReleasePump(pump);
-}
-
-void RenderCache::SchedulePump() {
-    ScopedRecursiveMutex scope(&requestAccess);
-    if (pumpPosted || requestCount == 0 || AtomicBoolGet(&shouldExit)) {
-        return;
-    }
-    pumpPosted = true;
-    AtomicIntInc(&pump->refs);
-    uitask::Post(MkFunc0(RunPump, pump), "RenderCachePump");
-}
-
 // TODO: conceptually, RenderCache is not the right place for code that paints
 //       (this is the only place that knows about Tiles, though)
 int RenderCache::PaintTile(
-#if defined(SUMATRA_NG)
     gpui::PaintCtx* ctx,
-#else
-    HDC hdc,
-#endif
     Rect bounds, DisplayModel* dm, int pageNo, TilePosition tile, Rect tileOnScreen, bool renderMissing,
     bool* renderOutOfDateCue, bool* renderedReplacement) {
     float zoom = dm->GetRenderZoom(pageNo);
@@ -1493,20 +1384,10 @@ int RenderCache::PaintTile(
         source.dx = (int)((float)bounds.dx * factor);
         source.dy = (int)((float)bounds.dy * factor);
     }
-#if defined(SUMATRA_NG)
     CanvasDrawTile(ctx, entry, target, source);
     if (gShowTileLayout) {
         CanvasDrawTileOutline(ctx, bounds);
     }
-#else
-    BlitPixmapRegion(renderedBmp, hdc, target, source);
-    if (gShowTileLayout) {
-        HPEN pen = CreatePen(PS_SOLID, 1, kColYellow);
-        HGDIOBJ oldPen = SelectObject(hdc, pen);
-        HdcDrawRect(hdc, bounds);
-        DeletePen(SelectObject(hdc, oldPen));
-    }
-#endif
 
     if (entry->outOfDate) {
         if (renderOutOfDateCue) {
@@ -1533,44 +1414,12 @@ static int cmpTilePosition(const TilePosition* a, const TilePosition* b) {
 // request for the visible part of the page if nothing at all could be
 // painted, 0 if something has been painted and kRenderDelayFailed on failure
 int RenderCache::Paint(
-#if defined(SUMATRA_NG)
     gpui::PaintCtx* ctx,
-#else
-    HDC hdc,
-#endif
     Rect bounds, DisplayModel* dm, int pageNo, PageInfo* pi, bool* renderOutOfDateCue) {
     ReportIf(!pi->isShown || 0.0 == pi->visibleRatio);
 
     if (!dm->ShouldCacheRendering(pageNo)) {
-#if defined(SUMATRA_NG)
         return kRenderDelayFailed;
-#else
-        int rotation = dm->PageRotation(pageNo);
-        float zoom = dm->GetZoomReal(pageNo);
-        bounds = pi->pageOnScreen.Intersect(bounds);
-
-        RectF area = ToRectF(bounds);
-        area.Offset((float)-pi->pageOnScreen.x, (float)-pi->pageOnScreen.y);
-        RectF pageBox = dm->PageMediaBoxForLayout(pageNo);
-        PointF origin = dm->GetEngine()->Transform(pageBox, pageNo, zoom, rotation).TL();
-        area.Offset(origin.x, origin.y);
-        area = dm->GetEngine()->Transform(area, pageNo, zoom, rotation, true);
-
-        RenderPageArgs args(pageNo, zoom, rotation, &area);
-        if (pi->loc.IsValid()) {
-            args.loc = pi->loc;
-        }
-        args.keepAlpha = true;
-        args.transparentBackdrop = ShowTransparencyGrid();
-        Pixmap* bmp = dm->GetEngine()->RenderPage(args);
-        if (AtomicBoolGet(&grayscalePageColors)) {
-            bmp = GrayscalePagePixmap(bmp);
-        }
-
-        bool success = bmp && BlitPixmap(bmp, hdc, bounds);
-        FreePixmap(bmp);
-        return success ? 0 : kRenderDelayFailed;
-#endif
     }
 
     int rotation = dm->PageRotation(pageNo);
@@ -1598,13 +1447,8 @@ int RenderCache::Paint(
         }
 
         bool isTargetRes = tile.res == targetRes;
-#if defined(SUMATRA_NG)
         int renderDelay = PaintTile(ctx, isect, dm, pageNo, tile, tileOnScreen, isTargetRes, renderOutOfDateCue,
                                     isTargetRes ? &neededScaling : nullptr);
-#else
-        int renderDelay = PaintTile(hdc, isect, dm, pageNo, tile, tileOnScreen, isTargetRes, renderOutOfDateCue,
-                                    isTargetRes ? &neededScaling : nullptr);
-#endif
         if (!(isTargetRes && 0 == renderDelay) && tile.res < maxRes) {
             VecAppend(queue, TilePosition(tile.res + 1, tile.row * 2, tile.col * 2));
             VecAppend(queue, TilePosition(tile.res + 1, tile.row * 2, (tile.col * 2) + 1));
@@ -1661,126 +1505,6 @@ void RenderCache::LogCacheSize() {
 
 extern RenderCache* gRenderCache;
 
-#if !defined(SUMATRA_NG)
-
-struct DebugTextWnd : WindowBase {
-    Edit* edit = nullptr;
-    PlatformFont* monoFont = nullptr;
-
-    bool Create(Str title, int fontSize);
-    void UpdateTheme() override;
-    void ApplyDarkMode() override;
-    void SetTextContent(Str text);
-};
-
-void DebugTextWnd::ApplyDarkMode() {
-    DarkModeApplyToWindowAndEraseBg(hwnd);
-}
-
-void DebugTextWnd::UpdateTheme() {
-    WindowBase::UpdateTheme();
-    // Re-apply monospaced font after darkmode child theming (may reset font).
-    if (edit && monoFont) {
-        edit->SetFont(monoFont);
-    }
-}
-
-void DebugTextWnd::SetTextContent(Str text) {
-    if (edit) {
-        edit->SetText(str::LFToCRLFTemp(text));
-    }
-}
-
-bool DebugTextWnd::Create(Str title, int fontSize) {
-    {
-        CreateCustomArgs args;
-        args.title = title;
-        args.visible = false;
-        args.style = WS_OVERLAPPEDWINDOW;
-        args.icon = LoadIconW(GetModuleHandleW(nullptr), MAKEINTRESOURCEW(GetAppIconID()));
-        CreateCustom(args);
-    }
-    if (!hwnd) {
-        return false;
-    }
-
-    Edit::CreateArgs args;
-    args.parent = hwnd;
-    args.isMultiLine = true;
-    args.noWrap = true;
-    args.withBorder = true;
-    edit = new Edit();
-    edit->Create(args);
-    SendMessageW(edit->hwnd, EM_SETREADONLY, TRUE, 0);
-    SendMessageW(edit->hwnd, EM_SETLIMITTEXT, 0, 0);
-
-    HDC hdc = GetDC(hwnd);
-    monoFont = HdcCreateSimpleFont(hdc, StrL("Consolas"), fontSize);
-    ReleaseDC(hwnd, hdc);
-    if (monoFont) {
-        edit->SetFont(monoFont);
-    }
-    layout = edit;
-
-    int winW = DpiScale(800);
-    int winH = DpiScale(500);
-    SetWindowPos(hwnd, nullptr, 0, 0, winW, winH, SWP_NOMOVE | SWP_NOZORDER);
-    DoLayout();
-    UpdateTheme();
-    SetIsVisible(true);
-    return true;
-}
-
-static DebugTextWnd* gRenderInfoWnd = nullptr;
-static DebugTextWnd* gCacheInfoWnd = nullptr;
-
-static void TeardownDebugTextWnd(DebugTextWnd** slot, DebugTextWnd* w) {
-    if (!slot || !*slot || *slot != w) {
-        return;
-    }
-    *slot = nullptr;
-    w->ScheduleDelete();
-}
-
-static void CloseDebugTextWnd(DebugTextWnd** slot) {
-    if (!slot || !*slot) {
-        return;
-    }
-    DebugTextWnd* w = *slot;
-    if (w->hwnd && IsWindow(w->hwnd)) {
-        w->Close();
-    } else {
-        TeardownDebugTextWnd(slot, w);
-    }
-}
-
-static void OnRenderInfoClose(WindowBase::CloseEvent* ev) {
-    TeardownDebugTextWnd(&gRenderInfoWnd, (DebugTextWnd*)ev->e->self);
-}
-
-static void OnRenderInfoDestroy(WindowBase::DestroyEvent* ev) {
-    TeardownDebugTextWnd(&gRenderInfoWnd, (DebugTextWnd*)ev->e->self);
-}
-
-static void TeardownCacheInfoWnd(DebugTextWnd* w) {
-    gOnCachedObjectsChanged = nullptr;
-    TeardownDebugTextWnd(&gCacheInfoWnd, w);
-}
-
-static void OnCacheInfoClose(WindowBase::CloseEvent* ev) {
-    TeardownCacheInfoWnd((DebugTextWnd*)ev->e->self);
-}
-
-static void OnCacheInfoDestroy(WindowBase::DestroyEvent* ev) {
-    TeardownCacheInfoWnd((DebugTextWnd*)ev->e->self);
-}
-
-bool IsRenderInfoWindowVisible() {
-    return gRenderInfoWnd && gRenderInfoWnd->hwnd && IsWindow(gRenderInfoWnd->hwnd);
-}
-
-#else
-
 constexpr Str kRenderInfoTitle = StrL("Render Queue Info");
 constexpr Str kCacheInfoTitle = StrL("Cache Info");
 
@@ -1818,8 +1542,6 @@ void ToggleCacheInfoWindow() {
     ShowTextInWindow(nullptr, kCacheInfoTitle, ToStr(s));
     gOnCachedObjectsChanged = UpdateCacheInfo;
 }
-
-#endif
 
 static void SerializePredictive(str::Builder& s, int originPageNo, int nPred, const int* pred) {
     if (nPred <= 0) {
@@ -1923,105 +1645,6 @@ void RenderCache::SerializeQueueState(str::Builder& s) {
     }
 }
 
-#if !defined(SUMATRA_NG)
-
-static void SetRenderInfoTextOnUI(Str* s) {
-    if (gRenderInfoWnd) {
-        gRenderInfoWnd->SetTextContent(*s);
-    }
-    str::Free(*s);
-    delete s;
-}
-
-// if the render-info debug window is shown, refresh it with the current
-// queue state. Cheap no-op when the window is hidden. Safe to call from
-// any thread (and while holding requestAccess).
-void RenderCache::UpdateRenderInfo() {
-    if (!IsRenderInfoWindowVisible()) {
-        return;
-    }
-    str::Builder s;
-    SerializeQueueState(s);
-    // marshal to the UI thread: updating the window from a render thread while
-    // holding requestAccess could deadlock if the UI thread is blocked on it
-    auto* dup = new Str(str::Dup(ToStr(s)));
-    auto fn = MkFunc0<Str>(SetRenderInfoTextOnUI, dup);
-    uitask::Post(fn, "RenderInfo");
-}
-
-static void CreateRenderInfoWindow() {
-    auto* wnd = new DebugTextWnd();
-    wnd->closeOnEsc = gSettings->escToExit;
-    wnd->onClose = MkFunc1Void<WindowBase::CloseEvent*>(OnRenderInfoClose);
-    wnd->onDestroy = MkFunc1Void<WindowBase::DestroyEvent*>(OnRenderInfoDestroy);
-    if (!wnd->Create(StrL("Render Queue Info"), 12)) {
-        delete wnd;
-        return;
-    }
-    gRenderInfoWnd = wnd;
-}
-
-// render queue debug window (CmdDebugToggleRenderInfo)
-void ToggleRenderInfoWindow() {
-    if (gRenderInfoWnd) {
-        CloseDebugTextWnd(&gRenderInfoWnd);
-        return;
-    }
-    CreateRenderInfoWindow();
-    if (gRenderCache) {
-        gRenderCache->UpdateRenderInfo();
-    }
-}
-
-// --------- cached-objects debug window (CmdDebugToggleCacheInfo) ---------
-
-bool IsCacheInfoWindowVisible() {
-    return gCacheInfoWnd && gCacheInfoWnd->hwnd && IsWindow(gCacheInfoWnd->hwnd);
-}
-
-static void SetCacheInfoTextOnUI(Str* s) {
-    if (gCacheInfoWnd) {
-        gCacheInfoWnd->SetTextContent(*s);
-    }
-    str::Free(*s);
-    delete s;
-}
-
-void UpdateCacheInfo() {
-    if (!IsCacheInfoWindowVisible()) {
-        return;
-    }
-    str::Builder s;
-    SerializeCachedObjects(s);
-    auto* dup = new Str(str::Dup(ToStr(s)));
-    auto fn = MkFunc0<Str>(SetCacheInfoTextOnUI, dup);
-    uitask::Post(fn, "CacheInfo");
-}
-
-static void CreateCacheInfoWindow() {
-    auto* wnd = new DebugTextWnd();
-    wnd->closeOnEsc = gSettings->escToExit;
-    wnd->onClose = MkFunc1Void<WindowBase::CloseEvent*>(OnCacheInfoClose);
-    wnd->onDestroy = MkFunc1Void<WindowBase::DestroyEvent*>(OnCacheInfoDestroy);
-    if (!wnd->Create(StrL("Cache Info"), 12)) {
-        delete wnd;
-        return;
-    }
-    gCacheInfoWnd = wnd;
-    gOnCachedObjectsChanged = UpdateCacheInfo;
-}
-
-void ToggleCacheInfoWindow() {
-    if (gCacheInfoWnd) {
-        CloseDebugTextWnd(&gCacheInfoWnd);
-        return;
-    }
-    CreateCacheInfoWindow();
-    UpdateCacheInfo();
-}
-
-#else
-
 static void SetDebugTextOnUI(Str* s) {
     SetTextViewWindowText(*s);
     str::Free(*s);
@@ -2046,4 +1669,3 @@ void UpdateCacheInfo() {
     uitask::Post(MkFunc0<Str>(SetDebugTextOnUI, new Str(str::Dup(ToStr(s)))), "CacheInfo");
 }
 
-#endif

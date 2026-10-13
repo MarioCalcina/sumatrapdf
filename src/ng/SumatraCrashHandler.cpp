@@ -12,11 +12,6 @@
 #include "base/Crypto.h"
 #include "base/CrashHandler.h"
 #include "base/SettingsUtil.h"
-#if OS_WIN
-#include "base/WinDynCalls.h"
-#include "base/DbgHelpDyn.h"
-#include "base/Win.h"
-#endif
 
 #include "Settings.h"
 #include "AppTools.h"
@@ -40,15 +35,9 @@
 
 // Windows POSTs a minidump, macOS a text report; each has its own store on
 // the server. Empty: nothing to upload to.
-#if OS_WIN
-#define kCrashSubmitUrl kCrashServer "/app/sumatrapdfng-win/uploadminidump"
-#elif OS_DARWIN
 // this macOS fork has no crash server: reports stay in crashinfo/, they must
 // not reach upstream's server, which did not make the build
 #define kCrashSubmitUrl ""
-#else
-#define kCrashSubmitUrl ""
-#endif
 
 // where InstallCrashHandler() writes the .dmp, in the crash arena
 static Str gCrashDumpPath;
@@ -66,19 +55,6 @@ TempStr GetCrashInfoDirTemp() {
 // Message from MuPDF's uncaught-throw abort (error.c). Looked up at crash time
 // so we do not need a hard link for every tool that builds CrashHandlerNoOp.
 const char* LookupUncaughtMupdfError() {
-#if OS_WIN
-    using Fn = const char* (*)();
-    HMODULE h = GetModuleHandleW(nullptr);
-    if (h) {
-        auto fn = (Fn)GetProcAddress(h, "fz_last_uncaught_error");
-        if (fn) {
-            const char* msg = fn();
-            if (msg && msg[0]) {
-                return msg;
-            }
-        }
-    }
-#endif
     return nullptr;
 }
 
@@ -94,16 +70,6 @@ static void GetProgramInfo(str::Builder& b) {
     if (gIsPreReleaseBuild) {
         b.Append(StrL(" pre-release"));
     }
-#if OS_WIN
-    if (IsProcess64()) {
-        b.Append(StrL(" 64-bit"));
-    } else {
-        b.Append(StrL(" 32-bit"));
-        if (IsRunningInWow64()) {
-            b.Append(StrL(" Wow64"));
-        }
-    }
-#endif
     if (gIsDebugBuild) {
         if (!str::Contains(currentVersion, StrL(" (dbg)"))) {
             b.Append(StrL(" (dbg)"));
@@ -125,15 +91,6 @@ static void ShowCrashHandlerMessage() {
         log(StrL("ShowCrashHandlerMessage: skipping because !CanAccessDisk()\n"));
         return;
     }
-#if OS_WIN
-    Str msg = StrL("SumatraPDF crashed.\n\nPress 'Cancel' to see the crash report.");
-    uint flags = MB_ICONERROR | MB_OKCANCEL | MB_SETFOREGROUND | MB_TOPMOST;
-    int res = MessageBoxW(nullptr, CWStrTemp(msg), L"SumatraPDF crashed", flags);
-    if (IDCANCEL != res) {
-        return;
-    }
-    LaunchFileShell(StrL("https://www.sumatrapdfreader.org/docs/Submit-crash-report.html"), {}, StrL("open"));
-#endif
 }
 
 // The .dmp we write alongside this already has the stacks, the modules and the
@@ -143,30 +100,10 @@ static void ShowCrashHandlerMessage() {
 static Str GetCrashComment(Arena* a, Str condStr, Str fileLine, bool isCrash) {
     str::Builder b(a);
     b.Reserve(16 * 1024);
-#if OS_WIN
-    if (isCrash) {
-        b.Append(StrL("Type: crash (minidump)\n"));
-    } else {
-        b.Append(StrL("Type: debug report (not crash)\n"));
-    }
-    b.Append(str::Format(a, "Minidump: %s\n", gCrashDumpPath));
-#else
     b.Append(isCrash ? StrL("Type: crash\n") : StrL("Type: debug report (not crash)\n"));
-#endif
     if (condStr) {
         b.Append(str::Format(a, "Cond: %s @ %s\n", condStr, fileLine));
     }
-#if OS_WIN
-    if (!isCrash) {
-        // Belt and braces for a debug report: we run on the reporting thread,
-        // so walk it now, before any dump machinery gets involved
-        b.Append(StrL("\n--- reporting thread ---\n"));
-        if (!dbghelp::GetCurrentThreadCallstack(b)) {
-            b.Append(StrL("(callstack not available)\n"));
-        }
-        b.Append(StrL("\n"));
-    }
-#endif
     GetProgramInfo(b);
     AppendUncaughtMupdfError(a, b);
     Str sysInfo = CrashHandlerSystemInfo();
@@ -212,13 +149,8 @@ static TempStr BuildSubmitUrlTemp() {
 
 // crashes from third-party builds (forks, distro rebuilds) aren't ours to fix
 static bool IsOfficialBuild() {
-#if OS_DARWIN
     // the mac build is ad-hoc signed, so there is no signer to tell builds apart
     return true;
-#else
-    TempStr signer = GetExecutableSignerTemp(GetSelfExePathTemp());
-    return str::Eq(signer, StrL(kOfficialSigner));
-#endif
 }
 
 void InstallSumatraCrashHandler(bool localOnly) {

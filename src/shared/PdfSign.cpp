@@ -9,25 +9,12 @@
 
 #include "base/Base.h"
 #include "base/File.h"
-#include "base/ScopedWin.h"
 
 // ng: Windows signs through wincrypt; Linux uses MuPDF's OpenSSL helper.
-#if OS_WIN
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-#include <wincrypt.h>
-#endif
 
 extern "C" {
 #include <mupdf/pdf.h>
-#if OS_WIN
-#include "mupdf/pkcs7-windows.h"
-#elif OS_DARWIN
 #include "mupdf/pkcs7_mac.h"
-#elif defined(SUMATRA_HAVE_OPENSSL)
-#include "mupdf/helpers/pkcs7-openssl.h"
-#endif
 }
 
 #include "gui/UIModels.h"
@@ -166,8 +153,6 @@ int EngineMupdfCountSignedSignatures(EngineBase* engine) {
     return n;
 }
 
-#if OS_WIN || OS_DARWIN || defined(SUMATRA_HAVE_OPENSSL)
-
 // Finds the unsigned signature widget named name; returns a kept reference the
 // caller drops. The page that owns it is left loaded and returned in pageOut
 // (caller drops it). Dropping that page before signing unbinds the annot
@@ -269,22 +254,10 @@ bool EngineMupdfSignDocument(EngineBase* engine, const PdfSignArgs& args, Str* e
     static_assert(kPdfSignShowGraphicName == PDF_SIGNATURE_SHOW_GRAPHIC_NAME);
 
     fz_try(ctx) {
-#if OS_WIN
-        if (args.certThumbprint) {
-            signer = pkcs7_windows_read_store(ctx, CStrTemp(args.certThumbprint));
-        } else {
-            signer = pkcs7_windows_read_pfx(ctx, CStrTemp(args.certPath), CStrTemp(args.certPassword));
-        }
-#else
         if (args.certThumbprint) {
             fz_throw(ctx, FZ_ERROR_ARGUMENT, "the system certificate store is unavailable");
         }
-#if OS_DARWIN
         signer = pkcs7_mac_read_pfx(ctx, CStrTemp(args.certPath), CStrTemp(args.certPassword));
-#else
-        signer = pkcs7_openssl_read_pfx(ctx, CStrTemp(args.certPath), CStrTemp(args.certPassword));
-#endif
-#endif
         if (args.fieldName) {
             widget = FindUnsignedSignatureWidget(ctx, epdf->pdfdoc, args.fieldName, &pageNo, &page);
             if (!widget) {
@@ -369,74 +342,5 @@ bool EngineMupdfSignDocument(EngineBase* engine, const PdfSignArgs& args, Str* e
 // Certificates in the current user's Personal store that have a private key
 // and are currently valid. Labels are what the Sign Document drop-down shows;
 // thumbprints are what EngineMupdfSignDocument wants in certThumbprint.
-#if OS_WIN
-void ListWindowsSigningCertificates(StrVec& thumbprints, StrVec& labels) {
-    thumbprints.Reset();
-    labels.Reset();
-    HCERTSTORE hStore = CertOpenSystemStoreW(0, L"MY");
-    if (!hStore) {
-        return;
-    }
-    FILETIME now;
-    GetSystemTimeAsFileTime(&now);
-    PCCERT_CONTEXT cert = nullptr;
-    while ((cert = CertEnumCertificatesInStore(hStore, cert)) != nullptr) {
-        DWORD provSz = 0;
-        if (!CertGetCertificateContextProperty(cert, CERT_KEY_PROV_INFO_PROP_ID, nullptr, &provSz)) {
-            continue;
-        }
-        if (cert->pCertInfo) {
-            if (CompareFileTime(&cert->pCertInfo->NotBefore, &now) > 0) {
-                continue;
-            }
-            if (CompareFileTime(&cert->pCertInfo->NotAfter, &now) < 0) {
-                continue;
-            }
-            BYTE ku[2]{};
-            if (CertGetIntendedKeyUsage(X509_ASN_ENCODING, cert->pCertInfo, ku, sizeof(ku))) {
-                if ((ku[0] & CERT_DIGITAL_SIGNATURE_KEY_USAGE) == 0) {
-                    continue;
-                }
-            }
-        }
-        BYTE hash[20];
-        DWORD hashLen = sizeof(hash);
-        if (!CertGetCertificateContextProperty(cert, CERT_HASH_PROP_ID, hash, &hashLen) || hashLen != 20) {
-            continue;
-        }
-        char hex[41];
-        for (DWORD i = 0; i < 20; i++) {
-            snprintf(hex + (i * 2), 3, "%02X", hash[i]);
-        }
-        WCHAR nameW[256]{};
-        CertGetNameStringW(cert, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0, nullptr, nameW, dimof(nameW));
-        TempStr name = ToUtf8Temp(WStr(nameW));
-        if (len(name) == 0) {
-            name = StrL("(unnamed)");
-        }
-        SYSTEMTIME st{};
-        if (cert->pCertInfo) {
-            FileTimeToSystemTime(&cert->pCertInfo->NotAfter, &st);
-        }
-        TempStr label = st.wYear ? fmt("%s (expires %04d-%02d-%02d)", name, st.wYear, st.wMonth, st.wDay) : name;
-        thumbprints.Append(Str(hex, 40));
-        labels.Append(label);
-    }
-    CertCloseStore(hStore, 0);
-}
-#else
-void ListWindowsSigningCertificates(StrVec&, StrVec&) {}
-#endif
-
-#else
-
-bool EngineMupdfSignDocument(EngineBase*, const PdfSignArgs&, Str* errOut) {
-    if (errOut) {
-        *errOut = str::Dup(StrL("signing a PDF is not available on this platform"));
-    }
-    return false;
-}
-
 void ListWindowsSigningCertificates(StrVec&, StrVec&) {}
 
-#endif

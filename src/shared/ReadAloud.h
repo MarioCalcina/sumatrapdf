@@ -3,21 +3,16 @@
 
 class EngineBase;
 struct DisplayModel;
-#if !defined(SUMATRA_NG)
-struct Gfx;
-#endif
 struct MainWindow;
 struct WindowTab;
 struct TextSelection;
 struct ReadAloudPlaybackBar;
-#if defined(SUMATRA_NG)
 struct MenuModel;
 namespace gpui {
 struct Ctx;
 struct El;
 struct PaintCtx;
 } // namespace gpui
-#endif
 
 // --- text-to-speech backend (WinRT speech synthesis, SAPI 5 fallback) ---
 
@@ -38,9 +33,6 @@ bool TtsIsSpeaking();
 
 int TtsGetSpokenPosUtf8();
 
-#if !defined(SUMATRA_NG) || OS_WIN
-void TtsSetNotifyWindow(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
-#endif
 void TtsProcessEvents();
 
 Vec<TtsVoiceInfo> TtsGetVoices();
@@ -57,16 +49,11 @@ bool TtsTakeEngineCrash();
 bool TtsEngineCrashed();
 bool TtsTestEngineCrash();
 void TtsTestPumpOnNextSpeak();
-#if defined(SUMATRA_NG)
 bool ApplyReadAloudVoiceFromSettings();
 void ReadAloudFreeVoiceCache();
-#endif
 
 // --- highlight of the words being spoken ---
 
-#if !defined(SUMATRA_NG)
-constexpr int kReadAloudHighlightTimerID = 8;
-#endif
 constexpr int kReadAloudHighlightDelayInMs = 80;
 
 // pageLoc, not a flat pageNo: flat numbers shift when chapters re-lay out
@@ -102,20 +89,14 @@ bool ReadAloudHighlightBuildFromDocument(DisplayModel* dm, int startPage, int st
 
 void ReadAloudHighlightTimerStart(MainWindow* win);
 void ReadAloudHighlightTimerStop(MainWindow* win);
-#if defined(SUMATRA_NG)
 void ReadAloudTick(MainWindow* win, int elapsedMs);
-#endif
 
 void ReadAloudOnUserViewChanged(MainWindow* win);
 void ReadAloudUpdateAutoScroll(MainWindow* win);
 
 bool ReadAloudGetProgressPage(WindowTab* tab, int* pageOut, int* pageCountOut);
 
-#if defined(SUMATRA_NG)
 void PaintReadAloudHighlight(MainWindow* win, gpui::PaintCtx* ctx);
-#else
-void PaintReadAloudHighlight(MainWindow* win, Gfx* gfx);
-#endif
 
 bool ReadAloudSentenceRange(Str text, int pos, int* startOut, int* endOut);
 
@@ -135,9 +116,6 @@ void ReadAloudAppendUnderlines(DisplayModel* dm, Rect canvasRc, ReadAloudHighlig
 void ReadAloudPlaybackBarUpdateSession(WindowTab* tab);
 void ReadAloudPlaybackBarHide(MainWindow* win);
 void ReadAloudPlaybackBarForgetTab(MainWindow* win, WindowTab* tab);
-#if !defined(SUMATRA_NG)
-void ReadAloudPlaybackBarRelayout(HWND hwndCanvas);
-#endif
 void ReadAloudPlaybackBarTick(MainWindow* win);
 
 void ReadAloudPlaybackPauseOrResume();
@@ -145,17 +123,10 @@ void ReadAloudPlaybackStop();
 void ReadAloudPlaybackCycleSpeed(int dir);
 void ReadAloudPlaybackBarDestroy(MainWindow* win);
 TempStr ReadAloudPlaybackBarStateTemp(int* exitCodeOut);
-#if defined(SUMATRA_NG)
 TempStr ReadAloudPlaybackBarTestTemp(Str action, int* exitCodeOut);
 gpui::El* ReadAloudPlaybackBarBuild(MainWindow* win, gpui::Ctx* cx);
-#endif
 
 // --- read-aloud session: what to read, chunking, menus ---
-
-#if !defined(SUMATRA_NG) || OS_WIN
-// posted by the tts backend, handled by the native window
-constexpr UINT kWmTtsEvent = WM_APP + 0x421;
-#endif
 
 constexpr int CmdTtsVoiceDefault = 0x7100;
 constexpr int CmdTtsVoiceFirst = 0x7101;
@@ -192,22 +163,9 @@ float ReadAloudSpeedAt(int idx);
 int ReadAloudClosestSpeedIdx();
 void ReadAloudSetSpeedIdx(int idx);
 
-#if defined(SUMATRA_NG)
 void RebuildReadAloudMenu(MainWindow* win, MenuModel* menu, bool includeCursorItem = false,
                           bool canReadFromCursor = false);
-#else
-void RebuildReadAloudMenu(MainWindow* win, HMENU menu, bool includeCursorItem = false, bool canReadFromCursor = false);
-#endif
 bool HandleReadAloudMenuCommand(MainWindow* win, int cmdId);
-#if !defined(SUMATRA_NG)
-void SetReadAloudAppSubmenu(HMENU menu);
-HMENU GetReadAloudAppSubmenu();
-bool IsReadAloudAppSubmenu(HMENU menu);
-void SetReadAloudContextSubmenu(HMENU menu);
-bool IsReadAloudContextSubmenu(HMENU menu);
-HMENU GetReadAloudContextSubmenu();
-void ShowTtsVoiceMenu(MainWindow* win, Rect buttonScreen);
-#endif
 
 // --- shared by ReadAloudSession.cpp and each app's ReadAloud.cpp ---
 

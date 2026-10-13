@@ -47,7 +47,6 @@
 #include "base/GuessFileType.h"
 #include "base/Timer.h"
 #include "base/UITask.h"
-#include "base/Win.h"
 #include "gui/Dpi.h"
 
 #include "gui/UIModels.h"

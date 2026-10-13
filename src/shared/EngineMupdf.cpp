@@ -3,35 +3,18 @@
 
 #include "base/Base.h"
 #include "base/Archive.h"
-#if defined(SUMATRA_NG)
-#if OS_WIN
-#include "base/ScopedWin.h"
-#endif
-#else
-#include "base/AutoWin.h"
-#endif
 #include "base/File.h"
 #include "base/GuessFileType.h"
 #include "base/Pixmap.h"
-#if OS_WIN
-#include "base/Win.h"
-#else
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
-#endif
 #include "base/Timer.h"
 #include "base/UITask.h"
 
 extern "C" {
 #include <mupdf/pdf.h>
-#if OS_WIN
-#include "mupdf/pkcs7-windows.h"
-#elif OS_DARWIN
 #include "mupdf/pkcs7_mac.h"
-#elif defined(SUMATRA_HAVE_OPENSSL)
-#include "mupdf/helpers/pkcs7-openssl.h"
-#endif
 #include "../../ext/mupdf/source/fitz/color-imp.h"
 }
 
@@ -76,13 +59,7 @@ float EngineMupdfSetEbookLayoutAspect(float dyOverDx) {
 }
 
 // in mupdf_load_system_font.c
-#if OS_WIN
-extern "C" void install_load_windows_font_funcs(fz_context* ctx);
-#elif OS_LINUX
-extern "C" void install_load_linux_font_funcs(fz_context* ctx);
-#elif OS_DARWIN
 extern "C" void install_load_mac_font_funcs(fz_context* ctx);
-#endif
 
 static AnnotationType AnnotationTypeFromPdfAnnot(enum pdf_annot_type tp) {
     return (AnnotationType)tp;
@@ -874,17 +851,10 @@ static fz_stream* FzOpenOrReadFile(fz_context* ctx, Str path, fz_buffer** bytesO
             return stm;
         }
     }
-#if OS_WIN
-    WCHAR* pathW = CWStrTemp(path);
-    fz_try(ctx) {
-        stm = fz_open_file_w(ctx, pathW);
-    }
-#else
     char* pathZ = CStrTemp(path);
     fz_try(ctx) {
         stm = fz_open_file(ctx, pathZ);
     }
-#endif
     fz_catch(ctx) {
         stm = nullptr;
         fz_report_error(ctx);
@@ -1680,113 +1650,6 @@ static LinkRectList* LinkifyText(Utf8PageText pageText, Rect* coords) {
 }
 
 // try to produce an 8-bit palette for saving some memory
-#if OS_WIN
-static RenderedBitmap* TryRenderAsPaletteImage(fz_pixmap* pixmap) {
-    int w = pixmap->w;
-    int h = pixmap->h;
-    int stride = ((w + 3) / 4) * 4;
-
-    size_t sz = sizeof(BITMAPINFO) + (255 * sizeof(RGBQUAD));
-    auto* bmi = (BITMAPINFO*)AllocArrayTemp<u8>((int)sz);
-    if (!bmi) {
-        return nullptr;
-    }
-    BITMAPINFOHEADER* bmih = &bmi->bmiHeader;
-    bmih->biSize = sizeof(*bmih);
-    bmih->biWidth = w;
-    bmih->biHeight = -h;
-    bmih->biPlanes = 1;
-    bmih->biCompression = BI_RGB;
-    bmih->biBitCount = 8;
-    bmih->biSizeImage = h * stride;
-    bmih->biClrUsed = 256;
-
-    void* data = nullptr;
-    HANDLE hMap = CreateFileMapping(INVALID_HANDLE_VALUE, nullptr, PAGE_READWRITE, 0, bmih->biSizeImage, nullptr);
-    HBITMAP hbmp = CreateDIBSection(nullptr, bmi, DIB_RGB_COLORS, &data, hMap, 0);
-    if (!hbmp) {
-        if (hMap) {
-            CloseHandle(hMap);
-        }
-        return nullptr;
-    }
-
-    u32* palette = (u32*)bmi->bmiColors;
-
-    // open-addressed hash table for color -> palette index lookup.
-    // key is RGB in source byte order (R | G<<8 | B<<16); empty slot = -1.
-    // kHashSize = 1,024 slots (4x the 256 max palette entries -> load factor <= 25%).
-    // hashIdx is 1,024 * 2 = 2,048 bytes; hashKey is 1,024 * 4 = 4,096 bytes; 6 KB total on the stack.
-    constexpr int kHashBits = 10;
-    constexpr int kHashSize = 1 << kHashBits;
-    constexpr u32 kHashMask = kHashSize - 1;
-    i16 hashIdx[kHashSize];
-    u32 hashKey[kHashSize];
-    memset(hashIdx, 0xFF, sizeof(hashIdx));
-
-    u8* dest = (u8*)data;
-    u8* source = pixmap->samples;
-    int paletteSize = 0;
-    int padding = stride - w;
-    // sentinel that can't equal any masked pixel (alpha bits would be 0)
-    u32 lastPx = 0xFFFFFFFFu;
-    int lastIdx = 0;
-
-    for (int j = 0; j < h; j++) {
-        for (int i = 0; i < w; i++) {
-            u32 px = *(u32*)source & 0x00FFFFFFu;
-            source += 4;
-
-            if (px == lastPx) {
-                *dest++ = (u8)lastIdx;
-                continue;
-            }
-
-            u32 slot = (px * 2654435761u) >> (32 - kHashBits);
-            int k;
-            for (;;) {
-                int idx = hashIdx[slot];
-                if (idx < 0) {
-                    if (paletteSize >= 256) {
-                        DeleteObject(hbmp);
-                        if (hMap) {
-                            CloseHandle(hMap);
-                        }
-                        return {};
-                    }
-                    k = paletteSize++;
-                    hashKey[slot] = px;
-                    hashIdx[slot] = (i16)k;
-                    // palette is BGR0 (RGBQUAD layout); source is RGBA, so swap R and B
-                    palette[k] = ((px & 0xFFu) << 16) | (px & 0xFF00u) | ((px >> 16) & 0xFFu);
-                    break;
-                }
-                if (hashKey[slot] == px) {
-                    k = idx;
-                    break;
-                }
-                slot = (slot + 1) & kHashMask;
-            }
-            lastPx = px;
-            lastIdx = k;
-            *dest++ = (u8)k;
-        }
-        dest += padding;
-    }
-
-    bmih->biClrUsed = paletteSize;
-    // CreateDIBSection snapshotted the (empty) color table at call time, so push the
-    // palette we just built into the DIB now via SetDIBColorTable.
-    HDC hdc = CreateCompatibleDC(nullptr);
-    if (hdc) {
-        HGDIOBJ oldBmp = SelectObject(hdc, hbmp);
-        SetDIBColorTable(hdc, 0, paletteSize, (RGBQUAD*)palette);
-        SelectObject(hdc, oldBmp);
-        DeleteDC(hdc);
-    }
-    return new RenderedBitmap(hbmp, Size(w, h), hMap);
-}
-#endif
 
 // had to create a copy of fz_convert_pixmap to ensure we always get the alpha
 static fz_pixmap* FzConvertPixmap2(fz_context* ctx, fz_pixmap* pix, fz_colorspace* ds, fz_colorspace* prf,
@@ -1840,71 +1703,7 @@ static fz_pixmap* NewBgrPixmap(fz_context* ctx, fz_pixmap* pixmap) {
     return res;
 }
 
-#if OS_WIN
-// preserveAlpha: palettizing drops the alpha channel, so skip it when the
-// caller needs transparent holes to composite over the canvas (issue #1809).
-static RenderedBitmap* NewRenderedFzPixmap(fz_context* ctx, fz_pixmap* pixmap, bool preserveAlpha = false) {
-    if (!pixmap) {
-        return nullptr;
-    }
-    if (!preserveAlpha && pixmap->n == 4 && fz_colorspace_is_rgb(ctx, pixmap->colorspace)) {
-        RenderedBitmap* res = TryRenderAsPaletteImage(pixmap);
-        if (res) {
-            return res;
-        }
-    }
-
-    auto* bmi = (BITMAPINFO*)AllocArrayTemp<u8>(sizeofi(BITMAPINFO) + (255 * sizeofi(RGBQUAD)));
-
-    fz_pixmap* bgrPixmap = NewBgrPixmap(ctx, pixmap);
-    if (!bgrPixmap) {
-        return nullptr;
-    }
-
-    int w = bgrPixmap->w;
-    int h = bgrPixmap->h;
-    int n = bgrPixmap->n;
-    int imgSize = (int)bgrPixmap->stride * h;
-    int bitsCount = n * 8;
-
-    BITMAPINFOHEADER* bmih = &bmi->bmiHeader;
-    bmih->biSize = sizeof(*bmih);
-    bmih->biWidth = w;
-    bmih->biHeight = -h;
-    bmih->biPlanes = 1;
-    bmih->biCompression = BI_RGB;
-    bmih->biBitCount = bitsCount;
-    bmih->biSizeImage = imgSize;
-    bmih->biClrUsed = 0;
-
-    void* data = nullptr;
-    HANDLE hFile = INVALID_HANDLE_VALUE;
-    DWORD fl = PAGE_READWRITE;
-    HANDLE hMap = CreateFileMappingW(hFile, nullptr, fl, 0, imgSize, nullptr);
-    uint usage = DIB_RGB_COLORS;
-    HBITMAP hbmp = CreateDIBSection(nullptr, bmi, usage, &data, hMap, 0);
-    if (data) {
-        u8* samples = bgrPixmap->samples;
-        memcpy(data, samples, imgSize);
-    }
-    fz_drop_pixmap(ctx, bgrPixmap);
-    if (!hbmp) {
-        if (hMap) {
-            CloseHandle(hMap);
-        }
-        return nullptr;
-    }
-    // return a RenderedBitmap even if hbmp is nullptr so that callers can
-    // distinguish rendering errors from GDI resource exhaustion
-    // (and in the latter case retry using smaller target rectangles)
-    return new RenderedBitmap(hbmp, Size(w, h), hMap);
-}
-#endif
-
 static Pixmap* NewPixmapFromFzPixmap(fz_context* ctx, fz_pixmap* pixmap, bool preserveAlpha = false) {
-#if OS_WIN
-    return PixmapFromRenderedBitmap(NewRenderedFzPixmap(ctx, pixmap, preserveAlpha));
-#else
     fz_pixmap* bgrPixmap = NewBgrPixmap(ctx, pixmap);
     if (!bgrPixmap) {
         return nullptr;
@@ -1925,7 +1724,6 @@ static Pixmap* NewPixmapFromFzPixmap(fz_context* ctx, fz_pixmap* pixmap, bool pr
     }
     fz_drop_pixmap(ctx, bgrPixmap);
     return res;
-#endif
 }
 
 static TocItem* NewTocItemWithDestination(Arena* arena, TocItem* parent, Str title, IPageDestination* dest) {
@@ -3422,13 +3220,7 @@ EngineMupdf::EngineMupdf() {
     }
     InstallFitzErrorCallbacks(this, _ctx);
 
-#if OS_WIN
-    install_load_windows_font_funcs(_ctx);
-#elif OS_LINUX
-    install_load_linux_font_funcs(_ctx);
-#elif OS_DARWIN
     install_load_mac_font_funcs(_ctx);
-#endif
     InstallEmbeddedFontLoader();
     fz_register_document_handlers(_ctx);
 }
@@ -4211,9 +4003,6 @@ bool EngineMupdf::LoadFromStream(fz_stream* stm, Str nameHint, PasswordUI* pwdUI
     }
     // a 3rd-party DLL might have unmasked fp exceptions on this thread, which
     // would crash mupdf on benign NaN comparisons e.g. in pdf_resolve_link_dest()
-#if OS_WIN
-    MaskFpExceptions();
-#endif
     auto* ctx = Ctx();
 
     float ldx = layoutA5DxPt;
@@ -4370,26 +4159,8 @@ bool EngineMupdf::LoadFromStream(fz_stream* stm, Str nameHint, PasswordUI* pwdUI
         ok = fz_authenticate_password(ctx, _doc, pwdA.s);
         // according to the spec (1.7 ExtensionLevel 3), the password
         // for crypt revisions 5 and above are in SASLprep normalization
-#if OS_WIN
-        if (!ok) {
-            // TODO: this is only part of SASLprep
-            TempStr normalized = NormalizeString(pwd, 5 /* NormalizationKC */);
-            pwdA = normalized;
-            if (pwdA) {
-                ok = fz_authenticate_password(ctx, _doc, pwdA.s);
-            }
-        }
-#endif
         // older Acrobat versions seem to have considered passwords to be in codepage 1252
         // note: such passwords aren't portable when stored as Unicode text
-#if OS_WIN
-        if (!ok && GetACP() != 1252) {
-            TempStr pwd_ansi = pwdA;
-            TempWStr pwdCp1252 = strconv::StrCPToWStrTemp(pwd_ansi, 1252);
-            pwdA = ToUtf8Temp(pwdCp1252);
-            ok = fz_authenticate_password(ctx, _doc, pwdA.s);
-        }
-#endif
         if (ok) {
             str::ReplaceWithCopy(&pdfPassword, pwdA);
         }
@@ -5136,11 +4907,7 @@ static NO_INLINE IPageDestination* DestFromAttachment(EngineMupdf* engine, fz_ou
 }
 
 static bool IsAlnumW(WCHAR c) {
-#if OS_WIN
-    return IsCharAlphaNumericW(c) != 0;
-#else
     return iswalnum((wint_t)c) != 0;
-#endif
 }
 
 static bool HasAlnumW(const WStr& ws) {
@@ -7363,17 +7130,8 @@ bool EngineMupdf::HandleLink(IPageDestination* dest, ILinkHandler* linkHandler) 
 }
 
 RenderedBitmap* EngineMupdf::GetImageForPageElement(IPageElement* ipel) {
-#if OS_WIN
-    ReportIf(kindPageElementImage != ipel->GetKind());
-    auto* pel = (PageElementImage*)ipel;
-    auto r = pel->rect;
-    int pageNo = pel->loc.IsValid() ? PageNoFromLocation(pel->loc) : pel->pageNo;
-    int imageID = pel->imageID;
-    return GetPageImage(pageNo, r, imageID);
-#else
     (void)ipel;
     return nullptr;
-#endif
 }
 
 // PDF-embedded CMYK JPEG uses PDF polarity (0 = no ink). A standalone JPEG
@@ -7640,7 +7398,6 @@ static fz_pixmap* FzLoadOrientedImage(EngineMupdf* engine, int pageNo, RectF rec
     return oriented ? oriented : pixmap;
 }
 
-#if !OS_WIN
 // Same pixels Copy Image returns on Windows, without a GDI bitmap.
 Pixmap* EngineMupdfPageImagePixmap(EngineBase* engineBase, IPageElement* ipel) {
     EngineMupdf* engine = AsEngineMupdf(engineBase);
@@ -7658,37 +7415,12 @@ Pixmap* EngineMupdfPageImagePixmap(EngineBase* engineBase, IPageElement* ipel) {
     fz_drop_pixmap(ctx, pix);
     return res;
 }
-#endif
 
 RenderedBitmap* EngineMupdf::GetPageImage(int pageNo, RectF rect, int imageIdx) {
-#if !OS_WIN
     (void)pageNo;
     (void)rect;
     (void)imageIdx;
     return nullptr;
-#else
-    auto* ctx = Ctx();
-    fz_pixmap* pix = FzLoadOrientedImage(this, pageNo, rect, imageIdx);
-    if (!pix) {
-        return nullptr;
-    }
-
-    RenderedBitmap* bmp = nullptr;
-    fz_var(bmp);
-    fz_try(ctx) {
-        bmp = NewRenderedFzPixmap(ctx, pix);
-    }
-    fz_always(ctx) {
-        fz_drop_pixmap(ctx, pix);
-    }
-    fz_catch(ctx) {
-        fz_report_error(ctx);
-        // we own bmp if it was already created, so drop it rather than just forgetting it
-        delete bmp;
-        bmp = nullptr;
-    }
-    return bmp;
-#endif
 }
 
 static PageText ExtractPageTextLocked(EngineMupdf* e, FzPageInfo* pageInfo) {
@@ -7899,16 +7631,7 @@ TempStr EngineMupdf::ExtractFontListTemp() {
         }
 
         info.Reset();
-#if OS_WIN
-        if (name.s[0] < 0 && MultiByteToWideChar(936, MB_ERR_INVALID_CHARS, name.s, -1, nullptr, 0)) {
-            TempStr s = strconv::ToMultiByteTemp(name, 936, CP_UTF8);
-            info.Append(s);
-        } else {
-            info.Append(name);
-        }
-#else
         info.Append(name);
-#endif
         if (len(encoding) > 0 || len(type) > 0 || embedded) {
             info.Append(StrL(" ("));
             if (len(type) > 0) {
@@ -8056,7 +7779,6 @@ static TempStr LookupMetadataTemp(fz_context* ctx, fz_document* doc, Str key) {
     return str::DupTemp(Str(buf, (int)((size_t)n - 1)));
 }
 
-#if OS_WIN || OS_DARWIN || defined(SUMATRA_HAVE_OPENSSL)
 struct SigFieldWalk {
     Vec<pdf_obj*> fields;
 };
@@ -8195,348 +7917,7 @@ static void AppendSigValidation(str::Builder& out, pdf_signature_error certErr, 
         out.Append(StrL("  The document wasn't changed since the signature was applied.\n"));
     }
 }
-#endif
 
-#if OS_WIN
-static bool (*gEutlLookupFn)(const u8* der, int derLen) = nullptr;
-
-void SetEutlLookupFn(bool (*fn)(const u8* der, int derLen)) {
-    gEutlLookupFn = fn;
-}
-
-static bool CertIsEuTrusted(const u8* der, int derLen) {
-    if (!gEutlLookupFn || !der || derLen <= 0) {
-        return false;
-    }
-    return gEutlLookupFn(der, derLen);
-}
-
-static TempStr FormatUnixTimeTemp(int64_t unixSecs) {
-    if (unixSecs <= 0) {
-        return {};
-    }
-    time_t t = (time_t)unixSecs;
-    struct tm tm;
-    gmtime_s(&tm, &t);
-    char buf[64];
-    strftime(buf, sizeof buf, "%Y/%m/%d %H:%M:%S UTC", &tm);
-    return str::DupTemp(Str(buf));
-}
-
-static TempStr FormatPdfDateRawTemp(fz_context* ctx, pdf_obj* obj) {
-    if (!obj) {
-        return {};
-    }
-    const char* raw = nullptr;
-    fz_try(ctx) {
-        raw = pdf_to_str_buf(ctx, obj);
-    }
-    fz_catch(ctx) {
-        fz_report_error(ctx);
-        raw = nullptr;
-    }
-    if (!raw || !raw[0]) {
-        return {};
-    }
-    Str s = Str(raw);
-    str::TrimPrefix(s, StrL("D:"));
-    if (s.len < 14) {
-        return {};
-    }
-    char buf[80];
-    int n =
-        snprintf(buf, sizeof(buf), "%.4s/%.2s/%.2s %.2s:%.2s:%.2s", s.s, s.s + 4, s.s + 6, s.s + 8, s.s + 10, s.s + 12);
-    if (n < 0) {
-        return {};
-    }
-    if (s.len > 14) {
-        Str tz = Str(s.s + 14, s.len - 14);
-        if (tz.len > 0 && (tz.s[0] == '+' || tz.s[0] == '-' || tz.s[0] == 'Z')) {
-            snprintf(buf + n, sizeof(buf) - (size_t)n, " %s", tz.s);
-        }
-    }
-    return str::DupTemp(Str(buf));
-}
-
-static bool PdfHasDssRevocation(fz_context* ctx, pdf_document* pdfdoc) {
-    pdf_obj* root = pdf_dict_get(ctx, pdf_trailer(ctx, pdfdoc), PDF_NAME(Root));
-    pdf_obj* dss = root ? pdf_dict_gets(ctx, root, "DSS") : nullptr;
-    if (!dss) {
-        return false;
-    }
-    pdf_obj* crls = pdf_dict_gets(ctx, dss, "CRLs");
-    pdf_obj* ocsps = pdf_dict_gets(ctx, dss, "OCSPs");
-    int nCrl = crls ? pdf_array_len(ctx, crls) : 0;
-    int nOcsp = ocsps ? pdf_array_len(ctx, ocsps) : 0;
-    return nCrl > 0 || nOcsp > 0;
-}
-
-static const char* SigSubFilter(fz_context* ctx, pdf_obj* vDict) {
-    pdf_obj* sf = pdf_dict_get(ctx, vDict, PDF_NAME(SubFilter));
-    if (!sf) {
-        return nullptr;
-    }
-    return pdf_to_name(ctx, sf);
-}
-
-static bool SubFilterIsDocTimeStamp(const char* sf) {
-    return sf && str::Eq(Str(sf), StrL("ETSI.RFC3161"));
-}
-
-static bool SubFilterIsCades(const char* sf) {
-    return sf && str::StartsWith(Str(sf), StrL("ETSI.CAdES"));
-}
-
-static void AppendTrustSource(str::Builder& s, const u8* der, int derLen) {
-    if (CertIsEuTrusted(der, derLen)) {
-        s.Append(StrL("  Source of trust: European Union Trusted List (EUTL)\n"));
-    } else {
-        s.Append(StrL("  Source of trust: Windows Certificate Store\n"));
-    }
-}
-
-static void AppendLtvLine(str::Builder& s, bool ltv, int64_t notAfterUnix) {
-    if (ltv) {
-        s.Append(StrL("  This signature is LTV enabled.\n"));
-        return;
-    }
-    TempStr exp = FormatUnixTimeTemp(notAfterUnix);
-    if (exp) {
-        s.Append(fmt("  This signature isn't LTV enabled and expires after: %s\n", exp));
-    } else {
-        s.Append(StrL("  This signature isn't LTV enabled.\n"));
-    }
-}
-
-static void AppendPadesLevel(str::Builder& s, bool isCades, bool hasTs, bool ltv, bool hasDocTs, bool isDocTs,
-                             bool hasPolicy) {
-    if (isDocTs) {
-        return;
-    }
-    if (!isCades) {
-        return;
-    }
-    const char* level = "PAdES B-B";
-    if (hasDocTs && ltv && hasTs) {
-        level = "PAdES B-LTA";
-    } else if (ltv && hasTs) {
-        level = "PAdES B-LT";
-    } else if (hasTs) {
-        level = "PAdES B-T";
-    }
-    if (hasPolicy && str::Eq(Str(level), StrL("PAdES B-B"))) {
-        s.Append(StrL("  Signature level: PAdES-EPES\n"));
-        return;
-    }
-    s.Append(fmt("  Signature level: %s\n", Str(level)));
-}
-
-static void AppendSignatureFieldInfo(fz_context* ctx, str::Builder& s, pdf_pkcs7_verifier* verifier,
-                                     pdf_document* pdfdoc, pdf_obj* sigObj, int sigNo, int pageNo, bool docHasDss,
-                                     bool docHasDocTs, int laterSigs) {
-    if (len(s) > 0) {
-        s.AppendChar('\n');
-    }
-    pdf_obj* vDict = pdf_dict_get(ctx, sigObj, PDF_NAME(V));
-    if (!vDict) {
-        vDict = sigObj;
-    }
-    const char* subFilter = SigSubFilter(ctx, vDict);
-    bool isDocTs = SubFilterIsDocTimeStamp(subFilter);
-    bool isSigned = pdf_signature_is_signed(ctx, pdfdoc, sigObj);
-    if (!isSigned && isDocTs && pdf_dict_get(ctx, vDict, PDF_NAME(Contents))) {
-        isSigned = true;
-    }
-    if (isDocTs) {
-        s.Append(fmt("Signature %d (document timestamp):\n", sigNo));
-    } else if (pageNo > 0) {
-        s.Append(fmt("Signature %d (page %d):\n", sigNo, pageNo));
-    } else {
-        s.Append(fmt("Signature %d:\n", sigNo));
-    }
-    if (!isSigned) {
-        s.Append(StrL("  not signed\n"));
-        return;
-    }
-
-    char* contents = nullptr;
-    size_t contentsLen = 0;
-    pkcs7_windows_sig_info info{};
-    fz_try(ctx) {
-        contentsLen = pdf_signature_contents(ctx, pdfdoc, sigObj, &contents);
-        if (contentsLen > 0) {
-            pkcs7_windows_inspect(ctx, (unsigned char*)contents, contentsLen, &info);
-        }
-    }
-    fz_always(ctx) {
-        fz_free(ctx, contents);
-        contents = nullptr;
-    }
-    fz_catch(ctx) {
-        fz_report_error(ctx);
-    }
-
-    s.Append(isDocTs ? StrL("  Timestamp certificate:\n") : StrL("  User certificate:\n"));
-    AppendTrustSource(s, info.cert_der, info.cert_der_len);
-    if (info.signer_cn && info.signer_cn[0]) {
-        s.Append(fmt("  Signed by: %s\n", Str(info.signer_cn)));
-    } else {
-        s.Append(StrL("  Signed by: (unknown)\n"));
-    }
-
-    pdf_obj* mObj = pdf_dict_get(ctx, vDict, PDF_NAME(M));
-    TempStr signedAt = FormatPdfDateRawTemp(ctx, mObj);
-    if (len(signedAt) == 0 && info.gen_time_unix > 0) {
-        signedAt = FormatUnixTimeTemp(info.gen_time_unix);
-    }
-    if (len(signedAt) == 0 && info.n_ts > 0) {
-        signedAt = FormatUnixTimeTemp(info.ts[0].gen_time_unix);
-    }
-    if (signedAt) {
-        s.Append(fmt("  Signature time: %s\n", signedAt));
-        if (isDocTs) {
-            s.Append(StrL("  The time and date displayed is from the secure time & date server.\n"));
-        } else {
-            s.Append(StrL("  The time and date displayed is from the user device.\n"));
-        }
-    }
-    if (info.issuer_cn && info.issuer_cn[0]) {
-        s.Append(fmt("  Certificate issued by: %s\n", Str(info.issuer_cn)));
-    }
-    if (info.has_qc_statement) {
-        s.Append(StrL("  Qualified certificate (eIDAS qcStatements).\n"));
-    }
-
-    pdf_signature_error certErr = PDF_SIGNATURE_ERROR_UNKNOWN;
-    pdf_signature_error digErr = PDF_SIGNATURE_ERROR_UNKNOWN;
-    int edits = 0;
-    fz_try(ctx) {
-        certErr = pdf_check_certificate(ctx, verifier, pdfdoc, sigObj);
-        digErr = pdf_check_digest(ctx, verifier, pdfdoc, sigObj);
-        edits = pdf_signature_incremental_change_since_signing(ctx, pdfdoc, sigObj);
-    }
-    fz_catch(ctx) {
-        fz_report_error(ctx);
-    }
-    if (!isDocTs) {
-        AppendSigValidation(s, certErr, digErr, edits, laterSigs);
-    }
-
-    bool ltv = docHasDss;
-    AppendLtvLine(s, ltv, info.not_after_unix);
-    if (info.hash_algo) {
-        s.Append(fmt("  Hash algorithm: %s\n", Str(info.hash_algo)));
-    }
-    if (info.sig_algo) {
-        s.Append(fmt("  Signature algorithm: %s\n", Str(info.sig_algo)));
-    }
-    if (info.digest_hex) {
-        s.Append(fmt("  Document hash: %s\n", Str(info.digest_hex)));
-    }
-    if (info.policy_oid) {
-        s.Append(fmt("  Policy ID: %s\n", Str(info.policy_oid)));
-    }
-    bool isCades = SubFilterIsCades(subFilter) || info.has_cades_attr;
-    AppendPadesLevel(s, isCades, info.has_timestamp, ltv, docHasDocTs, isDocTs, info.has_sig_policy_attr);
-
-    AppendSigDictText(ctx, s, vDict, StrL("reason"), PDF_NAME(Reason));
-    AppendSigDictText(ctx, s, vDict, StrL("location"), PDF_NAME(Location));
-    AppendSigDictText(ctx, s, vDict, StrL("contact"), PDF_NAME(ContactInfo));
-    AppendSigCertification(ctx, s, vDict);
-
-    for (int ti = 0; ti < info.n_ts; ti++) {
-        const pkcs7_windows_ts_info& ts = info.ts[ti];
-        s.Append(StrL("  -----\n"));
-        s.Append(StrL("  Included Time Stamp:\n"));
-        AppendTrustSource(s, ts.cert_der, ts.cert_der_len);
-        if (ts.signer_cn && ts.signer_cn[0]) {
-            s.Append(fmt("  Signed by: %s\n", Str(ts.signer_cn)));
-        }
-        TempStr tsTime = FormatUnixTimeTemp(ts.gen_time_unix);
-        if (tsTime) {
-            s.Append(fmt("  Signature time: %s\n", tsTime));
-            s.Append(StrL("  The time and date displayed is from the secure time & date server.\n"));
-        }
-        if (ts.issuer_cn && ts.issuer_cn[0]) {
-            s.Append(fmt("  Certificate issued by: %s\n", Str(ts.issuer_cn)));
-        }
-        AppendLtvLine(s, ltv, ts.not_after_unix);
-        if (ts.hash_algo) {
-            s.Append(fmt("  Hash algorithm: %s\n", Str(ts.hash_algo)));
-        }
-        if (ts.policy_oid) {
-            s.Append(fmt("  Policy ID: %s\n", Str(ts.policy_oid)));
-        }
-    }
-
-    pkcs7_windows_sig_info_free(ctx, &info);
-}
-
-PdfSigCert::~PdfSigCert() {
-    str::Free(label);
-    str::Free(der);
-}
-
-PdfSigCert* EngineMupdfGetSignatureCerts(EngineBase* engine) {
-    PdfSigCert* head = nullptr;
-    EngineMupdf* e = AsEngineMupdf(engine);
-    if (!e || !e->pdfdoc) {
-        return nullptr;
-    }
-    fz_context* ctx = e->Ctx();
-    ScopedRecursiveMutex scope(&e->docLock);
-    Vec<pdf_obj*> fields;
-    fz_try(ctx) {
-        CollectSignatureFields(ctx, e->pdfdoc, fields);
-        int sigNo = 0;
-        for (pdf_obj* field : fields) {
-            ++sigNo;
-            char* contents = nullptr;
-            size_t contentsLen = pdf_signature_contents(ctx, e->pdfdoc, field, &contents);
-            if (contentsLen == 0) {
-                fz_free(ctx, contents);
-                continue;
-            }
-            pkcs7_windows_sig_info info{};
-            if (contentsLen > 0) {
-                pkcs7_windows_inspect(ctx, (unsigned char*)contents, contentsLen, &info);
-            }
-            fz_free(ctx, contents);
-            auto add = [&](const char* who, const u8* der, int derLen) {
-                if (!der || derLen <= 0) {
-                    return;
-                }
-                auto* c = new PdfSigCert;
-                c->label = str::Dup(fmt("Signature %d %s", sigNo, Str(who)));
-                c->der = str::Dup(Str((const char*)der, derLen));
-                ListInsertEnd(&head, c);
-            };
-            pdf_obj* v = pdf_dict_get(ctx, field, PDF_NAME(V));
-            bool docTs = SubFilterIsDocTimeStamp(SigSubFilter(ctx, v ? v : field));
-            add(docTs ? "timestamp" : "signer", info.cert_der, info.cert_der_len);
-            for (int ti = 0; ti < info.n_ts; ti++) {
-                add("timestamp", info.ts[ti].cert_der, info.ts[ti].cert_der_len);
-            }
-            pkcs7_windows_sig_info_free(ctx, &info);
-        }
-    }
-    fz_always(ctx) {
-        for (pdf_obj* field : fields) {
-            pdf_drop_obj(ctx, field);
-        }
-    }
-    fz_catch(ctx) {
-        fz_report_error(ctx);
-    }
-    return head;
-}
-
-void FreePdfSigCerts(PdfSigCert* certs) {
-    ListDelete(certs);
-}
-#endif
-
-#if OS_DARWIN || defined(SUMATRA_HAVE_OPENSSL)
 static void AppendOpenSslSigText(fz_context* ctx, str::Builder& out, pdf_pkcs7_verifier* verifier, pdf_document* pdfdoc,
                                  pdf_obj* field, int sigNo, int laterSigs) {
     if (len(out) > 0) {
@@ -8577,10 +7958,8 @@ static void AppendOpenSslSigText(fz_context* ctx, str::Builder& out, pdf_pkcs7_v
     AppendSigDictText(ctx, out, value, StrL("contact"), PDF_NAME(ContactInfo));
     AppendSigCertification(ctx, out, value);
 }
-#endif
 
 static TempStr GetSignatures(EngineMupdf* e) {
-#if OS_WIN || OS_DARWIN || defined(SUMATRA_HAVE_OPENSSL)
     pdf_document* pdfdoc = e->pdfdoc;
     if (!pdfdoc) {
         return {};
@@ -8594,37 +7973,12 @@ static TempStr GetSignatures(EngineMupdf* e) {
     Vec<pdf_obj*> fields;
     fz_var(verifier);
     fz_try(ctx) {
-#if OS_WIN
-        verifier = pkcs7_windows_new_verifier(ctx);
-#elif OS_DARWIN
         verifier = pkcs7_mac_new_verifier(ctx);
-#else
-        verifier = pkcs7_openssl_new_verifier(ctx);
-#endif
         CollectSignatureFields(ctx, pdfdoc, fields);
-#if OS_WIN
-        bool hasDss = PdfHasDssRevocation(ctx, pdfdoc);
-        bool hasDocTs = false;
-        for (pdf_obj* field : fields) {
-            pdf_obj* v = pdf_dict_get(ctx, field, PDF_NAME(V));
-            if (SubFilterIsDocTimeStamp(SigSubFilter(ctx, v ? v : field))) {
-                hasDocTs = true;
-                break;
-            }
-        }
-        int sigNo = 0;
-        for (pdf_obj* field : fields) {
-            ++sigNo;
-            int pageNo = PageNoForSigField(ctx, pdfdoc, field);
-            AppendSignatureFieldInfo(ctx, sigs, verifier, pdfdoc, field, sigNo, pageNo, hasDss, hasDocTs,
-                                     LaterSignatures(ctx, pdfdoc, fields, field));
-        }
-#else
         for (int i = 0; i < len(fields); i++) {
             AppendOpenSslSigText(ctx, sigs, verifier, pdfdoc, fields[i], i + 1,
                                  LaterSignatures(ctx, pdfdoc, fields, fields[i]));
         }
-#endif
     }
     fz_always(ctx) {
         for (pdf_obj* field : fields) {
@@ -8636,10 +7990,6 @@ static TempStr GetSignatures(EngineMupdf* e) {
         fz_report_error(ctx);
     }
     return len(sigs) > 0 ? str::DupTemp(ToStr(sigs)) : TempStr{};
-#else
-    (void)e;
-    return {};
-#endif
 }
 
 void EngineMupdf::GetProperties(Props& propsOut) {
@@ -8871,81 +8221,6 @@ static void StartLoadingFileBytes(EngineMupdf* e) {
 // original bytes (MuPDF reads the whole file back, 4 KB at a time), then
 // appends. This output answers that check from memory, so the drive only sees
 // the appended bytes.
-#if OS_WIN
-struct AppendOutput {
-    HANDLE h = INVALID_HANDLE_VALUE;
-    fz_buffer* original = nullptr;
-};
-
-static void AppendOutWrite(fz_context* ctx, void* state, const void* data, size_t n) {
-    auto* s = (AppendOutput*)state;
-    DWORD written = 0;
-    if (!WriteFile(s->h, data, (DWORD)n, &written, nullptr) || written != (DWORD)n) {
-        fz_throw(ctx, FZ_ERROR_SYSTEM, "cannot write file: error %d", (int)GetLastError());
-    }
-}
-
-static void AppendOutSeek(fz_context* ctx, void* state, int64_t offset, int whence) {
-    auto* s = (AppendOutput*)state;
-    DWORD method = FILE_BEGIN;
-    if (whence == SEEK_CUR) {
-        method = FILE_CURRENT;
-    } else if (whence == SEEK_END) {
-        method = FILE_END;
-    }
-    LARGE_INTEGER off;
-    off.QuadPart = offset;
-    if (!SetFilePointerEx(s->h, off, nullptr, method)) {
-        fz_throw(ctx, FZ_ERROR_SYSTEM, "cannot seek file: error %d", (int)GetLastError());
-    }
-}
-
-static int64_t AppendOutTell(fz_context* ctx, void* state) {
-    auto* s = (AppendOutput*)state;
-    LARGE_INTEGER zero{};
-    LARGE_INTEGER pos{};
-    if (!SetFilePointerEx(s->h, zero, &pos, FILE_CURRENT)) {
-        fz_throw(ctx, FZ_ERROR_SYSTEM, "cannot tell file position: error %d", (int)GetLastError());
-    }
-    return pos.QuadPart;
-}
-
-static void AppendOutTruncate(fz_context* ctx, void* state) {
-    auto* s = (AppendOutput*)state;
-    if (!SetEndOfFile(s->h)) {
-        fz_throw(ctx, FZ_ERROR_SYSTEM, "cannot truncate file: error %d", (int)GetLastError());
-    }
-}
-
-static void AppendOutClose(fz_context* ctx, void* state) {
-    auto* s = (AppendOutput*)state;
-    BOOL ok = CloseHandle(s->h);
-    s->h = INVALID_HANDLE_VALUE;
-    if (!ok) {
-        fz_throw(ctx, FZ_ERROR_SYSTEM, "cannot close file: error %d", (int)GetLastError());
-    }
-}
-
-static bool AppendOutOpen(AppendOutput* s, Str path) {
-    DWORD share = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
-    s->h = CreateFileW(CWStrTemp(path), GENERIC_READ | GENERIC_WRITE, share, nullptr, OPEN_EXISTING,
-                       FILE_ATTRIBUTE_NORMAL, nullptr);
-    return s->h != INVALID_HANDLE_VALUE;
-}
-
-static bool AppendOutIsOpen(AppendOutput* s) {
-    return s->h != INVALID_HANDLE_VALUE;
-}
-
-static void AppendOutAbandon(AppendOutput* s) {
-    CloseHandle(s->h);
-    s->h = INVALID_HANDLE_VALUE;
-}
-
-static int AppendOutLastError() {
-    return (int)GetLastError();
-}
-#else
 // ng: the same output over a file descriptor
 struct AppendOutput {
     int fd = -1;
@@ -9015,7 +8290,6 @@ static void AppendOutAbandon(AppendOutput* s) {
 static int AppendOutLastError() {
     return errno;
 }
-#endif
 
 static fz_stream* AppendOutAsStream(fz_context* ctx, void* state) {
     auto* s = (AppendOutput*)state;
@@ -9514,7 +8788,6 @@ static void AnnotLoadThread(EngineMupdf* e) {
     uitask::Post(fn, "AnnotLoadFinished");
 }
 
-#if defined(SUMATRA_NG)
 // ng: the annotation UI asks for one page's wrappers before it starts the
 // background loader; it cannot include EngineMupdf.h (mupdf headers clash with
 // gpui.h), so this is the entry point
@@ -9529,7 +8802,6 @@ void EngineMupdfLoadAnnotsForPage(EngineBase* engine, int pageNo) {
     }
 }
 
-#endif
 void EngineMupdfStartLoadAllAnnotations(EngineBase* engine, const Vec<int>& firstPages, const Func0& onProgress) {
     EngineMupdf* e = AsEngineMupdf(engine);
     if (!e || !e->pdfdoc) {
@@ -10104,9 +9376,6 @@ void EngineMupdf::ApplyReflowThemeCss() {
     if (!isReflowable || !_doc || ebookLayoutW <= 0 || ebookLayoutH <= 0) {
         return;
     }
-#if !defined(SUMATRA_NG)
-    // drop a count started against the layout we're about to throw away
-#endif
     CancelBackgroundChapterLayout();
     TempStr themeCss = ReflowDocumentThemeCssTemp();
     TempStr fullCss = ebookUserCss;
@@ -10121,9 +9390,6 @@ void EngineMupdf::ApplyReflowThemeCss() {
 
     fz_context* ctx = Ctx();
     if (!ctx) {
-#if !defined(SUMATRA_NG)
-        StartBackgroundChapterLayout();
-#endif
         return;
     }
     ForEachPageInfo(this, [this, ctx](FzPageInfo* pi) {
@@ -10145,9 +9411,6 @@ void EngineMupdf::ApplyReflowThemeCss() {
         fz_report_error(ctx);
     }
     if (!ok) {
-#if !defined(SUMATRA_NG)
-        StartBackgroundChapterLayout();
-#endif
         return;
     }
 
@@ -10156,10 +9419,6 @@ void EngineMupdf::ApplyReflowThemeCss() {
         LayOutChapter(1);
         SetPageCountFromChapters();
         logf("ApplyReflowThemeCss: chapters reset, chapter 1 -> %d pages\n", chapters.PageCount(1));
-#if !defined(SUMATRA_NG)
-        // caller syncs the view, then starts the background count. starting
-        // here races that sync: flat page numbers move under SetScrollState
-#endif
         return;
     }
 

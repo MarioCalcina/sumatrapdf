@@ -4,17 +4,11 @@
 #include "base/Base.h"
 #include "base/CmdLineArgs.h"
 #include "base/File.h"
-#if OS_WIN
-#include "base/Win.h"
-#endif
 
 #include "Settings.h"
 #include "DisplayMode.h"
 // ng: Print.h needs the win32 printing types (step 14); this is all we use
 void GetPrintersInfo(str::Builder& out);
-#if OS_WIN
-#include "Translations.h"
-#endif
 #include "Flags.h"
 #include "SumatraLog.h"
 
@@ -81,32 +75,6 @@ static SeqStrings gArgNames =
 // clang-format on
 // @gen-end flags
 
-#if OS_WIN
-// consoleOnly: skip the GUI text dialog (CLI -list-printers with -console/-silent)
-void ShowPrintersDialog(bool consoleOnly) {
-    str::Builder out;
-
-    gLogToConsole = true;
-    RedirectIOToExistingConsole();
-
-    GetPrintersInfo(out);
-    log(ToStr(out));
-
-    gLogToConsole = false;
-    // CLI (-list-printers with -console/-silent, or stdout already a console):
-    // print only. Otherwise show the text dialog (e.g. CmdListPrinters).
-    if (!consoleOnly) {
-        HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-        DWORD mode = 0;
-        if (hOut && hOut != INVALID_HANDLE_VALUE && GetConsoleMode(hOut, &mode)) {
-            consoleOnly = true;
-        }
-    }
-    if (!consoleOnly) {
-        ShowTextInWindowDialog(Tr("SumatraPDF - Show Printers"), ToStr(out));
-    }
-}
-#else
 static TempStr GetDefaultPrinterNameTemp() {
     return str::DupTemp(StrL("\037default-printer"));
 }
@@ -123,7 +91,6 @@ void ShowPrintersDialog(bool) {
     log(ToStr(out));
     gLogToConsole = false;
 }
-#endif
 
 // parses a list of page ranges such as 1,3-5,7- (i..e all but pages 2 and 6)
 // into an interable list (returns nullptr on parsing errors)
@@ -915,17 +882,6 @@ static void ParseFlagNodes(Arena* a, StrNode* firstArg, Flags& i, Str toolNames)
         }
     }
 }
-
-#if OS_WIN
-void ParseFlags(Arena* a, WStr cmdLine, Flags& i, Str toolNames) {
-    StrNode* root = ParseCmdLine(cmdLine);
-    defer {
-        FreeStrNode(nullptr, root);
-    };
-    // skip argv[0], the executable
-    ParseFlagNodes(a, root ? root->next : nullptr, i, toolNames);
-}
-#endif
 
 // ng: off Windows the platform already split the command line for us
 void ParseFlagsArgv(Arena* a, int argc, char** argv, Flags& i, Str toolNames) {

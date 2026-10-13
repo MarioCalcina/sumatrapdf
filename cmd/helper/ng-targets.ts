@@ -1135,7 +1135,6 @@ export const targets: Target[] = [
     exclude: [
       // not in orig's base project: the app links one of CrashHandler.cpp /
       // CrashHandlerNoOp.cpp and one of SumatraLog.cpp / LogNoOp.cpp
-      "src/ng/base/CrashHandler.cpp",
       "src/ng/base/CrashHandler_mac.cpp",
       "src/ng/base/CrashHandler_posix.cpp",
       "src/base/LogNoOp.cpp",
@@ -1449,16 +1448,13 @@ export const targets: Target[] = [
       "src/ng/GlobalHotkeys.cpp",
       "src/ng/Print.cpp",
       "src/ng/Print_posix.cpp",
-      "src/ng/PrintWin11.cpp",
       "src/ng/HangDetector.cpp",
       "src/ng/ExplorerQuickLook.cpp",
       "src/ng/UpdateCheck.cpp",
       "src/ng/UpdateCheckCommon.cpp",
       "src/ng/UpdateTemp.cpp",
       "src/ng/Installer.cpp",
-      "src/ng/InstallerCommon.cpp",
       "src/ng/Uninstaller.cpp",
-      "src/ng/RegistryInstaller.cpp",
       "src/ng/StressTesting.cpp",
       "src/ng/SumatraControl.cpp",
       "src/ng/SumatraControlCommon.cpp",
@@ -1471,7 +1467,6 @@ export const targets: Target[] = [
       "src/ng/SumatraCrashCommon.cpp",
       // the app links the real crash handler; the console tools link
       // src/CrashHandlerNoOp.cpp instead, as orig does
-      "src/ng/base/CrashHandler.cpp",
       "src/ng/base/CrashHandler_mac.cpp",
       "src/ng/base/CrashHandler_posix.cpp",
     ],

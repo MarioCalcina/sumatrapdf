@@ -13,7 +13,3 @@ MainWindow* FindExplorerQuickLookWindow();
 void ExplorerQuickLookRemoveRunKey();
 bool ExplorerQuickLookOnKeyDown(MainWindow* win, int key, bool hasModifiers);
 
-#if OS_WIN
-bool HandleExplorerQuickLookCopyData(COPYDATASTRUCT* cds);
-bool SendExplorerQuickLookToExisting(HWND hwnd, Str path);
-#endif

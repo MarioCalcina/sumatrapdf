@@ -9,9 +9,7 @@
 #include "base/File.h"
 
 #include <unistd.h>
-#if OS_LINUX || OS_DARWIN
 #include <sys/xattr.h>
-#endif
 
 #include "SumatraConfig.h"
 #include "Version.h"
@@ -28,13 +26,11 @@ bool IsRunningInPortableMode() {
         return sCacheIsPortable != 0;
     }
     sCacheIsPortable = 0;
-#if !OS_WASM
     TempStr dir = GetSelfExeDirTemp();
     TempStr path = path::JoinTemp(dir, StrL("SumatraPDF-settings.txt"));
     if (file::Exists(path) && dir::HasWriteAccess(dir)) {
         sCacheIsPortable = 1;
     }
-#endif
     return sCacheIsPortable != 0;
 }
 
@@ -55,28 +51,13 @@ void SetAppDataDir(Str dir) {
 // $XDG_CONFIG_HOME/SumatraPDF on Linux, ~/Library/Application Support/SumatraPDF
 // on mac, /settings on wasm (OPFS, mirrored in MEMFS)
 static TempStr DefaultAppDataDirTemp() {
-#if OS_WASM
-    return str::DupTemp(StrL("/settings"));
-#else
     const char* home = getenv("HOME");
-#if OS_DARWIN
     if (home && *home) {
         TempStr dir = path::JoinTemp(Str((char*)home), StrL("Library/Application Support"));
         return path::JoinTemp(dir, StrL(kAppName));
     }
-#else
-    const char* xdg = getenv("XDG_CONFIG_HOME");
-    if (xdg && *xdg) {
-        return path::JoinTemp(Str((char*)xdg), StrL(kAppName));
-    }
-    if (home && *home) {
-        TempStr dir = path::JoinTemp(Str((char*)home), StrL(".config"));
-        return path::JoinTemp(dir, StrL(kAppName));
-    }
-#endif
     const char* tmp = getenv("TMPDIR");
     return path::JoinTemp(Str((char*)(tmp && *tmp ? tmp : "/tmp")), StrL(kAppName));
-#endif
 }
 
 TempStr GetAppDataDirTemp() {
@@ -162,14 +143,7 @@ static bool HasDownloadMetadata(Str path) {
     if (len(path) == 0) {
         return false;
     }
-#if OS_DARWIN
     return getxattr(CStrTemp(path), "com.apple.quarantine", nullptr, 0, 0, 0) >= 0;
-#elif OS_LINUX
-    return getxattr(CStrTemp(path), "user.xdg.origin.url", nullptr, 0) >= 0 ||
-           getxattr(CStrTemp(path), "user.xdg.referrer.url", nullptr, 0) >= 0;
-#else
-    return false;
-#endif
 }
 
 bool IsUntrustedFile(Str filePath, Str fileUrl) {
@@ -247,7 +221,6 @@ void DetectTextEditors(Vec<TextEditor*>& out) {
     }
 }
 
-#if !OS_WASM
 bool AppToolsPosix_UnitTests() {
     TempStr shell = FindInPathTemp(StrL("sh"), StrL("/bin:/usr/bin"));
     TempStr absent = FindInPathTemp(StrL("sumatrapdf-ng-no-such-editor"), StrL("/bin:/usr/bin"));
@@ -257,7 +230,6 @@ bool AppToolsPosix_UnitTests() {
            IsUntrustedFile({}, StrL("https://example.org/file.pdf")) &&
            !IsUntrustedFile({}, StrL("file:///tmp/file.pdf"));
 }
-#endif
 
 void CollectInverseSearchCommands(StrVec& out, Str cmdLine) {
     out.Reset();

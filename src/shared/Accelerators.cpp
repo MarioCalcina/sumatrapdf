@@ -2,9 +2,7 @@
    License: Simplified BSD (see COPYING.BSD) */
 
 #include "base/Base.h"
-#if !OS_WIN
 #include "VirtKeys.h"
-#endif
 #include "Settings.h"
 #include "Commands.h"
 #include "ShortcutParse.h"
@@ -192,7 +190,6 @@ static Accel gBuiltInAccelerators[] = {
 //                           and are the shortcut menus show for the command
 //   IsDroppedOnPlatform()   built-ins that mean nothing on this platform
 //   ToPlatformShortcut()    a built-in's key as this platform spells it
-#if OS_DARWIN
 static Accel gPlatformAccelerators[] = {
     // Find Next / Previous own Command+G; Go to Page moves where Preview has it
     {{kCmd | kVirt, 'G'}, CmdFindNext},
@@ -233,41 +230,24 @@ static Accel gPlatformAccelerators[] = {
     // the key above Return is Backspace; a Mac calls it Delete
     {{kCmd | kVirt, VK_BACK}, CmdDeleteAnnotation},
 };
-#elif OS_LINUX
-static Accel gPlatformAccelerators[] = {
-    {{kCtrl | kVirt, VK_OEM_COMMA}, CmdOptions},
-};
-#else
-// a zero-length array is not C++
-static Accel gPlatformAccelerators[] = {
-    {{0, 0}, 0},
-};
-#endif
 // NOLINTEND(modernize-use-designated-initializers)
 
 static bool IsDroppedOnPlatform(const KeyShortcut& sc) {
-#if OS_DARWIN
     // Option+arrows move by word in a text field
     if (sc.alt && !sc.ctrl && (sc.vk == VK_LEFT || sc.vk == VK_RIGHT)) {
         return true;
     }
     // Windows idioms: Ctrl+F4 closes, Ctrl+Insert copies
     return sc.ctrl && (sc.vk == VK_F4 || sc.vk == VK_INSERT);
-#else
-    (void)sc;
-    return false;
-#endif
 }
 
 static KeyShortcut ToPlatformShortcut(KeyShortcut sc) {
-#if OS_DARWIN
     // Command is what Ctrl is elsewhere. Switching tabs stays on Control.
     bool isTabKey = sc.vk == VK_TAB || sc.vk == VK_NEXT || sc.vk == VK_PRIOR;
     if (sc.ctrl && !isTabKey) {
         sc.ctrl = false;
         sc.cmd = true;
     }
-#endif
     return sc;
 }
 
@@ -275,9 +255,6 @@ static Accel* gAccels = nullptr;
 static int gAccelsCount = 0;
 static AccelStroke* gAccelStrokes = nullptr;
 static int gAccelStrokesCount = 0;
-#if OS_WIN
-static HACCEL gAccelTables[3]{};
-#endif
 
 // Custom Shortcuts clone a unique command id, so the accelerator is stored
 // under that id. Treat it as the original command when looking up bindings.
@@ -651,40 +628,6 @@ static void BuildAcceleratorStrokes() {
     }
 }
 
-#if OS_WIN
-static ACCEL ToWinAccel(const Accel& a) {
-    ACCEL res{};
-    res.fVirt = a.sc.Mods();
-    res.key = a.sc.vk;
-    res.cmd = (WORD)a.cmd;
-    return res;
-}
-
-static void BuildWinAcceleratorTables() {
-    ACCEL* all = AllocArrayTemp<ACCEL>(gAccelsCount);
-    ACCEL* edit = AllocArrayTemp<ACCEL>(gAccelsCount);
-    ACCEL* tree = AllocArrayTemp<ACCEL>(gAccelsCount);
-    int nEdit = 0;
-    int nTree = 0;
-
-    for (int i = 0; i < gAccelsCount; i++) {
-        const Accel& a = gAccels[i];
-        all[i] = ToWinAccel(a);
-        if (IsSafeAccel(a)) {
-            edit[nEdit++] = all[i];
-        }
-        if (IsSafeTreeAccel(a)) {
-            tree[nTree++] = all[i];
-        }
-    }
-
-    gAccelTables[0] = CreateAcceleratorTableW(all, gAccelsCount);
-    gAccelTables[1] = CreateAcceleratorTableW(edit, nEdit);
-    gAccelTables[2] = CreateAcceleratorTableW(tree, nTree);
-    ReportIf(!gAccelTables[0] || !gAccelTables[1] || !gAccelTables[2]);
-}
-#endif
-
 void CreateSumatraAcceleratorTable() {
     gShortcutLangCode = CurrentLangCode;
     ReportIf(gAccels);
@@ -719,12 +662,6 @@ void CreateSumatraAcceleratorTable() {
 }
 
 void FreeAcceleratorTables() {
-#if OS_WIN
-    for (HACCEL& table : gAccelTables) {
-        DestroyAcceleratorTable(table);
-        table = nullptr;
-    }
-#endif
     for (int i = 0; i < gAccelStrokesCount; i++) {
         str::FreePtr(&gAccelStrokes[i].stroke);
     }
@@ -754,18 +691,6 @@ const AccelStroke* GetAcceleratorStrokes(int& nOut) {
     nOut = gAccelStrokesCount;
     return gAccelStrokes;
 }
-
-#if OS_WIN
-HACCEL* GetAcceleratorTables() {
-    if (!gAccels) {
-        CreateSumatraAcceleratorTable();
-    }
-    if (!gAccelTables[0]) {
-        BuildWinAcceleratorTables();
-    }
-    return gAccelTables;
-}
-#endif
 
 #if IS_DEBUG
 // Folder browsing has to keep working when focus is inside the document (the
@@ -863,11 +788,7 @@ bool Accelerators_UnitTestCustomShortcutShown() {
     FreeAcceleratorTables();
     CreateSumatraAcceleratorTable();
     TempStr keys = ShortcutsForCmdTemp(CmdOpenFile, 8);
-#if OS_DARWIN
     return str::Contains(keys, StrL("\u2303\u21e7"
                                     "F24"));
-#else
-    return str::Contains(keys, StrL("Ctrl + Shift + F24"));
-#endif
 }
 #endif

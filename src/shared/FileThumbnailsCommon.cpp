@@ -67,11 +67,7 @@ bool PixmapIsEmpty(const Pixmap* px) {
     return !px || px->width <= 0 || px->height <= 0 || !px->data;
 }
 
-#if defined(SUMATRA_NG)
 constexpr bool kThumbnailsFullPageDefault = true;
-#else
-constexpr bool kThumbnailsFullPageDefault = false;
-#endif
 
 // ThumbnailsType: full (the whole first page) or legacy (the top of it);
 // anything else is the app's default

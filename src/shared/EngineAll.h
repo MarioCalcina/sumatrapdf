@@ -191,17 +191,6 @@ bool IsUnsignedSignatureWidget(Annotation*, TempStr* fieldNameOut);
 bool EngineMupdfSignDocument(EngineBase*, const PdfSignArgs&, Str* errOut);
 void ListWindowsSigningCertificates(StrVec& thumbprints, StrVec& labels);
 
-#if OS_WIN
-void SetEutlLookupFn(bool (*fn)(const u8* der, int derLen));
-struct PdfSigCert {
-    PdfSigCert* next = nullptr;
-    Str label;
-    Str der;
-    ~PdfSigCert();
-};
-PdfSigCert* EngineMupdfGetSignatureCerts(EngineBase*);
-void FreePdfSigCerts(PdfSigCert*);
-#endif
 Annotation* EngineMupdfGetAnnotationAtPos(EngineBase*, int pageNo, PointF pos, float padding, Annotation*);
 IPageElement* EngineMupdfElementAtPosWait(EngineBase* engine, int pageNo, PointF pt);
 Annotation* EngineMupdfGetWidgetAtPos(EngineBase*, int pageNo, PointF pos);
@@ -224,11 +213,9 @@ Str EngineMupdfLoadAttachment(EngineBase*, int attachmentNo);
 Str EngineMupdfLoadAnnotAttachment(EngineBase*, int objNum);
 TempStr EngineMupdfGetPdfInfo(Str path);
 TempStr EngineMupdfGetPdfOutline(Str path);
-#if !OS_WIN
 struct Pixmap;
 struct IPageElement;
 Pixmap* EngineMupdfPageImagePixmap(EngineBase*, IPageElement*);
-#endif
 
 bool IsEnginePsAvailable();
 bool IsEnginePsSupportedFileType(FileType);

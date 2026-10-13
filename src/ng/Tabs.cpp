@@ -9,7 +9,6 @@
 
 #include "base/Base.h"
 #include "base/File.h"
-#include "base/Win.h"
 
 #include "gui/UIModels.h"
 
@@ -321,32 +320,7 @@ void MaybeMigrateTab(WindowTab* tab, MainWindow* newWin) {
     delete tab;
 
     if (!newWin) {
-#if OS_WIN
-        // dragging a tab out of a maximized window: like Chrome, create a
-        // normal (non-maximized) window with the size the source window
-        // would have when restored, positioned at the cursor so it lands
-        // on the new window's tab strip
-        HWND oldHwnd = AppShellNativeHwnd(oldWin);
-        Rect normal;
-        bool wasZoomed = oldHwnd && IsZoomed(oldHwnd) && AppShellNormalWindowRect(oldWin, &normal);
-        Rect rect;
-        if (wasZoomed) {
-            int dpi = AppShellWindowDpi(oldWin);
-            POINT releasePt{};
-            GetCursorPos(&releasePt);
-            int x = releasePt.x - MulDiv(100, dpi, 96);
-            int y = releasePt.y - (MulDiv(kTabBarDy, dpi, 96) / 2);
-            rect = ShiftRectToWorkArea(Rect(x, y, normal.dx, normal.dy), oldHwnd, true);
-        }
-#endif
         newWin = CreateAndShowMainWindow(nullptr);
-#if OS_WIN
-        if (newWin && wasZoomed) {
-            // after the placement CreateAndShowMainWindow posted, which may
-            // maximize it (the remembered state is the old window's)
-            PlaceMainWindowLater(newWin, rect, false);
-        }
-#endif
     }
     if (!newWin) {
         DeleteTabState(state);

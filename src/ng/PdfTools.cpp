@@ -15,9 +15,6 @@
 #include "base/File.h"
 #include "base/Pixmap.h"
 #include "base/UITask.h"
-#if OS_WIN
-#include "base/Win.h"
-#endif
 
 #include "gui/UIModels.h"
 #include "VirtKeys.h"
@@ -50,7 +47,6 @@
 #include "gui/PlatformFont.h"
 #include "gui/ToolWindow.h"
 #include "gui/DocCanvas.h"
-#include "gui/WasmBridge.h"
 #include "ImageSaveCropResize.h"
 #include "SumatraDialogs.h"
 #include "PdfTools.h"
@@ -98,9 +94,6 @@ bool SavePixmapAsImageFile(Pixmap* px, Str path) {
     Pixmap* converted = nullptr;
     Pixmap* use = px;
     if (px->format == PixmapFormat::Native) {
-#if OS_WIN
-        converted = PixmapCopyAs32bppDIB(px);
-#endif
         if (!converted) {
             return false;
         }
@@ -1805,14 +1798,7 @@ TempStr MergePdfResultTemp(Str action, Str arg, int n, int* exitCodeOut) {
     AppShellInvalidate(gTool.win);
     int hwnd = 0;
     int focused = 0;
-#if OS_WIN
-    HWND native = ToolWindowHwnd(gTool.tw);
-    hwnd = (int)(intptr_t)native;
-    int dpi = native ? (int)GetDpiForWindow(native) : 96;
-    focused = (native && GetFocus() == native) ? 1 : 0;
-#else
     int dpi = AppShellWindowDpi(gTool.win);
-#endif
     if (dpi < 96) {
         dpi = 96;
     }

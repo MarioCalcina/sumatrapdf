@@ -2,7 +2,6 @@
    License: GPLv3 */
 
 #include "gui/GpuiBridge.h"
-#include "base/Win.h"
 
 #include "gui/Dpi.h"
 #include "gui/UIModels.h"
@@ -64,87 +63,12 @@ void ReadAloudFreeVoiceCache() {
 
 // ---------------- 1. text-to-speech backend ----------------
 
-#if OS_DARWIN
-
 void TtsMacRelease();
 
 void TtsRelease() {
     ReadAloudFreeVoiceCache();
     TtsMacRelease();
 }
-
-#elif OS_WASM
-
-void TtsWasmRelease();
-
-void TtsRelease() {
-    ReadAloudFreeVoiceCache();
-    TtsWasmRelease();
-}
-
-#elif OS_LINUX
-
-void TtsLinuxRelease();
-
-void TtsRelease() {
-    ReadAloudFreeVoiceCache();
-    TtsLinuxRelease();
-}
-
-#elif !OS_WIN
-
-bool TtsIsAvailable() {
-    return false;
-}
-bool TtsSpeakUtf8(Str) {
-    return false;
-}
-bool TtsQueueUtf8(Str) {
-    return false;
-}
-bool TtsDidStartQueued() {
-    return false;
-}
-void TtsStop() {}
-void TtsRelease() {
-    ReadAloudFreeVoiceCache();
-}
-bool TtsIsSpeaking() {
-    return false;
-}
-int TtsGetSpokenPosUtf8() {
-    return -1;
-}
-void TtsProcessEvents() {}
-Vec<TtsVoiceInfo> TtsGetVoices() {
-    return Vec<TtsVoiceInfo>();
-}
-void TtsFreeVoices(Vec<TtsVoiceInfo>&) {}
-bool TtsSetVoiceById(Str) {
-    return false;
-}
-Str TtsGetVoiceId() {
-    return Str();
-}
-void TtsSetSpeed(float) {}
-float TtsGetSpeed() {
-    return 1.0f;
-}
-bool TtsOnEngineCrash(void*) {
-    return false;
-}
-bool TtsTakeEngineCrash() {
-    return false;
-}
-bool TtsEngineCrashed() {
-    return false;
-}
-bool TtsTestEngineCrash() {
-    return false;
-}
-void TtsTestPumpOnNextSpeak() {}
-
-#endif // OS_DARWIN / OS_WASM / OS_LINUX / !OS_WIN
 
 // orig has this in AppSettings.cpp; see ReadAloud.h
 bool ApplyReadAloudVoiceFromSettings() {
@@ -278,14 +202,9 @@ void ReadAloudTick(MainWindow* win, int elapsedMs) {
         ReadAloudHighlightTimerStop(win);
         return;
     }
-#if OS_DARWIN || OS_WASM
     // These backends report completion through callbacks rather than a window
     // message, so the timer also advances or finishes the session.
     ReadAloudOnTtsEvent(win);
-#else
-    TtsProcessEvents();
-    ReadAloudAfterTtsEvents();
-#endif
     int pos = TtsGetSpokenPosUtf8();
     static int sLastTtsPos = -999;
     if (pos != sLastTtsPos) {
@@ -696,18 +615,8 @@ TempStr ReadAloudPlaybackBarStateTemp(int* exitCodeOut) {
     }
 
     // the bar is its own window. BoundsOut is dips; the test clicks client pixels.
-#if OS_WIN
-    HWND barHwnd = bar->tw ? ToolWindowHwnd(bar->tw) : nullptr;
-    if (!barHwnd) {
-        out.Append(StrL("NOTREADY no-bar\n"));
-        return finish(2);
-    }
-    int dpi = DpiGetForHwnd(barHwnd);
-    int hwndNum = (int)(intptr_t)barHwnd;
-#else
     int dpi = 96;
     int hwndNum = 0;
-#endif
     auto toPx = [&](gp::Bounds b) {
         Rect r = FromGpui(b);
         return Rect{MulDiv(r.x, dpi, 96), MulDiv(r.y, dpi, 96), MulDiv(r.dx, dpi, 96), MulDiv(r.dy, dpi, 96)};
@@ -719,9 +628,6 @@ TempStr ReadAloudPlaybackBarStateTemp(int* exitCodeOut) {
     int idx = ReadAloudClosestSpeedIdx();
     TempStr speedText = ReadAloudSpeedLabelTemp(ReadAloudSpeedAt(idx));
     gp::Window* gw = nullptr;
-#if OS_WIN
-    gw = bar->tw ? ToolWindowGpui(bar->tw) : nullptr;
-#endif
     if (!gw) {
         gw = win->gpuiWin;
     }

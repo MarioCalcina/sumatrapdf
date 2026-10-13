@@ -30,13 +30,7 @@ static TempStr FindClaudeExecutableTemp() {
     StrVec candidates;
     TempStr userProfile = AIChatHomeDirTemp();
     if (len(userProfile) > 0) {
-#if OS_WIN
-        candidates.Append(fmt("%s\\.local\\bin\\claude.exe", userProfile));
-        candidates.Append(fmt("%s\\AppData\\Local\\Programs\\claude-code\\claude.exe", userProfile));
-        candidates.Append(fmt("%s\\AppData\\Roaming\\npm\\claude.cmd", userProfile));
-#else
         candidates.Append(path::JoinTemp(userProfile, StrL(".local/bin/claude")));
-#endif
     }
     gClaudeExecutablePath = str::Dup(AIChatFindExecutableTemp(candidates, StrL("claude.exe"), StrL("claude")));
     return gClaudeExecutablePath;

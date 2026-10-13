@@ -18,16 +18,8 @@
 #include "DisplayModel.h"
 #include "SumatraPDF.h"
 #include "MainWindow.h"
-#if !defined(SUMATRA_NG)
-#include "Selection.h"
-#endif
 #include "ReadAloud.h"
 #include "Translations.h"
-#if !defined(SUMATRA_NG)
-#include "ReadingAutoScroll.h"
-#include "ReadingBar.h"
-#include "AnnotEditToolbar.h"
-#endif
 #include "WindowTab.h"
 
 WindowTab::WindowTab(MainWindow* win) {
@@ -55,25 +47,6 @@ bool WindowTab::IsAboutTab() const {
     return type == WindowTab::Type::About;
 }
 
-#if !defined(SUMATRA_NG)
-// the SidebarView / SidebarBottomView settings
-static const char* kSidebarViewNames[kSidebarViewCount] = {"bookmarks", "thumbnails", "favorites"};
-
-SidebarView SidebarViewFromStr(Str s, SidebarView def) {
-    for (int i = 0; i < kSidebarViewCount; i++) {
-        if (str::EqI(s, Str(kSidebarViewNames[i]))) {
-            return (SidebarView)i;
-        }
-    }
-    return def;
-}
-
-Str SidebarViewToStr(SidebarView v) {
-    return Str(kSidebarViewNames[(int)v]);
-}
-
-#endif
-
 bool WindowTab::IsFavoritesTab() const {
     ReportIf(type == WindowTab::Type::None);
     return type == WindowTab::Type::Favorites;
@@ -88,10 +61,6 @@ WindowTab::~WindowTab() {
     logf("~WindowTab: 0x%p, dm: 0x%p\n", this, AsFixed());
     // Nothing may point at a tab that is going away.
     ReadAloudForgetTab(this);
-#if !defined(SUMATRA_NG)
-    ReadingAutoScrollForgetTab(this);
-    ReadingBarForgetTab(this);
-#endif
     // DestroyWindow can re-enter code that reads these pointers.
     if (win) {
         if (win->ctrl == ctrl) {
@@ -101,47 +70,12 @@ WindowTab::~WindowTab() {
             win->currentTabTemp = nullptr;
         }
     }
-#if !defined(SUMATRA_NG)
-    // Full browser teardown next (not mere hide). DestroyWindow pumps; with
-    // win->ctrl already nulled (and isBeingClosed on window close), canvas
-    // re-entry must not touch a freed DisplayModel.
-    if (AsChm()) {
-        AsChm()->DestroyParentWindow();
-    } else if (AsMarkdown()) {
-        AsMarkdown()->DestroyParentWindow();
-    }
-    if (hwndPDFInfo) {
-        DestroyWindow(hwndPDFInfo);
-        hwndPDFInfo = nullptr;
-    }
-    if (hwndPDFOutline) {
-        DestroyWindow(hwndPDFOutline);
-        hwndPDFOutline = nullptr;
-    }
-    CloseAnnotationUiForTab(this);
-#endif
     FileWatcherUnsubscribe(watcher);
     watcher = nullptr;
     delete selectionOnPage;
-#if !defined(SUMATRA_NG)
-    // technically we only need to clear ctrl == gMostRecentlyOpenedDoc
-    // but gMostRecentlyOpenedDoc is only for dde commands
-    // so doesn't need to be kept for long
-    gMostRecentlyOpenedDoc = nullptr;
-#endif
     // waits for in-flight renders off the UI thread; deletes on the UI thread
     DeleteControllerAsync(ctrl);
     ctrl = nullptr;
-#if !defined(SUMATRA_NG)
-    if (pendingLoadArgs) {
-        // LoadArgs dtor releases any leftover engine; drop ctrl first so we do
-        // not double-delete through both paths if both were set
-        delete pendingLoadArgs->ctrl;
-        pendingLoadArgs->ctrl = nullptr;
-        SafeEngineRelease(&pendingLoadArgs->engine);
-    }
-    delete pendingLoadArgs;
-#endif
     if (IsOpenCachePath(filePath)) {
         file::Delete(filePath);
     }
@@ -162,16 +96,6 @@ WindowTab::~WindowTab() {
         delete readAloudHighlight;
         readAloudHighlight = nullptr;
     }
-#if !defined(SUMATRA_NG)
-    for (AIChatTabState& st : aiChat) {
-        str::Free(st.sessionId);
-        st.sessionId = {};
-        if (st.process) {
-            TerminateProcess(st.process, 0);
-            CloseHandle(st.process);
-        }
-    }
-#endif
 }
 
 bool WindowTab::IsDocLoaded() const {
@@ -238,12 +162,6 @@ void WindowTab::MoveDocBy(int dx, int dy) const {
     if (!dm) {
         return;
     }
-#if !defined(SUMATRA_NG)
-    ReportIf(win->linkOnLastButtonDown);
-    if (win->linkOnLastButtonDown) {
-        return;
-    }
-#endif
     if (0 != dx) {
         dm->ScrollXBy(dx);
     }
@@ -276,38 +194,3 @@ void WindowTab::ToggleZoom() const {
     }
     ctrl->SetZoomVirtual(NextToggleZoom(), nullptr);
 }
-#if !defined(SUMATRA_NG)
-
-bool SaveDataToFile(HWND hwndParent, Str fileName, Str data) {
-    if (!CanAccessDisk()) {
-        return false;
-    }
-
-    OPENFILENAME ofn{};
-    ofn.lStructSize = sizeof(ofn);
-    ofn.hwndOwner = hwndParent;
-
-    WCHAR dstFileName[MAX_PATH] = {};
-    if (fileName) {
-        str::BufSet(dstFileName, dimof(dstFileName), fileName);
-    }
-    ofn.lpstrFile = dstFileName;
-    ofn.nMaxFile = dimof(dstFileName);
-
-    // Prepare the file filters (use \1 instead of \0 so that the
-    // double-zero terminated string isn't cut by the string handling
-    // methods too early on)
-    TempStr fileFilterA = fmt("%s\1*.*\1", Tr("All files"));
-    TempWStr fileFilter = ToWStrTemp(fileFilterA);
-    wstr::TransCharsInPlace(fileFilter, WStrL(L"\1"), WStrL(L"\0"));
-    ofn.lpstrFilter = fileFilter.s;
-
-    ofn.nFilterIndex = 1;
-    ofn.Flags = OFN_OVERWRITEPROMPT | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY;
-
-    if (!GetSaveFileNameW(&ofn)) {
-        return false;
-    }
-    return file::WriteFile(ToUtf8Temp(dstFileName), data);
-}
-#endif

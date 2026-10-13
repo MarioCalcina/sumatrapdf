@@ -422,7 +422,6 @@ static void AppendRecentFilesToMenu(MenuModel* menu) {
         return;
     }
     SetFileHistoryCmdIds(files);
-#if OS_DARWIN
     // a Mac app lists them in File > Open Recent, below Open, ending with a way
     // to clear them
     MenuItemModel recent;
@@ -445,7 +444,6 @@ static void AppendRecentFilesToMenu(MenuModel* menu) {
     }
     VecInsertAt(menu->items, at, recent);
     return;
-#endif
     for (int i = 0; i < len(files); i++) {
         TempStr name = ShortenStringUtf8InTheMiddleTemp(path::GetBaseNameTemp(files[i].path), 70);
         name = str::ReplaceTemp(name, StrL("&"), StrL("&&"));

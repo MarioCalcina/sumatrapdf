@@ -69,19 +69,9 @@ void FindEditSetText(MainWindow* win, Str s);
 bool FindEditIsModified(MainWindow* win);
 void FindEditSetModified(MainWindow* win, bool modified);
 bool IsFindEditFocused(MainWindow* win);
-#if defined(SUMATRA_NG)
 TempStr FindEditTestTemp(MainWindow* win, Str action, Str arg, int* exitCodeOut = nullptr);
 void FindBarApplyDpi(MainWindow* win);
-#endif
 
-#if OS_WIN
-FindBarWnd* CreateFindBar(MainWindow* win);
-void FindBarUpdateDpi(MainWindow* win);
-int FindBarFontHeight(MainWindow* win);
-int FindBarWindowHeight(MainWindow* win);
-int FindStatusDx(PlatformFont* font, int totalHits, bool capped);
-void StartPickedFindTerm(MainWindow* win, Str term);
-#endif
 void FindBarSetMatchCaseChecked(MainWindow* win, bool checked);
 void FindBarSetMatchWholeWordChecked(MainWindow* win, bool checked);
 void FindBarSyncHistory(MainWindow* win);

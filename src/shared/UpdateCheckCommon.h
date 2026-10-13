@@ -5,20 +5,14 @@
 
 struct UpdateInfo;
 extern UpdateInfo* gPendingUpdate;
-#if OS_DARWIN
 // this fork's releases
 static const Str kExpectedDlHost = StrL("https://github.com/MarioCalcina/sumatrapdf/");
-#else
-static const Str kExpectedDlHost = StrL("https://www.sumatrapdfreader.org/");
-#endif
 bool IsTrustedUpdateDlUrl(Str dlURL);
 void BuildUpdateURL(str::Builder& url, Str baseURL, UpdateCheck updateCheckType);
 
-#if !OS_WIN
 // implemented by ng: base/Win.h has them on Windows
 bool IsProcess64();
 bool IsArmBuild();
-#endif
 
 struct UpdateInfo {
     // the window that asked: orig keeps its frame, ng the window

@@ -3,7 +3,6 @@
 
 #include "base/Base.h"
 #include "base/File.h"
-#include "base/Win.h"
 #include "base/Launch.h"
 #include "base/Pixmap.h"
 
@@ -113,18 +112,8 @@ static Pixmap* PixmapForImageElement(EngineBase* engine, IPageElement* imageElem
     if (!bmp) {
         return nullptr;
     }
-#if OS_WIN
-    Pixmap* px = PixmapFromRenderedBitmap(bmp);
-    if (px && px->format == PixmapFormat::Native) {
-        Pixmap* copy = PixmapCopyAs32bppDIB(px);
-        FreePixmap(px);
-        px = copy;
-    }
-    return px;
-#else
     // ng: a RenderedBitmap is win32-only, so bmp is always null here
     return nullptr;
-#endif
 }
 
 static void SearchGoogleLensSrc(WindowTab* tab, GoogleLensSrc src, IPageElement* imageElement, int pageNo) {
@@ -167,15 +156,9 @@ static void SearchGoogleLensSrc(WindowTab* tab, GoogleLensSrc src, IPageElement*
             RenderPageArgs args(pageNo, zoom, dm->PageRotation(pageNo), &pageRect, RenderTarget::Export);
             bitmap = dm->GetEngine()->RenderPage(args);
             if (bitmap && bitmap->format != PixmapFormat::BGRA8) {
-#if OS_WIN
-                Pixmap* converted = PixmapCopyAs32bppDIB(bitmap);
-                FreePixmap(bitmap);
-                bitmap = converted;
-#else
                 // ng: a Native (palette DIB) pixmap can only be read through GDI
                 FreePixmap(bitmap);
                 bitmap = nullptr;
-#endif
             }
         }
     }

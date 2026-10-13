@@ -14,9 +14,6 @@
 
 #include "gui/GpuiBridge.h"
 #include "VirtKeys.h"
-#if OS_WIN
-#include "base/Win.h"
-#endif
 #include "base/File.h"
 #include "base/ByteReaderWriter.h"
 #include "base/GuessFileType.h"
@@ -139,10 +136,6 @@ struct ImageEditWnd {
     ToolWindow* tw = nullptr;
     // the height of the image area of that window (dips)
     float toolImgAreaDy = 0;
-#if OS_WIN
-    // orig's class name. A gpui tool window stays GpuiSystemMonitor.
-    HWND classHwnd = nullptr;
-#endif
 };
 
 static ImageEditWnd gImgEdit;
@@ -812,49 +805,6 @@ static void DoSave() {
 
 // --- the dialog -------------------------------------------------------------
 
-#if OS_WIN
-// Tests look the editor up as this class and post Esc to it.
-constexpr const WCHAR* kImageEditWinClass = L"SUMATRA_PDF_IMAGE_EDIT";
-
-static LRESULT CALLBACK ImageEditClassProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
-    if (msg == WM_KEYDOWN && wp == VK_ESCAPE) {
-        ImageEditOnEscape();
-        return 0;
-    }
-    return DefWindowProcW(hwnd, msg, wp, lp);
-}
-
-static void EnsureImageEditClass() {
-    static bool registered = false;
-    if (registered) {
-        return;
-    }
-    WNDCLASSEXW wc{};
-    wc.cbSize = sizeof(wc);
-    wc.lpfnWndProc = ImageEditClassProc;
-    wc.hInstance = GetModuleHandleW(nullptr);
-    wc.lpszClassName = kImageEditWinClass;
-    registered = RegisterClassExW(&wc) != 0 || GetLastError() == ERROR_CLASS_ALREADY_EXISTS;
-}
-
-static void ShowImageEditClassWindow() {
-    EnsureImageEditClass();
-    if (gImgEdit.classHwnd && IsWindow(gImgEdit.classHwnd)) {
-        return;
-    }
-    gImgEdit.classHwnd = CreateWindowExW(WS_EX_NOACTIVATE, kImageEditWinClass, L"", WS_POPUP, 0, 0, 0, 0, nullptr,
-                                         nullptr, GetModuleHandleW(nullptr), nullptr);
-}
-
-static void DestroyImageEditClassWindow() {
-    HWND hwnd = gImgEdit.classHwnd;
-    gImgEdit.classHwnd = nullptr;
-    if (hwnd && IsWindow(hwnd)) {
-        DestroyWindow(hwnd);
-    }
-}
-#endif
-
 // the dialog in the frame; a window of its own is not the frame's business
 bool IsImageEditWindowVisible() {
     return gImgEdit.visible && !gImgEdit.tw;
@@ -865,9 +815,6 @@ void CloseImageEditWindow() {
         return;
     }
     gImgEdit.visible = false;
-#if OS_WIN
-    DestroyImageEditClassWindow();
-#endif
     MainWindow* win = gImgEdit.win;
     if (gImgEdit.tw) {
         ToolWindowClose(gImgEdit.tw);
@@ -908,26 +855,6 @@ TempStr ImageEditStateTemp() {
                gImgEdit.newW, gImgEdit.newH, DestPathTemp());
 }
 
-#if OS_WIN
-// The picker keeps its bitmap and deletes it. The editor takes ownership of
-// the one it is given, so hand it a copy.
-void ShowImageEditWindow(HWND parent, ImageEditMode mode, Str filePath, RenderedBitmap* rbmp, bool selectPdf,
-                         Str originalData, bool closeOnEsc) {
-    MainWindow* win = nullptr;
-    for (MainWindow* w : gWindows) {
-        if (parent && AppShellNativeHwnd(w) == parent) {
-            win = w;
-            break;
-        }
-    }
-    if (!win && len(gWindows) > 0) {
-        win = gWindows[0];
-    }
-    RenderedBitmap* owned = rbmp ? rbmp->Clone() : nullptr;
-    ShowImageEditWindow(win, mode, filePath, owned, selectPdf, originalData, closeOnEsc);
-}
-#endif
-
 void ShowImageEditWindow(MainWindow* win, ImageEditMode mode, Str filePath, RenderedBitmap* rbmp, bool selectPdf,
                          Str originalData, bool closeOnEsc) {
     if (!IsMainWindowValidAndNotClosing(win)) {
@@ -941,16 +868,7 @@ void ShowImageEditWindow(MainWindow* win, ImageEditMode mode, Str filePath, Rend
     if (rbmp) {
         // ng: orig keeps the bitmap and the caller deletes it; here the
         // Pixmap takes its pixels over, so the editor owns it from now on
-#if OS_WIN
-        px = PixmapFromRenderedBitmap(rbmp);
-        if (px && px->format == PixmapFormat::Native) {
-            Pixmap* copy = PixmapCopyAs32bppDIB(px);
-            FreePixmap(px);
-            px = copy;
-        }
-#else
         // ng: a RenderedBitmap is win32-only, so rbmp is always null here
-#endif
         fromRendered = true;
     } else if (len(filePath) > 0 && gImageEditHost.LoadImageFile) {
         px = gImageEditHost.LoadImageFile(filePath);
@@ -996,9 +914,6 @@ void ShowImageEditWindow(MainWindow* win, ImageEditMode mode, Str filePath, Rend
 
     gImgEdit.visible = true;
     ImageEditOpenToolWindow(win);
-#if OS_WIN
-    ShowImageEditClassWindow();
-#endif
     logf("%s\n", ImageEditStateTemp());
     AppShellInvalidate(win);
 }

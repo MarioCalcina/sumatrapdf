@@ -8,7 +8,6 @@
 #include "base/File.h"
 #include "base/GuessFileType.h"
 #include "base/Timer.h"
-#include "base/Win.h"
 
 #include "gui/Dpi.h"
 #include "gui/UIModels.h"
@@ -18,11 +17,9 @@
 #include "EngineBase.h"
 #include "EngineAll.h"
 
-#if OS_POSIX && !OS_WASM
 #include <signal.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#endif
 
 TempStr GetSumatraDataDirTemp();
 
@@ -45,17 +42,6 @@ static bool gDviToolsInited = false;
 static Str gDviConvertTool;
 
 static TempStr FindExeTemp(Str name) {
-#if OS_WIN
-    WCHAR* nameW = CWStrTemp(name);
-    WCHAR buf[4096];
-    DWORD n = SearchPathW(nullptr, nameW, nullptr, dimof(buf), buf, nullptr);
-    if (n == 0 || n >= dimof(buf)) {
-        return {};
-    }
-    return ToUtf8Temp(buf);
-#elif OS_WASM
-    return {};
-#else
     const char* env = getenv("PATH");
     if (!env) {
         return {};
@@ -70,7 +56,6 @@ static TempStr FindExeTemp(Str name) {
         }
     }
     return {};
-#endif
 }
 
 static TempStr ExeInDirTemp(Str dir, Str exeName) {
@@ -90,11 +75,7 @@ static TempStr FindTexExeTemp(Str exeName) {
     if (len(found) > 0) {
         return found;
     }
-#if OS_WIN
-    Str bins[] = {StrL("pdflatex.exe"), StrL("xelatex.exe"), StrL("lualatex.exe"), StrL("latex.exe")};
-#else
     Str bins[] = {StrL("pdflatex"), StrL("xelatex"), StrL("lualatex"), StrL("latex")};
-#endif
     for (Str bin : bins) {
         TempStr binPath = FindExeTemp(bin);
         if (len(binPath) == 0) {
@@ -114,15 +95,9 @@ static void InitDviTools() {
     }
     gDviToolsInited = true;
 
-#if OS_WIN
-    Str dvipdfmx = StrL("dvipdfmx.exe");
-    Str xdvipdfmx = StrL("xdvipdfmx.exe");
-    Str dvipsName = StrL("dvips.exe");
-#else
     Str dvipdfmx = StrL("dvipdfmx");
     Str xdvipdfmx = StrL("xdvipdfmx");
     Str dvipsName = StrL("dvips");
-#endif
     TempStr pdfmx = FindTexExeTemp(dvipdfmx);
     if (len(pdfmx) == 0) {
         pdfmx = FindTexExeTemp(xdvipdfmx);
@@ -136,11 +111,7 @@ static void InitDviTools() {
         gDviTools.dvips = str::Dup(dvips);
     }
     TempStr gs;
-#if OS_WIN
-    gs = GetGhostscriptPathTemp();
-#else
     gs = FindExeTemp(StrL("gs"));
-#endif
     if (len(gs) > 0) {
         gDviTools.gs = str::Dup(gs);
     }
@@ -170,38 +141,6 @@ static int DviConvertTimeoutMs() {
 }
 
 static bool RunDviTool(Str exe, const Str* args, int nArgs, Str workDir) {
-#if OS_WIN
-    str::Builder cmd;
-    cmd.Append(QuoteCmdLineArgTemp(exe));
-    for (int i = 0; i < nArgs; i++) {
-        cmd.AppendChar(' ');
-        cmd.Append(QuoteCmdLineArgTemp(args[i]));
-    }
-    TempStr cmdLine = ToStrTemp(cmd);
-    HANDLE process = LaunchProcessInDir(cmdLine, workDir, CREATE_NO_WINDOW);
-    if (!process) {
-        logf("dvi: CreateProcess failed: %s\n", cmdLine);
-        return false;
-    }
-    int timeoutMs = DviConvertTimeoutMs();
-    DWORD wait = WaitForSingleObject(process, timeoutMs < 0 ? INFINITE : (DWORD)timeoutMs);
-    DWORD exitCode = EXIT_FAILURE;
-    GetExitCodeProcess(process, &exitCode);
-    if (wait != WAIT_OBJECT_0 || exitCode == STILL_ACTIVE) {
-        TerminateProcess(process, 1);
-        CloseHandle(process);
-        logf("dvi: timed out: %s\n", cmdLine);
-        return false;
-    }
-    CloseHandle(process);
-    if (exitCode != EXIT_SUCCESS) {
-        logf("dvi: exit %u: %s\n", exitCode, cmdLine);
-        return false;
-    }
-    return true;
-#elif OS_WASM
-    return false;
-#else
     if (nArgs < 0 || nArgs > 14) {
         return false;
     }
@@ -245,7 +184,6 @@ static bool RunDviTool(Str exe, const Str* args, int nArgs, Str workDir) {
         }
         SleepInMs(10);
     }
-#endif
 }
 
 struct DviTmpFile {

@@ -10,9 +10,6 @@
 #include "gui/GpuiBridge.h"
 
 #include "base/UITask.h"
-#if OS_WIN
-#include "base/Win.h"
-#endif
 #include "gui/UIModels.h"
 #include "VirtKeys.h"
 
@@ -425,9 +422,6 @@ static Rect KbHelpToolRect(MainWindow* win, const KbHelpDims& dims) {
     size.dx = std::min(size.dx, work.dx);
     size.dy = std::min(size.dy, work.dy);
     bool maximized = win->isMaximized || (win->gpuiWin && win->gpuiWin->maximized);
-#if OS_WIN
-    maximized = maximized || IsZoomed(AppShellNativeHwnd(win));
-#endif
     if (gKbHelp.parentFullscreen || maximized) {
         int x = std::max(work.x, work.Right() - size.dx);
         int y = limitValue(work.y + ((work.dy - size.dy) / 2), work.y, std::max(work.y, work.Bottom() - size.dy));

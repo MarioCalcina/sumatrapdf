@@ -13,12 +13,7 @@
 #include "base/Http.h"
 #include "base/File.h"
 #include "base/Crypto.h"
-#if OS_WIN
-#include "base/Win.h"
-#endif
-#if OS_DARWIN
 #include <sys/sysctl.h>
-#endif
 
 #include "gui/UIModels.h"
 
@@ -43,7 +38,6 @@
 
 static Kind kNotifUpdateCheckInProgress = "notifUpdateCheckInProgress";
 
-#if !OS_WIN
 // base/Win.h is Windows-only; these are what the update query needs from it
 bool IsProcess64() {
     return sizeof(void*) == 8;
@@ -56,7 +50,6 @@ bool IsArmBuild() {
     return false;
 #endif
 }
-#endif
 
 // ng: each platform has its own builds and update info, uploaded to
 // software/sumatrapdfng/<platform>/ in R2, and its own update check url on
@@ -65,29 +58,13 @@ bool IsArmBuild() {
 
 // clang-format off
 // tried in order; later entries are backups if earlier HTTP gets fail
-#if OS_WIN
-static const Str updateInfoURLs[] = {
-    StrL("https://www.sumatrapdfreader.org/update-check-ng-win.txt"),
-};
-#elif OS_DARWIN
 // upstream would offer a build without this fork's changes: the fork's mac-app
 // workflow attaches this to each release
 static const Str updateInfoURLs[] = {
     StrL("https://github.com/MarioCalcina/sumatrapdf/releases/latest/download/update-check-mac.txt"),
 };
-#elif OS_LINUX
-static const Str updateInfoURLs[] = {
-    StrL("https://www.sumatrapdfreader.org/update-check-ng-linux.txt"),
-};
-#else
-static const Str updateInfoURLs[] = {
-    StrL("https://www.sumatrapdfreader.org/update-check-rel.txt"),
-};
-#endif
 
-#if OS_DARWIN
 #define kWebisteDownloadPageURL "https://github.com/MarioCalcina/sumatrapdf/releases/latest"
-#endif
 #ifndef kWebisteDownloadPageURL
 #define kWebisteDownloadPageURL "https://www.sumatrapdfreader.org/download-free-pdf-viewer"
 #endif
@@ -188,78 +165,12 @@ static void OpenWebPage(Str url) {
     SumatraLaunchBrowser(url);
 }
 
-#if OS_WIN
-
-void StartInstallerAutoUpgrade(Str installerPath) {
-    TempStr expectedSigner = GetExecutableSignerTemp(GetSelfExePathTemp());
-    TempStr installerSigner = GetExecutableSignerTemp(installerPath);
-    if (len(expectedSigner) == 0 || len(installerSigner) == 0 || !str::Eq(expectedSigner, installerSigner) ||
-        !IsPEFileSigned(installerPath)) {
-        logf("StartInstallerAutoUpgrade: refusing an update with an untrusted signature\n");
-        return;
-    }
-    str::Builder cmd;
-    // ng: orig asks the installer (IsOurExeInstalled()); the installer is step
-    // 17, so "not portable" stands in for "installed"
-    if (!IsRunningInPortableMode()) {
-        // no need for sleep because it shows the installer dialog anyway
-        if (gIsPreReleaseBuild) {
-            cmd.Append(StrL(" -fast-install"));
-        } else {
-            cmd.Append(StrL(" -install"));
-        }
-    } else {
-        // we're asking to over-write over ourselves, so also wait 2 secs to allow
-        // our process to exit
-        cmd.Append(fmt(R"( -sleep-ms 2000 -exit-when-done -update-self-to "%s")", GetSelfExePathTemp()));
-    }
-    logf("StartInstallerAutoUpgrade: installer cmd: '%s'\n", ToStr(cmd));
-    CreateProcessHelper(installerPath, ToStr(cmd));
-}
-
-static void ExitAfterStartingUpdater() {
-    // Exit immediately so the updater can overwrite our exe
-    ::ExitProcess(0);
-}
-
-// the assumption is that this is a portable version downloaded to temp directory
-// we should copy ourselves over the existing file, launch ourselves and
-// tell our new copy to delete ourselves
-void UpdateSelfTo(Str dstPath, int sleepMs) {
-    ReportIf(len(dstPath) == 0);
-    if (!file::Exists(dstPath)) {
-        logf("UpdateSelfTo: failed because destination doesn't exist\n");
-        return;
-    }
-
-    logf("UpdateSelfTo: '%s', sleep for %d ms\n", dstPath, sleepMs);
-    // sleeping for a bit to make sure that the program that launched us
-    // had time to exit so that we can overwrite it
-    SleepInMs(sleepMs);
-
-    // OverwriteAtomicRetry(dst, src): copy this process (new build) onto dstPath
-    TempStr srcPath = GetSelfExePathTemp();
-    bool ok = file::OverwriteAtomicRetry(dstPath, srcPath, 20, 250);
-    if (!ok) {
-        logf("UpdateSelfTo: failed to overwrite '%s' with '%s'\n", dstPath, srcPath);
-        return;
-    }
-    logf("UpdateSelfTo: copied self to '%s'\n", dstPath);
-
-    TempStr args = fmt(R"(-sleep-ms 500 -delete-file "%s")", srcPath);
-    CreateProcessHelper(dstPath, args);
-}
-
-#else
-
 // no installer off Windows: the user is sent to the download page instead
 void StartInstallerAutoUpgrade(Str) {}
 
 static void ExitAfterStartingUpdater() {}
 
 void UpdateSelfTo(Str, int) {}
-
-#endif
 
 // The build's own download when the update info names a trusted one.
 static void OpenDownloadPage(UpdateInfo* updateInfo) {
@@ -363,35 +274,6 @@ static void UpdateProgressCb(UpdateProgressData* data, HttpProgress* progress) {
 }
 
 static void DownloadUpdateAsync(DownloadUpdateAsyncData* data) {
-#if OS_WIN
-    UpdateInfo* updateInfo = data->updateInfo;
-    // sum<hex>.tmp.exe stays after install; the .tmp stub is unused. Sweep leftovers first.
-    constexpr int kStaleUpdateExeSec = 24 * 60 * 60;
-    DeleteStaleUpdateTemps(GetTempDirTemp(), {}, kStaleUpdateExeSec);
-
-    TempStr stub = GetTempFilePathTemp(StrL("sumatra-installer"));
-    // the installer must be named .exe or it won't be able to self-elevate with "runas"
-    TempStr installerPath;
-    if (len(stub) > 0) {
-        file::Delete(stub);
-        installerPath = str::JoinTemp(stub, StrL(".exe"));
-    }
-    UpdateProgressData pd;
-    pd.win = data->win;
-    auto cb = MkFunc1<UpdateProgressData, HttpProgress*>(UpdateProgressCb, &pd);
-    constexpr i64 kMaxUpdateDownloadSize = 256LL * 1024 * 1024;
-    bool ok = len(installerPath) > 0 && HttpGetToFile(updateInfo->dlURL, installerPath, cb, kMaxUpdateDownloadSize);
-    logf("DownloadUpdateAsync: HttpGetToFile(): ok=%d, downloaded to '%s'\n", (int)ok, installerPath);
-    TempStr expectedSigner = GetExecutableSignerTemp(GetSelfExePathTemp());
-    TempStr installerSigner = ok ? GetExecutableSignerTemp(installerPath) : TempStr{};
-    ok = ok && expectedSigner && installerSigner && str::Eq(expectedSigner, installerSigner) &&
-         IsPEFileSigned(installerPath);
-    if (ok) {
-        updateInfo->installerPath = str::Dup(installerPath);
-    } else {
-        file::Delete(installerPath);
-    }
-#endif
 
     // process the rest on ui thread to avoid threading issues
     uitask::Post(MkFunc0<DownloadUpdateAsyncData>(DownloadUpdateFinish, data), "TaskShowAutoUpdateDialog");
@@ -574,7 +456,6 @@ static DWORD MaybeStartUpdateDownload(MainWindow* win, HttpRsp* rsp, UpdateCheck
     return 0;
 }
 
-#if OS_DARWIN
 // "mac-15.6.1"
 static TempStr OsNameTemp() {
     char ver[32]{};
@@ -584,56 +465,13 @@ static TempStr OsNameTemp() {
     }
     return fmt("mac-%s", Str(ver));
 }
-#elif OS_LINUX
-// The distribution's ID from os-release, e.g. "ubuntu" for ID=ubuntu or ID="ubuntu".
-static TempStr OsNameTemp() {
-    FILE* f = fopen("/etc/os-release", "r");
-    if (!f) {
-        f = fopen("/usr/lib/os-release", "r");
-    }
-    if (!f) {
-        return StrL("linux");
-    }
-    constexpr Str kKey = StrL("ID=");
-    TempStr res = StrL("linux");
-    char line[256];
-    while (fgets(line, sizeof(line), f)) {
-        Str s(line);
-        if (!str::StartsWith(s, kKey)) {
-            continue;
-        }
-        // keep what is safe in a url; that drops the quotes and the newline
-        str::Builder id;
-        for (int i = len(kKey); i < len(s); i++) {
-            char c = s.s[i];
-            if (isalnum((unsigned char)c) || c == '.' || c == '_' || c == '-') {
-                id.AppendChar(c);
-            }
-        }
-        if (len(id) > 0) {
-            res = str::DupTemp(ToStr(id));
-        }
-        break;
-    }
-    fclose(f);
-    return res;
-}
-#elif !OS_WIN
-static TempStr OsNameTemp() {
-    return StrL("posix");
-}
-#endif
 
 // Shared by update check and minidump upload: v, os, 64bit, arm, lang, store, simd.
 void AppendClientInfoQuery(str::Builder& url) {
     url.Append(StrL("?v="));
     url.Append(currentVersion);
     url.Append(StrL("&os="));
-#if OS_WIN
-    url.Append(GetWindowsVerTemp());
-#else
     url.Append(OsNameTemp());
-#endif
     url.Append(StrL("&64bit="));
     url.Append(Str(IsProcess64() ? "yes" : "no"));
     url.Append(StrL("&arm="));
@@ -644,10 +482,6 @@ void AppendClientInfoQuery(str::Builder& url) {
     if (gIsStoreBuild) {
         url.Append(StrL("&store"));
     }
-#if OS_WIN
-    url.Append(StrL("&simd="));
-    url.Append(LatestSupportedSIMD());
-#endif
 }
 
 struct UpdateCheckAsyncData {
@@ -661,9 +495,6 @@ struct UpdateCheckAsyncData {
 
 // ng: base's Http is winhttp. Off Windows gpui's http client answers instead
 static bool UpdateHttpGet(Str uri, HttpRsp* rsp) {
-#if OS_WIN
-    return HttpGet(uri, rsp);
-#else
     gp::HttpRsp gr;
     bool ok = gp::HttpGet(ToGpui(uri), &gr);
     rsp->httpStatusCode = (DWORD)gr.status;
@@ -673,7 +504,6 @@ static bool UpdateHttpGet(Str uri, HttpRsp* rsp) {
     }
     gp::HttpRspFree(&gr);
     return ok && gr.status == 200;
-#endif
 }
 
 static void UpdateCheckFinish(UpdateCheckAsyncData* data) {
@@ -699,48 +529,6 @@ static void UpdateCheckFinish(UpdateCheckAsyncData* data) {
         NotifyUpdateCheckFailed(win, err);
     }
 }
-
-#if OS_WASM
-static void UpdateCheckWasmStart(UpdateCheckAsyncData* data);
-
-static void UpdateCheckWasmDone(UpdateCheckAsyncData* data, gp::HttpAsyncResult result) {
-    HttpRsp* rsp = data->rsp;
-    gp::HttpRsp* gr = result.response;
-    rsp->error = result.ok ? 0 : (DWORD)-1;
-    rsp->httpStatusCode = gr ? (DWORD)gr->status : 0;
-    if (gr && gr->body.len > 0) {
-        rsp->data.Append(Str((char*)gr->body.els, gr->body.len));
-    }
-    logf("UpdateCheckAsync: response from '%s': error=%d, status=%d, %d bytes\n", rsp->url, (int)rsp->error,
-         (int)rsp->httpStatusCode, (int)len(rsp->data));
-    if (result.ok && gr && gr->status == 200) {
-        UpdateCheckFinish(data);
-        return;
-    }
-    UpdateCheckWasmStart(data);
-}
-
-static void UpdateCheckWasmStart(UpdateCheckAsyncData* data) {
-    if (data->nextUrl >= dimofi(updateInfoURLs)) {
-        UpdateCheckFinish(data);
-        return;
-    }
-
-    delete data->rsp;
-    data->rsp = nullptr;
-    str::Builder url;
-    BuildUpdateURL(url, updateInfoURLs[data->nextUrl++], data->updateCheckType);
-    data->rsp = new HttpRsp;
-    str::ReplaceWithCopy(&data->rsp->url, ToStr(url));
-    gp::HttpReq req;
-    req.url = ToGpui(data->rsp->url);
-    req.method = GStrL("GET");
-    if (!gp::HttpSendAsync(req, gp::MkFunc1<UpdateCheckAsyncData, gp::HttpAsyncResult>(UpdateCheckWasmDone, data))) {
-        data->rsp->error = (DWORD)-1;
-        UpdateCheckWasmStart(data);
-    }
-}
-#endif
 
 static void UpdateCheckAsync(UpdateCheckAsyncData* data) {
     auto updateCheckType = data->updateCheckType;
@@ -787,9 +575,5 @@ void StartAsyncUpdateCheck(MainWindow* win, UpdateCheck updateCheckType) {
     auto* data = new UpdateCheckAsyncData();
     data->win = win;
     data->updateCheckType = updateCheckType;
-#if OS_WASM
-    UpdateCheckWasmStart(data);
-#else
     RunAsync(MkFunc0<UpdateCheckAsyncData>(UpdateCheckAsync, data), StrL("UpdateCheckAsync"));
-#endif
 }

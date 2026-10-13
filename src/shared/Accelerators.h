@@ -26,6 +26,3 @@ int AsciiAcceleratorCmd(u32 ch);
 bool IsSafeAccel(const Accel&);
 bool IsSafeTreeAccel(const Accel&);
 
-#if OS_WIN
-HACCEL* GetAcceleratorTables();
-#endif

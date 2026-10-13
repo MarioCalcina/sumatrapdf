@@ -3,7 +3,6 @@
 
 #include "base/Base.h"
 #include "base/File.h"
-#include "base/Win.h"
 #include "base/GuessFileType.h"
 #include "gui/UIModels.h"
 #include "Settings.h"

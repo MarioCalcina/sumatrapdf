@@ -19,7 +19,6 @@ extern int gDpiOverride;
 extern int dpiX;
 extern int dpiY;
 
-#if !OS_WIN
 // win32's MulDiv: a * b / c, rounded to nearest
 inline int MulDiv(int a, int b, int c) {
     if (c == 0) {
@@ -30,7 +29,6 @@ inline int MulDiv(int a, int b, int c) {
     n = n >= 0 ? n + half : n - half;
     return (int)(n / c);
 }
-#endif
 
 int DpiGetForHwnd(HWND);
 int DpiGetForPoint(int x, int y);
@@ -60,12 +58,10 @@ struct DpiScope {
     }
 };
 
-#if !OS_WIN
 // ng: the win32 metric ids the portable model code asks for. Dpi_posix.cpp
 // supplies the portable scrollbar dimensions for them.
 #define SM_CXVSCROLL 2
 #define SM_CYHSCROLL 3
-#endif
 
 int DpiGetSystemMetrics(int index);
 int DpiGetSystemMetrics(int index, int dpi);

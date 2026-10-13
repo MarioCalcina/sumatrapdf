@@ -50,12 +50,6 @@ struct Pixmap {
     float yres = 96.0f;
     u8* data = nullptr; // pixel buffer; owned by malloc, or by hbmp when DIB-section-backed
 
-#if OS_WIN
-    // When non-null, the Pixmap is backed by a GDI DIB section: `data` is its pixels and
-    // the bitmap is directly blittable (BlitPixmap). Owns these handles.
-    HBITMAP hbmp = nullptr;
-    HANDLE hMap = nullptr; // optional file mapping backing hbmp
-#endif
 };
 
 void CopyPixmapRows(Pixmap* dst, const u8* src, int srcStride);
@@ -66,28 +60,6 @@ Pixmap* PixmapToBgra(Pixmap* p);
 
 // Gives a decoder an RGB24 or straight-alpha RGBA32 destination buffer.
 typedef u8* (*DecodeDstAllocFn)(void* user, int dx, int dy, bool hasAlpha, int* stride);
-
-#if OS_WIN
-struct RenderedBitmap;
-
-// DIB-section-backed 32bpp BGRA8. Use only when this pixmap must be SelectObject'd
-// or must adopt a GDI HBITMAP / Native DIB. Heap pixels blit via StretchDIBits
-// with no extra copy (BlitPixmap / BlitPixmapAlpha).
-Pixmap* AllocPixmapDIB(int w, int h);
-Pixmap* PixmapFromHICON(HICON);
-bool BlitPixmap(Pixmap* p, HDC hdc, Rect target);
-bool BlitPixmapAlpha(Pixmap* p, HDC hdc, Rect target);
-bool BlitPixmapRegion(Pixmap* p, HDC hdc, Rect target, Rect source);
-bool BlitPixmapDibBits(const Pixmap* p, HDC hdc, Rect target, Rect source);
-Pixmap* PixmapFromHBITMAP(HBITMAP hbmp, Size size, HANDLE hMap = nullptr);
-// an opaque 32bpp copy of a DIB-backed Pixmap, for code that needs to read pixels
-// out of one whose format is Native. Returns null if there's nothing to copy
-Pixmap* PixmapCopyAs32bppDIB(const Pixmap* p);
-Pixmap* PixmapFromRenderedBitmap(RenderedBitmap* rb);
-RenderedBitmap* RenderedBitmapFromPixmap(Pixmap* px);
-
-void FreePixmapNativeBitmap(Pixmap* p);
-#endif
 
 // remaps a rendered page bitmap onto a text / background / link color ramp
 // (dark mode). ng: portable, orig declares it in the win32 half
@@ -137,7 +109,6 @@ inline Pixmap* AllocPixmap(int w, int h, PixmapFormat fmt = PixmapFormat::BGRA8,
     return p;
 }
 
-#if !OS_WIN
 // No GDI DIB section off Windows; same heap buffer as AllocPixmap.
 inline Pixmap* AllocPixmapDIB(int w, int h) {
     return AllocPixmap(w, h);
@@ -147,19 +118,11 @@ inline Pixmap* AllocPixmapDIB(int w, int h) {
 // Applies an EXIF orientation (2..8) and frees the input; anything else
 // returns px unchanged.
 Pixmap* PixmapApplyExifOrientation(Pixmap* px, int orientation);
-#endif
 
 inline void FreePixmap(Pixmap* p) {
     if (!p) {
         return;
     }
-#if OS_WIN
-    if (p->hbmp) {
-        FreePixmapNativeBitmap(p);
-        delete p;
-        return;
-    }
-#endif
     free(p->data);
     delete p;
 }
@@ -169,12 +132,6 @@ inline Pixmap* ClonePixmap(const Pixmap* src) {
     if (!src || !src->data) {
         return nullptr;
     }
-#if OS_WIN
-    // ng: Native pixels have no layout to copy; the clone is a 32bpp DIB
-    if (src->format == PixmapFormat::Native) {
-        return PixmapCopyAs32bppDIB(src);
-    }
-#endif
     Pixmap* p = AllocPixmap(src->width, src->height, src->format, src->premultiplied);
     if (!p) {
         return nullptr;

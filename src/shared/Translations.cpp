@@ -12,9 +12,6 @@
 namespace trans {
 
 extern int FindLangIdx(Str code);
-#if OS_WIN
-extern LANGID GetLangIdByIdx(int idx);
-#endif
 extern bool IsLangRtl(int langIdx);
 
 // A view into the shared language table.
@@ -233,7 +230,6 @@ bool IsCurrLangRtl() {
     return IsLangRtl(gCurrLangIdx);
 }
 
-#if !OS_WIN
 // ISO codes our table spells differently, then ("") ISO codes our table has
 // for another language: Breton "br" is not Brazilian Portuguese
 // clang-format off
@@ -286,9 +282,7 @@ int LangIdxForLocale(Str locale) {
 // $LC_ALL / $LANG ("de_DE.UTF-8") name the language.
 Str DetectUserLang() {
     StrVec locales;
-#if OS_DARWIN
     GetUserLanguages(locales);
-#endif
     const char* envNames[] = {"LC_ALL", "LC_MESSAGES", "LANG"};
     for (const char* name : envNames) {
         const char* v = getenv(name);
@@ -304,28 +298,6 @@ Str DetectUserLang() {
     }
     return StrL("en");
 }
-#else
-Str DetectUserLang() {
-    LANGID langId = GetUserDefaultUILanguage();
-    // try the exact match
-    for (int i = 0; i < GetLangsCount(); i++) {
-        if (langId == GetLangIdByIdx(i)) {
-            return GetLangCodeByIdxTemp(i);
-        }
-    }
-
-    // see if we have a translation in a language that has the same
-    // primary id as user's language and neutral sublang
-    LANGID userLangIdNeutral = MAKELANGID(PRIMARYLANGID(langId), SUBLANG_NEUTRAL);
-    for (int i = 0; i < GetLangsCount(); i++) {
-        if (userLangIdNeutral == GetLangIdByIdx(i)) {
-            return GetLangCodeByIdxTemp(i);
-        }
-    }
-
-    return StrL("en");
-}
-#endif
 
 void Destroy() {
     FreeTranslations();

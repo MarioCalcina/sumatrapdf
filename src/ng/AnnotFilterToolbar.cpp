@@ -15,9 +15,6 @@
 #include "VirtKeys.h"
 #include "base/File.h"
 #include "base/UITask.h"
-#if OS_WIN
-#include "base/Win.h"
-#endif
 
 #include "gui/Dpi.h"
 #include "gui/UIModels.h"
@@ -656,9 +653,7 @@ static bool AnnotFilterKey(AnnotFilterToolbar* f, int vkey, bool isCtrl, bool is
     }
     // macOS Delete is Backspace. The filter box returned above; this is the list.
     bool macDelete = false;
-#if OS_DARWIN
     macDelete = vkey == VK_BACK && !isCtrl && !isAlt;
-#endif
     if (vkey == VK_DELETE || macDelete) {
         DeleteListSelection(f);
         return true;
@@ -1117,9 +1112,6 @@ static ToolWindowDesc AnnotFilterToolDesc() {
 
 static bool FrameIsMaxOrFullscreen(MainWindow* win) {
     bool zoomed = win->isMaximized || (win->gpuiWin && win->gpuiWin->maximized);
-#if OS_WIN
-    zoomed = zoomed || IsZoomed(AppShellNativeHwnd(win));
-#endif
     return win->isFullScreen || win->presentation || zoomed;
 }
 

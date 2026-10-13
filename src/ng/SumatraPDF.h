@@ -132,11 +132,6 @@ void OpenNextPrevFileInFolder(MainWindow* win, bool forward, Str pathToDelete = 
 // the page-info tip (CmdTogglePageInfo): put it up or refresh it when the
 // user asked for it and a document is loaded
 void ShowPageInfoIfWanted(MainWindow* win);
-#if OS_WIN
-void ShowDefaultAppNotification(MainWindow* win, const StrVec& missing);
-// orig's window picker. hwndRestore gets focus back when the picker closes.
-void ShowScreenshotPicker(HWND hwndRestore);
-#endif
 bool DismissNotificationsOnEsc(MainWindow* win);
 // the cursor-position tip (CmdToggleCursorPosition), refreshed on mouse move
 struct NotificationWnd;

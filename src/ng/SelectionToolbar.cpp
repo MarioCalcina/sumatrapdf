@@ -386,14 +386,6 @@ TempStr SelectionToolbarLayoutDumpTemp(MainWindow* win) {
         // so the screen point is the client origin plus this layout point.
         int x = (int)(r.x + 0.5f);
         int y = (int)(r.y + 0.5f);
-#if OS_WIN
-        if (HWND hwnd = AppShellNativeHwnd(win)) {
-            POINT pt{x, y};
-            ClientToScreen(hwnd, &pt);
-            x = pt.x;
-            y = pt.y;
-        }
-#endif
         out.Append(fmt("placed=%d,%d,%d,%d\n", x, y, (int)(r.w + 0.5f), (int)(r.h + 0.5f)));
     }
     if (!tb) {

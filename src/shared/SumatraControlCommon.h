@@ -122,22 +122,10 @@ bool ControlFavoritesMenu(MainWindow* win, Str action, TempStr* idsOut);
 void ControlTogglePresentation(MainWindow* win);
 void ControlToggleFullScreen(MainWindow* win);
 
-#if OS_WIN
-using ControlConn = HANDLE;
-bool ReadExact(HANDLE h, void* data, DWORD n);
-bool WriteExact(HANDLE h, Str data);
-struct ControlThreadArg {
-    Str pipeName;
-};
-void SumatraControlThread(ControlThreadArg* arg);
-// implemented by each app
-bool ProcessControlConnection(HANDLE h);
-#else
 // a connected unix domain socket
 using ControlConn = int;
 bool ReadExact(int fd, void* data, u32 n);
 bool WriteExact(int fd, Str data);
-#endif
 
 struct LayoutProbeState {
     MainWindow* win = nullptr;

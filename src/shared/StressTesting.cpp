@@ -7,16 +7,9 @@
 #include "base/File.h"
 #include "base/GuessFileType.h"
 #include "base/Timer.h"
-#if !defined(SUMATRA_NG) || OS_WIN
-#include "base/Win.h"
-#endif
 #include "base/StrQueue.h"
 
 #include "gui/UIModels.h"
-#if !defined(SUMATRA_NG)
-#include "gui/Layout.h"
-#include "gui/win/WinGui.h"
-#endif
 
 #include "Settings.h"
 #include "DocProperties.h"
@@ -36,29 +29,18 @@
 #include "WindowTab.h"
 #include "Flags.h"
 #include "SearchAndDDE.h"
-#if defined(SUMATRA_NG)
 #include "FindBar.h"
 #include "gui/AppShell.h"
-#endif
 #include "base/CrashHandler.h"
 #include "StressTesting.h"
 
-#if defined(SUMATRA_NG)
 #include "SumatraLog.h"
-#endif
-
-#if !defined(SUMATRA_NG)
-constexpr int kFirstStressTimerID = 101;
-#endif
 
 constexpr int kStressTestMaxPagesPerFile = 16;
 constexpr int kStressTestMaxPagesSlowFile = 8;
 constexpr int kStressTestSlowPageMs = 4 * 1000;
 
 static bool gIsStressTesting = false;
-#if !defined(SUMATRA_NG)
-static int gCurrStressTimerId = kFirstStressTimerID;
-#endif
 static Kind kNotifStressTestBenchmark = "stressTestBenchmark";
 static Kind kNotifStressTestSummary = "stressTestSummary";
 static AtomicInt gStressTestFileNo = 0;
@@ -459,9 +441,6 @@ struct StressTest {
     int pageForSearchStart = 0;
     int nFilesProcessed = 0; // number of files processed so far
     int maxFiles = 0;        // max files to process, 0 means no limit
-#if !defined(SUMATRA_NG)
-    int timerId = 0;
-#endif
     bool exitWhenDone = false;
     int maxPagesForFile = kStressTestMaxPagesPerFile;
     int nPagesRenderedThisFile = 0;
@@ -498,9 +477,6 @@ static void LimitPagesToRender(Vec<int>& pages, int maxPages) {
 StressTest::StressTest(MainWindow* win, bool exitWhenDone) {
     this->win = win;
     this->exitWhenDone = exitWhenDone;
-#if !defined(SUMATRA_NG)
-    timerId = gCurrStressTimerId++;
-#endif
 }
 
 StressTest::~StressTest() {
@@ -510,11 +486,7 @@ StressTest::~StressTest() {
 }
 
 static void TickTimer(StressTest* st) {
-#if !defined(SUMATRA_NG)
-    SetTimer(st->win->hwndFrame, st->timerId, USER_TIMER_MINIMUM, nullptr);
-#else
     (void)st;
-#endif
 }
 
 static void Start(StressTest* st, TestFileProvider* fileProvider, int cycles) {
@@ -551,11 +523,7 @@ static void Finished(StressTest* st, bool success) {
         ShowNotification(args);
     }
 
-#if defined(SUMATRA_NG)
     CloseWindow(st->win, st->exitWhenDone, false);
-#else
-    CloseWindow(st->win, st->exitWhenDone && CanCloseWindow(st->win), false);
-#endif
     delete st;
 }
 
@@ -583,14 +551,7 @@ static void Start(StressTest* st, Str path, Str filter, Str ranges, int cycles) 
 }
 
 static void StartStressSearch(MainWindow* win) {
-#if defined(SUMATRA_NG)
     FindTextOnThread(win, TextSearch::Direction::Forward, StrL("!z_yt"), true, true);
-#else
-    if (win->findEdit) {
-        win->findEdit->SetText(StrL("!z_yt"));
-    }
-    FindTextOnThread(win, TextSearch::Direction::Forward, true);
-#endif
 }
 
 static bool OpenFile(StressTest* st, Str fileName) {
@@ -602,14 +563,7 @@ static bool OpenFile(StressTest* st, Str fileName) {
     printf("%d: %s\n", fileNo, fileName.s);
     fflush(stdout);
 
-#if defined(SUMATRA_NG)
     MainWindow* w = LoadDocument(st->win, fileName, LoadPrefs::Save, LoadReuse::CurrentTab);
-#else
-    LoadArgs args(fileName, st->win);
-    args.forceReuse = true;
-    args.noPlaceWindow = true;
-    MainWindow* w = LoadDocument(&args);
-#endif
     if (!w) {
         return false;
     }
@@ -633,11 +587,7 @@ static bool OpenFile(StressTest* st, Str fileName) {
     ctrl->SetDisplayMode(DisplayMode::Continuous);
     ctrl->SetZoomVirtual(kZoomFitPage, nullptr);
     ctrl->GoToFirstPage();
-#if defined(SUMATRA_NG)
     bool tocVisible = st->win->uiState.tocVisible;
-#else
-    bool tocVisible = st->win->uiState.sidebarTopVisible;
-#endif
     if (tocVisible || gSettings->showFavorites) {
         SetSidebarVisibility(st->win, tocVisible, gSettings->showFavorites);
     }
@@ -807,37 +757,13 @@ static bool GoToNextPage(StressTest* st) {
         StartStressSearch(st->win);
     }
 
-#if !defined(SUMATRA_NG)
-    if (1 == rand() % 3) {
-        Rect rect = HwndClientRect(st->win->hwndFrame);
-        int deltaX = (rand() % 40) - 23;
-        rect.dx += deltaX;
-        if (rect.dx < 300) {
-            rect.dx += (abs(deltaX) * 3);
-        }
-        int deltaY = (rand() % 40) - 23;
-        rect.dy += deltaY;
-        if (rect.dy < 300) {
-            rect.dy += (abs(deltaY) * 3);
-        }
-        SendMessageW(st->win->hwndFrame, WM_SIZE, 0, MAKELONG(rect.dx, rect.dy));
-    }
-#endif
     return true;
 }
 
-#if defined(SUMATRA_NG)
 static void OnTimer(StressTest* st) {
-#else
-static void OnTimer(StressTest* st, int timerIdGot) {
-#endif
     DisplayModel* dm;
     bool didRender;
 
-#if !defined(SUMATRA_NG)
-    ReportIf(st->timerId != timerIdGot);
-    KillTimer(st->win->hwndFrame, st->timerId);
-#endif
     if (!st->win->IsDocLoaded()) {
         if (!GoToNextFile(st)) {
             Finished(st, true);
@@ -908,43 +834,7 @@ void GetStressTestInfo(str::Builder& b) {
     }
 }
 
-#if !defined(SUMATRA_NG)
-static Rect GetWorkAreaRect() {
-    RECT rc;
-    SystemParametersInfo(SPI_GETWORKAREA, 0, &rc, 0);
-    return ToRect(rc);
-}
-
-// position windows in halves or quarters of the screen
-static void PositionStressWindows(MainWindow** windows, int n) {
-    Rect wa = GetWorkAreaRect();
-    int halfDx = wa.dx / 2;
-    int halfDy = wa.dy / 2;
-    struct {
-        int x, y, dx, dy;
-    } positions[4];
-
-    if (n == 1) {
-        positions[0] = {wa.x + halfDx, wa.y, wa.dx - halfDx, wa.dy};
-    } else if (n == 2) {
-        positions[0] = {wa.x, wa.y, halfDx, wa.dy};
-        positions[1] = {wa.x + halfDx, wa.y, wa.dx - halfDx, wa.dy};
-    } else {
-        // 3 or 4: quarters
-        positions[0] = {wa.x, wa.y, halfDx, halfDy};
-        positions[1] = {wa.x + halfDx, wa.y, wa.dx - halfDx, halfDy};
-        positions[2] = {wa.x, wa.y + halfDy, halfDx, wa.dy - halfDy};
-        positions[3] = {wa.x + halfDx, wa.y + halfDy, wa.dx - halfDx, wa.dy - halfDy};
-    }
-
-    for (int j = 0; j < n; j++) {
-        auto& p = positions[j];
-        MoveWindow(windows[j]->hwndFrame, p.x, p.y, p.dx, p.dy, TRUE);
-    }
-}
-#else
 static void PositionStressWindows(MainWindow**, int) {}
-#endif
 
 void StartStressTest(Flags* i, MainWindow* win) {
     gIsStressTesting = true;
@@ -952,17 +842,9 @@ void StartStressTest(Flags* i, MainWindow* win) {
     gSettings->chmUI.useFixedPageUI = true;
     // TODO: make stress test work with tabs?
     gSettings->useTabs = false;
-#if !defined(SUMATRA_NG) || OS_WIN
-    SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED);
-#endif
     srand((unsigned int)time(nullptr));
 
-#if !defined(SUMATRA_NG) || OS_WIN
-    FILE* nul = nullptr;
-    freopen_s(&nul, "NUL", "w", stderr);
-#else
     FILE* nul = freopen("/dev/null", "w", stderr);
-#endif
     (void)nul;
 
     int n = i->stressParallelCount;
@@ -1012,17 +894,11 @@ void StartStressTest(Flags* i, MainWindow* win) {
     }
 }
 
-#if defined(SUMATRA_NG)
 void OnStressTestTimer(MainWindow* win) {
     if (win->stressTest) {
         OnTimer(win->stressTest);
     }
 }
-#else
-void OnStressTestTimer(MainWindow* win, int timerId) {
-    OnTimer(win->stressTest, timerId);
-}
-#endif
 
 void FinishStressTest(MainWindow* win) {
     delete win->stressTest;

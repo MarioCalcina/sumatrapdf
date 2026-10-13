@@ -11,11 +11,6 @@
 // After this header, `Str` / `Vec` / `Rect` / `Point` / `Size` are ours and
 // gpui's are `gp::Str` &c. Never `using namespace gpui` in such a file.
 
-#ifdef _WIN32
-#define NOMINMAX
-#include <winsock2.h>
-#endif
-
 #include "gpui.h"
 
 #undef StrL
@@ -95,11 +90,7 @@ inline Rect FromGpui(gp::Bounds b) {
 // the modifier of a key combo the app handles itself, which orig spells Ctrl:
 // Command on macOS (⌘C copies, ⌘W closes), so Cmd + key is never a plain key
 inline bool CtrlOrCmd(const gp::KeyEvent* ev) {
-#if OS_DARWIN
     return ev->ctrl || ev->platform;
-#else
-    return ev->ctrl;
-#endif
 }
 
 // ng: gpui's Listen() needs the listener's owner entity type, so it can't be

@@ -321,21 +321,6 @@ static gp::El* BuildTabDragImage(MainWindow* win, gp::Ctx* cx, int tabDx) {
 
 // orig's MainWindowTabMigration: the window the tab was released over
 static MainWindow* MainWindowUnderCursor() {
-#if OS_WIN
-    POINT pt{};
-    if (!GetCursorPos(&pt)) {
-        return nullptr;
-    }
-    HWND hwnd = WindowFromPoint(pt);
-    if (hwnd) {
-        hwnd = GetAncestor(hwnd, GA_ROOT);
-    }
-    for (MainWindow* w : gWindows) {
-        if (hwnd && AppShellNativeHwnd(w) == hwnd) {
-            return w;
-        }
-    }
-#endif
     // ng: gpui does not say which window is under the pointer
     return nullptr;
 }
@@ -504,13 +489,7 @@ static uint32_t ActMenuCmd() {
 
 // "Underline access keys when available" (off until Alt, by default)
 static bool MenuCuesOn() {
-#if OS_WIN
-    BOOL on = FALSE;
-    SystemParametersInfoW(SPI_GETKEYBOARDCUES, 0, &on, 0);
-    return on != FALSE;
-#else
     return false;
-#endif
 }
 
 static void SetMenuCue(gp::Ctx* cx, gpc::PopupMenu* menu, gp::Str label, const MenuAccelText& at, bool disabled) {

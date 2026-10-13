@@ -227,19 +227,7 @@ void OverlayScrollbarOnMouse(OverlayScrollbar* sb, bool overOwner, bool overScro
 
 // orig's SPI_GETKEYBOARDDELAY / SPI_GETKEYBOARDSPEED timing for the repeat
 static int RepeatDelayMs(bool initial) {
-#if OS_WIN
-    if (initial) {
-        UINT delayMs = 0;
-        SystemParametersInfoW(SPI_GETKEYBOARDDELAY, 0, &delayMs, 0);
-        return 250 + ((int)delayMs * 250); // 0-3 maps to 250-1000ms
-    }
-    UINT repeatMs = 0;
-    SystemParametersInfoW(SPI_GETKEYBOARDSPEED, 0, &repeatMs, 0);
-    // SPI_GETKEYBOARDSPEED returns 0-31, map to ~33-500ms (same as OS key repeat)
-    return 400 - ((int)repeatMs * 12);
-#else
     return initial ? 500 : 28;
-#endif
 }
 
 static void StartRepeat(OverlayScrollbar* sb, ScrollMsg code) {

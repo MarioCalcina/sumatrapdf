@@ -4,7 +4,6 @@
 #include "base/Base.h"
 #include "base/File.h"
 #include "base/Pixmap.h"
-#include "base/ScopedWin.h"
 #include "base/HtmlTags.h"
 #include "base/CssParser.h"
 

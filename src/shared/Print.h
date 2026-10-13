@@ -15,39 +15,6 @@ enum class PaperFormat {
 };
 PaperFormat GetPaperFormatFromSizeApprox(SizeF size);
 
-#if OS_WIN
-struct Printer {
-    Str name;
-    Str output;
-    Str docName;
-    DEVMODEW* devMode = nullptr;
-    PRINTER_INFO_2* info = nullptr;
-
-    // number of paper sizes supported by the printer
-    int nPaperSizes = 0;
-    // papers[i] is DMPAPER_LETTER etc.
-    WORD* papers = nullptr;      // DC_PAPERS
-    StrVec paperNames;           // DC_PAPERNAMES
-    POINT* paperSizes = nullptr; // DC_PAPERSIZE
-
-    int nBins = 0;
-    WORD* bins = nullptr; // DC_BINS
-    StrVec binNames;      // DC_BINNAMES
-
-    bool isColor = false;    // DC_COLORDEVICE
-    bool isDuplex = false;   // DC_DUPLEX
-    bool canStaple = false;  // DC_STAPLE
-    bool canCallate = false; // DC_COLLATE
-    int orientation = 0;     // DC_ORIENTATION
-
-    Printer() = default;
-    ~Printer();
-    void SetDevMode(DEVMODEW*);
-};
-
-Printer* NewPrinter(Str name);
-#endif
-
 void GetPrintersInfo(str::Builder& out);
 
 class EngineBase;
@@ -61,14 +28,6 @@ struct PrintPageLayout {
     Rect stretch;
     bool isStretch = false;
 };
-
-#if OS_WIN
-// where a page lands on the paper: shared by the GDI and the WinRT print paths
-// so both place the content identically
-PrintPageLayout CalculatePrintPageLayout(EngineBase& engine, int pageNo, const Print_Advanced_Data& advanced,
-                                         Size paperSize, Rect printable, float dpiX, float dpiY, bool printPortrait,
-                                         Str printerName);
-#endif
 
 // result of command-line printing; the numeric values double as the process
 // exit code so an automated caller can tell why printing failed (issue #3478)

@@ -430,9 +430,7 @@ static void ReadAloudOnEngineCrash() {
     WindowTab* tab = GetReadAloudSourceTab();
     ReadAloudPlaybackStop();
     ReadAloudSaveVoicePref({});
-#if defined(SUMATRA_NG)
     ReadAloudFreeVoiceCache();
-#endif
     TtsSetVoiceById(StrL(""));
     if (tab && tab->win) {
         ReadAloudShowNotif(tab, Tr("Read aloud voice crashed and was turned off"));
@@ -1192,24 +1190,7 @@ TempStr TtsLangIdToLocaleNameTemp(Str lang) {
         return str::DupTemp(lang);
     }
 
-#if OS_WIN
-    char* langZ = CStrTemp(lang);
-    char* end = nullptr;
-    unsigned long langId = strtoul(langZ, &end, 16);
-    if (end == langZ || langId == 0) {
-        return str::DupTemp(lang);
-    }
-
-    WCHAR localeName[LOCALE_NAME_MAX_LENGTH] = {};
-    int n = LCIDToLocaleName((LCID)langId, localeName, dimof(localeName), 0);
-    if (n <= 0) {
-        return str::DupTemp(lang);
-    }
-
-    return ToUtf8Temp(localeName);
-#else
     return str::DupTemp(lang);
-#endif
 }
 
 void HandleReadAloudMenuSelection(MainWindow* win, int selected) {

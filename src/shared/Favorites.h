@@ -68,16 +68,9 @@ void AddFavoriteForCurrentPage(MainWindow* win);
 // favorite be matched by (chapter, page) instead of the stale flat pageNo
 void DelFavorite(Str filePath, int pageNo, DocController* ctrl = nullptr);
 void DelFavorite(FileState* fs, Favorite* fav);
-#if OS_WIN
-void CreateFavorites(MainWindow* win);
-#endif
 
 // a menu being built: HMENU in orig, gpui's model in ng
-#if defined(SUMATRA_NG)
 using MenuRef = MenuModel*;
-#else
-using MenuRef = HMENU;
-#endif
 void RebuildFavMenu(MainWindow* win, MenuRef menu);
 // implemented by each app
 void MenuAppendString(MenuRef m, Str title, int cmdId);

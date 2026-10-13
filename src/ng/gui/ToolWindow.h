@@ -184,15 +184,6 @@ float ToolWindowSetUiFontPx(gpui::Ctx* cx, float px);
 // too, and they are closed before it is
 void ToolWindowsInvalidateFor(MainWindow* win);
 void ToolWindowsCloseFor(MainWindow* win);
-#if OS_WIN
-// NativeWindow.cpp claims gpui windows by class name; these are not frames
-bool ToolWindowOwnsHwnd(HWND hwnd);
-HWND ToolWindowHwnd(ToolWindow* tw);
-// the SumatraWgDefaultWinClass window tests post to, or the tool window
-HWND ToolWindowOrigHwnd(ToolWindow* tw);
-// the main window of the tool window with this handle
-MainWindow* ToolWindowOwnerFromHwnd(HWND hwnd);
-#endif
 
 // -dbg-control's TestToolWindow: list | on | off | close <name> |
 // input <name> <kind> a b c d (see AppShellTestInput) | state <name> |

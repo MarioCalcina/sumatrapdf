@@ -9,15 +9,12 @@
 #include "base/Base.h"
 #include "base/File.h"
 #include "base/Pixmap.h"
-#include "gui/WasmBridge.h"
 #include "gui/AppShell.h"
 
-#if !OS_WASM
 #include <errno.h>
 #include <spawn.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#endif
 
 #include "gui/UIModels.h"
 
@@ -44,9 +41,7 @@
 
 #include "SumatraLog.h"
 
-#if !OS_WASM
 extern char** environ;
-#endif
 
 // the resolution a page is rasterized at before it goes into the PDF
 constexpr int kPrintToPdfDpi = 150;
@@ -59,11 +54,6 @@ struct PosixPageRange {
 
 // appends stdout and stderr while waiting for a short-lived command
 static bool AppendCommandOutput(str::Builder& out, char* const argv[]) {
-#if OS_WASM
-    (void)out;
-    (void)argv;
-    return false;
-#else
     int fds[2]{};
     if (pipe(fds) != 0) {
         return false;
@@ -100,20 +90,15 @@ static bool AppendCommandOutput(str::Builder& out, char* const argv[]) {
         err = waitpid(pid, &status, 0) < 0 ? errno : 0;
     } while (err == EINTR);
     return err == 0 && WIFEXITED(status) && WEXITSTATUS(status) == 0;
-#endif
 }
 
 void GetPrintersInfo(str::Builder& out) {
-#if OS_WASM
-    out.Append(StrL("No printers: this build prints to a PDF file.\n"));
-#else
     char* argv[] = {(char*)"lpstat", (char*)"-d", (char*)"-p", nullptr};
     if (!AppendCommandOutput(out, argv) && len(out) == 0) {
         out.Append(StrL("Unable to run lpstat.\n"));
     } else if (len(out) == 0) {
         out.Append(StrL("No printers found.\n"));
     }
-#endif
 }
 
 // bounds all selection fragments on a page, as the Windows print path does
@@ -327,12 +312,6 @@ static void AppendLpSettings(StrVec& args, Str settings) {
 
 // submits a generated PDF synchronously so the temporary file can be removed
 static bool SendPdfToPrinter(Str path, Str printerName, Str settings) {
-#if OS_WASM
-    (void)path;
-    (void)printerName;
-    (void)settings;
-    return false;
-#else
     bool useDefault = str::Eq(printerName, Str(kDefaultPrinterToken));
     StrVec args;
     args.Append(StrL("lp"));
@@ -363,7 +342,6 @@ static bool SendPdfToPrinter(Str path, Str printerName, Str settings) {
         return false;
     }
     return WIFEXITED(status) && WEXITSTATUS(status) == 0;
-#endif
 }
 
 PrintResult PrintFile2(EngineBase* engine, Str printerName, bool displayErrors, Str settings) {
@@ -382,7 +360,7 @@ PrintResult PrintFile2(EngineBase* engine, Str printerName, bool displayErrors, 
 #endif
     (void)displayErrors;
     TempStr destPath = OutputPathFromSettingsTemp(settings);
-    bool sendToPrinter = !OS_WASM && len(destPath) == 0 && len(printerName) > 0;
+    bool sendToPrinter = len(destPath) == 0 && len(printerName) > 0;
     if (sendToPrinter) {
         destPath = GetTempFilePathTemp(StrL("sumatra-print-"));
     } else if (len(destPath) == 0) {
@@ -489,17 +467,6 @@ void PrintCurrentFile(MainWindow* win, bool waitForCompletion, bool selectionByD
         delete selection;
         return;
     }
-#if OS_WASM
-    TempStr printPath = GetTempFilePathTemp(StrL("sumatra-print-"));
-    bool ok = PrintEngineToPdf(engine, printPath, selection, rotation) && WasmPrintPdf(printPath);
-    file::Delete(printPath);
-    delete selection;
-    if (!ok) {
-        MessageBoxWarning(win, Tr("Couldn't initialize printer"), Tr("Printing problem."));
-    }
-    return;
-#endif
-#if OS_DARWIN
     // a PDF as saved prints as vectors at the printer's resolution; a
     // selection, a rotation or unsaved annotations need the rendered pages
     TempStr jobTitle = path::GetBaseNameTemp(engine->FilePath());
@@ -518,7 +485,6 @@ void PrintCurrentFile(MainWindow* win, bool waitForCompletion, bool selectionByD
         MessageBoxWarning(win, Tr("Couldn't initialize printer"), Tr("Printing problem."));
     }
     return;
-#endif
     engine->AddRef();
     auto* ctx = new PrintToPdfCtx{win, engine, selection, rotation};
     auto* args = new SavePathArgs();

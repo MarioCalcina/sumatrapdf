@@ -1,7 +1,6 @@
 /* Copyright 2022 the SumatraPDF project authors (see AUTHORS file).
    License: GPLv3 */
 
-#if defined(SUMATRA_NG)
 // ng: orig's Selection.cpp. The model (SelectionOnPage, the text and
 // rectangular selection state machine, select-all, copy) is orig's; what was
 // win32 is gpui here: Gfx -> gpui::PaintCtx, SetCapture / KillTimer ->
@@ -10,74 +9,36 @@
 // docs/port-progress.md.
 
 #include "gui/GpuiBridge.h"
-#else
-#include "base/Base.h"
-#endif
 #include "base/Pixmap.h"
-#if defined(SUMATRA_NG)
 
-#else
-#include <uiautomationcore.h>
-#endif
 #include "gui/Dpi.h"
-#if !defined(SUMATRA_NG)
-#include "base/AutoWin.h"
-#include "base/Win.h"
-
-#endif
 #include "gui/UIModels.h"
-#if !defined(SUMATRA_NG)
-#include "gui/Layout.h"
-#include "gui/win/WinGui.h"
-#include "gui/Gfx.h"
-#endif
 
 #include "Settings.h"
-#if defined(SUMATRA_NG)
 #include "AppSettings.h"
 #include "DisplayMode.h"
-#endif
 #include "DocController.h"
 #include "EngineBase.h"
-#if defined(SUMATRA_NG)
 #include "base/GuessFileType.h"
 #include "EngineAll.h"
-#else
-#include "AppSettings.h"
-#endif
 #include "ChmModel.h"
 #include "MarkdownModel.h"
 #include "DisplayModel.h"
 #include "TextSelection.h"
 #include "Notifications.h"
 #include "SumatraConfig.h"
-#if defined(SUMATRA_NG)
 #include "Commands.h"
 #include "Translations.h"
-#endif
 #include "SumatraPDF.h"
-#if !defined(SUMATRA_NG)
-#include "Canvas.h"
-#endif
 #include "MainWindow.h"
 #include "WindowTab.h"
 #include "SelectionToolbar.h"
-#if defined(SUMATRA_NG)
 #include "gui/AppShell.h"
 #include "gui/DocCanvas.h"
 #include "SelectTextKeyboard.h"
-#else
-#include "SelectTextKeyboard.h"
-#include "Commands.h"
-#include "Toolbar.h"
-#include "Translations.h"
-#include "uia/Provider.h"
-#endif
 #include "Selection.h"
-#if defined(SUMATRA_NG)
 
 #include "SumatraLog.h"
-#endif
 
 SelectionOnPage::SelectionOnPage(int pageNo, const RectF* const rect, const QuadF* const quad) {
     this->pageNo = pageNo;
@@ -249,15 +210,10 @@ Rect GetRectangularSelectionScreenRect(MainWindow* win) {
     return SelectionBounds(win->AsFixed(), win->CurrentTab()->selectionOnPage);
 }
 
-#if defined(SUMATRA_NG)
 // Bounding box of the current selection.
 // ng: orig returns screen coordinates (HwndClientToScreen on the canvas);
 // gpui does not report a window's screen position, so these are canvas
 // coordinates.
-#else
-// Bounding box of the current selection in screen pixels, so a helper can sit
-// next to it (${selectionPosition} in SelectionHandlers, discussion #6015).
-#endif
 bool GetSelectionScreenRect(WindowTab* tab, Rect& out) {
     out = {};
     if (!tab || !tab->win || !tab->selectionOnPage) {
@@ -265,23 +221,14 @@ bool GetSelectionScreenRect(WindowTab* tab, Rect& out) {
     }
     MainWindow* win = tab->win;
     DisplayModel* dm = win->AsFixed();
-#if defined(SUMATRA_NG)
     if (!dm || !win->showSelection) {
-#else
-    if (!dm || !win->hwndCanvas || !win->showSelection) {
-#endif
         return false;
     }
     Rect bounds = SelectionBounds(dm, tab->selectionOnPage);
     if (bounds.IsEmpty()) {
         return false;
     }
-#if defined(SUMATRA_NG)
     out = bounds;
-#else
-    Point p = HwndClientToScreen(win->hwndCanvas, bounds.TL());
-    out = Rect(p.x, p.y, bounds.dx, bounds.dy);
-#endif
     return true;
 }
 
@@ -312,24 +259,12 @@ static void RepaintSelection(MainWindow* win) {
 }
 
 static void StartSelectionCapture(MainWindow* win) {
-#if defined(SUMATRA_NG)
     CanvasSetCapture(win, true);
-#else
-    SetCapture(win->hwndCanvas);
-    SetTimer(win->hwndCanvas, kSelectSmoothScrollTimerID, kSelectSmoothScrollDelayInMs, nullptr);
-#endif
     RepaintSelection(win);
 }
 
 static void StopSelectionCapture(MainWindow* win) {
-#if defined(SUMATRA_NG)
     CanvasSetCapture(win, false);
-#else
-    if (GetCapture() == win->hwndCanvas) {
-        ReleaseCapture();
-    }
-    KillTimer(win->hwndCanvas, kSelectSmoothScrollTimerID);
-#endif
 }
 
 // Apply edge/corner/move drag to an original normalized rect (screen coords).
@@ -434,7 +369,6 @@ SelectionDragEdge HitTestRectangularSelection(MainWindow* win, int mx, int my) {
     return SelectionDragEdge::None;
 }
 
-#if defined(SUMATRA_NG)
 using SelectionCursorId = int;
 static const SelectionCursorId kSelectionCursors[] = {
     (int)gp::CursorKind::Arrow,
@@ -448,13 +382,6 @@ static const SelectionCursorId kSelectionCursors[] = {
     (int)gp::CursorKind::ResizeUpLeftDownRight,
     (int)gp::CursorKind::ClosedHand,
 };
-#else
-using SelectionCursorId = LPWSTR;
-static const SelectionCursorId kSelectionCursors[] = {
-    IDC_ARROW,    IDC_SIZEWE,   IDC_SIZEWE,   IDC_SIZENS,   IDC_SIZENS,
-    IDC_SIZENWSE, IDC_SIZENESW, IDC_SIZENESW, IDC_SIZENWSE, IDC_SIZEALL,
-};
-#endif
 static_assert(dimof(kSelectionCursors) == (int)SelectionDragEdge::Move + 1);
 
 SelectionCursorId CursorIdForSelectionEdge(SelectionDragEdge edge) {
@@ -498,13 +425,8 @@ void UpdateRectangularSelectionEdit(MainWindow* win, int x, int y) {
     win->selectionMeasure = win->AsFixed() ? win->AsFixed()->CvtFromScreen(win->selectionRect).Size() : SizeF();
 }
 
-#if defined(SUMATRA_NG)
 void PaintTransparentRectangles(gp::PaintCtx* ctx, Rect screenRc, Vec<Rect>& rects, Color selectionColor, u8 alpha,
                                 int pad, bool drawBorder) {
-#else
-void PaintTransparentRectangles(Gfx* gfx, Rect screenRc, Vec<Rect>& rects, Color selectionColor, u8 alpha, int pad,
-                                bool drawBorder) {
-#endif
     Vec<Rect> paintedRects;
     // A bordered selection is the 3.6.1 look: font-height boxes as-is and a
     // 1px outline. Find highlights stay borderless and pad the box.
@@ -521,11 +443,7 @@ void PaintTransparentRectangles(Gfx* gfx, Rect screenRc, Vec<Rect>& rects, Color
         }
     }
     int outlineWidth = drawBorder ? 1 : 0;
-#if defined(SUMATRA_NG)
     CanvasFillRects(ctx, paintedRects.els, len(paintedRects), selectionColor, alpha, outlineWidth);
-#else
-    gfx->FillRects(paintedRects.els, len(paintedRects), selectionColor, alpha, outlineWidth);
-#endif
 }
 
 static Rect QuadScreenBounds(const Point* pts) {
@@ -539,11 +457,7 @@ static Rect QuadScreenBounds(const Point* pts) {
     return Rect::FromXY(x0, y0, x1, y1);
 }
 
-#if defined(SUMATRA_NG)
 static void PaintTransparentQuads(gp::PaintCtx* ctx, Rect screenRc, Vec<Point>& pts, Color selectionColor, u8 alpha,
-#else
-static void PaintTransparentQuads(Gfx* gfx, Rect screenRc, Vec<Point>& pts, Color selectionColor, u8 alpha,
-#endif
                                   bool drawBorder) {
     int nQuads = len(pts) / 4;
     if (nQuads <= 0) {
@@ -561,88 +475,10 @@ static void PaintTransparentQuads(Gfx* gfx, Rect screenRc, Vec<Point>& pts, Colo
         }
     }
     int outlineWidth = drawBorder ? 1 : 0;
-#if defined(SUMATRA_NG)
     CanvasFillQuads(ctx, painted.els, len(painted) / 4, selectionColor, alpha, outlineWidth);
-#else
-    gfx->FillQuads(painted.els, len(painted) / 4, selectionColor, alpha, outlineWidth);
-#endif
 }
 
-#if defined(SUMATRA_NG)
 void PaintSelection(MainWindow* win, gp::PaintCtx* ctx) {
-#else
-// Touch selection handles: a dot under each end of the selection, big enough
-// to grab with a fingertip. kTouchSelHandleDip is the dot's diameter; the
-// touchable area around it is padded so a slightly-off tap still lands.
-constexpr int kTouchSelHandleDip = 14;
-constexpr int kTouchSelHandleHitPadDip = 10;
-
-bool GetTouchSelHandleRects(MainWindow* win, Rect& startOut, Rect& endOut) {
-    DisplayModel* dm = win->AsFixed();
-    WindowTab* tab = win->CurrentTab();
-    if (!dm || !tab || !tab->selectionOnPage) {
-        return false;
-    }
-    Vec<SelectionOnPage>& sel = *tab->selectionOnPage;
-    int n = len(sel);
-    if (n == 0) {
-        return false;
-    }
-    // the selection runs first rect -> last rect, so the handles belong under
-    // the bottom-left of the first and the bottom-right of the last
-    Rect first = sel[0].GetRect(dm);
-    Rect last = sel[n - 1].GetRect(dm);
-    int dxy = DpiScale(kTouchSelHandleDip);
-    int r = dxy / 2;
-    startOut = Rect(first.x - r, first.y + first.dy, dxy, dxy);
-    endOut = Rect(last.x + last.dx - r, last.y + last.dy, dxy, dxy);
-    return true;
-}
-
-TouchSelHandle HitTestTouchSelHandle(MainWindow* win, int x, int y) {
-    if (!win->touchSelHandles) {
-        return TouchSelHandle::None;
-    }
-    Rect start, end;
-    if (!GetTouchSelHandleRects(win, start, end)) {
-        return TouchSelHandle::None;
-    }
-    int pad = DpiScale(kTouchSelHandleHitPadDip);
-    start.Inflate(pad, pad);
-    end.Inflate(pad, pad);
-    Point pt(x, y);
-    // the end handle wins a tie: it's the one a reader adjusts most
-    if (end.Contains(pt)) {
-        return TouchSelHandle::End;
-    }
-    if (start.Contains(pt)) {
-        return TouchSelHandle::Start;
-    }
-    return TouchSelHandle::None;
-}
-
-void HideTouchSelHandles(MainWindow* win) {
-    if (!win->touchSelHandles) {
-        return;
-    }
-    win->touchSelHandles = false;
-    win->touchSelDragging = TouchSelHandle::None;
-    win->RedrawCanvas();
-}
-
-static void PaintTouchSelHandles(MainWindow* win, Gfx* gfx) {
-    Rect start, end;
-    if (!win->touchSelHandles || !GetTouchSelHandleRects(win, start, end)) {
-        return;
-    }
-    ParsedColor* parsedCol = GetPrefsColor(gSettings->fixedPageUI.selectionColor);
-    Color col = parsedCol->col;
-    gfx->FillEllipse(start, col);
-    gfx->FillEllipse(end, col);
-}
-
-void PaintSelection(MainWindow* win, Gfx* gfx) {
-#endif
     ReportIf(!win->AsFixed());
 
     Vec<Rect> rects;
@@ -710,26 +546,13 @@ void PaintSelection(MainWindow* win, Gfx* gfx) {
     if (alpha == 0) {
         alpha = kSelectionDefaultAlpha;
     }
-#if defined(SUMATRA_NG)
     Rect canvas(Point(), win->AsFixed()->GetViewPort().Size());
-#endif
     if (len(quadPts) > 0) {
-#if defined(SUMATRA_NG)
         PaintTransparentQuads(ctx, canvas, quadPts, parsedCol->col, alpha, /*drawBorder*/ true);
-#else
-        PaintTransparentQuads(gfx, win->canvasRc, quadPts, parsedCol->col, alpha, /*drawBorder*/ true);
-#endif
     }
     if (len(rects) > 0) {
-#if defined(SUMATRA_NG)
         PaintTransparentRectangles(ctx, canvas, rects, parsedCol->col, alpha, 1, /*drawBorder*/ true);
-#else
-        PaintTransparentRectangles(gfx, win->canvasRc, rects, parsedCol->col, alpha, 1, /*drawBorder*/ true);
-#endif
     }
-#if !defined(SUMATRA_NG)
-    PaintTouchSelHandles(win, gfx);
-#endif
 }
 
 void UpdateTextSelection(MainWindow* win, bool select) {
@@ -737,8 +560,6 @@ void UpdateTextSelection(MainWindow* win, bool select) {
         return;
     }
 
-#if !defined(SUMATRA_NG)
-#endif
     DisplayModel* dm = win->AsFixed();
     if (select) {
         int pageNo = dm->GetPageNoByPoint(win->selectionRect.BR());
@@ -756,12 +577,6 @@ void UpdateTextSelection(MainWindow* win, bool select) {
     DeleteOldSelectionInfo(win);
     win->CurrentTab()->selectionOnPage = SelectionOnPage::FromTextSelect(&dm->textSelection->result);
     win->showSelection = win->CurrentTab()->selectionOnPage != nullptr;
-#if !defined(SUMATRA_NG)
-
-    if (win->uiaProvider) {
-        win->uiaProvider->OnSelectionChanged();
-    }
-#endif
 }
 
 // isTextSelectionOut is set to true if this is text-only selection (as opposed to
@@ -803,12 +618,10 @@ TempStr GetSelectedTextTemp(WindowTab* tab, Str lineSep, bool& isTextOnlySelecti
     return JoinTemp(&selections, lineSep);
 }
 
-#if defined(SUMATRA_NG)
 // orig's RenderSelectionsAsRenderedBitmap: each selection rectangle rendered
 // out of the engine and stacked vertically into one image (Google Lens).
 // ng: orig round-trips every piece through a RenderedBitmap / DIB; here the
 // engine's Pixmap is normalized to 32bpp and used directly.
-#endif
 Pixmap* RenderSelectionsAsPixmap(DisplayModel* dm, const Vec<SelectionOnPage>& selections) {
     if (!dm || len(selections) == 0) {
         return nullptr;
@@ -876,123 +689,31 @@ Pixmap* RenderSelectionsAsPixmap(DisplayModel* dm, const Vec<SelectionOnPage>& s
     return combined;
 }
 
-#if defined(SUMATRA_NG)
 // ng: orig also puts the first selection rectangle on the clipboard as a
 // bitmap (CF_BITMAP); gpui's clipboard is text only, so only the text goes.
 void CopySelectionToClipboard(MainWindow* win) {
-#else
-RenderedBitmap* RenderSelectionsAsRenderedBitmap(DisplayModel* dm, const Vec<SelectionOnPage>& selections) {
-    return RenderedBitmapFromPixmap(RenderSelectionsAsPixmap(dm, selections));
-}
-
-static bool CopySelectionImageToOpenClipboard(WindowTab* tab, bool appendOnly) {
-    DisplayModel* dm = tab->AsFixed();
-    if (!dm || !tab->selectionOnPage || len(*tab->selectionOnPage) == 0) {
-        return false;
-    }
-    SelectionOnPage* selOnPage = &(*tab->selectionOnPage)[0];
-    if (!dm->ValidPageNo(selOnPage->pageNo)) {
-        return false;
-    }
-    float zoom = dm->GetZoomReal(selOnPage->pageNo);
-    int rotation = dm->PageRotation(selOnPage->pageNo);
-    RenderPageArgs args(selOnPage->pageNo, zoom, rotation, &selOnPage->rect, RenderTarget::Export);
-    Pixmap* bmp = dm->GetEngine()->RenderPage(args);
-    if (!bmp) {
-        logf("CopySelectionImageToOpenClipboard: RenderPage(page %d) failed\n", selOnPage->pageNo);
-        return false;
-    }
-    // EngineImages (image files, cbz/cbr) renders sub-rects through GDI+ and
-    // returns a malloc-backed Pixmap with no DIB section, so bmp->hbmp is null.
-    // RenderedBitmapFromPixmap() makes one when needed (and consumes bmp).
-    RenderedBitmap* rbmp = RenderedBitmapFromPixmap(bmp);
-    if (!rbmp) {
-        logf("CopySelectionImageToOpenClipboard: RenderedBitmapFromPixmap() failed\n");
-        return false;
-    }
-    bool ok = CopyImageToClipboard(rbmp->GetBitmap(), appendOnly);
-    if (!ok) {
-        logf("CopySelectionImageToOpenClipboard: CopyImageToClipboard() failed\n");
-    }
-    delete rbmp;
-    return ok;
-}
-
-void CopySelectionAsImageToClipboard(MainWindow* win) {
-#endif
     WindowTab* tab = win->CurrentTab();
-#if defined(SUMATRA_NG)
     if (!tab || !tab->selectionOnPage) {
-#else
-    if (!tab || !HasPermission(Perm::CopySelection)) {
-#endif
         return;
     }
-#if !defined(SUMATRA_NG)
-    if (!OpenClipboardForUpdate()) {
-        return;
-    }
-    AutoCall closeClipboard(CloseClipboardAfterUpdate);
-    CopySelectionImageToOpenClipboard(tab, false);
-}
-
-void CopySelectionToClipboard(MainWindow* win) {
-    WindowTab* tab = win->CurrentTab();
-    ReportIf(len(*tab->selectionOnPage) == 0 && win->mouseAction != MouseAction::SelectingText);
-
-    if (!OpenClipboardForUpdate()) {
-        return;
-    }
-    AutoCall closeClipboard(CloseClipboardAfterUpdate);
-#endif
 
     DisplayModel* dm = win->AsFixed();
     TempStr selText;
     bool isTextOnlySelectionOut = false;
     if (!gDisableDocumentRestrictions && (dm && !dm->GetEngine()->allowsCopyingText)) {
-#if defined(SUMATRA_NG)
         ShowTemporaryNotification(win, Tr("Copying text was denied (copying as image only)"), kNotifDefaultTimeOut);
-#else
-        NotificationCreateArgs args;
-        args.hwndParent = win->hwndCanvas;
-        args.msg = Tr("Copying text was denied (copying as image only)");
-        ShowNotification(args);
-    } else {
-        selText = GetSelectedTextTemp(tab, StrL("\r\n"), isTextOnlySelectionOut);
-    }
-
-    if (len(selText) > 0) {
-        AppendTextToClipboard(selText);
-    }
-
-    if (isTextOnlySelectionOut) {
-        // don't also copy the first line of a text selection as an image
-#endif
         return;
     }
-#if defined(SUMATRA_NG)
     selText = GetSelectedTextTemp(tab, StrL("\r\n"), isTextOnlySelectionOut);
     logf("CopySelectionToClipboard: %d bytes, text-only selection: %d\n", len(selText), isTextOnlySelectionOut ? 1 : 0);
     if (len(selText) == 0) {
         return;
     }
     CanvasSetClipboardText(win, selText);
-#else
-
-    CopySelectionImageToOpenClipboard(tab, true);
-#endif
 }
 
 void OnSelectAll(MainWindow* win, bool textOnly) {
     if (!HasPermission(Perm::CopySelection)) {
-#if !defined(SUMATRA_NG)
-        return;
-    }
-
-    if ((win->findEdit && win->findEdit->IsFocused()) || (win->pageEdit && win->pageEdit->IsFocused()) ||
-        (win->chapterEdit && win->chapterEdit->IsFocused())) {
-        EditSelectAll(GetFocus());
-#endif
         return;
     }
 
@@ -1026,9 +747,7 @@ void OnSelectAll(MainWindow* win, bool textOnly) {
     }
 
     win->showSelection = win->CurrentTab()->selectionOnPage != nullptr;
-#if defined(SUMATRA_NG)
     ShowSelectionToolbar(win, SelToolbarShow::Settled);
-#endif
     RepaintSelection(win);
 }
 
@@ -1113,9 +832,6 @@ void OnSelectionEdgeAutoscroll(MainWindow* win, int x, int y) {
         dy = kSelectAutoscrollStepLength;
     }
 
-#if !defined(SUMATRA_NG)
-    ReportIf(NeedsSelectionEdgeAutoscroll(win, x, y) != (dx != 0 || dy != 0));
-#endif
     if (dx != 0 && MouseAction::SelectingText == win->mouseAction) {
         dx = LimitTextSelectionAutoscrollDx(win, dx);
     }
@@ -1149,11 +865,7 @@ void OnSelectionEdgeAutoscroll(MainWindow* win, int x, int y) {
     }
 }
 
-#if defined(SUMATRA_NG)
 void OnSelectionStart(MainWindow* win, int x, int y, bool forceRect) {
-#else
-void OnSelectionStart(MainWindow* win, int x, int y, WPARAM /*key*/, bool forceRect) {
-#endif
     ReportIf(!win->AsFixed());
     // selecting with the mouse takes over: leave keyboard selection mode so its
     // caret and help bar don't linger over a mouse selection
@@ -1166,13 +878,8 @@ void OnSelectionStart(MainWindow* win, int x, int y, WPARAM /*key*/, bool forceR
     win->selectingByWord = false;
     win->mouseAction = MouseAction::Selecting;
 
-#if defined(SUMATRA_NG)
     bool isShift = CanvasShiftPressed();
     bool isCtrl = CanvasCtrlPressed();
-#else
-    bool isShift = IsShiftPressed();
-    bool isCtrl = IsCtrlPressed();
-#endif
 
     // Ctrl+drag or forceRect starts a rectangular selection.
     if (!forceRect && (!isCtrl || isShift)) {
@@ -1232,7 +939,6 @@ void OnSelectionStop(MainWindow* win, int x, int y, bool aborted) {
         win->selectionDragEdge = SelectionDragEdge::None;
     }
     win->selectingByWord = false;
-#if defined(SUMATRA_NG)
     {
         DisplayModel* dmLog = win->AsFixed();
         WindowTab* tabLog = win->CurrentTab();
@@ -1241,12 +947,6 @@ void OnSelectionStop(MainWindow* win, int x, int y, bool aborted) {
              dmLog ? len(dmLog->textSelection->result) : 0, win->selectionRect.x, win->selectionRect.y,
              win->selectionRect.dx, win->selectionRect.dy);
     }
-#else
-    // refresh selection-dependent toolbar buttons once, when the selection is
-    // finalized, rather than on every repaint while dragging (UpdateTextSelection
-    // runs from PaintSelection on each frame, which flickered the toolbar)
-    ToolbarUpdateStateForWindow(win, false);
-#endif
     win->RedrawCanvas();
 
     // show the floating selection toolbar for a finished text selection

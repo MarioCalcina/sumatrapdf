@@ -138,9 +138,6 @@ struct Flags {
     ~Flags() = default;
 };
 
-#if OS_WIN
-void ParseFlags(Arena* a, WStr cmdLine, Flags&, Str toolNames = {});
-#endif
 void ParseFlagsArgv(Arena* a, int argc, char** argv, Flags&, Str toolNames = {});
 void ShowPrintersDialog(bool consoleOnly = false);
 

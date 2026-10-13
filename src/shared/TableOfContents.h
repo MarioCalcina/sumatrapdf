@@ -35,14 +35,3 @@ void TocCollapseAll(MainWindow*);
 void TocExpandToLevel(MainWindow*, int level);
 void TocCollapseSameLevel(MainWindow*, TocItem*);
 
-#if OS_WIN
-void CreateToc(MainWindow*);
-void RefreshTocTreeIfNeeded(MainWindow*);
-void UpdateTocExpansionState(Vec<int>& tocState, TreeView*, TocTree*);
-bool CanShowThumbnails(WindowTab*);
-void UpdateSidebarThumbnails(MainWindow*);
-void SidebarPagesChanged(MainWindow*);
-void ClearSidebarThumbnails(MainWindow*);
-void UpdateSidebarColors(MainWindow*);
-bool ThumbnailsTakeKey(MainWindow*, HWND, WPARAM key);
-#endif

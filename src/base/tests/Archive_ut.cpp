@@ -23,7 +23,6 @@ static const u8 kEncryptedZip[] = {
 };
 
 void ArchiveTest() {
-#if !OS_WASM
     Archive archive;
     archive.password = str::Dup(StrL("secret"));
     Str data{(char*)kEncryptedZip, dimof(kEncryptedZip)};
@@ -35,5 +34,4 @@ void ArchiveTest() {
         return;
     }
     utassert(str::Eq(Str(fi->data, fi->fileSizeUncompressed), StrL("secret payload")));
-#endif
 }

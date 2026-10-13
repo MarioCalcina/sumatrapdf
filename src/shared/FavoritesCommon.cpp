@@ -4,9 +4,6 @@
 #include "base/Base.h"
 #include "base/File.h"
 #include "base/UITask.h"
-#if !defined(SUMATRA_NG)
-#include "base/Win.h"
-#endif
 #include "gui/UIModels.h"
 #include "Settings.h"
 #include "DisplayMode.h"

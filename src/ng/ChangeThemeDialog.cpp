@@ -10,9 +10,6 @@
 
 #include "gui/GpuiBridge.h"
 #include "VirtKeys.h"
-#if OS_WIN
-#include "base/Win.h"
-#endif
 
 #include "gui/UIModels.h"
 
@@ -62,11 +59,7 @@ static ChangeThemeDlg gChangeTheme;
 
 // the list row of the System theme, which follows the OS light/dark mode
 static Str FollowSystemThemeLabel() {
-#if OS_DARWIN
     return Tr("Follow macOS");
-#else
-    return Tr("Follow Windows");
-#endif
 }
 
 static void ChangeThemeOpenToolWindow(MainWindow* win);

@@ -48,22 +48,5 @@ bool HomePageOnKeyDown(MainWindow* win, int vk, bool ctrl);
 void HomePageContextMenuFromKey(MainWindow* win, gpui::Ctx* cx);
 void CopyAboutInfoToClipboard(MainWindow* win);
 
-#if OS_WIN
-void DrawAboutPage(MainWindow* win, Gfx* gfx);
-void DrawHomePage(MainWindow* win, Gfx* gfx);
-void HomePageCreate(MainWindow* win);
-void HomePageRelayout(MainWindow* win);
-void HomePageHideSearch(MainWindow* win);
-void HomePageOnVScroll(MainWindow* win, WPARAM wp);
-void HomePageOnMouseWheel(MainWindow* win, int delta);
-void HomePageUpdateSearchColors(MainWindow* win);
-void HomePageOnDpiChanged(MainWindow* win, int dpi);
-void HomePageDestroySearch(MainWindow* win);
-bool HomePageOnCanvasMessage(MainWindow* win, UINT msg, WPARAM wp, LPARAM lp, LRESULT& res);
-void HomePageOnWindowActivate(MainWindow* win, bool active);
-bool HomePageOnHover(MainWindow* win, int x, int y);
-Str HomePageFilePathAtTemp(MainWindow* win, int x, int y);
-void HomePageClearActiveEntry(MainWindow* win);
-#endif
 TempStr HomeListRowsResultTemp(int* exitCodeOut);
 TempStr HomeSelectionResultTemp(int* exitCodeOut);

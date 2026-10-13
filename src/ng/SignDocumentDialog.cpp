@@ -282,9 +282,6 @@ static bool UsingCertFile() {
 static void FillCertificates() {
     gSign.certThumbs.Reset();
     StrVec labels;
-#if OS_WIN
-    ListWindowsSigningCertificates(gSign.certThumbs, labels);
-#endif
     StrVec items;
     for (int i = 0; i < len(labels); i++) {
         items.Append(labels[i]);
@@ -483,12 +480,7 @@ static void DoSign(const PdfSignArgs& args) {
     }
     Str err;
     bool ok = false;
-#if OS_WIN || OS_DARWIN || defined(SUMATRA_HAVE_OPENSSL)
     ok = EngineMupdfSignDocument(engine, args, &err);
-#else
-    (void)args;
-    err = str::Dup(StrL("signing is not available on this platform"));
-#endif
     if (!ok) {
         gSign.placing = false;
         SignDocumentSyncWindow();

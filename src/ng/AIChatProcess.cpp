@@ -4,19 +4,14 @@
 #include "base/Base.h"
 #include "base/CmdLineArgs.h"
 #include "base/File.h"
-#if OS_WIN
-#include "base/Win.h"
-#endif
 
 #include "AIChatCommon.h"
 
-#if OS_POSIX && !OS_WASM
 #include <errno.h>
 #include <poll.h>
 #include <signal.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#endif
 
 TempStr AIChatFindExecutableTemp(const StrVec& fullPathCandidates, Str searchExeName, Str searchNameNoExt) {
     for (int i = 0; i < len(fullPathCandidates); i++) {
@@ -24,17 +19,6 @@ TempStr AIChatFindExecutableTemp(const StrVec& fullPathCandidates, Str searchExe
             return str::DupTemp(fullPathCandidates[i]);
         }
     }
-#if OS_WIN
-    WCHAR pathW[MAX_PATH];
-    if (len(searchExeName) > 0 &&
-        SearchPathW(nullptr, ToWStrTemp(searchExeName).s, nullptr, MAX_PATH, pathW, nullptr) > 0) {
-        return ToUtf8Temp(pathW);
-    }
-    if (len(searchNameNoExt) > 0 &&
-        SearchPathW(nullptr, ToWStrTemp(searchNameNoExt).s, L".exe", MAX_PATH, pathW, nullptr) > 0) {
-        return ToUtf8Temp(pathW);
-    }
-#elif !OS_WASM
     Str name = len(searchNameNoExt) > 0 ? searchNameNoExt : searchExeName;
     const char* env = getenv("PATH");
     if (len(name) > 0 && env) {
@@ -47,131 +31,8 @@ TempStr AIChatFindExecutableTemp(const StrVec& fullPathCandidates, Str searchExe
             }
         }
     }
-#else
-    (void)searchExeName;
-    (void)searchNameNoExt;
-#endif
     return {};
 }
-
-#if OS_WIN
-
-void AIChatCloseProcess(void** processHandle, bool terminateIfRunning) {
-    if (!processHandle || !*processHandle) {
-        return;
-    }
-    HANDLE h = (HANDLE)*processHandle;
-    *processHandle = nullptr;
-    if (terminateIfRunning && WaitForSingleObject(h, 0) == WAIT_TIMEOUT) {
-        TerminateProcess(h, 0);
-    }
-    CloseHandle(h);
-}
-
-bool AIChatLaunchProcessWithStdoutPipe(Str cmdLine, Str cwd, AIChatProcessLaunchResult* out) {
-    if (!out || len(cmdLine) == 0) {
-        return false;
-    }
-    *out = {};
-
-    SECURITY_ATTRIBUTES sa = {sizeof(sa), nullptr, TRUE};
-    HANDLE hReadPipe;
-    HANDLE hWritePipe;
-    if (!CreatePipe(&hReadPipe, &hWritePipe, &sa, 0)) {
-        return false;
-    }
-    SetHandleInformation(hReadPipe, HANDLE_FLAG_INHERIT, 0);
-
-    STARTUPINFOW si = {};
-    si.cb = sizeof(si);
-    si.hStdOutput = hWritePipe;
-    si.hStdError = hWritePipe;
-    si.dwFlags = STARTF_USESTDHANDLES;
-
-    PROCESS_INFORMATION pi = {};
-    WCHAR* dirW = len(cwd) > 0 ? CWStrTemp(cwd) : nullptr;
-    BOOL ok =
-        CreateProcessW(nullptr, CWStrTemp(cmdLine), nullptr, nullptr, TRUE, CREATE_NO_WINDOW, nullptr, dirW, &si, &pi);
-    CloseHandle(hWritePipe);
-    if (!ok) {
-        CloseHandle(hReadPipe);
-        return false;
-    }
-
-    CloseHandle(pi.hThread);
-    out->ok = true;
-    out->hProcess = pi.hProcess;
-    out->hReadPipe = hReadPipe;
-    out->processId = (u32)pi.dwProcessId;
-    return true;
-}
-
-int AIChatReadPipeChunk(void* hReadPipe, char* buf, int size) {
-    DWORD bytesRead = 0;
-    if (!ReadFile((HANDLE)hReadPipe, buf, (DWORD)size, &bytesRead, nullptr)) {
-        return -1;
-    }
-    return (int)bytesRead;
-}
-
-void AIChatCloseReadPipe(void* hReadPipe) {
-    CloseHandle((HANDLE)hReadPipe);
-}
-
-void AIChatReadPipeToEnd(void* hReadPipe, str::Builder& out) {
-    char buf[4096];
-    int n;
-    while ((n = AIChatReadPipeChunk(hReadPipe, buf, sizeof(buf))) > 0) {
-        out.Append(Str(buf, n));
-    }
-    AIChatCloseReadPipe(hReadPipe);
-}
-
-bool AIChatWaitForProcess(void* hProcess, int timeoutMs) {
-    return WaitForSingleObject((HANDLE)hProcess, (DWORD)timeoutMs) == WAIT_OBJECT_0;
-}
-
-void AIChatTerminateProcess(void* hProcess) {
-    TerminateProcess((HANDLE)hProcess, 1);
-}
-
-constexpr int kAIChatMaxCaptureBytes = 1024 * 1024;
-
-// Run cmdLine and collect its stdout and stderr into out. Stops after
-// timeoutMs and kills the process if it's still running.
-bool AIChatRunCapture(Str cmdLine, int timeoutMs, str::Builder& out) {
-    AIChatProcessLaunchResult launch;
-    if (!AIChatLaunchProcessWithStdoutPipe(cmdLine, {}, &launch)) {
-        return false;
-    }
-
-    ULONGLONG deadline = GetTickCount64() + timeoutMs;
-    while (GetTickCount64() < deadline && out.len < kAIChatMaxCaptureBytes) {
-        DWORD available = 0;
-        if (!PeekNamedPipe((HANDLE)launch.hReadPipe, nullptr, 0, nullptr, &available, nullptr)) {
-            break;
-        }
-        if (available > 0) {
-            char buf[4096];
-            DWORD nRead = 0;
-            DWORD toRead = std::min<DWORD>(available, dimof(buf));
-            if (!ReadFile((HANDLE)launch.hReadPipe, buf, toRead, &nRead, nullptr) || nRead == 0) {
-                break;
-            }
-            out.Append(Str(buf, (int)nRead));
-            continue;
-        }
-        if (WaitForSingleObject((HANDLE)launch.hProcess, 10) != WAIT_TIMEOUT) {
-            break;
-        }
-        Sleep(10);
-    }
-    CloseHandle((HANDLE)launch.hReadPipe);
-    AIChatCloseProcess(&launch.hProcess, true);
-    return true;
-}
-
-#elif OS_POSIX && !OS_WASM
 
 struct AIChatPosixProcess {
     pid_t pid = -1;
@@ -408,41 +269,6 @@ bool AIChatRunCapture(Str cmdLine, int timeoutMs, str::Builder& out) {
     AIChatCloseProcess(&launch.hProcess, true);
     return true;
 }
-
-#else
-
-void AIChatCloseProcess(void** processHandle, bool) {
-    if (processHandle) {
-        *processHandle = nullptr;
-    }
-}
-
-bool AIChatLaunchProcessWithStdoutPipe(Str, Str, AIChatProcessLaunchResult* out) {
-    if (out) {
-        *out = {};
-    }
-    return false;
-}
-
-void AIChatReadPipeToEnd(void*, str::Builder&) {}
-
-int AIChatReadPipeChunk(void*, char*, int) {
-    return -1;
-}
-
-void AIChatCloseReadPipe(void*) {}
-
-bool AIChatWaitForProcess(void*, int) {
-    return true;
-}
-
-void AIChatTerminateProcess(void*) {}
-
-bool AIChatRunCapture(Str, int, str::Builder&) {
-    return false;
-}
-
-#endif
 
 TempStr AIChatFormatSessionIdTemp(const u8* bytes) {
     u8 b[16];

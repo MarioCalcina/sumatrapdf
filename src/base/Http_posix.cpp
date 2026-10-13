@@ -12,9 +12,8 @@
 #include "base/File.h"
 #include "base/Http.h"
 
-// ng: was Http_mac.cpp. Linux and macOS link libcurl; wasm keeps the command
-// fallback (a no-op in practice). The portable half of the API is in Http.cpp,
-// outside its OS_WIN block.
+// ng: was Http_mac.cpp; links libcurl. The portable half of the API is in
+// Http.cpp.
 
 static constexpr DWORD kHttpErrorSuccess = 0;
 static constexpr DWORD kHttpErrorFailure = 1;

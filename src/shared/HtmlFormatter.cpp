@@ -13,15 +13,9 @@
 #include "gui/PlatformFont.h"
 #include "gui/PlatformText.h"
 
-#if OS_WIN
-#include "base/GdiPlusUtil.h"
-#elif OS_LINUX
-#include <cairo/cairo.h>
-#elif OS_DARWIN
 #include "base/MacTypesHide.h"
 #include <CoreGraphics/CoreGraphics.h>
 #include "base/MacTypesShow.h"
-#endif
 #include "HtmlFormatter.h"
 
 // Measure each line's items before positioning them for justification.
@@ -1336,7 +1330,6 @@ Vec<HtmlPage*>* HtmlFormatter::FormatAllPages(bool skipEmptyPages) {
     return pages;
 }
 
-#if OS_WIN || OS_LINUX || OS_DARWIN
 // Draw text in one lock before shapes; GDI's GetHDC/ReleaseHDC is expensive.
 static void DrawHtmlText(PlatformTextRender* textDraw, Vec<DrawInstr>* drawInstructions, float offX, float offY,
                          Color textColor, bool* abortCookie) {
@@ -1358,75 +1351,12 @@ static void DrawHtmlText(PlatformTextRender* textDraw, Vec<DrawInstr>* drawInstr
     }
     textDraw->Unlock();
 }
-#endif
 
 // TODO: draw link in the appropriate format (blue text, underlined, should show hand cursor when
 // mouse is over a link. There's a slight complication here: we only get explicit information about
 // strings, not about the whitespace and we should underline the whitespace as well. Also the text
 // should be underlined at a baseline
-#if OS_WIN
-using Gdiplus::Bitmap;
-using Gdiplus::Ok;
-using Gdiplus::Pen;
-using Gdiplus::Status;
-using Gdiplus::UnitPixel;
-using Gdiplus::Win32Error;
 
-void DrawHtmlPage(Gdiplus::Graphics* g, PlatformTextRender* textDraw, Vec<DrawInstr>* drawInstructions, float offX,
-                  float offY, bool showBbox, Color textColor, bool* abortCookie) {
-    Pen debugPen(Gdiplus::Color(255, 0, 0), 1);
-    Pen linePen(Gdiplus::Color(0x5F, 0x4B, 0x32), 2.f);
-    Pen linkPen(textColor);
-
-    DrawHtmlText(textDraw, drawInstructions, offX, offY, textColor, abortCookie);
-
-    Status status;
-    for (DrawInstr& i : *drawInstructions) {
-        RectF bbox = i.bbox;
-        bbox.x += offX;
-        bbox.y += offY;
-        if (DrawInstrType::Line == i.type || DrawInstrType::LinkStart == i.type) {
-            bool rule = DrawInstrType::Line == i.type;
-            float y = floorf(bbox.y + (rule ? bbox.dy / 2.f : bbox.dy) + 0.5f);
-            Gdiplus::PointF p1(bbox.x, y);
-            Gdiplus::PointF p2(bbox.x + bbox.dx, y);
-            if (rule && showBbox) {
-                status = g->DrawRectangle(&debugPen, ToGdipRectF(bbox));
-                ReportIf(status != Ok);
-            }
-            status = g->DrawLine(rule ? &linePen : &linkPen, p1, p2);
-            ReportIf(status != Ok);
-        } else if (DrawInstrType::Image == i.type) {
-            // TODO: cache the bitmap somewhere (?)
-            Bitmap* bmp = NewGdiplusBitmapFromPixmap(PixmapFromData(i.GetImage()));
-            if (bmp) {
-                status = g->DrawImage(bmp, ToGdipRectF(bbox), 0, 0, (float)bmp->GetWidth(), (float)bmp->GetHeight(),
-                                      UnitPixel);
-                // GDI+ sometimes seems to succeed in loading an image because it lazily decodes it
-                ReportIf(status != Ok && status != Win32Error);
-            }
-            delete bmp;
-        } else if (DrawInstrType::String == i.type || DrawInstrType::RtlString == i.type) {
-            if (showBbox) {
-                status = g->DrawRectangle(&debugPen, ToGdipRectF(bbox));
-                ReportIf(status != Ok);
-            }
-        } else if (DrawInstrType::LinkEnd == i.type) {
-            // TODO: set text color back again
-        } else if (IsSpaceDrawInstr(i) || (DrawInstrType::SetFont == i.type) || (DrawInstrType::Anchor == i.type) ||
-                   (DrawInstrType::PageMarkerAnchor == i.type)) {
-            // ignore
-        } else {
-            ReportIf(true);
-        }
-        if (abortCookie && *abortCookie) {
-            break;
-        }
-    }
-}
-#endif
-
-#if OS_LINUX || OS_DARWIN
 static Pixmap* PixmapForHtml(Str data) {
     Pixmap* src = PixmapFromData(data);
     AutoCall cleanup(FreePixmap, src);
@@ -1458,42 +1388,6 @@ static Pixmap* PixmapForHtml(Str data) {
     return dst;
 }
 
-#endif
-
-#if OS_LINUX
-using HtmlDrawContext = cairo_t*;
-
-static void HtmlSetColor(cairo_t* cairo, Color col) {
-    u8 r = 0;
-    u8 g = 0;
-    u8 b = 0;
-    UnpackColor(col, r, g, b);
-    cairo_set_source_rgb(cairo, r / 255.0, g / 255.0, b / 255.0);
-}
-
-static void HtmlDrawImage(cairo_t* cairo, Str data, RectF bbox) {
-    Pixmap* pixmap = PixmapForHtml(data);
-    if (!pixmap) {
-        return;
-    }
-    cairo_surface_t* surface = cairo_image_surface_create_for_data(pixmap->data, CAIRO_FORMAT_ARGB32, pixmap->width,
-                                                                   pixmap->height, pixmap->stride);
-    if (cairo_surface_status(surface) == CAIRO_STATUS_SUCCESS) {
-        cairo_save(cairo);
-        cairo_translate(cairo, bbox.x, bbox.y);
-        cairo_scale(cairo, bbox.dx / pixmap->width, bbox.dy / pixmap->height);
-        cairo_set_source_surface(cairo, surface, 0, 0);
-        cairo_rectangle(cairo, 0, 0, pixmap->width, pixmap->height);
-        cairo_fill(cairo);
-        cairo_restore(cairo);
-    }
-    cairo_surface_destroy(surface);
-    FreePixmap(pixmap);
-}
-
-#endif
-
-#if OS_DARWIN
 using HtmlDrawContext = CGContextRef;
 
 static void HtmlSetColor(CGContextRef context, Color color) {
@@ -1529,9 +1423,6 @@ static void HtmlDrawImage(CGContextRef context, Str data, RectF bbox) {
     FreePixmap(pixmap);
 }
 
-#endif
-
-#if OS_LINUX || OS_DARWIN
 void DrawHtmlPage(HtmlDrawContext context, PlatformTextRender* textDraw, Vec<DrawInstr>* drawInstructions, float offX,
                   float offY, bool showBbox, Color textColor, bool* abortCookie) {
     DrawHtmlText(textDraw, drawInstructions, offX, offY, textColor, abortCookie);
@@ -1543,36 +1434,22 @@ void DrawHtmlPage(HtmlDrawContext context, PlatformTextRender* textDraw, Vec<Dra
             bool rule = DrawInstrType::Line == i.type;
             float y = floorf(bbox.y + (rule ? bbox.dy / 2.f : bbox.dy) + 0.5f);
             HtmlSetColor(context, rule ? MkRgb(0x5f, 0x4b, 0x32) : textColor);
-#if OS_LINUX
-            cairo_set_line_width(context, rule ? 2 : 1);
-            cairo_move_to(context, bbox.x, y);
-            cairo_line_to(context, bbox.x + bbox.dx, y);
-            cairo_stroke(context);
-#else
             CGContextSetLineWidth(context, rule ? 2 : 1);
             CGContextMoveToPoint(context, bbox.x, y);
             CGContextAddLineToPoint(context, bbox.x + bbox.dx, y);
             CGContextStrokePath(context);
-#endif
         } else if (DrawInstrType::Image == i.type) {
             HtmlDrawImage(context, i.GetImage(), bbox);
         } else if ((DrawInstrType::String == i.type || DrawInstrType::RtlString == i.type) && showBbox) {
             HtmlSetColor(context, kColRed);
-#if OS_LINUX
-            cairo_set_line_width(context, 1);
-            cairo_rectangle(context, bbox.x, bbox.y, bbox.dx, bbox.dy);
-            cairo_stroke(context);
-#else
             CGContextSetLineWidth(context, 1);
             CGContextStrokeRect(context, CGRectMake(bbox.x, bbox.y, bbox.dx, bbox.dy));
-#endif
         }
         if (abortCookie && *abortCookie) {
             break;
         }
     }
 }
-#endif
 
 HtmlFormatterArgs* CreateFormatterDefaultArgs(int dx, int dy, Arena* textAllocator) {
     HtmlFormatterArgs* args = new HtmlFormatterArgs();

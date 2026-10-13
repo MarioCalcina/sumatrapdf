@@ -15,9 +15,6 @@
 
 #include "gui/GpuiBridge.h"
 #include "VirtKeys.h"
-#if OS_WIN
-#include "base/Win.h"
-#endif
 
 #include "base/SettingsUtil.h"
 #include "base/UITask.h"
@@ -897,11 +894,9 @@ static gp::El* AdvToolBuild(MainWindow*, gp::Ctx* cx) {
 // filter too, before an edit sees them
 // Delete (Cmd+Backspace on macOS) puts the selected setting's default back
 static bool AdvIsRestoreDefaultKey(const gp::KeyEvent* ev) {
-#if OS_DARWIN
     if (ev->vk == VK_BACK && ev->platform && !ev->ctrl && !ev->alt && !ev->shift) {
         return true;
     }
-#endif
     return ev->vk == VK_DELETE && !ev->ctrl && !ev->alt && !ev->shift && !ev->platform;
 }
 

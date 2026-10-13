@@ -12,29 +12,13 @@ struct TocTree;
 struct TabState;
 struct Annotation;
 struct WatchedFile;
-#if !defined(SUMATRA_NG)
-struct LoadArgs;
-#endif
 struct ReadAloudHighlightMap;
 
-#if defined(SUMATRA_NG)
 enum class SidebarContent {
     Bookmarks,
     Thumbnails,
     Favorites,
 };
-#else
-// what a sidebar panel shows
-enum class SidebarView {
-    Bookmarks,
-    Thumbnails,
-    Favorites,
-};
-constexpr int kSidebarViewCount = 3;
-
-SidebarView SidebarViewFromStr(Str s, SidebarView def);
-Str SidebarViewToStr(SidebarView);
-#endif
 
 struct AutoScroll {
     bool on = false;
@@ -76,12 +60,6 @@ struct WindowTab {
     MainWindow* win = nullptr;
     DocController* ctrl = nullptr;
     u64 loadStartedAt = 0;
-#if !defined(SUMATRA_NG)
-    // network-drive copy progress while loading (-1 = not in copy phase)
-    i64 loadCopyBytesCopied = -1;
-    i64 loadCopyBytesTotal = 0;
-    LoadArgs* pendingLoadArgs = nullptr;
-#endif
     // FileWatcher token for unsubscribing
     WatchedFile* watcher = nullptr;
     // list of rectangles of the last rectangular, text or image selection
@@ -90,19 +68,13 @@ struct WindowTab {
     TocTree* currToc = nullptr;   // not owned by us
     TabState* tabState = nullptr; // when lazy loading
     Annotation* selectedAnnotation = nullptr;
-#if !defined(SUMATRA_NG)
-    HWND hwndPDFInfo = nullptr;
-    HWND hwndPDFOutline = nullptr;
-#endif
     // file size / mtime seen at the previous kAutoReloadTimerID tick, and when
     // the pending auto-reload was first scheduled. Used to wait out a writer
     // that is still producing the file (see kAutoReloadTimerID in Canvas.cpp)
     i64 autoReloadSize = -1;
     u64 autoReloadStartMs = 0;
     FILETIME autoReloadModTime{};
-#if defined(SUMATRA_NG)
     int autoReloadLeftMs = 0;
-#endif
     ReadAloudHighlightMap* readAloudHighlight = nullptr;
     Str filePath;
     Str displayName;
@@ -153,12 +125,7 @@ struct WindowTab {
     // state of the table of contents
     bool showToc = false;
     bool showTocPresentation = false;
-#if defined(SUMATRA_NG)
     SidebarContent sidebarContent = SidebarContent::Bookmarks;
-#else
-    // what the sidebar's top panel shows (showToc: whether it does)
-    SidebarView sidebarView = SidebarView::Bookmarks;
-#endif
     // whether to auto-reload the document when the tab is selected
     bool reloadOnFocus = false;
     // opened via CmdOpenFileNoHistory: do not write File History / Windows Recent
@@ -211,9 +178,5 @@ struct WindowTab {
     float NextToggleZoom() const;
     void ToggleZoom() const;
 };
-
-#if !defined(SUMATRA_NG)
-bool SaveDataToFile(HWND hwndParent, Str fileName, Str data);
-#endif
 
 bool IsPdfDoc(WindowTab* tab);

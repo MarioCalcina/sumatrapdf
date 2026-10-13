@@ -7,12 +7,6 @@
 // long as the program runs, so they come out of the perm arena and are never
 // freed individually.
 
-#if OS_WIN
-namespace Gdiplus {
-class Font;
-}
-#endif
-
 enum class PlatformFontStyle {
     Regular = 0,
     Bold = 1,
@@ -33,14 +27,7 @@ struct PlatformFont {
     PlatformFontStyle style = PlatformFontStyle::Regular;
     uintptr_t nativeId = 0;
     int averageCharWidth = 0;
-#if OS_WIN
-    // created from the description, or from an adopted HFONT's family name
-    Gdiplus::Font* gdiFont = nullptr;
-    // for gdiFont, created lazily by GetHFont(); set upfront when adopted
-    HFONT hfont = nullptr;
-#else
     void* nativeFont = nullptr;
-#endif
     // memoized by GetBoldPlatformFont()
     PlatformFont* boldVariant = nullptr;
 
@@ -48,10 +35,6 @@ struct PlatformFont {
     float GetSize() const { return sizePt; }
     PlatformFontStyle GetStyle() const { return style; }
     bool SameAs(Str name, float sizePt, PlatformFontStyle style) const;
-#if OS_WIN
-    Gdiplus::Font* GetGdiplusFont() const { return gdiFont; }
-    HFONT GetHFont();
-#endif
 };
 
 PlatformFont* GetPlatformFont(Str name, float sizePt, PlatformFontStyle style);
@@ -71,10 +54,3 @@ PlatformFont* GetUserGuiFont(Str fontName, int size);
 PlatformFont* GetUserGuiFontEx(Str fontName, int size, bool bold, bool italic);
 PlatformFont* GetScaledPlatformFont(PlatformFont*, int percent);
 
-#if OS_WIN
-// adopts an existing HFONT (e.g. one of the app's UI fonts, which live for the
-// whole run) so it can be used with the portable drawing API. Not owned
-PlatformFont* GetPlatformFont(HFONT);
-PlatformFont* HdcCreateSimpleFont(HDC hdc, Str fontName, int fontSize);
-void DeleteCreatedFonts();
-#endif

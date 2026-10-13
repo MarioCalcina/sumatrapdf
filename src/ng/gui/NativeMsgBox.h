@@ -8,17 +8,6 @@
 // automation channel they are off, so a script gets the port's dialogs,
 // which it can answer; TestNativeMsgBox turns them on to look at them.
 
-#if OS_WIN
-bool NativeMsgBoxEnabled();
-void NativeMsgBoxSetEnabled(bool enabled);
-// MessageBoxW(owner, text, caption, flags); onResult gets its return value
-void NativeMsgBox(MainWindow* win, Str text, Str caption, uint flags, Func1<int> onResult);
-// orig's ShouldSaveAnnotationsDialog; onChoice gets a SaveChoice
-void NativeUnsavedDialog(MainWindow* win, Str fileName, Func1<int> onChoice);
-// -dbg-control's TestNativeMsgBox: on | off | state | answer <button id>
-TempStr NativeMsgBoxTestTemp(Str what, int arg);
-#else
 inline bool NativeMsgBoxEnabled() {
     return false;
 }
-#endif

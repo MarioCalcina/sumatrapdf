@@ -11,7 +11,6 @@
 #include "gui/GpuiBridge.h"
 #include "VirtKeys.h"
 #include "base/File.h"
-#include "base/Win.h"
 #include "base/Pixmap.h"
 
 #include "gui/Dpi.h"
@@ -52,11 +51,6 @@
 #include "OverlayScrollbar.h"
 #include "HomePage.h"
 #include "HomePageCommon.h"
-
-#if OS_WIN
-#include <shellapi.h>
-#include <commctrl.h>
-#endif
 
 #include "SumatraLog.h"
 
@@ -170,30 +164,6 @@ static void AppendBugReportInfo(str::Builder& s) {
         s.Append(StrL("ASan: yes\n"));
     }
 
-#if OS_WIN
-    OSVERSIONINFOEX ver{};
-    if (GetOsVersion(ver)) {
-        TempStr os = OsNameFromVerTemp(ver);
-        int buildNumber = (int)ver.dwBuildNumber & 0xFFFF;
-        Str arch = StrL("64-bit");
-        if (IsProcess32()) {
-            arch = IsRunningInWow64() ? StrL("32-bit (Wow64)") : StrL("32-bit");
-        }
-        s.Append(fmt("OS: Windows %s, build %d, %s\n", os, buildNumber, arch));
-    }
-    if (IsOs64()) {
-        s.Append(StrL("OS architecture: 64-bit\n"));
-    } else {
-        s.Append(StrL("OS architecture: 32-bit\n"));
-    }
-
-    MEMORYSTATUSEX ms{};
-    ms.dwLength = sizeof(ms);
-    if (GlobalMemoryStatusEx(&ms)) {
-        float physMemGB = (float)ms.ullTotalPhys / (float)(1024 * 1024 * 1024);
-        s.Append(fmt("Physical memory: %.2f GB (%d%% in use)\n", physMemGB, (int)ms.dwMemoryLoad));
-    }
-#endif
     s.Append(fmt("Processors: %d\n", CpuCoreCount()));
 
     Str theme = ThemeGetNameAt(ThemeGetCurrentIndex());
@@ -435,87 +405,9 @@ static gp::ImageLoadState HomeThumbLoad(gp::PaintApp* pa, void* user, gp::Render
     return t->img ? gp::ImageLoadState::Ready : gp::ImageLoadState::Failed;
 }
 
-#if OS_WIN
-static void GetFileStateIcon(FileState* fs) {
-    if (fs->himl) {
-        return;
-    }
-    SHFILEINFOW sfi{};
-    sfi.iIcon = -1;
-    uint flags = SHGFI_SYSICONINDEX | SHGFI_SMALLICON | SHGFI_USEFILEATTRIBUTES;
-    WCHAR* filePathW = CWStrTemp(fs->filePath);
-    fs->himl = (HIMAGELIST)SHGetFileInfoW(filePathW, 0, &sfi, sizeof(sfi), flags);
-    fs->iconIdx = sfi.iIcon;
-}
-
-struct HomeFileIcon {
-    HomeFileIcon* next = nullptr;
-    HIMAGELIST imageList = nullptr;
-    int iconIdx = -1;
-    Pixmap* pixmap = nullptr;
-    // made from the pixmap on the paint thread, the first time it is drawn
-    gp::RenderImage* img = nullptr;
-    bool tried = false;
-};
-
-static HomeFileIcon* gFileIcons = nullptr;
-
-// Shell image lists are Windows drawing objects. Convert each distinct icon to
-// a Pixmap once; the home page draws it as a gpui image.
-static HomeFileIcon* GetFileStateIconPixmap(FileState* fs) {
-    GetFileStateIcon(fs);
-    if (!fs->himl || fs->iconIdx < 0) {
-        return nullptr;
-    }
-    for (HomeFileIcon* icon = gFileIcons; icon; icon = icon->next) {
-        if (icon->imageList == fs->himl && icon->iconIdx == fs->iconIdx) {
-            return icon->pixmap ? icon : nullptr;
-        }
-    }
-
-    HICON hicon = ImageList_GetIcon(fs->himl, fs->iconIdx, ILD_TRANSPARENT);
-    Pixmap* pixmap = nullptr;
-    if (hicon) {
-        pixmap = PixmapFromHICON(hicon);
-        DestroyIcon(hicon);
-    }
-    auto* icon = new HomeFileIcon();
-    icon->imageList = fs->himl;
-    icon->iconIdx = fs->iconIdx;
-    icon->pixmap = pixmap;
-    ListInsertFront(&gFileIcons, icon);
-    return pixmap ? icon : nullptr;
-}
-
-// the icon's pixels are premultiplied BGRA, which is what gpui takes
-static gp::ImageLoadState HomeFileIconLoad(gp::PaintApp* pa, void* user, gp::RenderImage** imgOut) {
-    auto* icon = (HomeFileIcon*)user;
-    Pixmap* px = icon->pixmap;
-    if (!icon->tried) {
-        icon->tried = true;
-        if (px->stride == px->width * 4) {
-            icon->img = gp::RenderImageFromBgra(pa, px->data, px->width, px->height);
-        }
-    }
-    *imgOut = icon->img;
-    return icon->img ? gp::ImageLoadState::Ready : gp::ImageLoadState::Failed;
-}
-#endif
-
 // orig draws the shell's small icon for the file's type in front of its name.
 // ng: the shell is asked on Windows only; elsewhere it is gpui's document glyph
 static gp::El* HomeFileIconEl(MainWindow* win, gp::Ctx* cx, FileState* fs, Color colText) {
-#if OS_WIN
-    HomeFileIcon* icon = GetFileStateIconPixmap(fs);
-    if (icon) {
-        float k = CanvasScale(win);
-        gp::ImageSource src = gp::ImageSource::FromCustom(HomeFileIconLoad, icon);
-        return gp::ImageEl(cx->a, src, GStrL(""))
-            ->W((float)icon->pixmap->width * k)
-            ->H((float)icon->pixmap->height * k)
-            ->Shrink0();
-    }
-#endif
     return gp::IconEl(cx->a, gp::IconName::FileText, 14)->Fg(ToGpui(colText))->Shrink0();
 }
 
@@ -1269,11 +1161,7 @@ struct AboutDims {
 // GetUserGuiFont() turns Windows pixels into CoreText points, 3/4 of them,
 // while gpui draws the About texts in pixels: measure them at their drawn size
 static int AboutFontSize(int px) {
-#if OS_DARWIN
     return MulDiv(px, 96, 72);
-#else
-    return px;
-#endif
 }
 
 static void MeasureAbout(MainWindow* win, AboutDims& d) {
@@ -1887,11 +1775,7 @@ gp::El* HomePageBuild(MainWindow* win, gp::Ctx* cx) {
     // orig's chrome-less About dropdown under the logo: shown after the tooltip
     // delay, it stays up while the cursor is over the logo or the box, so its
     // links stay clickable
-#if OS_WIN
-    Str logoName = StrL("SumatraPDF NG");
-#else
     Str logoName = StrL(kAppName);
-#endif
     logoRow->Child(gpc::HoverCard::New(cx, GStrL("home-about-hover"))
                        ->Trigger(SumatraLogoEl(cx, (float)kSumatraTxtFontSize, {}, logoName))
                        ->Content(AboutBoxEl(win, cx, false))
