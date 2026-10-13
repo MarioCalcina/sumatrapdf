@@ -3619,6 +3619,10 @@ void StartSumatraControl(Str pipeName) {
     // until it asks for the system's (TestNativeMsgBox on)
     NativeMsgBoxSetEnabled(false);
 #endif
+#if OS_DARWIN
+    // nor macOS's save panel: it gets the port's dialog (TestFinishSavePathDialog)
+    NativeFileDlgSetEnabled(false);
+#endif
     auto* arg = new ControlThreadArg{str::Dup(pipeName)};
     RunAsync(MkFunc0(SumatraControlThread, arg), StrL("SumatraControl"));
 }

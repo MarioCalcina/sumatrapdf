@@ -15,6 +15,7 @@
 #include "base/MacTypesShow.h"
 
 #include "base/UITask.h"
+#include "base/File.h"
 #include "SumatraPDF.h"
 #include "MainWindow.h"
 #include "Theme.h"
@@ -22,6 +23,8 @@
 #include "Version.h"
 #include "gui/AppShell.h"
 #include "gui/DocCanvas.h"
+#include "gui/NativeFileDlg.h"
+#include "SumatraDialogs.h"
 
 // AppKit turns automatic termination back on at the end of launch when it
 // still counts zero windows. Under lldb the app never becomes frontmost, so
@@ -411,4 +414,84 @@ void AppShellNoteRecentDoc(Str path) {
         return;
     }
     [[NSDocumentController sharedDocumentController] noteNewRecentDocumentURL:[NSURL fileURLWithPath:s]];
+}
+
+// --- the save panel ----------------------------------------------------------
+
+// off while a -dbg-control script drives the app: it can't answer the panel
+static bool gNativeFileDlgOn = true;
+
+bool NativeFileDlgEnabled() {
+    return gNativeFileDlgOn;
+}
+
+void NativeFileDlgSetEnabled(bool enabled) {
+    gNativeFileDlgOn = enabled;
+}
+
+static void FreeSaveArgs(SavePathArgs* args) {
+    str::Free(args->title);
+    str::Free(args->initialPath);
+    str::Free(args->defExt);
+    str::Free(args->filter);
+    str::Free(args->nativeFile);
+    str::Free(args->nativeDir);
+    delete args;
+}
+
+// the name the panel returned, with the default extension when it has none
+static TempStr SavedPathTemp(SavePathArgs* args, NSURL* url) {
+    const char* s = url ? url.path.UTF8String : nullptr;
+    if (!s) {
+        return {};
+    }
+    TempStr path = str::DupTemp(Str((char*)s));
+    Str ext = args->defExt;
+    if (!args->noDefExt && len(ext) > 0 && len(path::GetExtTemp(path)) == 0) {
+        path = str::JoinTemp(path, ext);
+    }
+    return path;
+}
+
+static void SaveFileDlgNow(SavePathArgs* args) {
+    MainWindow* win = args->win;
+    NSView* view = IsMainWindowValidAndNotClosing(win) ? (__bridge NSView*)gp::PlatWindowHandle(win->gpuiWin) : nil;
+    NSWindow* window = view.window;
+    if (!window) {
+        args->path = {};
+        args->onDone.Call(args);
+        FreeSaveArgs(args);
+        return;
+    }
+
+    Str name = len(args->nativeFile) > 0 ? args->nativeFile : args->initialPath;
+    TempStr dir = len(args->nativeDir) > 0 ? str::DupTemp(args->nativeDir) : path::GetDirTemp(args->initialPath);
+    NSSavePanel* panel = [NSSavePanel savePanel];
+    panel.canCreateDirectories = YES;
+    panel.nameFieldStringValue = ToNSString(path::GetBaseNameTemp(name)) ?: @"";
+    if (len(dir) > 0 && dir::Exists(dir)) {
+        panel.directoryURL = [NSURL fileURLWithPath:ToNSString(dir) isDirectory:YES];
+    }
+    if (args->nativeTitle && len(args->title) > 0) {
+        panel.message = ToNSString(args->title);
+    }
+    // the port's dialog reports no filter either: the callers go by the extension
+    args->filterIndex = 0;
+    [panel beginSheetModalForWindow:window
+                  completionHandler:^(NSModalResponse res) {
+                    TempStr path = res == NSModalResponseOK ? SavedPathTemp(args, panel.URL) : TempStr{};
+                    logf("NativeSaveFileDlg: '%s'\n", path);
+                    args->path = path;
+                    args->onDone.Call(args);
+                    FreeSaveArgs(args);
+                    if (IsMainWindowValid(win)) {
+                        AppShellInvalidate(win);
+                    }
+                  }];
+}
+
+// macOS's save panel as a sheet on the window, in place of the port's dialog.
+// Takes ownership of args; shown from the ui task queue once gpui has unwound
+void NativeSaveFileDlg(SavePathArgs* args) {
+    uitask::Post(MkFunc0(SaveFileDlgNow, args), "NativeSaveFileDlg");
 }

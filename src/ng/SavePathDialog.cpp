@@ -5,7 +5,7 @@
 // port's stand-in for win32's GetSaveFileNameW: a dialog with the directory it
 // is in, the sub-directories and matching files in it, and a file-name field.
 // Every save-as in the port goes through ShowSavePathDialog(), which on
-// Windows shows orig's dialog instead (gui/NativeFileDlg_win.cpp).
+// macOS shows the system's save panel instead (gui/NativeWindow_mac.mm).
 
 #include "gui/GpuiBridge.h"
 
@@ -203,7 +203,7 @@ void ShowSavePathDialog(SavePathArgs* args) {
         delete args;
         return;
     }
-#if OS_WIN
+#if OS_WIN || OS_DARWIN
     if (NativeFileDlgEnabled() && !args->openExisting) {
         NativeSaveFileDlg(args);
         return;

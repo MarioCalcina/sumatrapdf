@@ -77,7 +77,9 @@ languages are complete. Numbers and dates follow the macOS region. The manual us
 original app.
 
 `mac-daily.yml` builds debug and release and runs the base unit tests.
-`mac-app.yml` (manual) builds `SumatraPDF-mac.dmg` and screenshots of the app.
+`mac-app.yml` (manual) builds `SumatraPDF-mac.dmg`, publishes it as a GitHub
+release with `update-check-mac.txt` (what Check for Updates reads) and takes
+screenshots of the app.
 
 ## macOS integration
 
@@ -97,6 +99,9 @@ AppKit code lives in `*_mac.mm` files, mostly `gui/NativeWindow_mac.mm`:
   gpui finds the Window menu by its English title, so it is translated after
 - Print opens the macOS print panel (PDFKit) on the PDF itself, or on a
   rendered one for a selection, a rotation or unsaved annotations
+- Save As (and every other save) is the macOS save panel; a `-dbg-control`
+  script gets the port's dialog, which it can drive
+- File > Show in Finder; About, Settings and Quit only in the app menu
 - tabs sit in the title bar beside the traffic lights
 
 gpui gap: a text field's context menu (Cut, Copy, Paste, Select All) is

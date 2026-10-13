@@ -77,8 +77,8 @@ void MessageBoxWarning(MainWindow* win, Str msg, Str title = {});
 
 // --- the dialogs ------------------------------------------------------------
 
-// ng: gpui has no save-file prompt. On Windows this is orig's GetSaveFileNameW
-// (gui/NativeFileDlg_win.cpp); elsewhere the port's own dialog
+// ng: gpui has no save-file prompt. On macOS this is the system's save panel
+// (gui/NativeWindow_mac.mm); under -dbg-control the port's own dialog
 struct SavePathArgs {
     MainWindow* win = nullptr;
     Str title;       // owned
