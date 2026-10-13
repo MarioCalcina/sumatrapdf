@@ -41,6 +41,8 @@
 #include "WindowTab.h"
 #include "Tabs.h"
 #include "gui/NativeFileDlg.h"
+#include "gui/FilePanels.h"
+#include "gui/MacServices.h"
 #include "gui/AppShell.h"
 #include "gui/GpuiTheme.h"
 #include "gui/DocCanvas.h"
@@ -920,7 +922,9 @@ void AppShellShowCursor(MainWindow* win, bool show) {
     }
 }
 
-void AppShellPreventSleep(bool) {}
+void AppShellPreventSleep(bool on) {
+    MacPreventDisplaySleep(on);
+}
 
 gp::App* AppShellGetApp() {
     return gApp;
@@ -972,88 +976,52 @@ void AppShellSetTitle(MainWindow* win, Str title) {
     }
 }
 
-// ng: without zenity or kdialog gpui's prompt returns nothing; the port's own
-// pickers are there for that
-bool AppShellHasOsFilePicker() {
-    return true;
-}
-
-struct PickFileCtx {
-    Func1<Str> onPicked;
-};
-
-static void OnOwnPickerDone(PickFileCtx* ctx, SavePathArgs* args) {
-    Func1<Str> onPicked = ctx->onPicked;
-    delete ctx;
-    if (len(args->path) > 0) {
-        TempStr path = str::DupTemp(args->path);
-        onPicked.Call(path);
-    }
-}
-
-bool AppShellPickFileAsync(MainWindow* win, Str title, Str filter, const Func1<Str>& onPicked) {
-    if (!win || !win->gpuiWin) {
-        return false;
-    }
-    if (AppShellHasOsFilePicker()) {
-        return false;
-    }
-    // the port's dialog, in the mode that picks a file that exists
-    auto* ctx = new PickFileCtx{onPicked};
-    auto* args = new SavePathArgs();
-    args->win = win;
-    args->title = str::Dup(len(title) > 0 ? title : Tr("Open"));
-    WindowTab* tab = win->CurrentTab();
-    TempStr dir = tab && len(tab->filePath) > 0 ? path::GetDirTemp(tab->filePath) : TempStr{};
-    // only the directory matters; the name field starts empty
-    args->initialPath = str::Dup(len(dir) > 0 ? path::JoinTemp(dir, StrL("")) : Str{});
-    args->filter = str::Dup(filter);
-    args->openExisting = true;
-    args->onDone = MkFunc1(OnOwnPickerDone, ctx);
-    ShowSavePathDialog(args);
-    return true;
-}
-
-// ng: the same open prompt with a caller-chosen title (a certificate, an
-// image); gpui's PathPrompt has no file-type filter
-TempStr AppShellPromptForPathTemp(MainWindow* win, Str title, Str filter, Str initialPath) {
-    if (!win || !win->gpuiWin) {
-        return {};
-    }
-    (void)filter;
-    (void)initialPath;
+// gpui's prompt: one file, no filter. What a -dbg-control script gets, as it
+// can't answer macOS's panel
+static TempStr GpuiPromptForFileTemp(MainWindow* win, Str title) {
     gp::PathPrompt prompt;
     prompt.files = true;
     prompt.title = ToGpui(len(title) > 0 ? title : Tr("Open"));
-    gp::TempStr path = gp::PromptForPathTemp(win->gpuiWin, prompt);
-    return str::DupTemp(FromGpui(path));
-}
-
-TempStr AppShellPromptForFileTemp(MainWindow* win) {
-    if (!win || !win->gpuiWin) {
-        return {};
-    }
-    gp::PathPrompt prompt;
-    prompt.files = true;
-    prompt.title = ToGpui(Tr("Open"));
     gp::TempStr path = gp::PromptForPathTemp(win->gpuiWin, prompt);
     // gpui's temp string lives in its own arena, ours has to outlive this call
     return str::DupTemp(FromGpui(path));
 }
 
-// ng: gpui's prompt answers one path (see "gpui gaps"); Windows' own dialog
-// has orig's OFN_ALLOWMULTISELECT
+// ng: the open prompt with a caller-chosen title (a certificate, an image)
+TempStr AppShellPromptForPathTemp(MainWindow* win, Str title, Str filter, Str initialPath) {
+    if (!win || !win->gpuiWin) {
+        return {};
+    }
+    if (!NativeFileDlgEnabled()) {
+        return GpuiPromptForFileTemp(win, title);
+    }
+    StrVec paths;
+    if (!MacOpenPanel(len(title) > 0 ? title : Tr("Open"), filter, initialPath, OpenPanelSelect::One, &paths)) {
+        return {};
+    }
+    return str::DupTemp(paths[0]);
+}
+
+TempStr AppShellPromptForFileTemp(MainWindow* win) {
+    return AppShellPromptForPathTemp(win, Tr("Open"), {});
+}
+
+// orig's OFN_ALLOWMULTISELECT open dialog
 bool AppShellPromptForFiles(MainWindow* win, Str filter, StrVec* pathsOut) {
     if (!win || !win->gpuiWin) {
         return false;
     }
-    (void)filter;
-    TempStr path = AppShellPromptForFileTemp(win);
-    if (len(path) == 0) {
-        return false;
+    if (!NativeFileDlgEnabled()) {
+        TempStr path = GpuiPromptForFileTemp(win, Tr("Open"));
+        if (len(path) == 0) {
+            return false;
+        }
+        pathsOut->Append(path);
+        return true;
     }
-    pathsOut->Append(path);
-    return true;
+    WindowTab* tab = win->CurrentTab();
+    Str initial = tab ? tab->filePath : Str{};
+    return MacOpenPanel(Tr("Open"), filter, initial, OpenPanelSelect::Many, pathsOut);
 }
 
 // --- key bindings -----------------------------------------------------------
@@ -2775,8 +2743,7 @@ Rect AppShellPredictCanvasRc(MainWindow* win, CanvasPredict predict) {
         return {};
     }
     bool tabsVisible = TabsAreVisible(win);
-    if (predict == CanvasPredict::DocumentTab && SettingsUseTabs() && !win->isFullScreen &&
-        !win->InPresentation()) {
+    if (predict == CanvasPredict::DocumentTab && SettingsUseTabs() && !win->isFullScreen && !win->InPresentation()) {
         tabsVisible = true;
     }
     bool wasMaximized = win->isMaximized;

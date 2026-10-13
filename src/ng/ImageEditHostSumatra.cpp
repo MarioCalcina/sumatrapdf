@@ -28,6 +28,7 @@
 #include "Theme.h"
 #include "Translations.h"
 #include "ImageSaveCropResize.h"
+#include "gui/MacServices.h"
 #include "AppHelpersCommon.h"
 
 extern "C" {
@@ -200,12 +201,15 @@ static bool ImageFormatAvailable(Str ext) {
     return false;
 }
 
-// ng: gpui cannot write images; Windows keeps orig's PNG + CF_DIBV5 pair.
+// ng: gpui's clipboard writes text only, so the PNG goes on AppKit's pasteboard
 bool ImageEditCopyToClipboard(Pixmap* px) {
     if (!px) {
         return false;
     }
-    return false;
+    Str png = EncodePngFromPixmap(px);
+    bool ok = MacPasteboardSetPng(png);
+    str::Free(png);
+    return ok;
 }
 
 Pixmap* ImageEditGetClipboard(MainWindow* win) {

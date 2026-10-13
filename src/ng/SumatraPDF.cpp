@@ -145,7 +145,6 @@ static bool gCrashOnOpen = false;
 // lets the shell open a URI for any supported scheme in
 // the appropriate application (web browser, mail client, etc.)
 bool SumatraLaunchBrowser(Str url) {
-
     if (!CanAccessDisk()) {
         return false;
     }
@@ -3572,23 +3571,64 @@ static void ToggleFilePicker() {
     ScheduleSaveSettings();
 }
 
+// orig's BuildOpenFileFilters: "All supported documents" first, then one group
+// per format and "All files", as an lpstrFilter with \1 for \0
+static TempStr OpenDocsFilterTemp() {
+    const struct {
+        Str name;
+        Str filter;
+        bool available;
+    } fileFormats[] = {
+        {Tr("PDF documents"), StrL("*.pdf;*.p7m"), true},
+        {Tr("XPS documents"), StrL("*.xps;*.oxps"), true},
+        {Tr("DjVu documents"), StrL("*.djvu"), true},
+        {Tr("PostScript documents"), StrL("*.ps;*.eps"), IsEnginePsAvailable()},
+        {Tr("DVI documents"), StrL("*.dvi"), IsEngineDviAvailable()},
+        {Tr("Comic books"), StrL("*.cbz;*.cbr;*.cb7;*.cbt"), true},
+        {Tr("CHM documents"), StrL("*.chm"), true},
+        {Tr("SVG documents"), StrL("*.svg"), true},
+        {Tr("EPUB ebooks"), StrL("*.epub"), true},
+        {Tr("Microsoft Reader ebooks"), StrL("*.lit"), true},
+        {Tr("Markdown documents"), StrL("*.md;*.markdown"), true},
+        {Tr("Mobi documents"), StrL("*.mobi"), true},
+        {Tr("FictionBook documents"), StrL("*.fb2;*.fb2z;*.zfb2"), true},
+        {Tr("PalmDoc documents"), StrL("*.pdb;*.prc"), true},
+        {Tr("Images"),
+         StrL("*.bmp;*.dib;*.gif;*.jpg;*.jpeg;*.jfif;*.jxr;*.hdp;*.wdp;*.png;*.tga;*.tif;*.tiff;*.webp;*.heic;*.heif;"
+              "*.avif;*.jxl;*.jp2;*.j2k;*.jpx;*.jpf;*.jpm;*.j2c;*.ico"),
+         true},
+        {Tr("Text documents"), StrL("*.txt;*.log;*.nfo;*.tcr"), true},
+    };
+
+    str::Builder all;
+    str::Builder groups;
+    for (const auto& ff : fileFormats) {
+        if (!ff.available) {
+            continue;
+        }
+        if (len(all) > 0) {
+            all.AppendChar(';');
+        }
+        all.Append(ff.filter);
+        groups.Append(ff.name);
+        groups.AppendChar('\1');
+        groups.Append(ff.filter);
+        groups.AppendChar('\1');
+    }
+    return fmt("%s\1%s\1%s%s\1*.*\1", Tr("All supported documents"), ToStr(all), ToStr(groups), Tr("All files"));
+}
+
 static void OpenFileCmd(MainWindow* win, bool skipHistory, bool forceOsPicker) {
-    // don't allow opening different files in plugin mode
     if (!CanAccessDisk()) {
         return;
     }
-    // ng: without an OS picker File / Open did nothing at all
-    if ((!forceOsPicker && FilePickerIsSumatraPDF()) || !AppShellHasOsFilePicker()) {
+    if (!forceOsPicker && FilePickerIsSumatraPDF()) {
         ShowNavFilesInFolder(win, {}, skipHistory);
         return;
     }
-    TempStr path = AppShellPromptForFileTemp(win);
-    if (len(path) == 0) {
-        return;
-    }
-    WindowTab* tab = LoadDocument(win, path) ? win->CurrentTab() : nullptr;
-    if (tab && skipHistory) {
-        tab->skipHistory = true;
+    StrVec paths;
+    if (AppShellPromptForFiles(win, OpenDocsFilterTemp(), &paths)) {
+        StartLoadDocuments(paths, win, skipHistory);
     }
 }
 
@@ -3715,22 +3755,6 @@ static void InsertImageAtPath(MainWindow* win, Point pt, Str path) {
     FinishImageStamp(win, tab, annot);
 }
 
-// ng: for the platforms whose picker answers later (AppShellPickFileAsync)
-struct ImagePickCtx {
-    MainWindow* win = nullptr;
-    WindowTab* tab = nullptr;
-    Point pt;
-};
-
-static ImagePickCtx gImagePick;
-
-static void OnImagePicked(ImagePickCtx* ctx, Str path) {
-    if (!IsMainWindowValidAndNotClosing(ctx->win) || ctx->win->CurrentTab() != ctx->tab) {
-        return;
-    }
-    InsertImageAtPath(ctx->win, ctx->pt, path);
-}
-
 static void InsertImageFromFile(MainWindow* win, Point pt, ImageStampSource source) {
     WindowTab* tab = win->CurrentTab();
     DisplayModel* dm = win->AsFixed();
@@ -3751,10 +3775,6 @@ static void InsertImageFromFile(MainWindow* win, Point pt, ImageStampSource sour
         TempStr filter =
             fmt("%s\1*.png;*.jpg;*.jpeg;*.jfif;*.bmp;*.gif;*.tif;*.tiff;*.webp;*.heic;*.heif;*.ico\1%s\1*.*\1",
                 Tr("Image files"), Tr("All files"));
-        gImagePick = {win, tab, pt};
-        if (AppShellPickFileAsync(win, Tr("Image files"), filter, MkFunc1(OnImagePicked, &gImagePick))) {
-            return;
-        }
         path = AppShellPromptForPathTemp(win, Tr("Image files"), filter);
     }
     if (len(path) == 0) {

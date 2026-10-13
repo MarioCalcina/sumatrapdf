@@ -60,15 +60,8 @@ void AppShellReapClosedWindows();
 // the open-file dialog; empty when cancelled
 TempStr AppShellPromptForFileTemp(MainWindow* win);
 // the same prompt with a title of its own (certificate, image, ...); filter is
-// orig's lpstrFilter with \1 for \0, which only Windows' dialog can apply
+// orig's lpstrFilter with \1 for \0 ("PDF documents\1*.pdf\1")
 TempStr AppShellPromptForPathTemp(MainWindow* win, Str title, Str filter, Str initialPath = {});
-// false on a Linux without zenity / kdialog, which gpui's prompt runs
-bool AppShellHasOsFilePicker();
-// ng: where the platform's open prompt cannot answer at once (the browser's
-// file input) or does not exist (see above), the pick comes back in onPicked
-// later and this returns true; otherwise false, and the caller prompts.
-// filter as AppShellPromptForPathTemp's
-bool AppShellPickFileAsync(MainWindow* win, Str title, Str filter, const Func1<Str>& onPicked);
 // File / Open style prompt taking several files where the platform can
 bool AppShellPromptForFiles(MainWindow* win, Str filter, StrVec* pathsOut);
 void AppShellSetTitle(MainWindow* win, Str title);
@@ -163,5 +156,5 @@ enum class PrintedPdf {
 bool AppShellPrintPdf(MainWindow* win, Str path, Str jobTitle, PrintedPdf after);
 // presentation mode's auto-hidden cursor (orig hides it with SetCursor(null))
 void AppShellShowCursor(MainWindow* win, bool show);
-// Fullscreen.PreventSleep: keep the display awake (Windows only for now)
+// Fullscreen.PreventSleep: keep the display awake
 void AppShellPreventSleep(bool on);

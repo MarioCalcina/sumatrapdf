@@ -1135,6 +1135,8 @@ export const targets: Target[] = [
       "src/ng/ExternalViewers.cpp",
       "src/ng/gui/NativeWindow.cpp",
       "src/ng/gui/NativeWindow_mac.mm",
+      "src/ng/gui/FilePanels_mac.mm",
+      "src/ng/gui/MacServices_mac.mm",
       "src/ng/GlobalHotkeys.cpp",
       "src/ng/Print.cpp",
       "src/ng/Print_posix.cpp",

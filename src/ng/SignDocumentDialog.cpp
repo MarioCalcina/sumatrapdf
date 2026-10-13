@@ -608,28 +608,9 @@ void SignDocumentView::OnToggle(SignDocumentView*, gp::Ctx* cx, const gp::ClickE
     AppShellInvalidate(gSign.win);
 }
 
-// ng: for the platforms whose picker answers later (AppShellPickFileAsync)
-static void OnCertPicked(MainWindow* win, Str path) {
-    if (gSign.win == win && gSign.editCert) {
-        gp::InputSetValue(gSign.editCert, ToGpui(path));
-        AppShellInvalidate(win);
-    }
-}
-
-static void OnSignImagePicked(MainWindow* win, Str path) {
-    if (gSign.win == win && gSign.editImage) {
-        gp::InputSetValue(gSign.editImage, ToGpui(path));
-        AppShellInvalidate(win);
-    }
-}
-
 void SignDocumentView::OnBrowse(SignDocumentView*, gp::Ctx* cx, const gp::ClickEvent*) {
     TempStr filter = fmt("%s\1*.pfx;*.p12\1%s\1*.*\1", Tr("Certificate files"), Tr("All files"));
     TempStr curr = gSign.editCert ? str::DupTemp(FromGpui(gp::InputValue(gSign.editCert))) : TempStr{};
-    if (AppShellPickFileAsync(gSign.win, Tr("Certificate files"), filter, MkFunc1(OnCertPicked, gSign.win))) {
-        gp::Notify(cx);
-        return;
-    }
     TempStr path = AppShellPromptForPathTemp(gSign.win, Tr("Certificate files"), filter, curr);
     if (len(path) > 0 && gSign.editCert) {
         gp::InputSetValue(gSign.editCert, ToGpui(path));
@@ -641,10 +622,6 @@ void SignDocumentView::OnBrowse(SignDocumentView*, gp::Ctx* cx, const gp::ClickE
 void SignDocumentView::OnBrowseImage(SignDocumentView*, gp::Ctx* cx, const gp::ClickEvent*) {
     TempStr filter = fmt("%s\1*.png;*.jpg;*.jpeg\1%s\1*.*\1", Tr("Image files"), Tr("All files"));
     TempStr curr = gSign.editImage ? str::DupTemp(FromGpui(gp::InputValue(gSign.editImage))) : TempStr{};
-    if (AppShellPickFileAsync(gSign.win, Tr("Image files"), filter, MkFunc1(OnSignImagePicked, gSign.win))) {
-        gp::Notify(cx);
-        return;
-    }
     TempStr path = AppShellPromptForPathTemp(gSign.win, Tr("Image files"), filter, curr);
     if (len(path) > 0 && gSign.editImage) {
         gp::InputSetValue(gSign.editImage, ToGpui(path));

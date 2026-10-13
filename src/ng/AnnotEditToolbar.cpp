@@ -307,18 +307,6 @@ void DeleteAnnotEditToolbar(MainWindow* win) {
     delete tb;
 }
 
-// ng: for the platforms whose picker answers later (AppShellPickFileAsync)
-static void OnAttachPicked(MainWindow* win, Str path) {
-    if (!IsMainWindowValidAndNotClosing(win)) {
-        return;
-    }
-    AnnotEditToolbar* tb = win->annotEditToolbar;
-    Annotation* annot = LiveToolbarAnnot(tb);
-    if (annot && SetEmbeddedFileFromPath(annot, path)) {
-        AnnotChanged(win->CurrentTab());
-    }
-}
-
 // --- the contents editor ----------------------------------------------------
 
 bool IsEditingAnnotContents(MainWindow* win) {
@@ -936,9 +924,6 @@ static void OnChipClick(AnnotEditToolbar* tb, int chipIdx) {
             break;
         case AnnotEditKind::AttachFile: {
             if (!CanAccessDisk()) {
-                break;
-            }
-            if (AppShellPickFileAsync(tb->win, Tr("Open"), {}, MkFunc1(OnAttachPicked, tb->win))) {
                 break;
             }
             TempStr path = AppShellPromptForPathTemp(tb->win, Tr("Open"), {});
