@@ -19,7 +19,6 @@
 #include "base/File.h"
 #include "SumatraPDF.h"
 #include "Commands.h"
-#include "WindowTab.h"
 #include "MainWindow.h"
 #include "ExternalViewers.h"
 #include "Theme.h"
@@ -169,12 +168,11 @@ static NSURL* KeyDocURL() {
     if (!win && len(gWindows) > 0) {
         win = gWindows[0];
     }
-    WindowTab* tab = win ? win->CurrentTab() : nullptr;
-    // a file on disk, as Send by Email needs
-    if (!tab || !CanSendAsEmailAttachment(tab)) {
+    Str path = FilePathForOtherApps(win ? win->CurrentTab() : nullptr);
+    if (len(path) == 0) {
         return nil;
     }
-    return [NSURL fileURLWithPath:ToNSString(tab->filePath)];
+    return [NSURL fileURLWithPath:ToNSString(path)];
 }
 
 static NSImage* MenuIcon(NSImage* img) {

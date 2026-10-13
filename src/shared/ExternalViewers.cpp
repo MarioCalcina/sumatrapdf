@@ -490,6 +490,15 @@ bool CanSendAsEmailAttachment(WindowTab* tab) {
     return IsEmailAttachmentSendAvailable();
 }
 
+// the tab's file when other apps may open it (File > Open With, Share);
+// empty otherwise
+Str FilePathForOtherApps(WindowTab* tab) {
+    if (!tab || !CanViewExternally(tab)) {
+        return {};
+    }
+    return tab->filePath;
+}
+
 bool SendAsEmailAttachment(WindowTab* tab) {
     if (!tab || !CanSendAsEmailAttachment(tab)) {
         return false;

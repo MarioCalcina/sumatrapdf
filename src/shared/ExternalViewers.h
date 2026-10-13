@@ -20,6 +20,7 @@ bool ViewWithKnownExternalViewer(WindowTab* tab, int cmd);
 
 bool CanSendAsEmailAttachment(WindowTab* tab = nullptr);
 bool SendAsEmailAttachment(WindowTab* tab);
+Str FilePathForOtherApps(WindowTab* tab);
 
 bool CouldBePDFDoc(WindowTab*);
 bool IsPdfDoc(WindowTab*);
