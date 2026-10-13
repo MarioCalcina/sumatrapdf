@@ -43,7 +43,8 @@ import { commands, commandAltDescs } from "./gen-commands";
 
 // strings that should not be sent for translation
 // (e.g. command names whose display text is set dynamically)
-const translationBlacklist: string[] = ["Toggle Windows Previewer", "Toggle Windows Search Filter"];
+// ("..." is from a comment in src/base/Base.cpp)
+const translationBlacklist: string[] = ["Toggle Windows Previewer", "Toggle Windows Search Filter", "..."];
 
 const DEFAULT_SERVER = "https://www.apptranslator.org";
 const LOCAL_SERVER = "http://127.0.0.1:9311";
@@ -262,17 +263,24 @@ function tryGetTransSecret(): string {
   return s;
 }
 
-// strings of this fork translated from an upstream string that differs in one word
+// strings of this fork translated from an upstream string that differs in one
+// word; "from" may be one the code no longer uses
 const derivedTranslations: { english: string; from: string; word: [string, string] }[] = [
   { english: "Follow macOS", from: "Follow Windows", word: ["Windows", "macOS"] },
+  {
+    english: "Open File With macOS File Picker...",
+    from: "Open File With Windows File Picker...",
+    word: ["Windows", "macOS"],
+  },
+  { english: "Open using &macOS File Picker...", from: "Open using &Windows File Picker...", word: ["Windows", "macOS"] },
 ];
 
-function addDerivedTranslations(pt: ParsedTranslations): void {
+function addDerivedTranslations(pt: ParsedTranslations, hist: ServerHistory): void {
   for (const d of derivedTranslations) {
     let n = 0;
     for (const [lang, m] of pt.perLang) {
       if (existingTranslation(pt.perLang, lang, d.english) !== undefined) continue;
-      const t = m.get(d.from);
+      const t = fixTranslation(hist.get(lang)?.get(d.from) ?? "");
       if (!t || !t.includes(d.word[0])) continue;
       m.set(d.english, t.replaceAll(d.word[0], d.word[1]));
       n++;
@@ -331,13 +339,13 @@ async function buildFromHistory(server: string): Promise<void> {
   }
   const pt: ParsedTranslations = { perLang, allStrings: strs, fromServer: clonePerLang(perLang) };
   autoAddStrippedMatches(pt, buildStrippedIndex(hist, pt));
-  addDerivedTranslations(pt);
-  const translated = new Set(strs.filter((s) => [...perLang.values()].some((m) => m.has(s))));
+  addDerivedTranslations(pt, hist);
   addForkTranslations(pt);
 
   // what translations/fork.txt could add: strings no language has, and per
   // language the ones others have
   const untranslated = strs.filter((s) => ![...perLang.values()].some((m) => m.has(s)));
+  const translated = new Set(strs.filter((s) => !untranslated.includes(s)));
   console.log(`${untranslated.length} strings without any translation:\n  ${untranslated.join("\n  ")}`);
   for (const [lang, m] of perLang) {
     const gaps = strs.filter((s) => translated.has(s) && !m.has(s));

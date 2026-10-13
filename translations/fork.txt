@@ -5,172 +5,6726 @@
 # Format: ":english" then "lang:translation" lines. A hint like "Del close tab"
 # keeps its key as the first word.
 :%s: restore default
+af:%s: herstel verstek
+am:%s: վերականգնել լռելյայնը
+ar:%s: استعادة الافتراضي
+bg:%s: възстанови по подразбиране
+bn:%s: ডিফল্ট পুনরুদ্ধার করুন
+br:%s: restaurar padrão
+bs:%s: vrati zadano
+by:%s: аднавіць прадвызначанае
+ca-xv:%s: restaura el valor per defecte
+ca:%s: restaura el valor per defecte
+cn:%s：恢复默认值
+cy:%s: adfer y rhagosodiad
+cz:%s: obnovit výchozí
+de:%s: Standard wiederherstellen
+dk:%s: gendan standard
+el:%s: επαναφορά προεπιλογής
 es:%s: restaurar valor predeterminado
+et:%s: taasta vaikeväärtus
+eu:%s: berrezarri balio lehenetsia
+fa:%s: بازگردانی پیش‌فرض
+fi:%s: palauta oletus
+fr:%s : restaurer la valeur par défaut
+fy-nl:%s: standertwearde werom sette
+ga:%s: athchóirigh an réamhshocrú
+gl:%s: restaurar o valor predeterminado
+he:%s: שחזר ברירת מחדל
+hi:%s: डिफ़ॉल्ट पुनर्स्थापित करें
+hr:%s: vrati zadano
+hu:%s: alapértelmezés visszaállítása
+id:%s: pulihkan bawaan
+it:%s: ripristina predefinito
+ja:%s: デフォルトに戻す
+ka:%s: ნაგულისხმევის აღდგენა
+kr:%s: 기본값 복원
+kw:%s: dasserghi defowt
+lt:%s: atkurti numatytąjį
+mk:%s: врати стандардно
+ml:%s: സ്ഥിരസ്ഥിതി പുനഃസ്ഥാപിക്കുക
+mm:%s: မူလအတိုင်း ပြန်ထားရန်
+my:%s: pulihkan lalai
+nl:%s: standaardwaarde herstellen
+nn:%s: gjenopprett standard
+no:%s: gjenopprett standard
+pa:%s: ਪੂਰਵ-ਨਿਰਧਾਰਤ ਮੁੜ-ਬਹਾਲ ਕਰੋ
+pl:%s: przywróć domyślne
+pt:%s: repor predefinição
+ro:%s: restabilește valoarea implicită
+ru:%s: восстановить по умолчанию
+si:%s: පෙරනිමිය ප්‍රතිසාධනය කරන්න
+sk:%s: obnoviť predvolené
+sl:%s: obnovi privzeto
+sn:%s: dzorera zvakajairwa
+sp-rs:%s: vrati podrazumevano
+sq:%s: rikthe parazgjedhjen
+sr-rs:%s: врати подразумевано
+sv:%s: återställ standardvärde
+ta:%s: இயல்புநிலையை மீட்டமை
+th:%s: คืนค่าเริ่มต้น
+tl:%s: ibalik ang default
+tr:%s: varsayılana döndür
+tw:%s：還原預設值
+uk:%s: відновити типове
+uz:%s: standartni tiklash
+vn:%s: khôi phục mặc định
+ne:%s: पूर्वनिर्धारित पुनर्स्थापना गर्नुहोस्
+az:%s: standartı bərpa et
+ku:%s: گەڕاندنەوەی بنەڕەت
+jv:%s: balekake gawan
+lv:%s: atjaunot noklusējumu
+co:%s: restaurà u valore predefinitu
+fo:%s: endurset vanligt virði
+sat:%s: ᱰᱤᱯᱷᱚᱞᱴ ᱫᱚᱦᱲᱟ ᱫᱚᱦᱚ
 :a note
+af:'n nota
+am:նշում
+ar:ملاحظة
+bg:бележка
+bn:একটি নোট
+br:uma nota
+bs:napomena
+by:заўвага
+ca-xv:una nota
+ca:una nota
+cn:备注
+cy:nodyn
+cz:poznámka
+de:Hinweis
+dk:en note
+el:σημείωση
 es:una nota
+et:märkus
+eu:ohar bat
+fa:یادداشت
+fi:huomautus
+fr:remarque
+fy-nl:in opmerking
+ga:nóta
+gl:unha nota
+he:הערה
+hi:एक नोट
+hr:napomena
+hu:megjegyzés
+id:catatan
+it:nota
+ja:メモ
+ka:შენიშვნა
+kr:메모
+kw:noten
+lt:pastaba
+mk:белешка
+ml:ഒരു കുറിപ്പ്
+mm:မှတ်စု
+my:nota
+nl:een opmerking
+nn:ein merknad
+no:en merknad
+pa:ਇੱਕ ਨੋਟ
+pl:uwaga
+pt:uma nota
+ro:o notă
+ru:примечание
+si:සටහනක්
+sk:poznámka
+sl:opomba
+sn:chinyorwa
+sp-rs:napomena
+sq:një shënim
+sr-rs:напомена
+sv:en anteckning
+ta:ஒரு குறிப்பு
+th:หมายเหตุ
+tl:isang tala
+tr:bir not
+tw:附註
+uk:примітка
+uz:izoh
+vn:ghi chú
+ne:एउटा टिप्पणी
+az:qeyd
+ku:تێبینییەک
+jv:cathetan
+lv:piezīme
+co:una nota
+fo:ein viðmerking
+sat:ᱢᱤᱫᱴᱟᱹᱝ ᱱᱳᱴ
 :About %s
+af:Oor %s
+am:%s-ի մասին
+ar:حول %s
+bg:Относно %s
+bn:%s সম্পর্কে
+br:Sobre %s
+bs:O aplikaciji %s
+by:Пра %s
+ca-xv:Quant a %s
+ca:Quant a %s
+cn:关于%s
+cy:Ynghylch %s
+cz:O aplikaci %s
+de:Über %s
+dk:Om %s
+el:Πληροφορίες για %s
 es:Acerca de %s
+et:Teave rakenduse %s kohta
+eu:%s aplikazioari buruz
+fa:درباره %s
+fi:Tietoja ohjelmasta %s
+fr:À propos de %s
+fy-nl:Oer %s
+ga:Maidir le %s
+gl:Acerca de %s
+he:אודות %s
+hi:%s के बारे में
+hr:O aplikaciji %s
+hu:A(z) %s névjegye
+id:Mengenai %s
+it:Informazioni su %s
+ja:%sについて
+ka:%s-ის შესახებ
+kr:%s에 관하여
+kw:A-dro dhe %s
+lt:Apie %s
+mk:За %s
+ml:%s നെക്കുറിച്ച്
+mm:%s အကြောင်း
+my:Mengenai %s
+nl:Over %s
+nn:Om %s
+no:Om %s
+pa:%s ਬਾਰੇ
+pl:%s – informacje
+pt:Acerca de %s
+ro:Despre %s
+ru:О программе %s
+si:%s ගැන
+sk:O aplikácii %s
+sl:O programu %s
+sn:Nezve %s
+sp-rs:O aplikaciji %s
+sq:Rreth %s
+sr-rs:О апликацији %s
+sv:Om %s
+ta:%s பற்றி
+th:เกี่ยวกับ %s
+tl:Tungkol sa %s
+tr:%s Hakkında
+tw:關於%s
+uk:Про %s
+uz:%s haqida
+vn:Giới thiệu về %s
+ne:%s बारे
+az:%s haqqında
+ku:دەربارەی %s
+jv:Babagan %s
+lv:Par %s
+co:À prupositu di %s
+fo:Um %s
+sat:%s ᱵᱟᱵᱚᱛ
 :Agent is working...
+af:Agent is besig...
+am:Գործակալն աշխատում է...
+ar:الوكيل يعمل...
+bg:Агентът работи...
+bn:এজেন্ট কাজ করছে...
+br:O agente está trabalhando...
+bs:Agent radi...
+by:Агент працуе...
+ca-xv:L'agent està treballant...
+ca:L'agent està treballant...
+cn:代理正在工作...
+cy:Mae'r asiant yn gweithio...
+cz:Agent pracuje...
+de:Agent arbeitet...
+dk:Agenten arbejder...
+el:Ο πράκτορας εργάζεται...
 es:El agente está trabajando...
+et:Agent töötab...
+eu:Agentea lanean ari da...
+fa:عامل در حال کار است...
+fi:Agentti työskentelee...
+fr:L'agent travaille...
+fy-nl:Agint is dwaande...
+ga:Tá an gníomhaire ag obair...
+gl:O axente está a traballar...
+he:הסוכן עובד...
+hi:एजेंट काम कर रहा है...
+hr:Agent radi...
+hu:Az ügynök dolgozik...
+id:Agen sedang bekerja...
+it:L'agente sta lavorando...
+ja:エージェントが作業中...
+ka:აგენტი მუშაობს...
+kr:에이전트가 작업 중...
+kw:An gweythres a ober...
+lt:Agentas dirba...
+mk:Агентот работи...
+ml:ഏജന്റ് പ്രവർത്തിക്കുന്നു...
+mm:အေးဂျင့် လုပ်ဆောင်နေသည်...
+my:Ejen sedang bekerja...
+nl:Agent is bezig...
+nn:Agenten arbeider...
+no:Agenten jobber...
+pa:ਏਜੰਟ ਕੰਮ ਕਰ ਰਿਹਾ ਹੈ...
+pl:Agent pracuje...
+pt:O agente está a trabalhar...
+ro:Agentul lucrează...
+ru:Агент работает...
+si:නියෝජිතයා වැඩ කරමින්...
+sk:Agent pracuje...
+sl:Agent dela ...
+sn:Mumiririri ari kushanda...
+sp-rs:Agent radi...
+sq:Agjenti po punon...
+sr-rs:Агент ради...
+sv:Agenten arbetar...
+ta:முகவர் வேலை செய்கிறது...
+th:เอเจนต์กำลังทำงาน...
+tl:Nagtatrabaho ang agent...
+tr:Ajan çalışıyor...
+tw:代理程式正在處理...
+uk:Агент працює...
+uz:Agent ishlamoqda...
+vn:Tác tử đang làm việc...
+ne:एजेन्ट काम गर्दैछ...
+az:Agent işləyir...
+ku:بریکار کار دەکات...
+jv:Agen lagi nyambut gawe...
+lv:Aģents strādā...
+co:L’agente travaglia...
+fo:Agenturin arbeiðir...
+sat:ᱮᱡᱮᱱᱴ ᱠᱟᱹᱢᱤ ᱠᱟᱱᱟᱭ...
 :Approval signature
+af:Goedkeuringshandtekening
+am:Հաստատման ստորագրություն
+ar:توقيع الموافقة
+bg:Одобрителен подпис
+bn:অনুমোদন স্বাক্ষর
+br:Assinatura de aprovação
+bs:Potpis odobrenja
+by:Подпіс зацвярджэння
+ca-xv:Signatura d'aprovació
+ca:Signatura d'aprovació
+cn:批准签名
+cy:Llofnod cymeradwyo
+cz:Schvalovací podpis
+de:Genehmigungssignatur
+dk:Godkendelsessignatur
+el:Υπογραφή έγκρισης
 es:Firma de aprobación
+et:Kinnitusallkiri
+eu:Onarpen-sinadura
+fa:امضای تأیید
+fi:Hyväksyntäallekirjoitus
+fr:Signature d'approbation
+fy-nl:Goedkarringshantekening
+ga:Síniú faofa
+gl:Sinatura de aprobación
+he:חתימת אישור
+hi:अनुमोदन हस्ताक्षर
+hr:Potpis odobrenja
+hu:Jóváhagyó aláírás
+id:Tanda tangan persetujuan
+it:Firma di approvazione
+ja:承認署名
+ka:დამტკიცების ხელმოწერა
+kr:승인 서명
+kw:Sinans komendyans
+lt:Patvirtinimo parašas
+mk:Потпис за одобрување
+ml:അംഗീകാര ഒപ്പ്
+mm:အတည်ပြု လက်မှတ်
+my:Tandatangan kelulusan
+nl:Goedkeuringshandtekening
+nn:Godkjenningssignatur
+no:Godkjenningssignatur
+pa:ਮਨਜ਼ੂਰੀ ਦਸਤਖਤ
+pl:Podpis zatwierdzający
+pt:Assinatura de aprovação
+ro:Semnătură de aprobare
+ru:Утверждающая подпись
+si:අනුමැතියේ අත්සන
+sk:Schvaľovací podpis
+sl:Odobritveni podpis
+sn:Siginecha yekubvumidza
+sp-rs:Potpis odobrenja
+sq:Nënshkrim miratimi
+sr-rs:Потпис одобрења
+sv:Godkännandesignatur
+ta:ஒப்புதல் கையொப்பம்
+th:ลายเซ็นอนุมัติ
+tl:Lagda ng pag-apruba
+tr:Onay imzası
+tw:核准簽章
+uk:Підпис затвердження
+uz:Tasdiqlash imzosi
+vn:Chữ ký phê duyệt
+ne:स्वीकृति हस्ताक्षर
+az:Təsdiq imzası
+ku:واژووی پەسەندکردن
+jv:Tandha tangan persetujuan
+lv:Apstiprinājuma paraksts
+co:Segnatura d’appruvazione
+fo:Góðkenningarundirskrift
+sat:ᱢᱟᱱᱚᱛ ᱥᱚᱦᱤ
 :Ask about this document...
+af:Vra oor hierdie dokument...
+am:Հարցրեք այս փաստաթղթի մասին...
+ar:اسأل عن هذا المستند...
+bg:Попитай за този документ...
+bn:এই নথি সম্পর্কে জিজ্ঞাসা করুন...
+br:Pergunte sobre este documento...
+bs:Pitaj o ovom dokumentu...
+by:Спытаць пра гэты дакумент...
+ca-xv:Pregunta sobre este document...
+ca:Pregunta sobre aquest document...
+cn:询问有关此文档的问题...
+cy:Gofynnwch am y ddogfen hon...
+cz:Zeptat se na tento dokument...
+de:Frage zu diesem Dokument...
+dk:Spørg om dette dokument...
+el:Ρωτήστε για αυτό το έγγραφο...
 es:Pregunta sobre este documento...
+et:Küsi selle dokumendi kohta...
+eu:Galdetu dokumentu honi buruz...
+fa:درباره این سند بپرسید...
+fi:Kysy tästä dokumentista...
+fr:Poser une question sur ce document...
+fy-nl:Freegje wat oer dit dokumint...
+ga:Fiafraigh faoin doiciméad seo...
+gl:Pregunta sobre este documento...
+he:שאל על מסמך זה...
+hi:इस दस्तावेज़ के बारे में पूछें...
+hr:Pitaj o ovom dokumentu...
+hu:Kérdezzen erről a dokumentumról...
+id:Tanyakan tentang dokumen ini...
+it:Chiedi informazioni su questo documento...
+ja:このドキュメントについて質問...
+ka:იკითხეთ ამ დოკუმენტის შესახებ...
+kr:이 문서에 대해 질문...
+kw:Govyn a-dro dhe'n dokment ma...
+lt:Klausti apie šį dokumentą...
+mk:Прашај за овој документ...
+ml:ഈ പ്രമാണത്തെക്കുറിച്ച് ചോദിക്കുക...
+mm:ဤစာတမ်းအကြောင်း မေးမြန်းရန်...
+my:Tanya tentang dokumen ini...
+nl:Vraag iets over dit document...
+nn:Spør om dette dokumentet...
+no:Spør om dette dokumentet...
+pa:ਇਸ ਦਸਤਾਵੇਜ਼ ਬਾਰੇ ਪੁੱਛੋ...
+pl:Zapytaj o ten dokument...
+pt:Pergunte sobre este documento...
+ro:Întreabă despre acest document...
+ru:Спросить об этом документе...
+si:මෙම ලේඛනය ගැන අසන්න...
+sk:Opýtať sa na tento dokument...
+sl:Vprašaj o tem dokumentu ...
+sn:Bvunza nezvegwaro iri...
+sp-rs:Pitaj o ovom dokumentu...
+sq:Pyet për këtë dokument...
+sr-rs:Питај о овом документу...
+sv:Fråga om det här dokumentet...
+ta:இந்த ஆவணத்தைப் பற்றிக் கேளுங்கள்...
+th:ถามเกี่ยวกับเอกสารนี้...
+tl:Magtanong tungkol sa dokumentong ito...
+tr:Bu belge hakkında sorun...
+tw:詢問有關此文件的問題...
+uk:Запитати про цей документ...
+uz:Ushbu hujjat haqida so‘rang...
+vn:Hỏi về tài liệu này...
+ne:यो कागजातबारे सोध्नुहोस्...
+az:Bu sənəd haqqında soruşun...
+ku:پرسیار دەربارەی ئەم بەڵگەنامەیە بکە...
+jv:Takon babagan dokumen iki...
+lv:Jautāt par šo dokumentu...
+co:Dumandà nantu à stu ducumentu...
+fo:Spyr um hetta skjalið...
+sat:ᱱᱚᱶᱟ ᱫᱚᱞᱤᱞ ᱵᱟᱵᱚᱛ ᱠᱩᱞᱤ ᱢᱮ...
 :Auto-Rotate Wide Pages
+af:Draai wye bladsye outomaties
+am:Ավտոմատ պտտել լայն էջերը
+ar:تدوير الصفحات العريضة تلقائيًا
+bg:Автоматично завъртане на широки страници
+bn:চওড়া পৃষ্ঠা স্বয়ংক্রিয়ভাবে ঘোরান
+br:Girar automaticamente páginas largas
+bs:Automatski rotiraj široke stranice
+by:Аўтаматычна паварочваць шырокія старонкі
+ca-xv:Gira automàticament les pàgines amples
+ca:Gira automàticament les pàgines amples
+cn:自动旋转宽页面
+cy:Cylchdroi tudalennau llydan yn awtomatig
+cz:Automaticky otáčet široké stránky
+de:Breite Seiten automatisch drehen
+dk:Roter brede sider automatisk
+el:Αυτόματη περιστροφή φαρδιών σελίδων
 es:Girar automáticamente las páginas anchas
+et:Pööra laiad lehed automaatselt
+eu:Biratu automatikoki orri zabalak
+fa:چرخش خودکار صفحه‌های عریض
+fi:Kierrä leveät sivut automaattisesti
+fr:Pivoter automatiquement les pages larges
+fy-nl:Brede siden automatysk draaie
+ga:Rothlaigh leathanaigh leathana go huathoibríoch
+gl:Rotar automaticamente as páxinas anchas
+he:סובב אוטומטית עמודים רחבים
+hi:चौड़े पृष्ठ स्वचालित रूप से घुमाएँ
+hr:Automatski zakreni široke stranice
+hu:Széles oldalak automatikus forgatása
+id:Putar halaman lebar secara otomatis
+it:Ruota automaticamente le pagine larghe
+ja:横長のページを自動回転
+ka:ფართო გვერდების ავტომატური შემობრუნება
+kr:넓은 페이지 자동 회전
+kw:Treylya folennow ledan yn awtomatek
+lt:Automatiškai pasukti plačius puslapius
+mk:Автоматски ротирај широки страници
+ml:വീതിയുള്ള പേജുകൾ സ്വയമേവ തിരിക്കുക
+mm:ကျယ်သော စာမျက်နှာများကို အလိုအလျောက် လှည့်ရန်
+my:Putar halaman lebar secara automatik
+nl:Brede pagina's automatisch draaien
+nn:Roter breie sider automatisk
+no:Roter brede sider automatisk
+pa:ਚੌੜੇ ਸਫ਼ਿਆਂ ਨੂੰ ਆਪਣੇ ਆਪ ਘੁਮਾਓ
+pl:Automatycznie obracaj szerokie strony
+pt:Rodar automaticamente páginas largas
+ro:Rotește automat paginile late
+ru:Автоповорот широких страниц
+si:පළල් පිටු ස්වයංක්‍රීයව කරකවන්න
+sk:Automaticky otáčať široké strany
+sl:Samodejno zasukaj široke strani
+sn:Tenderedza mapeji akafara pachawo
+sp-rs:Automatski rotiraj široke stranice
+sq:Rrotullo automatikisht faqet e gjera
+sr-rs:Аутоматски ротирај широке странице
+sv:Rotera breda sidor automatiskt
+ta:அகலமான பக்கங்களைத் தானாகச் சுழற்று
+th:หมุนหน้ากว้างอัตโนมัติ
+tl:Awtomatikong i-rotate ang malalapad na pahina
+tr:Geniş sayfaları otomatik döndür
+tw:自動旋轉寬頁面
+uk:Автоматично повертати широкі сторінки
+uz:Keng sahifalarni avtomatik aylantirish
+vn:Tự động xoay các trang rộng
+ne:चौडा पृष्ठहरू स्वतः घुमाउनुहोस्
+az:Geniş səhifələri avtomatik döndər
+ku:خولاندنەوەی خۆکاری لاپەڕە پانەکان
+jv:Puter kaca amba kanthi otomatis
+lv:Automātiski pagriezt platās lapas
+co:Girà autumaticamente e pagine larghe
+fo:Snara breiðar síður sjálvvirkandi
+sat:ᱳᱥᱟᱨ ᱥᱟᱦᱴᱟᱠᱚ ᱟᱡ ᱛᱮ ᱟᱹᱪᱩᱨ ᱢᱮ
 :Bottom
+af:Onderkant
+am:Ներքև
+ar:الأسفل
+bg:Долу
+bn:নিচে
+br:Parte inferior
+bs:Dno
+by:Уніз
+ca-xv:Baix
+ca:A baix
+cn:底部
+cy:Gwaelod
+cz:Dolní okraj
+de:Unterer Rand
+dk:Bund
+el:Κάτω
 es:Parte inferior
+et:Alumine serv
+eu:Behean
+fa:پایین
+fi:Alareuna
+fr:Bas
+fy-nl:Ûnderkant
+ga:Bun
+gl:Abaixo
+he:למטה
+hi:नीचे
+hr:Dno
+hu:Alja
+id:Bawah
+it:In basso
+ja:下端
+ka:ქვემოთ
+kr:맨 아래
+kw:Goles
+lt:Apačia
+mk:Дно
+ml:താഴെ
+mm:အောက်ခြေ
+my:Bawah
+nl:Onderkant
+nn:Botn
+no:Bunn
+pa:ਹੇਠਾਂ
+pl:Dół
+pt:Fundo
+ro:Jos
+ru:В конец
+si:පහළ
+sk:Dolný okraj
+sl:Dno
+sn:Pasi
+sp-rs:Dno
+sq:Poshtë
+sr-rs:Дно
+sv:Nederkant
+ta:கீழே
+th:ด้านล่าง
+tl:Ibaba
+tr:Alt
+tw:底端
+uk:Донизу
+uz:Pastki qism
+vn:Dưới cùng
+ne:तल
+az:Aşağı
+ku:خوارەوە
+jv:Ngisor
+lv:Apakša
+co:In fondu
+fo:Botnur
+sat:ᱞᱟᱛᱟᱨ
 :Bring All to Front
+af:Bring alles na vore
+am:Բերել բոլորը առաջ
+ar:إحضار الكل إلى المقدمة
+bg:Изнеси всички отпред
+bn:সব সামনে আনুন
+br:Trazer Todas para a Frente
+bs:Dovedi sve naprijed
+by:Усе вокны наперад
+ca-xv:Porta-ho tot al davant
+ca:Porta-ho tot al davant
+cn:前置全部窗口
+cy:Dod â Phopeth i'r Blaen
+cz:Převést vše do popředí
+de:Alle nach vorne bringen
+dk:Anbring alle forrest
+el:Μεταφορά όλων μπροστά
 es:Traer todo al frente
+et:Too kõik ette
+eu:Ekarri dena aurrera
+fa:آوردن همه به جلو
+fi:Tuo kaikki eteen
+fr:Tout ramener au premier plan
+fy-nl:Alles nei foaren bringe
+ga:Tabhair Gach Rud chun Tosaigh
+gl:Traer todo á fronte
+he:הבא הכל לחזית
+hi:सभी को सामने लाएँ
+hr:Postavi sve naprijed
+hu:Az összes előtérbe hozása
+id:Bawa Semua ke Depan
+it:Porta tutto in primo piano
+ja:すべてを手前に移動
+ka:ყველას წინ წამოწევა
+kr:모두 앞으로 가져오기
+kw:Dri Oll dhe'n Rag
+lt:Perkelti visus į priekį
+mk:Донеси ги сите напред
+ml:എല്ലാം മുന്നിലേക്ക് കൊണ്ടുവരിക
+mm:အားလုံးကို ရှေ့သို့ ယူလာရန်
+my:Bawa Semua ke Depan
+nl:Alles op voorgrond
+nn:Legg alle fremst
+no:Legg alle fremst
+pa:ਸਭ ਨੂੰ ਅੱਗੇ ਲਿਆਓ
+pl:Umieść wszystko na wierzchu
+pt:Passar tudo para a frente
+ro:Adu tot în față
+ru:Все окна — на передний план
+si:සියල්ල ඉදිරියට ගෙනෙන්න
+sk:Preniesť všetko dopredu
+sl:Postavi vse v ospredje
+sn:Unza Zvose Kumberi
+sp-rs:Prenesi sve u prvi plan
+sq:Sill të gjitha përpara
+sr-rs:Пренеси све у први план
+sv:Lägg alla överst
+ta:அனைத்தையும் முன்னுக்குக் கொண்டுவா
+th:นำทั้งหมดมาด้านหน้า
+tl:Dalhin Lahat sa Harap
+tr:Tümünü Öne Getir
+tw:將此程式所有視窗移至最前
+uk:Все на передній план
+uz:Hammasini oldinga keltirish
+vn:Đưa tất cả ra trước
+ne:सबै अगाडि ल्याउनुहोस्
+az:Hamısını önə gətir
+ku:هەمووی بهێنە پێشەوە
+jv:Gawa Kabeh ing Ngarep
+lv:Pārvietot visus uz priekšu
+co:Purtà tuttu davanti
+fo:Flyt alt fremst
+sat:ᱡᱷᱚᱛᱚ ᱥᱚᱢᱟᱝ ᱛᱮ ᱟᱹᱜᱩ ᱢᱮ
 :built on
+af:gebou op
+am:կառուցված է
+ar:تاريخ البناء
+bg:компилирано на
+bn:তৈরির তারিখ
+br:compilado em
+bs:izgrađeno
+by:сабрана
+ca-xv:compilat el
+ca:compilat el
+cn:编译于
+cy:adeiladwyd ar
+cz:sestaveno
+de:erstellt am
+dk:bygget den
+el:δημιουργήθηκε στις
 es:compilado el
+et:koostatud
+eu:konpilazio-data
+fa:ساخته‌شده در
+fi:käännetty
+fr:compilé le
+fy-nl:boud op
+ga:tógtha ar
+gl:compilado o
+he:נבנה ב-
+hi:बनाया गया
+hr:izgrađeno
+hu:fordítva
+id:dibuat pada
+it:compilato il
+ja:ビルド日
+ka:აწყობილია
+kr:빌드 날짜
+kw:drehevys
+lt:sukompiliuota
+mk:изградено
+ml:നിർമ്മിച്ചത്
+mm:တည်ဆောက်သည့်ရက်
+my:dibina pada
+nl:gebouwd op
+nn:bygd
+no:bygget
+pa:ਬਣਾਇਆ ਗਿਆ
+pl:zbudowano
+pt:compilado em
+ro:compilat la
+ru:собрано
+si:ගොඩනැඟුවේ
+sk:zostavené
+sl:zgrajeno
+sn:yakavakwa pa
+sp-rs:napravljeno
+sq:ndërtuar më
+sr-rs:направљено
+sv:byggd den
+ta:உருவாக்கப்பட்டது
+th:สร้างเมื่อ
+tl:binuo noong
+tr:derleme tarihi
+tw:建置於
+uk:зібрано
+uz:yig‘ilgan sana
+vn:xây dựng ngày
+ne:निर्माण मिति
+az:yığılıb
+ku:دروستکراوە لە
+jv:digawe ing
+lv:kompilēts
+co:cumpilatu u
+fo:bygt
+sat:ᱛᱮᱭᱟᱨ ᱦᱩᱭ ᱢᱟᱸ
 :Certify: form filling and signing allowed
+af:Sertifiseer: invul van vorms en ondertekening toegelaat
+am:Վավերացնել. թույլատրվում է ձևերի լրացում և ստորագրում
+ar:تصديق: يُسمح بتعبئة النماذج والتوقيع
+bg:Сертифициране: разрешено попълване на формуляри и подписване
+bn:প্রত্যয়ন: ফর্ম পূরণ ও স্বাক্ষর অনুমোদিত
+br:Certificar: preenchimento de formulários e assinatura permitidos
+bs:Certificiraj: dozvoljeno popunjavanje obrazaca i potpisivanje
+by:Сертыфікаваць: дазволена запаўненне форм і подпіс
+ca-xv:Certifica: es permet emplenar formularis i signar
+ca:Certifica: es permet emplenar formularis i signar
+cn:认证：允许填写表单和签名
+cy:Ardystio: caniateir llenwi ffurflenni a llofnodi
+cz:Certifikovat: vyplňování formulářů a podepisování povoleno
+de:Zertifizieren: Ausfüllen von Formularen und Signieren erlaubt
+dk:Certificer: udfyldning af formularer og signering tilladt
+el:Πιστοποίηση: επιτρέπεται η συμπλήρωση φορμών και η υπογραφή
 es:Certificar: se permite rellenar formularios y firmar
+et:Sertifitseeri: vormide täitmine ja allkirjastamine lubatud
+eu:Ziurtatu: inprimakiak betetzea eta sinatzea baimenduta
+fa:گواهی: پر کردن فرم و امضا مجاز است
+fi:Varmenna: lomakkeiden täyttö ja allekirjoittaminen sallittu
+fr:Certifier : remplissage de formulaires et signature autorisés
+fy-nl:Sertifisearje: formulieren ynfolje en ûndertekenje tastien
+ga:Deimhnigh: ceadaítear foirmeacha a líonadh agus síniú
+gl:Certificar: permítese encher formularios e asinar
+he:אישור: מותר למלא טפסים ולחתום
+hi:प्रमाणित करें: फ़ॉर्म भरने और हस्ताक्षर की अनुमति
+hr:Certificiraj: dopušteno ispunjavanje obrazaca i potpisivanje
+hu:Hitelesítés: űrlapkitöltés és aláírás engedélyezett
+id:Sertifikasi: pengisian formulir dan penandatanganan diizinkan
+it:Certifica: compilazione moduli e firma consentite
+ja:証明: フォームへの入力と署名を許可
+ka:სერტიფიცირება: დაშვებულია ფორმების შევსება და ხელმოწერა
+kr:인증: 양식 작성 및 서명 허용
+kw:Dustunia: lenwel furvlennow ha sina alowys
+lt:Sertifikuoti: leidžiama pildyti formas ir pasirašyti
+mk:Сертифицирај: дозволено пополнување формулари и потпишување
+ml:സാക്ഷ്യപ്പെടുത്തുക: ഫോം പൂരിപ്പിക്കലും ഒപ്പിടലും അനുവദനീയം
+mm:အသိအမှတ်ပြု: ဖောင်ဖြည့်ခြင်းနှင့် လက်မှတ်ထိုးခြင်း ခွင့်ပြုသည်
+my:Perakui: pengisian borang dan menandatangani dibenarkan
+nl:Certificeren: formulieren invullen en ondertekenen toegestaan
+nn:Sertifiser: utfylling av skjema og signering tillate
+no:Sertifiser: utfylling av skjema og signering tillatt
+pa:ਪ੍ਰਮਾਣਿਤ ਕਰੋ: ਫ਼ਾਰਮ ਭਰਨ ਅਤੇ ਦਸਤਖਤ ਦੀ ਇਜਾਜ਼ਤ
+pl:Certyfikuj: dozwolone wypełnianie formularzy i podpisywanie
+pt:Certificar: preenchimento de formulários e assinatura permitidos
+ro:Certifică: completarea formularelor și semnarea sunt permise
+ru:Сертифицировать: разрешены заполнение форм и подписание
+si:සහතික කරන්න: පෝරම පිරවීමට සහ අත්සන් කිරීමට ඉඩ ඇත
+sk:Certifikovať: vypĺňanie formulárov a podpisovanie povolené
+sl:Overi: dovoljeno izpolnjevanje obrazcev in podpisovanje
+sn:Simbisa: kuzadza mafomu nekusaina zvinobvumidzwa
+sp-rs:Sertifikuj: dozvoljeno popunjavanje obrazaca i potpisivanje
+sq:Certifiko: lejohet plotësimi i formularëve dhe nënshkrimi
+sr-rs:Сертификуј: дозвољено попуњавање образаца и потписивање
+sv:Certifiera: ifyllning av formulär och signering tillåts
+ta:சான்றளி: படிவம் நிரப்புதல் மற்றும் கையொப்பமிடுதல் அனுமதிக்கப்படும்
+th:รับรอง: อนุญาตให้กรอกแบบฟอร์มและลงนาม
+tl:Patunayan: pinapayagan ang pagsagot sa form at paglagda
+tr:Onayla: form doldurma ve imzalamaya izin verilir
+tw:認證：允許填寫表單及簽署
+uk:Сертифікувати: дозволено заповнення форм і підписання
+uz:Sertifikatlash: shakllarni to‘ldirish va imzolashga ruxsat
+vn:Chứng nhận: cho phép điền biểu mẫu và ký
+ne:प्रमाणित गर्नुहोस्: फारम भर्न र हस्ताक्षर गर्न अनुमति
+az:Sertifikatla: formların doldurulmasına və imzalanmasına icazə verilir
+ku:بڕوانامە: پڕکردنەوەی فۆرم و واژووکردن ڕێگەپێدراوە
+jv:Sertifikasi: ngisi formulir lan tandha tangan diidinake
+lv:Sertificēt: atļauta veidlapu aizpildīšana un parakstīšana
+co:Certificà : riempimentu di furmulari è firma permessi
+fo:Vátta: útfylling av oyðublaðum og undirskriving loyvd
+sat:ᱥᱚᱨᱴᱤᱯᱷᱟᱭ: ᱯᱷᱚᱨᱢ ᱯᱮᱨᱮᱡ ᱟᱨ ᱥᱚᱦᱤ ᱦᱩᱠᱩᱢ
 :Certify: form filling, signing and annotations allowed
+af:Sertifiseer: invul van vorms, ondertekening en aantekeninge toegelaat
+am:Վավերացնել. թույլատրվում է ձևերի լրացում, ստորագրում և ծանոթագրություններ
+ar:تصديق: يُسمح بتعبئة النماذج والتوقيع والتعليقات التوضيحية
+bg:Сертифициране: разрешено попълване на формуляри, подписване и анотации
+bn:প্রত্যয়ন: ফর্ম পূরণ, স্বাক্ষর ও টীকা অনুমোদিত
+br:Certificar: preenchimento de formulários, assinatura e anotações permitidos
+bs:Certificiraj: dozvoljeno popunjavanje obrazaca, potpisivanje i napomene
+by:Сертыфікаваць: дазволена запаўненне форм, подпіс і анатацыі
+ca-xv:Certifica: es permet emplenar formularis, signar i fer anotacions
+ca:Certifica: es permet emplenar formularis, signar i fer anotacions
+cn:认证：允许填写表单、签名和注释
+cy:Ardystio: caniateir llenwi ffurflenni, llofnodi ac anodiadau
+cz:Certifikovat: vyplňování formulářů, podepisování a poznámky povoleny
+de:Zertifizieren: Ausfüllen von Formularen, Signieren und Anmerkungen erlaubt
+dk:Certificer: udfyldning af formularer, signering og annoteringer tilladt
+el:Πιστοποίηση: επιτρέπεται η συμπλήρωση φορμών, η υπογραφή και οι σχολιασμοί
 es:Certificar: se permite rellenar formularios, firmar y anotar
+et:Sertifitseeri: vormide täitmine, allkirjastamine ja märkused lubatud
+eu:Ziurtatu: inprimakiak betetzea, sinatzea eta oharrak baimenduta
+fa:گواهی: پر کردن فرم، امضا و حاشیه‌نویسی مجاز است
+fi:Varmenna: lomakkeiden täyttö, allekirjoittaminen ja merkinnät sallittu
+fr:Certifier : remplissage de formulaires, signature et annotations autorisés
+fy-nl:Sertifisearje: formulieren ynfolje, ûndertekenje en annotaasjes tastien
+ga:Deimhnigh: ceadaítear foirmeacha a líonadh, síniú agus anótálacha
+gl:Certificar: permítese encher formularios, asinar e anotar
+he:אישור: מותר למלא טפסים, לחתום ולהוסיף הערות
+hi:प्रमाणित करें: फ़ॉर्म भरने, हस्ताक्षर और एनोटेशन की अनुमति
+hr:Certificiraj: dopušteno ispunjavanje obrazaca, potpisivanje i bilješke
+hu:Hitelesítés: űrlapkitöltés, aláírás és jegyzetek engedélyezettek
+id:Sertifikasi: pengisian formulir, penandatanganan, dan anotasi diizinkan
+it:Certifica: compilazione moduli, firma e annotazioni consentite
+ja:証明: フォームへの入力、署名、注釈を許可
+ka:სერტიფიცირება: დაშვებულია ფორმების შევსება, ხელმოწერა და ანოტაციები
+kr:인증: 양식 작성, 서명 및 주석 허용
+kw:Dustunia: lenwel furvlennow, sina ha notenyans alowys
+lt:Sertifikuoti: leidžiama pildyti formas, pasirašyti ir anotuoti
+mk:Сертифицирај: дозволено пополнување формулари, потпишување и прибелешки
+ml:സാക്ഷ്യപ്പെടുത്തുക: ഫോം പൂരിപ്പിക്കൽ, ഒപ്പിടൽ, വ്യാഖ്യാനങ്ങൾ എന്നിവ അനുവദനീയം
+mm:အသိအမှတ်ပြု: ဖောင်ဖြည့်ခြင်း၊ လက်မှတ်ထိုးခြင်းနှင့် မှတ်ချက်များ ခွင့်ပြုသည်
+my:Perakui: pengisian borang, menandatangani dan anotasi dibenarkan
+nl:Certificeren: formulieren invullen, ondertekenen en aantekeningen toegestaan
+nn:Sertifiser: utfylling av skjema, signering og merknadar tillate
+no:Sertifiser: utfylling av skjema, signering og merknader tillatt
+pa:ਪ੍ਰਮਾਣਿਤ ਕਰੋ: ਫ਼ਾਰਮ ਭਰਨ, ਦਸਤਖਤ ਅਤੇ ਟਿੱਪਣੀਆਂ ਦੀ ਇਜਾਜ਼ਤ
+pl:Certyfikuj: dozwolone wypełnianie formularzy, podpisywanie i adnotacje
+pt:Certificar: preenchimento de formulários, assinatura e anotações permitidos
+ro:Certifică: completarea formularelor, semnarea și adnotările sunt permise
+ru:Сертифицировать: разрешены заполнение форм, подписание и аннотации
+si:සහතික කරන්න: පෝරම පිරවීමට, අත්සන් කිරීමට සහ විවරණ එක් කිරීමට ඉඩ ඇත
+sk:Certifikovať: vypĺňanie formulárov, podpisovanie a anotácie povolené
+sl:Overi: dovoljeno izpolnjevanje obrazcev, podpisovanje in pripombe
+sn:Simbisa: kuzadza mafomu, kusaina nezvinyorwa zvinobvumidzwa
+sp-rs:Sertifikuj: dozvoljeno popunjavanje obrazaca, potpisivanje i beleške
+sq:Certifiko: lejohet plotësimi i formularëve, nënshkrimi dhe anotimet
+sr-rs:Сертификуј: дозвољено попуњавање образаца, потписивање и белешке
+sv:Certifiera: ifyllning av formulär, signering och anteckningar tillåts
+ta:சான்றளி: படிவம் நிரப்புதல், கையொப்பமிடுதல் மற்றும் குறிப்புரைகள் அனுமதிக்கப்படும்
+th:รับรอง: อนุญาตให้กรอกแบบฟอร์ม ลงนาม และใส่คำอธิบายประกอบ
+tl:Patunayan: pinapayagan ang pagsagot sa form, paglagda at mga anotasyon
+tr:Onayla: form doldurma, imzalama ve ek açıklamalara izin verilir
+tw:認證：允許填寫表單、簽署及註解
+uk:Сертифікувати: дозволено заповнення форм, підписання та анотації
+uz:Sertifikatlash: shakllarni to‘ldirish, imzolash va izohlarga ruxsat
+vn:Chứng nhận: cho phép điền biểu mẫu, ký và chú thích
+ne:प्रमाणित गर्नुहोस्: फारम भर्न, हस्ताक्षर र एनोटेसन गर्न अनुमति
+az:Sertifikatla: formların doldurulmasına, imzalanmasına və annotasiyalara icazə verilir
+ku:بڕوانامە: پڕکردنەوەی فۆرم، واژووکردن و تێبینی ڕێگەپێدراوە
+jv:Sertifikasi: ngisi formulir, tandha tangan lan anotasi diidinake
+lv:Sertificēt: atļauta veidlapu aizpildīšana, parakstīšana un anotācijas
+co:Certificà : riempimentu di furmulari, firma è annutazioni permessi
+fo:Vátta: útfylling av oyðublaðum, undirskriving og viðmerkingar loyvd
+sat:ᱥᱚᱨᱴᱤᱯᱷᱟᱭ: ᱯᱷᱚᱨᱢ ᱯᱮᱨᱮᱡ, ᱥᱚᱦᱤ ᱟᱨ ᱪᱤᱱᱦᱟᱹᱠᱚ ᱦᱩᱠᱩᱢ
 :Certify: no changes allowed
+af:Sertifiseer: geen veranderinge toegelaat
+am:Վավերացնել. փոփոխություններ չեն թույլատրվում
+ar:تصديق: لا يُسمح بأي تغييرات
+bg:Сертифициране: не се разрешават промени
+bn:প্রত্যয়ন: কোনো পরিবর্তন অনুমোদিত নয়
+br:Certificar: nenhuma alteração permitida
+bs:Certificiraj: izmjene nisu dozvoljene
+by:Сертыфікаваць: змены забаронены
+ca-xv:Certifica: no es permeten canvis
+ca:Certifica: no es permeten canvis
+cn:认证：不允许更改
+cy:Ardystio: ni chaniateir newidiadau
+cz:Certifikovat: žádné změny nejsou povoleny
+de:Zertifizieren: keine Änderungen erlaubt
+dk:Certificer: ingen ændringer tilladt
+el:Πιστοποίηση: δεν επιτρέπονται αλλαγές
 es:Certificar: no se permiten cambios
+et:Sertifitseeri: muudatused pole lubatud
+eu:Ziurtatu: ez da aldaketarik baimentzen
+fa:گواهی: هیچ تغییری مجاز نیست
+fi:Varmenna: muutoksia ei sallita
+fr:Certifier : aucune modification autorisée
+fy-nl:Sertifisearje: gjin wizigingen tastien
+ga:Deimhnigh: ní cheadaítear athruithe
+gl:Certificar: non se permiten cambios
+he:אישור: אין לבצע שינויים
+hi:प्रमाणित करें: कोई बदलाव की अनुमति नहीं
+hr:Certificiraj: promjene nisu dopuštene
+hu:Hitelesítés: módosítás nem engedélyezett
+id:Sertifikasi: tidak ada perubahan yang diizinkan
+it:Certifica: nessuna modifica consentita
+ja:証明: 変更を許可しない
+ka:სერტიფიცირება: ცვლილებები არ არის დაშვებული
+kr:인증: 변경 허용 안 함
+kw:Dustunia: chanjyow vyth ny vydhons alowys
+lt:Sertifikuoti: pakeitimai neleidžiami
+mk:Сертифицирај: не се дозволени промени
+ml:സാക്ഷ്യപ്പെടുത്തുക: മാറ്റങ്ങൾ അനുവദനീയമല്ല
+mm:အသိအမှတ်ပြု: ပြောင်းလဲမှု ခွင့်မပြုပါ
+my:Perakui: tiada perubahan dibenarkan
+nl:Certificeren: geen wijzigingen toegestaan
+nn:Sertifiser: ingen endringar tillate
+no:Sertifiser: ingen endringer tillatt
+pa:ਪ੍ਰਮਾਣਿਤ ਕਰੋ: ਕੋਈ ਤਬਦੀਲੀ ਦੀ ਇਜਾਜ਼ਤ ਨਹੀਂ
+pl:Certyfikuj: zmiany niedozwolone
+pt:Certificar: não são permitidas alterações
+ro:Certifică: nu sunt permise modificări
+ru:Сертифицировать: изменения запрещены
+si:සහතික කරන්න: කිසිදු වෙනසකට ඉඩ නැත
+sk:Certifikovať: žiadne zmeny nie sú povolené
+sl:Overi: spremembe niso dovoljene
+sn:Simbisa: hapana shanduko inobvumidzwa
+sp-rs:Sertifikuj: izmene nisu dozvoljene
+sq:Certifiko: nuk lejohen ndryshime
+sr-rs:Сертификуј: измене нису дозвољене
+sv:Certifiera: inga ändringar tillåts
+ta:சான்றளி: மாற்றங்கள் அனுமதிக்கப்படாது
+th:รับรอง: ไม่อนุญาตให้เปลี่ยนแปลง
+tl:Patunayan: walang pinapayagang pagbabago
+tr:Onayla: değişikliğe izin verilmez
+tw:認證：不允許變更
+uk:Сертифікувати: зміни заборонено
+uz:Sertifikatlash: o‘zgartirishlarga ruxsat yo‘q
+vn:Chứng nhận: không cho phép thay đổi
+ne:प्रमाणित गर्नुहोस्: कुनै परिवर्तन अनुमति छैन
+az:Sertifikatla: dəyişikliklərə icazə verilmir
+ku:بڕوانامە: هیچ گۆڕانکارییەک ڕێگەپێنەدراوە
+jv:Sertifikasi: ora ana owah-owahan sing diidinake
+lv:Sertificēt: izmaiņas nav atļautas
+co:Certificà : nisuna mudificazione permessa
+fo:Vátta: ongar broytingar loyvdar
+sat:ᱥᱚᱨᱴᱤᱯᱷᱟᱭ: ᱵᱚᱫᱚᱞ ᱦᱩᱠᱩᱢ ᱵᱟᱹᱱᱩᱜᱼᱟ
 :Copy failed
+af:Kopiëring het misluk
+am:Պատճենումը ձախողվեց
+ar:فشل النسخ
+bg:Неуспешно копиране
+bn:অনুলিপি ব্যর্থ হয়েছে
+br:Falha ao copiar
+bs:Kopiranje nije uspjelo
+by:Не ўдалося скапіяваць
+ca-xv:No s'ha pogut copiar
+ca:No s'ha pogut copiar
+cn:复制失败
+cy:Methwyd copïo
+cz:Kopírování selhalo
+de:Kopieren fehlgeschlagen
+dk:Kopiering mislykkedes
+el:Η αντιγραφή απέτυχε
 es:Error al copiar
+et:Kopeerimine nurjus
+eu:Ezin izan da kopiatu
+fa:کپی ناموفق بود
+fi:Kopiointi epäonnistui
+fr:Échec de la copie
+fy-nl:Kopiearjen mislearre
+ga:Theip ar chóipeáil
+gl:Erro ao copiar
+he:ההעתקה נכשלה
+hi:कॉपी विफल
+hr:Kopiranje nije uspjelo
+hu:A másolás sikertelen
+id:Gagal menyalin
+it:Copia non riuscita
+ja:コピーに失敗しました
+ka:კოპირება ვერ მოხერხდა
+kr:복사 실패
+kw:Dasskrifa a fyllis
+lt:Nepavyko nukopijuoti
+mk:Копирањето не успеа
+ml:പകർത്തൽ പരാജയപ്പെട്ടു
+mm:ကူးယူ၍ မရပါ
+my:Gagal menyalin
+nl:Kopiëren mislukt
+nn:Kopiering mislukkast
+no:Kopiering mislyktes
+pa:ਕਾਪੀ ਅਸਫਲ
+pl:Kopiowanie nie powiodło się
+pt:Falha ao copiar
+ro:Copierea a eșuat
+ru:Не удалось скопировать
+si:පිටපත් කිරීම අසාර්ථකයි
+sk:Kopírovanie zlyhalo
+sl:Kopiranje ni uspelo
+sn:Kukopa kwakundikana
+sp-rs:Kopiranje nije uspelo
+sq:Kopjimi dështoi
+sr-rs:Копирање није успело
+sv:Kopieringen misslyckades
+ta:நகலெடுத்தல் தோல்வியடைந்தது
+th:คัดลอกไม่สำเร็จ
+tl:Nabigo ang pagkopya
+tr:Kopyalama başarısız oldu
+tw:拷貝失敗
+uk:Не вдалося скопіювати
+uz:Nusxalab bo‘lmadi
+vn:Sao chép thất bại
+ne:प्रतिलिपि असफल भयो
+az:Kopyalama uğursuz oldu
+ku:لەبەرگرتنەوە سەرکەوتوو نەبوو
+jv:Gagal nyalin
+lv:Kopēšana neizdevās
+co:Fiascu di a copia
+fo:Avritan miseydnaðist
+sat:ᱱᱚᱠᱚᱞ ᱨᱮ ᱵᱷᱩᱞ ᱦᱩᱭᱮᱱᱟ
 :Del restore default
+af:Del herstel verstek
+am:Del վերականգնել լռելյայնը
+ar:Del استعادة الافتراضي
+bg:Del възстанови по подразбиране
+bn:Del ডিফল্ট পুনরুদ্ধার করুন
+br:Del restaurar padrão
+bs:Del vrati zadano
+by:Del аднавіць прадвызначанае
+ca-xv:Supr restaura el valor per defecte
+ca:Supr restaura el valor per defecte
+cn:Del 恢复默认值
+cy:Del adfer y rhagosodiad
+cz:Del obnovit výchozí
+de:Entf Standard wiederherstellen
+dk:Del gendan standard
+el:Del επαναφορά προεπιλογής
 es:Supr restaurar valor predeterminado
+et:Del taasta vaikeväärtus
+eu:Ezab berrezarri balio lehenetsia
+fa:Del بازگردانی پیش‌فرض
+fi:Del palauta oletus
+fr:Suppr restaurer la valeur par défaut
+fy-nl:Del standertwearde werom sette
+ga:Del athchóirigh an réamhshocrú
+gl:Supr restaurar o valor predeterminado
+he:Del שחזר ברירת מחדל
+hi:Del डिफ़ॉल्ट पुनर्स्थापित करें
+hr:Del vrati zadano
+hu:Del alapértelmezés visszaállítása
+id:Del pulihkan bawaan
+it:Canc ripristina predefinito
+ja:Del デフォルトに戻す
+ka:Del ნაგულისხმევის აღდგენა
+kr:Del 기본값 복원
+kw:Del dasserghi defowt
+lt:Del atkurti numatytąjį
+mk:Del врати стандардно
+ml:Del സ്ഥിരസ്ഥിതി പുനഃസ്ഥാപിക്കുക
+mm:Del မူလအတိုင်း ပြန်ထားရန်
+my:Del pulihkan lalai
+nl:Del standaardwaarde herstellen
+nn:Del gjenopprett standard
+no:Del gjenopprett standard
+pa:Del ਪੂਰਵ-ਨਿਰਧਾਰਤ ਮੁੜ-ਬਹਾਲ ਕਰੋ
+pl:Del przywróć domyślne
+pt:Del repor predefinição
+ro:Del restabilește valoarea implicită
+ru:Del восстановить по умолчанию
+si:Del පෙරනිමිය ප්‍රතිසාධනය කරන්න
+sk:Del obnoviť predvolené
+sl:Del obnovi privzeto
+sn:Del dzorera zvakajairwa
+sp-rs:Del vrati podrazumevano
+sq:Del rikthe parazgjedhjen
+sr-rs:Del врати подразумевано
+sv:Del återställ standardvärde
+ta:Del இயல்புநிலையை மீட்டமை
+th:Del คืนค่าเริ่มต้น
+tl:Del ibalik ang default
+tr:Del varsayılana döndür
+tw:Del 還原預設值
+uk:Del відновити типове
+uz:Del standartni tiklash
+vn:Del khôi phục mặc định
+ne:Del पूर्वनिर्धारित पुनर्स्थापना गर्नुहोस्
+az:Del standartı bərpa et
+ku:Del گەڕاندنەوەی بنەڕەت
+jv:Del balekake gawan
+lv:Del atjaunot noklusējumu
+co:Squ. restaurà u valore predefinitu
+fo:Del endurset vanligt virði
+sat:Del ᱰᱤᱯᱷᱚᱞᱴ ᱫᱚᱦᱲᱟ ᱫᱚᱦᱚ
+:enter search term
+af:tik 'n soekterm
+am:մուտքագրեք որոնման բառ
+ar:أدخل مصطلح البحث
+bg:въведете дума за търсене
+bn:অনুসন্ধান শব্দ লিখুন
+br:digite um termo de pesquisa
+bs:unesite pojam za pretragu
+by:увядзіце пошукавы запыт
+ca-xv:introduïu un terme de busca
+ca:introduïu un terme de cerca
+cn:输入搜索词
+cy:rhowch derm chwilio
+cz:zadejte hledaný výraz
+de:Suchbegriff eingeben
+dk:indtast et søgeord
+el:εισαγάγετε όρο αναζήτησης
+es:introduce término de búsqueda
+et:sisesta otsingusõna
+eu:idatzi bilaketa-terminoa
+fa:عبارت جستجو را وارد کنید
+fi:kirjoita hakusana
+fr:saisissez un terme de recherche
+fy-nl:fier in sykterm yn
+ga:cuir isteach téarma cuardaigh
+gl:introduce un termo de busca
+he:הזן מונח חיפוש
+hi:खोज शब्द दर्ज करें
+hr:unesite pojam za pretraživanje
+hu:írjon be egy keresőkifejezést
+id:masukkan kata pencarian
+it:inserisci un termine di ricerca
+ja:検索語を入力
+ka:შეიყვანეთ საძიებო სიტყვა
+kr:검색어 입력
+kw:entrewgh ger hwilas
+lt:įveskite paieškos žodį
+mk:внесете поим за пребарување
+ml:തിരയൽ പദം നൽകുക
+mm:ရှာဖွေရန် စကားလုံး ထည့်ပါ
+my:masukkan istilah carian
+nl:voer een zoekterm in
+nn:skriv inn eit søkjeord
+no:skriv inn et søkeord
+pa:ਖੋਜ ਸ਼ਬਦ ਦਰਜ ਕਰੋ
+pl:wpisz wyszukiwane hasło
+pt:introduza um termo de pesquisa
+ro:introduceți un termen de căutare
+ru:введите поисковый запрос
+si:සෙවුම් පදයක් ඇතුළත් කරන්න
+sk:zadajte hľadaný výraz
+sl:vnesite iskalni niz
+sn:nyora izwi rekutsvaga
+sp-rs:unesite pojam za pretragu
+sq:jepni një term kërkimi
+sr-rs:унесите појам за претрагу
+sv:ange en sökterm
+ta:தேடல் சொல்லை உள்ளிடுக
+th:ป้อนคำค้นหา
+tl:maglagay ng termino sa paghahanap
+tr:arama terimi girin
+tw:輸入搜尋字詞
+uk:введіть пошуковий запит
+uz:qidiruv so‘zini kiriting
+vn:nhập từ khóa tìm kiếm
+ne:खोज शब्द प्रविष्ट गर्नुहोस्
+az:axtarış sözünü daxil edin
+ku:زاراوەی گەڕان بنووسە
+jv:lebokake tembung panelusuran
+lv:ievadiet meklēšanas vārdu
+co:scrivite un termine di ricerca
+fo:skriva eitt leitiorð
+sat:ᱥᱮᱸᱫᱽᱨᱟ ᱟᱹᱲᱟᱹ ᱚᱞ ᱢᱮ
 :External Viewer
+af:Eksterne kyker
+am:Արտաքին դիտիչ
+ar:عارض خارجي
+bg:Външен преглед
+bn:বাহ্যিক দর্শক
+br:Visualizador externo
+bs:Vanjski preglednik
+by:Знешні праглядальнік
+ca-xv:Visualitzador extern
+ca:Visualitzador extern
+cn:外部查看器
+cy:Gwyliwr allanol
+cz:Externí prohlížeč
+de:Externer Betrachter
+dk:Ekstern fremviser
+el:Εξωτερικό πρόγραμμα προβολής
 es:Visor externo
+et:Väline vaatur
+eu:Kanpoko ikustailea
+fa:نمایشگر خارجی
+fi:Ulkoinen katseluohjelma
+fr:Visionneuse externe
+fy-nl:Eksterne werjouwer
+ga:Amharcóir seachtrach
+gl:Visor externo
+he:מציג חיצוני
+hi:बाहरी व्यूअर
+hr:Vanjski preglednik
+hu:Külső megjelenítő
+id:Penampil eksternal
+it:Visualizzatore esterno
+ja:外部ビューア
+ka:გარე მნახველი
+kr:외부 뷰어
+kw:Gweler a-ves
+lt:Išorinė peržiūros programa
+mk:Надворешен прегледувач
+ml:ബാഹ്യ വ്യൂവർ
+mm:ပြင်ပ ကြည့်ရှုစနစ်
+my:Pemapar luaran
+nl:Externe viewer
+nn:Ekstern vising
+no:Ekstern visning
+pa:ਬਾਹਰੀ ਦਰਸ਼ਕ
+pl:Zewnętrzna przeglądarka
+pt:Visualizador externo
+ro:Vizualizator extern
+ru:Внешний просмотрщик
+si:බාහිර දර්ශකය
+sk:Externý prehliadač
+sl:Zunanji pregledovalnik
+sn:Muoni wekunze
+sp-rs:Spoljni pregledač
+sq:Shikues i jashtëm
+sr-rs:Спољни прегледач
+sv:Extern visare
+ta:வெளிப்புறப் பார்வையாளர்
+th:ตัวแสดงภายนอก
+tl:Panlabas na viewer
+tr:Harici görüntüleyici
+tw:外部檢視器
+uk:Зовнішній переглядач
+uz:Tashqi ko‘ruvchi
+vn:Trình xem bên ngoài
+ne:बाह्य दर्शक
+az:Xarici baxış proqramı
+ku:پیشاندەری دەرەکی
+jv:Panampil njaba
+lv:Ārējais skatītājs
+co:Fighjulatore esternu
+fo:Uttanhýsis vísari
+sat:ᱵᱟᱦᱨᱮ ᱧᱮᱞᱤᱭᱟᱹ
 :Failed to bake PDF file.
+af:Kon nie PDF-lêer platmaak nie.
+am:Չհաջողվեց հարթեցնել PDF ֆայլը։
+ar:فشل تسطيح ملف PDF.
+bg:Неуспешно изравняване на PDF файла.
+bn:PDF ফাইল সমতল করতে ব্যর্থ।
+br:Falha ao achatar o arquivo PDF.
+bs:Izravnavanje PDF datoteke nije uspjelo.
+by:Не ўдалося спляшчыць PDF-файл.
+ca-xv:No s'ha pogut aplanar el fitxer PDF.
+ca:No s'ha pogut aplanar el fitxer PDF.
+cn:无法拼合 PDF 文件。
+cy:Methwyd gwastatáu'r ffeil PDF.
+cz:Sloučení souboru PDF selhalo.
+de:PDF-Datei konnte nicht reduziert werden.
+dk:Kunne ikke udjævne PDF-filen.
+el:Αποτυχία ισοπέδωσης του αρχείου PDF.
 es:Error al aplanar el archivo PDF.
+et:PDF-faili lamendamine nurjus.
+eu:Ezin izan da PDF fitxategia lautu.
+fa:مسطح کردن پرونده PDF ناموفق بود.
+fi:PDF-tiedoston litistäminen epäonnistui.
+fr:Impossible de figer le fichier PDF.
+fy-nl:Kin PDF-bestân net plat meitsje.
+ga:Theip ar an gcomhad PDF a leacú.
+gl:Erro ao fixar o ficheiro PDF.
+he:השטחת קובץ ה-PDF נכשלה.
+hi:PDF फ़ाइल को समतल करने में विफल।
+hr:Poravnavanje PDF datoteke nije uspjelo.
+hu:Nem sikerült egybeolvasztani a PDF-fájlt.
+id:Gagal meratakan berkas PDF.
+it:Impossibile appiattire il file PDF.
+ja:PDF ファイルを平坦化できませんでした。
+ka:PDF ფაილის გაბრტყელება ვერ მოხერხდა.
+kr:PDF 파일을 병합하지 못했습니다.
+kw:Platthe an restren PDF a fyllis.
+lt:Nepavyko suploti PDF failo.
+mk:Израмнувањето на PDF-датотеката не успеа.
+ml:PDF ഫയൽ പരത്താൻ കഴിഞ്ഞില്ല.
+mm:PDF ဖိုင်ကို ညှိ၍ မရပါ။
+my:Gagal meratakan fail PDF.
+nl:Kan PDF-bestand niet afvlakken.
+nn:Klarte ikkje å flate ut PDF-fila.
+no:Kunne ikke flate ut PDF-filen.
+pa:PDF ਫਾਈਲ ਨੂੰ ਸਮਤਲ ਕਰਨ ਵਿੱਚ ਅਸਫਲ।
+pl:Nie udało się spłaszczyć pliku PDF.
+pt:Falha ao consolidar o ficheiro PDF.
+ro:Aplatizarea fișierului PDF a eșuat.
+ru:Не удалось запечь PDF-файл.
+si:PDF ගොනුව සමතලා කිරීමට නොහැකි විය.
+sk:Zlúčenie súboru PDF zlyhalo.
+sl:Sploščenje datoteke PDF ni uspelo.
+sn:Tatadza kutsetsenura faira rePDF.
+sp-rs:Poravnavanje PDF datoteke nije uspelo.
+sq:Sheshimi i skedarit PDF dështoi.
+sr-rs:Поравнавање PDF датотеке није успело.
+sv:Det gick inte att platta till PDF-filen.
+ta:PDF கோப்பைத் தட்டையாக்க முடியவில்லை.
+th:ไม่สามารถทำให้ไฟล์ PDF แบนราบได้
+tl:Nabigong i-flatten ang PDF file.
+tr:PDF dosyası düzleştirilemedi.
+tw:無法平面化 PDF 檔案。
+uk:Не вдалося зрівняти PDF-файл.
+uz:PDF faylni tekislab bo‘lmadi.
+vn:Không thể làm phẳng tệp PDF.
+ne:PDF फाइल समतल गर्न असफल भयो।
+az:PDF faylını düzləşdirmək alınmadı.
+ku:تەختکردنی پەڕگەی PDF سەرکەوتوو نەبوو.
+jv:Gagal ngratakake berkas PDF.
+lv:Neizdevās saplacināt PDF failu.
+co:Fiascu per scucinà u schedariu PDF.
+fo:Tað miseydnaðist at flata PDF-fíluna.
+sat:PDF ᱨᱮᱫᱽ ᱵᱮᱠ ᱨᱮ ᱵᱷᱩᱞ ᱦᱩᱭᱮᱱᱟ᱾
 :Failed to compress PDF file.
+af:Kon nie PDF-lêer komprimeer nie.
+am:Չհաջողվեց սեղմել PDF ֆայլը։
+ar:فشل ضغط ملف PDF.
+bg:Неуспешно компресиране на PDF файла.
+bn:PDF ফাইল সংকুচিত করতে ব্যর্থ।
+br:Falha ao comprimir o arquivo PDF.
+bs:Kompresija PDF datoteke nije uspjela.
+by:Не ўдалося сціснуць PDF-файл.
+ca-xv:No s'ha pogut comprimir el fitxer PDF.
+ca:No s'ha pogut comprimir el fitxer PDF.
+cn:无法压缩 PDF 文件。
+cy:Methwyd cywasgu'r ffeil PDF.
+cz:Komprese souboru PDF selhala.
+de:PDF-Datei konnte nicht komprimiert werden.
+dk:Kunne ikke komprimere PDF-filen.
+el:Αποτυχία συμπίεσης του αρχείου PDF.
 es:Error al comprimir el archivo PDF.
+et:PDF-faili tihendamine nurjus.
+eu:Ezin izan da PDF fitxategia konprimitu.
+fa:فشرده‌سازی پرونده PDF ناموفق بود.
+fi:PDF-tiedoston pakkaaminen epäonnistui.
+fr:Impossible de compresser le fichier PDF.
+fy-nl:Kin PDF-bestân net komprimearje.
+ga:Theip ar an gcomhad PDF a chomhbhrú.
+gl:Erro ao comprimir o ficheiro PDF.
+he:דחיסת קובץ ה-PDF נכשלה.
+hi:PDF फ़ाइल को संपीड़ित करने में विफल।
+hr:Sažimanje PDF datoteke nije uspjelo.
+hu:Nem sikerült tömöríteni a PDF-fájlt.
+id:Gagal mengompresi berkas PDF.
+it:Impossibile comprimere il file PDF.
+ja:PDF ファイルを圧縮できませんでした。
+ka:PDF ფაილის შეკუმშვა ვერ მოხერხდა.
+kr:PDF 파일을 압축하지 못했습니다.
+kw:Kompressa an restren PDF a fyllis.
+lt:Nepavyko suglaudinti PDF failo.
+mk:Компресирањето на PDF-датотеката не успеа.
+ml:PDF ഫയൽ കംപ്രസ് ചെയ്യാൻ കഴിഞ്ഞില്ല.
+mm:PDF ဖိုင်ကို ချုံ့၍ မရပါ။
+my:Gagal memampatkan fail PDF.
+nl:Kan PDF-bestand niet comprimeren.
+nn:Klarte ikkje å komprimere PDF-fila.
+no:Kunne ikke komprimere PDF-filen.
+pa:PDF ਫਾਈਲ ਨੂੰ ਸੰਕੁਚਿਤ ਕਰਨ ਵਿੱਚ ਅਸਫਲ।
+pl:Nie udało się skompresować pliku PDF.
+pt:Falha ao comprimir o ficheiro PDF.
+ro:Comprimarea fișierului PDF a eșuat.
+ru:Не удалось сжать PDF-файл.
+si:PDF ගොනුව සම්පීඩනය කිරීමට නොහැකි විය.
+sk:Kompresia súboru PDF zlyhala.
+sl:Stiskanje datoteke PDF ni uspelo.
+sn:Tatadza kudzvinyisa faira rePDF.
+sp-rs:Kompresija PDF datoteke nije uspela.
+sq:Ngjeshja e skedarit PDF dështoi.
+sr-rs:Компресија PDF датотеке није успела.
+sv:Det gick inte att komprimera PDF-filen.
+ta:PDF கோப்பைச் சுருக்க முடியவில்லை.
+th:ไม่สามารถบีบอัดไฟล์ PDF ได้
+tl:Nabigong i-compress ang PDF file.
+tr:PDF dosyası sıkıştırılamadı.
+tw:無法壓縮 PDF 檔案。
+uk:Не вдалося стиснути PDF-файл.
+uz:PDF faylni siqib bo‘lmadi.
+vn:Không thể nén tệp PDF.
+ne:PDF फाइल संकुचन गर्न असफल भयो।
+az:PDF faylını sıxmaq alınmadı.
+ku:پەستاندنی پەڕگەی PDF سەرکەوتوو نەبوو.
+jv:Gagal ngompres berkas PDF.
+lv:Neizdevās saspiest PDF failu.
+co:Fiascu per cumprime u schedariu PDF.
+fo:Tað miseydnaðist at trýsta PDF-fíluna.
+sat:PDF ᱨᱮᱫᱽ ᱜᱷᱮᱸᱴ ᱨᱮ ᱵᱷᱩᱞ ᱦᱩᱭᱮᱱᱟ᱾
 :Failed to convert PDF to images.
+af:Kon nie PDF na beelde omskakel nie.
+am:Չհաջողվեց PDF-ը փոխարկել պատկերների։
+ar:فشل تحويل PDF إلى صور.
+bg:Неуспешно преобразуване на PDF в изображения.
+bn:PDF কে ছবিতে রূপান্তর করতে ব্যর্থ।
+br:Falha ao converter o PDF em imagens.
+bs:Pretvaranje PDF-a u slike nije uspjelo.
+by:Не ўдалося пераўтварыць PDF у выявы.
+ca-xv:No s'ha pogut convertir el PDF en imatges.
+ca:No s'ha pogut convertir el PDF en imatges.
+cn:无法将 PDF 转换为图像。
+cy:Methwyd trosi'r PDF yn ddelweddau.
+cz:Převod PDF na obrázky selhal.
+de:PDF konnte nicht in Bilder konvertiert werden.
+dk:Kunne ikke konvertere PDF til billeder.
+el:Αποτυχία μετατροπής του PDF σε εικόνες.
 es:Error al convertir el PDF en imágenes.
+et:PDF-i piltideks teisendamine nurjus.
+eu:Ezin izan da PDFa irudi bihurtu.
+fa:تبدیل PDF به تصویر ناموفق بود.
+fi:PDF:n muuntaminen kuviksi epäonnistui.
+fr:Impossible de convertir le PDF en images.
+fy-nl:Kin PDF net nei ôfbyldingen konvertearje.
+ga:Theip ar an PDF a thiontú ina íomhánna.
+gl:Erro ao converter o PDF en imaxes.
+he:המרת ה-PDF לתמונות נכשלה.
+hi:PDF को छवियों में बदलने में विफल।
+hr:Pretvaranje PDF-a u slike nije uspjelo.
+hu:Nem sikerült képekké alakítani a PDF-et.
+id:Gagal mengonversi PDF menjadi gambar.
+it:Impossibile convertire il PDF in immagini.
+ja:PDF を画像に変換できませんでした。
+ka:PDF-ის სურათებად გარდაქმნა ვერ მოხერხდა.
+kr:PDF를 이미지로 변환하지 못했습니다.
+kw:Treylya an PDF dhe skeusennow a fyllis.
+lt:Nepavyko konvertuoti PDF į paveikslėlius.
+mk:Конвертирањето на PDF во слики не успеа.
+ml:PDF ചിത്രങ്ങളാക്കി മാറ്റാൻ കഴിഞ്ഞില്ല.
+mm:PDF ကို ပုံများအဖြစ် ပြောင်း၍ မရပါ။
+my:Gagal menukar PDF kepada imej.
+nl:Kan PDF niet naar afbeeldingen converteren.
+nn:Klarte ikkje å konvertere PDF til bilete.
+no:Kunne ikke konvertere PDF til bilder.
+pa:PDF ਨੂੰ ਚਿੱਤਰਾਂ ਵਿੱਚ ਬਦਲਣ ਵਿੱਚ ਅਸਫਲ।
+pl:Nie udało się przekonwertować PDF na obrazy.
+pt:Falha ao converter o PDF em imagens.
+ro:Conversia PDF-ului în imagini a eșuat.
+ru:Не удалось преобразовать PDF в изображения.
+si:PDF රූප බවට පරිවර්තනය කිරීමට නොහැකි විය.
+sk:Prevod PDF na obrázky zlyhal.
+sl:Pretvorba PDF v slike ni uspela.
+sn:Tatadza kushandura PDF kuva mifananidzo.
+sp-rs:Pretvaranje PDF-a u slike nije uspelo.
+sq:Shndërrimi i PDF-së në figura dështoi.
+sr-rs:Претварање PDF-а у слике није успело.
+sv:Det gick inte att konvertera PDF-filen till bilder.
+ta:PDF-ஐப் படங்களாக மாற்ற முடியவில்லை.
+th:ไม่สามารถแปลง PDF เป็นรูปภาพได้
+tl:Nabigong i-convert ang PDF sa mga larawan.
+tr:PDF görüntülere dönüştürülemedi.
+tw:無法將 PDF 轉換為影像。
+uk:Не вдалося перетворити PDF на зображення.
+uz:PDF faylni rasmlarga aylantirib bo‘lmadi.
+vn:Không thể chuyển PDF thành hình ảnh.
+ne:PDF लाई छविमा रूपान्तरण गर्न असफल भयो।
+az:PDF-i şəkillərə çevirmək alınmadı.
+ku:گۆڕینی PDF بۆ وێنە سەرکەوتوو نەبوو.
+jv:Gagal ngowahi PDF dadi gambar.
+lv:Neizdevās pārvērst PDF attēlos.
+co:Fiascu per cunvertisce u PDF in fiure.
+fo:Tað miseydnaðist at umskapa PDF til myndir.
+sat:PDF ᱪᱤᱛᱟᱹᱨ ᱛᱮ ᱵᱚᱫᱚᱞ ᱨᱮ ᱵᱷᱩᱞ ᱦᱩᱭᱮᱱᱟ᱾
 :Failed to decompress PDF file.
+af:Kon nie PDF-lêer dekomprimeer nie.
+am:Չհաջողվեց ապասեղմել PDF ֆայլը։
+ar:فشل فك ضغط ملف PDF.
+bg:Неуспешно декомпресиране на PDF файла.
+bn:PDF ফাইল অসংকুচিত করতে ব্যর্থ।
+br:Falha ao descomprimir o arquivo PDF.
+bs:Dekompresija PDF datoteke nije uspjela.
+by:Не ўдалося распакаваць PDF-файл.
+ca-xv:No s'ha pogut descomprimir el fitxer PDF.
+ca:No s'ha pogut descomprimir el fitxer PDF.
+cn:无法解压缩 PDF 文件。
+cy:Methwyd datgywasgu'r ffeil PDF.
+cz:Dekomprese souboru PDF selhala.
+de:PDF-Datei konnte nicht dekomprimiert werden.
+dk:Kunne ikke dekomprimere PDF-filen.
+el:Αποτυχία αποσυμπίεσης του αρχείου PDF.
 es:Error al descomprimir el archivo PDF.
+et:PDF-faili lahtipakkimine nurjus.
+eu:Ezin izan da PDF fitxategia deskonprimitu.
+fa:بازکردن فشرده‌سازی پرونده PDF ناموفق بود.
+fi:PDF-tiedoston purkaminen epäonnistui.
+fr:Impossible de décompresser le fichier PDF.
+fy-nl:Kin PDF-bestân net dekomprimearje.
+ga:Theip ar an gcomhad PDF a dhíchomhbhrú.
+gl:Erro ao descomprimir o ficheiro PDF.
+he:פריסת קובץ ה-PDF נכשלה.
+hi:PDF फ़ाइल को असंपीड़ित करने में विफल।
+hr:Raspakiravanje PDF datoteke nije uspjelo.
+hu:Nem sikerült kitömöríteni a PDF-fájlt.
+id:Gagal mendekompresi berkas PDF.
+it:Impossibile decomprimere il file PDF.
+ja:PDF ファイルを展開できませんでした。
+ka:PDF ფაილის გაშლა ვერ მოხერხდა.
+kr:PDF 파일의 압축을 풀지 못했습니다.
+kw:Digompressa an restren PDF a fyllis.
+lt:Nepavyko išskleisti PDF failo.
+mk:Декомпресирањето на PDF-датотеката не успеа.
+ml:PDF ഫയൽ ഡീകംപ്രസ് ചെയ്യാൻ കഴിഞ്ഞില്ല.
+mm:PDF ဖိုင်ကို ချဲ့၍ မရပါ။
+my:Gagal menyahmampat fail PDF.
+nl:Kan PDF-bestand niet decomprimeren.
+nn:Klarte ikkje å dekomprimere PDF-fila.
+no:Kunne ikke dekomprimere PDF-filen.
+pa:PDF ਫਾਈਲ ਨੂੰ ਅਸੰਕੁਚਿਤ ਕਰਨ ਵਿੱਚ ਅਸਫਲ।
+pl:Nie udało się zdekompresować pliku PDF.
+pt:Falha ao descomprimir o ficheiro PDF.
+ro:Decomprimarea fișierului PDF a eșuat.
+ru:Не удалось распаковать PDF-файл.
+si:PDF ගොනුව විසම්පීඩනය කිරීමට නොහැකි විය.
+sk:Dekompresia súboru PDF zlyhala.
+sl:Razširjanje datoteke PDF ni uspelo.
+sn:Tatadza kusunungura faira rePDF.
+sp-rs:Dekompresija PDF datoteke nije uspela.
+sq:Çngjeshja e skedarit PDF dështoi.
+sr-rs:Декомпресија PDF датотеке није успела.
+sv:Det gick inte att dekomprimera PDF-filen.
+ta:PDF கோப்பை விரிக்க முடியவில்லை.
+th:ไม่สามารถคลายการบีบอัดไฟล์ PDF ได้
+tl:Nabigong i-decompress ang PDF file.
+tr:PDF dosyasının sıkıştırması açılamadı.
+tw:無法解壓縮 PDF 檔案。
+uk:Не вдалося розпакувати PDF-файл.
+uz:PDF faylni siqilgan holatdan chiqarib bo‘lmadi.
+vn:Không thể giải nén tệp PDF.
+ne:PDF फाइल विसंकुचन गर्न असफल भयो।
+az:PDF faylının sıxılmasını açmaq alınmadı.
+ku:کردنەوەی پەستاندنی پەڕگەی PDF سەرکەوتوو نەبوو.
+jv:Gagal ndekompres berkas PDF.
+lv:Neizdevās atspiest PDF failu.
+co:Fiascu per scumprime u schedariu PDF.
+fo:Tað miseydnaðist at pakka PDF-fíluna út.
+sat:PDF ᱨᱮᱫᱽ ᱰᱤᱠᱚᱢᱯᱨᱮᱥ ᱨᱮ ᱵᱷᱩᱞ ᱦᱩᱭᱮᱱᱟ᱾
 :Failed to decrypt PDF file.
+af:Kon nie PDF-lêer dekripteer nie.
+am:Չհաջողվեց վերծանել PDF ֆայլը։
+ar:فشل فك تشفير ملف PDF.
+bg:Неуспешно дешифриране на PDF файла.
+bn:PDF ফাইল ডিক্রিপ্ট করতে ব্যর্থ।
+br:Falha ao descriptografar o arquivo PDF.
+bs:Dešifrovanje PDF datoteke nije uspjelo.
+by:Не ўдалося расшыфраваць PDF-файл.
+ca-xv:No s'ha pogut desxifrar el fitxer PDF.
+ca:No s'ha pogut desxifrar el fitxer PDF.
+cn:无法解密 PDF 文件。
+cy:Methwyd dadgryptio'r ffeil PDF.
+cz:Dešifrování souboru PDF selhalo.
+de:PDF-Datei konnte nicht entschlüsselt werden.
+dk:Kunne ikke dekryptere PDF-filen.
+el:Αποτυχία αποκρυπτογράφησης του αρχείου PDF.
 es:Error al descifrar el archivo PDF.
+et:PDF-faili dekrüptimine nurjus.
+eu:Ezin izan da PDF fitxategia deszifratu.
+fa:رمزگشایی پرونده PDF ناموفق بود.
+fi:PDF-tiedoston salauksen purkaminen epäonnistui.
+fr:Impossible de déchiffrer le fichier PDF.
+fy-nl:Kin PDF-bestân net ûntsiferje.
+ga:Theip ar an gcomhad PDF a dhíchriptiú.
+gl:Erro ao descifrar o ficheiro PDF.
+he:פענוח קובץ ה-PDF נכשל.
+hi:PDF फ़ाइल को डिक्रिप्ट करने में विफल।
+hr:Dešifriranje PDF datoteke nije uspjelo.
+hu:Nem sikerült visszafejteni a PDF-fájlt.
+id:Gagal mendekripsi berkas PDF.
+it:Impossibile decrittografare il file PDF.
+ja:PDF ファイルを復号できませんでした。
+ka:PDF ფაილის გაშიფვრა ვერ მოხერხდა.
+kr:PDF 파일을 복호화하지 못했습니다.
+kw:Digryptya an restren PDF a fyllis.
+lt:Nepavyko iššifruoti PDF failo.
+mk:Дешифрирањето на PDF-датотеката не успеа.
+ml:PDF ഫയൽ ഡീക്രിപ്റ്റ് ചെയ്യാൻ കഴിഞ്ഞില്ല.
+mm:PDF ဖိုင်ကို ကုဒ်ဖြည်၍ မရပါ။
+my:Gagal menyahsulit fail PDF.
+nl:Kan PDF-bestand niet ontsleutelen.
+nn:Klarte ikkje å dekryptere PDF-fila.
+no:Kunne ikke dekryptere PDF-filen.
+pa:PDF ਫਾਈਲ ਨੂੰ ਡੀਕ੍ਰਿਪਟ ਕਰਨ ਵਿੱਚ ਅਸਫਲ।
+pl:Nie udało się odszyfrować pliku PDF.
+pt:Falha ao desencriptar o ficheiro PDF.
+ro:Decriptarea fișierului PDF a eșuat.
+ru:Не удалось расшифровать PDF-файл.
+si:PDF ගොනුව විකේතනය කිරීමට නොහැකි විය.
+sk:Dešifrovanie súboru PDF zlyhalo.
+sl:Dešifriranje datoteke PDF ni uspelo.
+sn:Tatadza kubvisa kuvharidzirwa kwefaira rePDF.
+sp-rs:Dešifrovanje PDF datoteke nije uspelo.
+sq:Shfshehtëzimi i skedarit PDF dështoi.
+sr-rs:Дешифровање PDF датотеке није успело.
+sv:Det gick inte att dekryptera PDF-filen.
+ta:PDF கோப்பை மறைவிலக்க முடியவில்லை.
+th:ไม่สามารถถอดรหัสไฟล์ PDF ได้
+tl:Nabigong i-decrypt ang PDF file.
+tr:PDF dosyasının şifresi çözülemedi.
+tw:無法解密 PDF 檔案。
+uk:Не вдалося розшифрувати PDF-файл.
+uz:PDF fayl shifrini ochib bo‘lmadi.
+vn:Không thể giải mã tệp PDF.
+ne:PDF फाइल डिक्रिप्ट गर्न असफल भयो।
+az:PDF faylının şifrəsini açmaq alınmadı.
+ku:کردنەوەی نهێنیکاری پەڕگەی PDF سەرکەوتوو نەبوو.
+jv:Gagal ndekripsi berkas PDF.
+lv:Neizdevās atšifrēt PDF failu.
+co:Fiascu per dicifrà u schedariu PDF.
+fo:Tað miseydnaðist at avbróta PDF-fíluna.
+sat:PDF ᱨᱮᱫᱽ ᱰᱤᱠᱨᱤᱯᱴ ᱨᱮ ᱵᱷᱩᱞ ᱦᱩᱭᱮᱱᱟ᱾
 :Failed to delete pages from PDF file.
+af:Kon nie bladsye uit PDF-lêer skrap nie.
+am:Չհաջողվեց ջնջել էջերը PDF ֆայլից։
+ar:فشل حذف صفحات من ملف PDF.
+bg:Неуспешно изтриване на страници от PDF файла.
+bn:PDF ফাইল থেকে পৃষ্ঠা মুছতে ব্যর্থ।
+br:Falha ao excluir páginas do arquivo PDF.
+bs:Brisanje stranica iz PDF datoteke nije uspjelo.
+by:Не ўдалося выдаліць старонкі з PDF-файла.
+ca-xv:No s'han pogut eliminar pàgines del fitxer PDF.
+ca:No s'han pogut suprimir pàgines del fitxer PDF.
+cn:无法从 PDF 文件删除页面。
+cy:Methwyd dileu tudalennau o'r ffeil PDF.
+cz:Odstranění stránek ze souboru PDF selhalo.
+de:Seiten konnten nicht aus der PDF-Datei gelöscht werden.
+dk:Kunne ikke slette sider fra PDF-filen.
+el:Αποτυχία διαγραφής σελίδων από το αρχείο PDF.
 es:Error al eliminar páginas del archivo PDF.
+et:Lehtede kustutamine PDF-failist nurjus.
+eu:Ezin izan dira orriak ezabatu PDF fitxategitik.
+fa:حذف صفحه‌ها از پرونده PDF ناموفق بود.
+fi:Sivujen poistaminen PDF-tiedostosta epäonnistui.
+fr:Impossible de supprimer des pages du fichier PDF.
+fy-nl:Kin siden net út PDF-bestân wiskje.
+ga:Theip ar leathanaigh a scriosadh ón gcomhad PDF.
+gl:Erro ao eliminar páxinas do ficheiro PDF.
+he:מחיקת עמודים מקובץ ה-PDF נכשלה.
+hi:PDF फ़ाइल से पृष्ठ हटाने में विफल।
+hr:Brisanje stranica iz PDF datoteke nije uspjelo.
+hu:Nem sikerült oldalakat törölni a PDF-fájlból.
+id:Gagal menghapus halaman dari berkas PDF.
+it:Impossibile eliminare le pagine dal file PDF.
+ja:PDF ファイルからページを削除できませんでした。
+ka:PDF ფაილიდან გვერდების წაშლა ვერ მოხერხდა.
+kr:PDF 파일에서 페이지를 삭제하지 못했습니다.
+kw:Dilea folennow a'n restren PDF a fyllis.
+lt:Nepavyko ištrinti puslapių iš PDF failo.
+mk:Бришењето страници од PDF-датотеката не успеа.
+ml:PDF ഫയലിൽ നിന്ന് പേജുകൾ ഇല്ലാതാക്കാൻ കഴിഞ്ഞില്ല.
+mm:PDF ဖိုင်မှ စာမျက်နှာများကို ဖျက်၍ မရပါ။
+my:Gagal memadam halaman daripada fail PDF.
+nl:Kan pagina's niet uit PDF-bestand verwijderen.
+nn:Klarte ikkje å slette sider frå PDF-fila.
+no:Kunne ikke slette sider fra PDF-filen.
+pa:PDF ਫਾਈਲ ਵਿੱਚੋਂ ਸਫ਼ੇ ਮਿਟਾਉਣ ਵਿੱਚ ਅਸਫਲ।
+pl:Nie udało się usunąć stron z pliku PDF.
+pt:Falha ao eliminar páginas do ficheiro PDF.
+ro:Ștergerea paginilor din fișierul PDF a eșuat.
+ru:Не удалось удалить страницы из PDF-файла.
+si:PDF ගොනුවෙන් පිටු මැකීමට නොහැකි විය.
+sk:Odstránenie strán zo súboru PDF zlyhalo.
+sl:Brisanje strani iz datoteke PDF ni uspelo.
+sn:Tatadza kudzima mapeji kubva mufaira rePDF.
+sp-rs:Brisanje stranica iz PDF datoteke nije uspelo.
+sq:Fshirja e faqeve nga skedari PDF dështoi.
+sr-rs:Брисање страница из PDF датотеке није успело.
+sv:Det gick inte att ta bort sidor från PDF-filen.
+ta:PDF கோப்பிலிருந்து பக்கங்களை நீக்க முடியவில்லை.
+th:ไม่สามารถลบหน้าออกจากไฟล์ PDF ได้
+tl:Nabigong burahin ang mga pahina mula sa PDF file.
+tr:PDF dosyasından sayfalar silinemedi.
+tw:無法從 PDF 檔案刪除頁面。
+uk:Не вдалося видалити сторінки з PDF-файлу.
+uz:PDF fayldan sahifalarni o‘chirib bo‘lmadi.
+vn:Không thể xóa trang khỏi tệp PDF.
+ne:PDF फाइलबाट पृष्ठहरू मेटाउन असफल भयो।
+az:PDF faylından səhifələri silmək alınmadı.
+ku:سڕینەوەی لاپەڕەکان لە پەڕگەی PDF سەرکەوتوو نەبوو.
+jv:Gagal mbusak kaca saka berkas PDF.
+lv:Neizdevās dzēst lapas no PDF faila.
+co:Fiascu per squassà pagine da u schedariu PDF.
+fo:Tað miseydnaðist at strika síður úr PDF-fíluni.
+sat:PDF ᱨᱮᱫᱽ ᱠᱷᱚᱱ ᱥᱟᱦᱴᱟᱠᱚ ᱢᱮᱴᱟᱣ ᱨᱮ ᱵᱷᱩᱞ ᱦᱩᱭᱮᱱᱟ᱾
 :Failed to encrypt PDF file.
+af:Kon nie PDF-lêer enkripteer nie.
+am:Չհաջողվեց գաղտնագրել PDF ֆայլը։
+ar:فشل تشفير ملف PDF.
+bg:Неуспешно шифриране на PDF файла.
+bn:PDF ফাইল এনক্রিপ্ট করতে ব্যর্থ।
+br:Falha ao criptografar o arquivo PDF.
+bs:Šifrovanje PDF datoteke nije uspjelo.
+by:Не ўдалося зашыфраваць PDF-файл.
+ca-xv:No s'ha pogut xifrar el fitxer PDF.
+ca:No s'ha pogut xifrar el fitxer PDF.
+cn:无法加密 PDF 文件。
+cy:Methwyd amgryptio'r ffeil PDF.
+cz:Šifrování souboru PDF selhalo.
+de:PDF-Datei konnte nicht verschlüsselt werden.
+dk:Kunne ikke kryptere PDF-filen.
+el:Αποτυχία κρυπτογράφησης του αρχείου PDF.
 es:Error al cifrar el archivo PDF.
+et:PDF-faili krüptimine nurjus.
+eu:Ezin izan da PDF fitxategia zifratu.
+fa:رمزگذاری پرونده PDF ناموفق بود.
+fi:PDF-tiedoston salaaminen epäonnistui.
+fr:Impossible de chiffrer le fichier PDF.
+fy-nl:Kin PDF-bestân net fersiferje.
+ga:Theip ar an gcomhad PDF a chriptiú.
+gl:Erro ao cifrar o ficheiro PDF.
+he:הצפנת קובץ ה-PDF נכשלה.
+hi:PDF फ़ाइल को एन्क्रिप्ट करने में विफल।
+hr:Šifriranje PDF datoteke nije uspjelo.
+hu:Nem sikerült titkosítani a PDF-fájlt.
+id:Gagal mengenkripsi berkas PDF.
+it:Impossibile crittografare il file PDF.
+ja:PDF ファイルを暗号化できませんでした。
+ka:PDF ფაილის დაშიფვრა ვერ მოხერხდა.
+kr:PDF 파일을 암호화하지 못했습니다.
+kw:Kryptya an restren PDF a fyllis.
+lt:Nepavyko užšifruoti PDF failo.
+mk:Шифрирањето на PDF-датотеката не успеа.
+ml:PDF ഫയൽ എൻക്രിപ്റ്റ് ചെയ്യാൻ കഴിഞ്ഞില്ല.
+mm:PDF ဖိုင်ကို ကုဒ်ဝှက်၍ မရပါ။
+my:Gagal menyulitkan fail PDF.
+nl:Kan PDF-bestand niet versleutelen.
+nn:Klarte ikkje å kryptere PDF-fila.
+no:Kunne ikke kryptere PDF-filen.
+pa:PDF ਫਾਈਲ ਨੂੰ ਇਨਕ੍ਰਿਪਟ ਕਰਨ ਵਿੱਚ ਅਸਫਲ।
+pl:Nie udało się zaszyfrować pliku PDF.
+pt:Falha ao encriptar o ficheiro PDF.
+ro:Criptarea fișierului PDF a eșuat.
+ru:Не удалось зашифровать PDF-файл.
+si:PDF ගොනුව සංකේතනය කිරීමට නොහැකි විය.
+sk:Šifrovanie súboru PDF zlyhalo.
+sl:Šifriranje datoteke PDF ni uspelo.
+sn:Tatadza kuvharidzira faira rePDF.
+sp-rs:Šifrovanje PDF datoteke nije uspelo.
+sq:Fshehtëzimi i skedarit PDF dështoi.
+sr-rs:Шифровање PDF датотеке није успело.
+sv:Det gick inte att kryptera PDF-filen.
+ta:PDF கோப்பை மறையாக்க முடியவில்லை.
+th:ไม่สามารถเข้ารหัสไฟล์ PDF ได้
+tl:Nabigong i-encrypt ang PDF file.
+tr:PDF dosyası şifrelenemedi.
+tw:無法加密 PDF 檔案。
+uk:Не вдалося зашифрувати PDF-файл.
+uz:PDF faylni shifrlab bo‘lmadi.
+vn:Không thể mã hóa tệp PDF.
+ne:PDF फाइल इन्क्रिप्ट गर्न असफल भयो।
+az:PDF faylını şifrələmək alınmadı.
+ku:نهێنیکاری پەڕگەی PDF سەرکەوتوو نەبوو.
+jv:Gagal ngenkripsi berkas PDF.
+lv:Neizdevās šifrēt PDF failu.
+co:Fiascu per cifrà u schedariu PDF.
+fo:Tað miseydnaðist at bróta PDF-fíluna.
+sat:PDF ᱨᱮᱫᱽ ᱮᱱᱠᱨᱤᱯᱴ ᱨᱮ ᱵᱷᱩᱞ ᱦᱩᱭᱮᱱᱟ᱾
 :Failed to extract pages from PDF file.
+af:Kon nie bladsye uit PDF-lêer onttrek nie.
+am:Չհաջողվեց արտահանել էջերը PDF ֆայլից։
+ar:فشل استخراج صفحات من ملف PDF.
+bg:Неуспешно извличане на страници от PDF файла.
+bn:PDF ফাইল থেকে পৃষ্ঠা বের করতে ব্যর্থ।
+br:Falha ao extrair páginas do arquivo PDF.
+bs:Izdvajanje stranica iz PDF datoteke nije uspjelo.
+by:Не ўдалося выняць старонкі з PDF-файла.
+ca-xv:No s'han pogut extraure pàgines del fitxer PDF.
+ca:No s'han pogut extreure pàgines del fitxer PDF.
+cn:无法从 PDF 文件提取页面。
+cy:Methwyd echdynnu tudalennau o'r ffeil PDF.
+cz:Extrakce stránek ze souboru PDF selhala.
+de:Seiten konnten nicht aus der PDF-Datei extrahiert werden.
+dk:Kunne ikke udtrække sider fra PDF-filen.
+el:Αποτυχία εξαγωγής σελίδων από το αρχείο PDF.
 es:Error al extraer páginas del archivo PDF.
+et:Lehtede eraldamine PDF-failist nurjus.
+eu:Ezin izan dira orriak erauzi PDF fitxategitik.
+fa:استخراج صفحه‌ها از پرونده PDF ناموفق بود.
+fi:Sivujen poimiminen PDF-tiedostosta epäonnistui.
+fr:Impossible d'extraire des pages du fichier PDF.
+fy-nl:Kin siden net út PDF-bestân helje.
+ga:Theip ar leathanaigh a bhaint as an gcomhad PDF.
+gl:Erro ao extraer páxinas do ficheiro PDF.
+he:חילוץ עמודים מקובץ ה-PDF נכשל.
+hi:PDF फ़ाइल से पृष्ठ निकालने में विफल।
+hr:Izdvajanje stranica iz PDF datoteke nije uspjelo.
+hu:Nem sikerült oldalakat kinyerni a PDF-fájlból.
+id:Gagal mengekstrak halaman dari berkas PDF.
+it:Impossibile estrarre le pagine dal file PDF.
+ja:PDF ファイルからページを抽出できませんでした。
+ka:PDF ფაილიდან გვერდების ამოღება ვერ მოხერხდა.
+kr:PDF 파일에서 페이지를 추출하지 못했습니다.
+kw:Estrynna folennow a'n restren PDF a fyllis.
+lt:Nepavyko išskirti puslapių iš PDF failo.
+mk:Извлекувањето страници од PDF-датотеката не успеа.
+ml:PDF ഫയലിൽ നിന്ന് പേജുകൾ വേർതിരിക്കാൻ കഴിഞ്ഞില്ല.
+mm:PDF ဖိုင်မှ စာမျက်နှာများကို ထုတ်ယူ၍ မရပါ။
+my:Gagal mengekstrak halaman daripada fail PDF.
+nl:Kan pagina's niet uit PDF-bestand extraheren.
+nn:Klarte ikkje å hente ut sider frå PDF-fila.
+no:Kunne ikke trekke ut sider fra PDF-filen.
+pa:PDF ਫਾਈਲ ਵਿੱਚੋਂ ਸਫ਼ੇ ਕੱਢਣ ਵਿੱਚ ਅਸਫਲ।
+pl:Nie udało się wyodrębnić stron z pliku PDF.
+pt:Falha ao extrair páginas do ficheiro PDF.
+ro:Extragerea paginilor din fișierul PDF a eșuat.
+ru:Не удалось извлечь страницы из PDF-файла.
+si:PDF ගොනුවෙන් පිටු උපුටා ගැනීමට නොහැකි විය.
+sk:Extrahovanie strán zo súboru PDF zlyhalo.
+sl:Izvleček strani iz datoteke PDF ni uspel.
+sn:Tatadza kubudisa mapeji kubva mufaira rePDF.
+sp-rs:Izdvajanje stranica iz PDF datoteke nije uspelo.
+sq:Nxjerrja e faqeve nga skedari PDF dështoi.
+sr-rs:Издвајање страница из PDF датотеке није успело.
+sv:Det gick inte att extrahera sidor från PDF-filen.
+ta:PDF கோப்பிலிருந்து பக்கங்களைப் பிரித்தெடுக்க முடியவில்லை.
+th:ไม่สามารถแยกหน้าออกจากไฟล์ PDF ได้
+tl:Nabigong kunin ang mga pahina mula sa PDF file.
+tr:PDF dosyasından sayfalar çıkarılamadı.
+tw:無法從 PDF 檔案擷取頁面。
+uk:Не вдалося витягти сторінки з PDF-файлу.
+uz:PDF fayldan sahifalarni ajratib olib bo‘lmadi.
+vn:Không thể trích xuất trang từ tệp PDF.
+ne:PDF फाइलबाट पृष्ठहरू निकाल्न असफल भयो।
+az:PDF faylından səhifələri çıxarmaq alınmadı.
+ku:دەرهێنانی لاپەڕەکان لە پەڕگەی PDF سەرکەوتوو نەبوو.
+jv:Gagal ngekstrak kaca saka berkas PDF.
+lv:Neizdevās izvilkt lapas no PDF faila.
+co:Fiascu per estrae pagine da u schedariu PDF.
+fo:Tað miseydnaðist at taka síður úr PDF-fíluni.
+sat:PDF ᱨᱮᱫᱽ ᱠᱷᱚᱱ ᱥᱟᱦᱴᱟᱠᱚ ᱚᱰᱚᱠ ᱨᱮ ᱵᱷᱩᱞ ᱦᱩᱭᱮᱱᱟ᱾
 :Failed to extract text.
+af:Kon nie teks onttrek nie.
+am:Չհաջողվեց արտահանել տեքստը։
+ar:فشل استخراج النص.
+bg:Неуспешно извличане на текст.
+bn:লেখা বের করতে ব্যর্থ।
+br:Falha ao extrair o texto.
+bs:Izdvajanje teksta nije uspjelo.
+by:Не ўдалося выняць тэкст.
+ca-xv:No s'ha pogut extraure el text.
+ca:No s'ha pogut extreure el text.
+cn:无法提取文本。
+cy:Methwyd echdynnu testun.
+cz:Extrakce textu selhala.
+de:Text konnte nicht extrahiert werden.
+dk:Kunne ikke udtrække tekst.
+el:Αποτυχία εξαγωγής κειμένου.
 es:Error al extraer el texto.
+et:Teksti eraldamine nurjus.
+eu:Ezin izan da testua erauzi.
+fa:استخراج متن ناموفق بود.
+fi:Tekstin poimiminen epäonnistui.
+fr:Impossible d'extraire le texte.
+fy-nl:Kin tekst net úthelje.
+ga:Theip ar théacs a bhaint amach.
+gl:Erro ao extraer o texto.
+he:חילוץ הטקסט נכשל.
+hi:टेक्स्ट निकालने में विफल।
+hr:Izdvajanje teksta nije uspjelo.
+hu:Nem sikerült kinyerni a szöveget.
+id:Gagal mengekstrak teks.
+it:Impossibile estrarre il testo.
+ja:テキストを抽出できませんでした。
+ka:ტექსტის ამოღება ვერ მოხერხდა.
+kr:텍스트를 추출하지 못했습니다.
+kw:Estrynna tekst a fyllis.
+lt:Nepavyko išskirti teksto.
+mk:Извлекувањето текст не успеа.
+ml:ടെക്സ്റ്റ് വേർതിരിക്കാൻ കഴിഞ്ഞില്ല.
+mm:စာသားကို ထုတ်ယူ၍ မရပါ။
+my:Gagal mengekstrak teks.
+nl:Kan tekst niet extraheren.
+nn:Klarte ikkje å hente ut tekst.
+no:Kunne ikke trekke ut tekst.
+pa:ਟੈਕਸਟ ਕੱਢਣ ਵਿੱਚ ਅਸਫਲ।
+pl:Nie udało się wyodrębnić tekstu.
+pt:Falha ao extrair o texto.
+ro:Extragerea textului a eșuat.
+ru:Не удалось извлечь текст.
+si:පෙළ උපුටා ගැනීමට නොහැකි විය.
+sk:Extrahovanie textu zlyhalo.
+sl:Izvleček besedila ni uspel.
+sn:Tatadza kubudisa rugwaro.
+sp-rs:Izdvajanje teksta nije uspelo.
+sq:Nxjerrja e tekstit dështoi.
+sr-rs:Издвајање текста није успело.
+sv:Det gick inte att extrahera texten.
+ta:உரையைப் பிரித்தெடுக்க முடியவில்லை.
+th:ไม่สามารถแยกข้อความได้
+tl:Nabigong kunin ang teksto.
+tr:Metin çıkarılamadı.
+tw:無法擷取文字。
+uk:Не вдалося витягти текст.
+uz:Matnni ajratib olib bo‘lmadi.
+vn:Không thể trích xuất văn bản.
+ne:पाठ निकाल्न असफल भयो।
+az:Mətni çıxarmaq alınmadı.
+ku:دەرهێنانی دەق سەرکەوتوو نەبوو.
+jv:Gagal ngekstrak teks.
+lv:Neizdevās izvilkt tekstu.
+co:Fiascu per estrae u testu.
+fo:Tað miseydnaðist at taka tekst út.
+sat:ᱚᱞ ᱚᱰᱚᱠ ᱨᱮ ᱵᱷᱩᱞ ᱦᱩᱭᱮᱱᱟ᱾
 :Failed to read annotations from PDF file.
+af:Kon nie aantekeninge uit PDF-lêer lees nie.
+am:Չհաջողվեց կարդալ ծանոթագրությունները PDF ֆայլից։
+ar:فشل قراءة التعليقات التوضيحية من ملف PDF.
+bg:Неуспешно четене на анотациите от PDF файла.
+bn:PDF ফাইল থেকে টীকা পড়তে ব্যর্থ।
+br:Falha ao ler as anotações do arquivo PDF.
+bs:Čitanje napomena iz PDF datoteke nije uspjelo.
+by:Не ўдалося прачытаць анатацыі з PDF-файла.
+ca-xv:No s'han pogut llegir les anotacions del fitxer PDF.
+ca:No s'han pogut llegir les anotacions del fitxer PDF.
+cn:无法从 PDF 文件读取注释。
+cy:Methwyd darllen anodiadau o'r ffeil PDF.
+cz:Čtení poznámek ze souboru PDF selhalo.
+de:Anmerkungen konnten nicht aus der PDF-Datei gelesen werden.
+dk:Kunne ikke læse annoteringer fra PDF-filen.
+el:Αποτυχία ανάγνωσης σχολιασμών από το αρχείο PDF.
 es:Error al leer las anotaciones del archivo PDF.
+et:Märkuste lugemine PDF-failist nurjus.
+eu:Ezin izan dira oharrak irakurri PDF fitxategitik.
+fa:خواندن حاشیه‌نویسی‌ها از پرونده PDF ناموفق بود.
+fi:Merkintöjen lukeminen PDF-tiedostosta epäonnistui.
+fr:Impossible de lire les annotations du fichier PDF.
+fy-nl:Kin annotaasjes net út PDF-bestân lêze.
+ga:Theip ar anótálacha a léamh ón gcomhad PDF.
+gl:Erro ao ler as anotacións do ficheiro PDF.
+he:קריאת ההערות מקובץ ה-PDF נכשלה.
+hi:PDF फ़ाइल से एनोटेशन पढ़ने में विफल।
+hr:Čitanje bilješki iz PDF datoteke nije uspjelo.
+hu:Nem sikerült beolvasni a jegyzeteket a PDF-fájlból.
+id:Gagal membaca anotasi dari berkas PDF.
+it:Impossibile leggere le annotazioni dal file PDF.
+ja:PDF ファイルから注釈を読み込めませんでした。
+ka:PDF ფაილიდან ანოტაციების წაკითხვა ვერ მოხერხდა.
+kr:PDF 파일에서 주석을 읽지 못했습니다.
+kw:Redya notenyans a'n restren PDF a fyllis.
+lt:Nepavyko nuskaityti anotacijų iš PDF failo.
+mk:Читањето прибелешки од PDF-датотеката не успеа.
+ml:PDF ഫയലിൽ നിന്ന് വ്യാഖ്യാനങ്ങൾ വായിക്കാൻ കഴിഞ്ഞില്ല.
+mm:PDF ဖိုင်မှ မှတ်ချက်များကို ဖတ်၍ မရပါ။
+my:Gagal membaca anotasi daripada fail PDF.
+nl:Kan aantekeningen niet uit PDF-bestand lezen.
+nn:Klarte ikkje å lese merknadar frå PDF-fila.
+no:Kunne ikke lese merknader fra PDF-filen.
+pa:PDF ਫਾਈਲ ਵਿੱਚੋਂ ਟਿੱਪਣੀਆਂ ਪੜ੍ਹਨ ਵਿੱਚ ਅਸਫਲ।
+pl:Nie udało się odczytać adnotacji z pliku PDF.
+pt:Falha ao ler as anotações do ficheiro PDF.
+ro:Citirea adnotărilor din fișierul PDF a eșuat.
+ru:Не удалось прочитать аннотации из PDF-файла.
+si:PDF ගොනුවෙන් විවරණ කියවීමට නොහැකි විය.
+sk:Čítanie anotácií zo súboru PDF zlyhalo.
+sl:Branje pripomb iz datoteke PDF ni uspelo.
+sn:Tatadza kuverenga zvinyorwa kubva mufaira rePDF.
+sp-rs:Čitanje beleški iz PDF datoteke nije uspelo.
+sq:Leximi i anotimeve nga skedari PDF dështoi.
+sr-rs:Читање белешки из PDF датотеке није успело.
+sv:Det gick inte att läsa anteckningar från PDF-filen.
+ta:PDF கோப்பிலிருந்து குறிப்புரைகளைப் படிக்க முடியவில்லை.
+th:ไม่สามารถอ่านคำอธิบายประกอบจากไฟล์ PDF ได้
+tl:Nabigong basahin ang mga anotasyon mula sa PDF file.
+tr:PDF dosyasından ek açıklamalar okunamadı.
+tw:無法從 PDF 檔案讀取註解。
+uk:Не вдалося прочитати анотації з PDF-файлу.
+uz:PDF fayldan izohlarni o‘qib bo‘lmadi.
+vn:Không thể đọc chú thích từ tệp PDF.
+ne:PDF फाइलबाट एनोटेसनहरू पढ्न असफल भयो।
+az:PDF faylından annotasiyaları oxumaq alınmadı.
+ku:خوێندنەوەی تێبینییەکان لە پەڕگەی PDF سەرکەوتوو نەبوو.
+jv:Gagal maca anotasi saka berkas PDF.
+lv:Neizdevās nolasīt anotācijas no PDF faila.
+co:Fiascu per leghje l’annutazioni da u schedariu PDF.
+fo:Tað miseydnaðist at lesa viðmerkingar úr PDF-fíluni.
+sat:PDF ᱨᱮᱫᱽ ᱠᱷᱚᱱ ᱪᱤᱱᱦᱟᱹᱠᱚ ᱯᱟᱲᱦᱟᱣ ᱨᱮ ᱵᱷᱩᱞ ᱦᱩᱭᱮᱱᱟ᱾
 :Failed to save image
+af:Kon nie beeld stoor nie
+am:Չհաջողվեց պահել պատկերը
+ar:فشل حفظ الصورة
+bg:Неуспешно запазване на изображението
+bn:ছবি সংরক্ষণ করতে ব্যর্থ
+br:Falha ao salvar a imagem
+bs:Spremanje slike nije uspjelo
+by:Не ўдалося захаваць выяву
+ca-xv:No s'ha pogut guardar la imatge
+ca:No s'ha pogut desar la imatge
+cn:无法保存图像
+cy:Methwyd cadw'r ddelwedd
+cz:Uložení obrázku selhalo
+de:Bild konnte nicht gespeichert werden
+dk:Kunne ikke gemme billedet
+el:Αποτυχία αποθήκευσης εικόνας
 es:Error al guardar la imagen
+et:Pildi salvestamine nurjus
+eu:Ezin izan da irudia gorde
+fa:ذخیره تصویر ناموفق بود
+fi:Kuvan tallentaminen epäonnistui
+fr:Impossible d'enregistrer l'image
+fy-nl:Kin ôfbylding net bewarje
+ga:Theip ar an íomhá a shábháil
+gl:Erro ao gardar a imaxe
+he:שמירת התמונה נכשלה
+hi:छवि सहेजने में विफल
+hr:Spremanje slike nije uspjelo
+hu:Nem sikerült menteni a képet
+id:Gagal menyimpan gambar
+it:Impossibile salvare l'immagine
+ja:画像を保存できませんでした
+ka:სურათის შენახვა ვერ მოხერხდა
+kr:이미지를 저장하지 못했습니다
+kw:Gwitha an skeusenn a fyllis
+lt:Nepavyko įrašyti paveikslėlio
+mk:Зачувувањето на сликата не успеа
+ml:ചിത്രം സംരക്ഷിക്കാൻ കഴിഞ്ഞില്ല
+mm:ပုံကို သိမ်း၍ မရပါ
+my:Gagal menyimpan imej
+nl:Kan afbeelding niet opslaan
+nn:Klarte ikkje å lagre biletet
+no:Kunne ikke lagre bildet
+pa:ਚਿੱਤਰ ਸੰਭਾਲਣ ਵਿੱਚ ਅਸਫਲ
+pl:Nie udało się zapisać obrazu
+pt:Falha ao guardar a imagem
+ro:Salvarea imaginii a eșuat
+ru:Не удалось сохранить изображение
+si:රූපය සුරැකීමට නොහැකි විය
+sk:Uloženie obrázka zlyhalo
+sl:Shranjevanje slike ni uspelo
+sn:Tatadza kuchengetedza mufananidzo
+sp-rs:Čuvanje slike nije uspelo
+sq:Ruajtja e figurës dështoi
+sr-rs:Чување слике није успело
+sv:Det gick inte att spara bilden
+ta:படத்தைச் சேமிக்க முடியவில்லை
+th:ไม่สามารถบันทึกรูปภาพได้
+tl:Nabigong i-save ang larawan
+tr:Görüntü kaydedilemedi
+tw:無法儲存影像
+uk:Не вдалося зберегти зображення
+uz:Rasmni saqlab bo‘lmadi
+vn:Không thể lưu hình ảnh
+ne:छवि सुरक्षित गर्न असफल भयो
+az:Şəkli saxlamaq alınmadı
+ku:پاشەکەوتکردنی وێنە سەرکەوتوو نەبوو
+jv:Gagal nyimpen gambar
+lv:Neizdevās saglabāt attēlu
+co:Fiascu per arregistrà a fiura
+fo:Tað miseydnaðist at goyma myndina
+sat:ᱪᱤᱛᱟᱹᱨ ᱥᱟᱧᱪᱟᱣ ᱨᱮ ᱵᱷᱩᱞ ᱦᱩᱭᱮᱱᱟ
 :Failed to save the screenshot
+af:Kon nie skermskoot stoor nie
+am:Չհաջողվեց պահել էկրանի նկարը
+ar:فشل حفظ لقطة الشاشة
+bg:Неуспешно запазване на екранната снимка
+bn:স্ক্রিনশট সংরক্ষণ করতে ব্যর্থ
+br:Falha ao salvar a captura de tela
+bs:Spremanje snimka ekrana nije uspjelo
+by:Не ўдалося захаваць здымак экрана
+ca-xv:No s'ha pogut guardar la captura de pantalla
+ca:No s'ha pogut desar la captura de pantalla
+cn:无法保存屏幕截图
+cy:Methwyd cadw'r sgrinlun
+cz:Uložení snímku obrazovky selhalo
+de:Bildschirmfoto konnte nicht gespeichert werden
+dk:Kunne ikke gemme skærmbilledet
+el:Αποτυχία αποθήκευσης στιγμιότυπου οθόνης
 es:Error al guardar la captura de pantalla
+et:Ekraanipildi salvestamine nurjus
+eu:Ezin izan da pantaila-argazkia gorde
+fa:ذخیره نماگرفت ناموفق بود
+fi:Kuvakaappauksen tallentaminen epäonnistui
+fr:Impossible d'enregistrer la capture d'écran
+fy-nl:Kin skermôfbylding net bewarje
+ga:Theip ar an seat scáileáin a shábháil
+gl:Erro ao gardar a captura de pantalla
+he:שמירת צילום המסך נכשלה
+hi:स्क्रीनशॉट सहेजने में विफल
+hr:Spremanje snimke zaslona nije uspjelo
+hu:Nem sikerült menteni a képernyőképet
+id:Gagal menyimpan tangkapan layar
+it:Impossibile salvare lo screenshot
+ja:スクリーンショットを保存できませんでした
+ka:ეკრანის ანაბეჭდის შენახვა ვერ მოხერხდა
+kr:스크린샷을 저장하지 못했습니다
+kw:Gwitha an skeusenn skrin a fyllis
+lt:Nepavyko įrašyti ekrano kopijos
+mk:Зачувувањето на снимката од екранот не успеа
+ml:സ്ക്രീൻഷോട്ട് സംരക്ഷിക്കാൻ കഴിഞ്ഞില്ല
+mm:ဖန်သားပြင်ဓာတ်ပုံကို သိမ်း၍ မရပါ
+my:Gagal menyimpan tangkapan skrin
+nl:Kan schermafbeelding niet opslaan
+nn:Klarte ikkje å lagre skjermbiletet
+no:Kunne ikke lagre skjermbildet
+pa:ਸਕ੍ਰੀਨਸ਼ਾਟ ਸੰਭਾਲਣ ਵਿੱਚ ਅਸਫਲ
+pl:Nie udało się zapisać zrzutu ekranu
+pt:Falha ao guardar a captura de ecrã
+ro:Salvarea capturii de ecran a eșuat
+ru:Не удалось сохранить снимок экрана
+si:තිර රුව සුරැකීමට නොහැකි විය
+sk:Uloženie snímky obrazovky zlyhalo
+sl:Shranjevanje posnetka zaslona ni uspelo
+sn:Tatadza kuchengetedza mufananidzo wechidzitiro
+sp-rs:Čuvanje snimka ekrana nije uspelo
+sq:Ruajtja e pamjes së ekranit dështoi
+sr-rs:Чување снимка екрана није успело
+sv:Det gick inte att spara skärmbilden
+ta:திரைப்பிடிப்பைச் சேமிக்க முடியவில்லை
+th:ไม่สามารถบันทึกภาพหน้าจอได้
+tl:Nabigong i-save ang screenshot
+tr:Ekran görüntüsü kaydedilemedi
+tw:無法儲存螢幕截圖
+uk:Не вдалося зберегти знімок екрана
+uz:Ekran rasmini saqlab bo‘lmadi
+vn:Không thể lưu ảnh chụp màn hình
+ne:स्क्रिनसट सुरक्षित गर्न असफल भयो
+az:Ekran görüntüsünü saxlamaq alınmadı
+ku:پاشەکەوتکردنی وێنەی شاشە سەرکەوتوو نەبوو
+jv:Gagal nyimpen gambar layar
+lv:Neizdevās saglabāt ekrānuzņēmumu
+co:Fiascu per arregistrà a cattura di screnu
+fo:Tað miseydnaðist at goyma skíggjamyndina
+sat:ᱥᱠᱨᱤᱱᱥᱚᱴ ᱥᱟᱧᱪᱟᱣ ᱨᱮ ᱵᱷᱩᱞ ᱦᱩᱭᱮᱱᱟ
 :Failed to save the selection as an image.
+af:Kon nie seleksie as beeld stoor nie.
+am:Չհաջողվեց պահել ընտրվածը որպես պատկեր։
+ar:فشل حفظ التحديد كصورة.
+bg:Неуспешно запазване на селекцията като изображение.
+bn:নির্বাচন ছবি হিসেবে সংরক্ষণ করতে ব্যর্থ।
+br:Falha ao salvar a seleção como imagem.
+bs:Spremanje odabira kao slike nije uspjelo.
+by:Не ўдалося захаваць вылучэнне як выяву.
+ca-xv:No s'ha pogut guardar la selecció com a imatge.
+ca:No s'ha pogut desar la selecció com a imatge.
+cn:无法将所选内容保存为图像。
+cy:Methwyd cadw'r dewis fel delwedd.
+cz:Uložení výběru jako obrázku selhalo.
+de:Auswahl konnte nicht als Bild gespeichert werden.
+dk:Kunne ikke gemme markeringen som billede.
+el:Αποτυχία αποθήκευσης της επιλογής ως εικόνας.
 es:Error al guardar la selección como imagen.
+et:Valiku salvestamine pildina nurjus.
+eu:Ezin izan da hautapena irudi gisa gorde.
+fa:ذخیره انتخاب به‌صورت تصویر ناموفق بود.
+fi:Valinnan tallentaminen kuvana epäonnistui.
+fr:Impossible d'enregistrer la sélection en tant qu'image.
+fy-nl:Kin seleksje net as ôfbylding bewarje.
+ga:Theip ar an roghnúchán a shábháil mar íomhá.
+gl:Erro ao gardar a selección como imaxe.
+he:שמירת הבחירה כתמונה נכשלה.
+hi:चयन को छवि के रूप में सहेजने में विफल।
+hr:Spremanje odabira kao slike nije uspjelo.
+hu:Nem sikerült képként menteni a kijelölést.
+id:Gagal menyimpan pilihan sebagai gambar.
+it:Impossibile salvare la selezione come immagine.
+ja:選択範囲を画像として保存できませんでした。
+ka:მონიშნულის სურათად შენახვა ვერ მოხერხდა.
+kr:선택 영역을 이미지로 저장하지 못했습니다.
+kw:Gwitha an dewis avel skeusenn a fyllis.
+lt:Nepavyko įrašyti pažymėtos srities kaip paveikslėlio.
+mk:Зачувувањето на изборот како слика не успеа.
+ml:തിരഞ്ഞെടുപ്പ് ചിത്രമായി സംരക്ഷിക്കാൻ കഴിഞ്ഞില്ല.
+mm:ရွေးချယ်ထားသည်ကို ပုံအဖြစ် သိမ်း၍ မရပါ။
+my:Gagal menyimpan pilihan sebagai imej.
+nl:Kan selectie niet als afbeelding opslaan.
+nn:Klarte ikkje å lagre utvalet som bilete.
+no:Kunne ikke lagre utvalget som bilde.
+pa:ਚੋਣ ਨੂੰ ਚਿੱਤਰ ਵਜੋਂ ਸੰਭਾਲਣ ਵਿੱਚ ਅਸਫਲ।
+pl:Nie udało się zapisać zaznaczenia jako obrazu.
+pt:Falha ao guardar a seleção como imagem.
+ro:Salvarea selecției ca imagine a eșuat.
+ru:Не удалось сохранить выделение как изображение.
+si:තේරීම රූපයක් ලෙස සුරැකීමට නොහැකි විය.
+sk:Uloženie výberu ako obrázka zlyhalo.
+sl:Shranjevanje izbora kot slike ni uspelo.
+sn:Tatadza kuchengetedza zvasarudzwa semufananidzo.
+sp-rs:Čuvanje izbora kao slike nije uspelo.
+sq:Ruajtja e përzgjedhjes si figurë dështoi.
+sr-rs:Чување избора као слике није успело.
+sv:Det gick inte att spara markeringen som bild.
+ta:தேர்வைப் படமாகச் சேமிக்க முடியவில்லை.
+th:ไม่สามารถบันทึกส่วนที่เลือกเป็นรูปภาพได้
+tl:Nabigong i-save ang napili bilang larawan.
+tr:Seçim görüntü olarak kaydedilemedi.
+tw:無法將選取範圍儲存為影像。
+uk:Не вдалося зберегти виділення як зображення.
+uz:Tanlovni rasm sifatida saqlab bo‘lmadi.
+vn:Không thể lưu vùng chọn dưới dạng hình ảnh.
+ne:चयनलाई छविको रूपमा सुरक्षित गर्न असफल भयो।
+az:Seçimi şəkil kimi saxlamaq alınmadı.
+ku:پاشەکەوتکردنی دیاریکراو وەک وێنە سەرکەوتوو نەبوو.
+jv:Gagal nyimpen pilihan minangka gambar.
+lv:Neizdevās saglabāt atlasi kā attēlu.
+co:Fiascu per arregistrà a selezzione cum’è fiura.
+fo:Tað miseydnaðist at goyma valið sum mynd.
+sat:ᱵᱟᱪᱷᱟᱣ ᱪᱤᱛᱟᱹᱨ ᱞᱮᱠᱟ ᱥᱟᱧᱪᱟᱣ ᱨᱮ ᱵᱷᱩᱞ ᱦᱩᱭᱮᱱᱟ᱾
 :File %s already exists. Overwrite?
+af:Lêer %s bestaan reeds. Oorskryf?
+am:%s ֆայլն արդեն գոյություն ունի։ Վերագրե՞լ։
+ar:الملف %s موجود بالفعل. هل تريد استبداله؟
+bg:Файлът %s вече съществува. Да се презапише ли?
+bn:%s ফাইলটি আগে থেকেই আছে। ওভাররাইট করবেন?
+br:O arquivo %s já existe. Substituir?
+bs:Datoteka %s već postoji. Prepisati?
+by:Файл %s ужо існуе. Перазапісаць?
+ca-xv:El fitxer %s ja existeix. Voleu sobreescriure'l?
+ca:El fitxer %s ja existeix. Voleu sobreescriure'l?
+cn:文件 %s 已存在。是否覆盖？
+cy:Mae'r ffeil %s yn bodoli eisoes. Trosysgrifo?
+cz:Soubor %s již existuje. Přepsat?
+de:Die Datei %s existiert bereits. Überschreiben?
+dk:Filen %s findes allerede. Overskriv?
+el:Το αρχείο %s υπάρχει ήδη. Αντικατάσταση;
 es:El archivo %s ya existe. ¿Sobrescribirlo?
+et:Fail %s on juba olemas. Kirjutada üle?
+eu:%s fitxategia badago lehendik. Gainidatzi?
+fa:پرونده %s از قبل وجود دارد. جایگزین شود؟
+fi:Tiedosto %s on jo olemassa. Korvataanko?
+fr:Le fichier %s existe déjà. L'écraser ?
+fy-nl:Bestân %s bestiet al. Oerskriuwe?
+ga:Tá an comhad %s ann cheana. Forscríobh?
+gl:O ficheiro %s xa existe. Sobrescribilo?
+he:הקובץ %s כבר קיים. להחליף?
+hi:फ़ाइल %s पहले से मौजूद है। अधिलेखित करें?
+hr:Datoteka %s već postoji. Prepisati?
+hu:A(z) %s fájl már létezik. Felülírja?
+id:Berkas %s sudah ada. Timpa?
+it:Il file %s esiste già. Sovrascriverlo?
+ja:ファイル %s は既に存在します。上書きしますか?
+ka:ფაილი %s უკვე არსებობს. გადავაწეროთ?
+kr:%s 파일이 이미 있습니다. 덮어쓰시겠습니까?
+kw:Yma an restren %s seulabrys. Skrifa a-ugh?
+lt:Failas %s jau yra. Perrašyti?
+mk:Датотеката %s веќе постои. Да се презапише?
+ml:%s എന്ന ഫയൽ ഇതിനകം നിലവിലുണ്ട്. തിരുത്തിയെഴുതണോ?
+mm:ဖိုင် %s ရှိပြီးသားဖြစ်သည်။ အစားထိုးမလား?
+my:Fail %s sudah wujud. Tulis ganti?
+nl:Bestand %s bestaat al. Overschrijven?
+nn:Fila %s finst allereie. Skrive over?
+no:Filen %s finnes allerede. Overskrive?
+pa:ਫਾਈਲ %s ਪਹਿਲਾਂ ਹੀ ਮੌਜੂਦ ਹੈ। ਕੀ ਉੱਤੇ ਲਿਖਣਾ ਹੈ?
+pl:Plik %s już istnieje. Zastąpić?
+pt:O ficheiro %s já existe. Substituir?
+ro:Fișierul %s există deja. Îl suprascrieți?
+ru:Файл %s уже существует. Перезаписать?
+si:%s ගොනුව දැනටමත් පවතී. උඩින් ලියන්නද?
+sk:Súbor %s už existuje. Prepísať?
+sl:Datoteka %s že obstaja. Jo prepišem?
+sn:Faira %s rinotovapo. Rinyorwe pamusoro?
+sp-rs:Datoteka %s već postoji. Zameniti?
+sq:Skedari %s ekziston tashmë. Ta mbishkruaj?
+sr-rs:Датотека %s већ постоји. Заменити?
+sv:Filen %s finns redan. Vill du skriva över den?
+ta:%s கோப்பு ஏற்கனவே உள்ளது. மேலெழுதவா?
+th:มีไฟล์ %s อยู่แล้ว เขียนทับหรือไม่
+tl:Umiiral na ang file na %s. Papalitan?
+tr:%s dosyası zaten var. Üzerine yazılsın mı?
+tw:檔案 %s 已存在。要覆寫嗎？
+uk:Файл %s уже існує. Перезаписати?
+uz:%s fayli allaqachon mavjud. Ustidan yozilsinmi?
+vn:Tệp %s đã tồn tại. Ghi đè?
+ne:फाइल %s पहिले नै अवस्थित छ। अधिलेखन गर्ने?
+az:%s faylı artıq mövcuddur. Üzərinə yazılsın?
+ku:پەڕگەی %s پێشتر هەیە. جێگۆڕکێی پێ بکرێت؟
+jv:Berkas %s wis ana. Timpa?
+lv:Fails %s jau pastāv. Pārrakstīt?
+co:U schedariu %s esiste dighjà. Rimpiazzallu ?
+fo:Fílan %s finst longu. Skriva yvir?
+sat:ᱨᱮᱫᱽ %s ᱢᱮᱱᱟᱜᱼᱟ ᱾ ᱪᱮᱛᱟᱱ ᱛᱮ ᱚᱞ ᱢᱮ?
 :Find & Select
+af:Soek en kies
+am:Որոնել և ընտրել
+ar:البحث والتحديد
+bg:Търсене и избор
+bn:খুঁজুন ও নির্বাচন করুন
+br:Localizar e selecionar
+bs:Pretraga i odabir
+by:Пошук і вылучэнне
+ca-xv:Busca i selecciona
+ca:Cerca i selecció
+cn:查找和选择
+cy:Canfod a Dewis
+cz:Hledání a výběr
+de:Suchen und Auswählen
+dk:Søg og marker
+el:Εύρεση και επιλογή
 es:Buscar y seleccionar
+et:Otsimine ja valimine
+eu:Bilatu eta hautatu
+fa:جستجو و انتخاب
+fi:Etsi ja valitse
+fr:Rechercher et sélectionner
+fy-nl:Sykje en selektearje
+ga:Aimsigh agus Roghnaigh
+gl:Buscar e seleccionar
+he:חיפוש ובחירה
+hi:खोजें और चुनें
+hr:Traženje i odabir
+hu:Keresés és kijelölés
+id:Cari dan Pilih
+it:Trova e seleziona
+ja:検索と選択
+ka:ძებნა და მონიშვნა
+kr:찾기 및 선택
+kw:Kavos ha Dewis
+lt:Paieška ir žymėjimas
+mk:Пребарување и избор
+ml:കണ്ടെത്തുകയും തിരഞ്ഞെടുക്കുകയും ചെയ്യുക
+mm:ရှာဖွေပြီး ရွေးချယ်ရန်
+my:Cari dan Pilih
+nl:Zoeken en selecteren
+nn:Søk og merk
+no:Søk og merk
+pa:ਲੱਭੋ ਅਤੇ ਚੁਣੋ
+pl:Znajdź i zaznacz
+pt:Localizar e selecionar
+ro:Căutare și selectare
+ru:Поиск и выделение
+si:සොයන්න සහ තෝරන්න
+sk:Hľadanie a výber
+sl:Iskanje in izbira
+sn:Tsvaga uye Sarudza
+sp-rs:Pretraga i izbor
+sq:Gjej dhe përzgjidh
+sr-rs:Претрага и избор
+sv:Sök och markera
+ta:தேடு மற்றும் தேர்ந்தெடு
+th:ค้นหาและเลือก
+tl:Hanapin at Piliin
+tr:Bul ve Seç
+tw:尋找與選取
+uk:Пошук і виділення
+uz:Topish va tanlash
+vn:Tìm và chọn
+ne:खोज्नुहोस् र चयन गर्नुहोस्
+az:Axtar və seç
+ku:گەڕان و دیاریکردن
+jv:Golek lan Pilih
+lv:Meklēt un atlasīt
+co:Ricercà è selezziunà
+fo:Leita og vel
+sat:ᱯᱟᱱᱛᱮ ᱟᱨ ᱵᱟᱪᱷᱟᱣ
+:Follow macOS
+fa:پیروی از macOS
+ml:macOS പിന്തുടരുക
+pa:macOS ਦੀ ਪਾਲਣਾ ਕਰੋ
+ku:شوێن macOS بکەوە
+sat:macOS ᱜᱚᱲᱚᱭ ᱢᱮ
 :forums
+af:forums
+am:ֆորումներ
+ar:المنتديات
+bg:форуми
+bn:ফোরাম
+br:fóruns
+bs:forumi
+by:форумы
+ca-xv:fòrums
+ca:fòrums
+cn:论坛
+cy:fforymau
+cz:fóra
+de:Foren
+dk:fora
+el:φόρουμ
 es:foros
+et:foorumid
+eu:foroak
+fa:انجمن‌ها
+fi:foorumit
+fr:forums
+fy-nl:foarums
+ga:fóraim
+gl:foros
+he:פורומים
+hi:फ़ोरम
+hr:forumi
+hu:fórumok
+id:forum
+it:forum
+ja:フォーラム
+ka:ფორუმები
+kr:포럼
+kw:forumow
+lt:forumai
+mk:форуми
+ml:ഫോറങ്ങൾ
+mm:ဖိုရမ်များ
+my:forum
+nl:forums
+nn:forum
+no:forum
+pa:ਫੋਰਮ
+pl:fora
+pt:fóruns
+ro:forumuri
+ru:форумы
+si:සංසද
+sk:fóra
+sl:forumi
+sn:maforamu
+sp-rs:forumi
+sq:forume
+sr-rs:форуми
+sv:forum
+ta:மன்றங்கள்
+th:ฟอรัม
+tl:mga forum
+tr:forumlar
+tw:論壇
+uk:форуми
+uz:forumlar
+vn:diễn đàn
+ne:फोरमहरू
+az:forumlar
+ku:مەکۆکان
+jv:forum
+lv:forumi
+co:fori
+fo:kjak
+sat:ᱯᱷᱚᱨᱚᱢᱠᱚ
 :Hide %s
+af:Versteek %s
+am:Թաքցնել %s-ը
+ar:إخفاء %s
+bg:Скрий %s
+bn:%s লুকান
+br:Ocultar %s
+bs:Sakrij %s
+by:Схаваць %s
+ca-xv:Amaga %s
+ca:Amaga %s
+cn:隐藏%s
+cy:Cuddio %s
+cz:Skrýt %s
+de:%s ausblenden
+dk:Skjul %s
+el:Απόκρυψη %s
 es:Ocultar %s
+et:Peida %s
+eu:Ezkutatu %s
+fa:پنهان کردن %s
+fi:Kätke %s
+fr:Masquer %s
+fy-nl:%s ferbergje
+ga:Folaigh %s
+gl:Agochar %s
+he:הסתר את %s
+hi:%s छिपाएँ
+hr:Sakrij %s
+hu:%s elrejtése
+id:Sembunyikan %s
+it:Nascondi %s
+ja:%sを隠す
+ka:%s-ის დამალვა
+kr:%s 가리기
+kw:Kudha %s
+lt:Slėpti %s
+mk:Скриј %s
+ml:%s മറയ്ക്കുക
+mm:%s ကို ဖျောက်ရန်
+my:Sembunyikan %s
+nl:Verberg %s
+nn:Gøym %s
+no:Skjul %s
+pa:%s ਲੁਕਾਓ
+pl:Ukryj %s
+pt:Ocultar %s
+ro:Ascunde %s
+ru:Скрыть %s
+si:%s සඟවන්න
+sk:Skryť %s
+sl:Skrij %s
+sn:Viga %s
+sp-rs:Sakrij %s
+sq:Fshih %s
+sr-rs:Сакриј %s
+sv:Göm %s
+ta:%s ஐ மறை
+th:ซ่อน %s
+tl:Itago ang %s
+tr:%s Uygulamasını Gizle
+tw:隱藏%s
+uk:Сховати %s
+uz:%s ni yashirish
+vn:Ẩn %s
+ne:%s लुकाउनुहोस्
+az:%s gizlət
+ku:شاردنەوەی %s
+jv:Dhelikake %s
+lv:Paslēpt %s
+co:Piattà %s
+fo:Fjal %s
+sat:%s ᱩᱠᱩ ᱢᱮ
 :Hide Others
+af:Versteek ander
+am:Թաքցնել մյուսները
+ar:إخفاء الآخرين
+bg:Скрий другите
+bn:অন্যগুলো লুকান
+br:Ocultar Outros
+bs:Sakrij ostale
+by:Схаваць іншыя
+ca-xv:Amaga els altres
+ca:Amaga els altres
+cn:隐藏其他
+cy:Cuddio Eraill
+cz:Skrýt ostatní
+de:Andere ausblenden
+dk:Skjul andre
+el:Απόκρυψη υπολοίπων
 es:Ocultar otros
+et:Peida teised
+eu:Ezkutatu besteak
+fa:پنهان کردن بقیه
+fi:Kätke muut
+fr:Masquer les autres
+fy-nl:Oaren ferbergje
+ga:Folaigh Cinn Eile
+gl:Agochar outros
+he:הסתר אחרים
+hi:अन्य छिपाएँ
+hr:Sakrij ostale
+hu:Egyebek elrejtése
+id:Sembunyikan Lainnya
+it:Nascondi altre
+ja:ほかを隠す
+ka:სხვების დამალვა
+kr:기타 가리기
+kw:Kudha Erel
+lt:Slėpti kitas
+mk:Скриј ги другите
+ml:മറ്റുള്ളവ മറയ്ക്കുക
+mm:အခြားများကို ဖျောက်ရန်
+my:Sembunyikan Lain-lain
+nl:Verberg andere
+nn:Gøym andre
+no:Skjul andre
+pa:ਹੋਰ ਲੁਕਾਓ
+pl:Ukryj pozostałe
+pt:Ocultar outros
+ro:Ascunde-le pe celelalte
+ru:Скрыть остальные
+si:අනෙක් ඒවා සඟවන්න
+sk:Skryť ostatné
+sl:Skrij ostale
+sn:Viga Vamwe
+sp-rs:Sakrij ostale
+sq:Fshih të tjerat
+sr-rs:Сакриј остале
+sv:Göm övriga
+ta:மற்றவற்றை மறை
+th:ซ่อนรายการอื่น
+tl:Itago ang Iba
+tr:Diğerlerini Gizle
+tw:隱藏其他
+uk:Сховати інші
+uz:Boshqalarni yashirish
+vn:Ẩn mục khác
+ne:अरू लुकाउनुहोस्
+az:Digərlərini gizlət
+ku:شاردنەوەی ئەوانی تر
+jv:Dhelikake Liyane
+lv:Paslēpt citus
+co:Piattà l’altri
+fo:Fjal onnur
+sat:ᱮᱴᱟᱜᱠᱚ ᱩᱠᱩ ᱢᱮ
 :Interface
+af:Koppelvlak
+am:Միջերես
+ar:الواجهة
+bg:Интерфейс
+bn:ইন্টারফেস
+br:Interface
+bs:Interfejs
+by:Інтэрфейс
+ca-xv:Interfície
+ca:Interfície
+cn:界面
+cy:Rhyngwyneb
+cz:Rozhraní
+de:Oberfläche
+dk:Brugerflade
+el:Διεπαφή
 es:Interfaz
+et:Liides
+eu:Interfazea
+fa:رابط کاربری
+fi:Käyttöliittymä
+fr:Interface
+fy-nl:Ynterface
+ga:Comhéadan
+gl:Interface
+he:ממשק
+hi:इंटरफ़ेस
+hr:Sučelje
+hu:Felület
+id:Antarmuka
+it:Interfaccia
+ja:インターフェイス
+ka:ინტერფეისი
+kr:인터페이스
+kw:Ynterfas
+lt:Sąsaja
+mk:Интерфејс
+ml:ഇന്റർഫേസ്
+mm:အင်တာဖေ့စ်
+my:Antara muka
+nl:Interface
+nn:Grensesnitt
+no:Grensesnitt
+pa:ਇੰਟਰਫੇਸ
+pl:Interfejs
+pt:Interface
+ro:Interfață
+ru:Интерфейс
+si:අතුරුමුහුණත
+sk:Rozhranie
+sl:Vmesnik
+sn:Interface
+sp-rs:Interfejs
+sq:Ndërfaqja
+sr-rs:Интерфејс
+sv:Gränssnitt
+ta:இடைமுகம்
+th:อินเทอร์เฟซ
+tl:Interface
+tr:Arayüz
+tw:介面
+uk:Інтерфейс
+uz:Interfeys
+vn:Giao diện
+ne:इन्टरफेस
+az:İnterfeys
+ku:ڕووکار
+jv:Antarmuka
+lv:Saskarne
+co:Interfaccia
+fo:Markamót
+sat:ᱤᱱᱴᱟᱨᱯᱷᱮᱥ
 :Left Edge
+af:Linkerrand
+am:Ձախ եզր
+ar:الحافة اليسرى
+bg:Ляв край
+bn:বাম প্রান্ত
+br:Borda esquerda
+bs:Lijevi rub
+by:Левы край
+ca-xv:Vora esquerra
+ca:Vora esquerra
+cn:左边缘
+cy:Ymyl Chwith
+cz:Levý okraj
+de:Linker Rand
+dk:Venstre kant
+el:Αριστερό άκρο
 es:Borde izquierdo
+et:Vasak serv
+eu:Ezkerreko ertza
+fa:لبه چپ
+fi:Vasen reuna
+fr:Bord gauche
+fy-nl:Linkerrâne
+ga:Imeall Clé
+gl:Bordo esquerdo
+he:קצה שמאלי
+hi:बायाँ किनारा
+hr:Lijevi rub
+hu:Bal szél
+id:Tepi Kiri
+it:Bordo sinistro
+ja:左端
+ka:მარცხენა კიდე
+kr:왼쪽 가장자리
+kw:Amal Kledh
+lt:Kairysis kraštas
+mk:Лев раб
+ml:ഇടത് അറ്റം
+mm:ဘယ်ဘက်အစွန်း
+my:Pinggir Kiri
+nl:Linkerrand
+nn:Venstre kant
+no:Venstre kant
+pa:ਖੱਬਾ ਕਿਨਾਰਾ
+pl:Lewa krawędź
+pt:Margem esquerda
+ro:Marginea stângă
+ru:К левому краю
+si:වම් දාරය
+sk:Ľavý okraj
+sl:Levi rob
+sn:Mupendero Wekuruboshwe
+sp-rs:Levi rub
+sq:Skaji i majtë
+sr-rs:Леви руб
+sv:Vänsterkant
+ta:இடது விளிம்பு
+th:ขอบซ้าย
+tl:Kaliwang Gilid
+tr:Sol Kenar
+tw:左邊緣
+uk:Лівий край
+uz:Chap chet
+vn:Cạnh trái
+ne:बायाँ किनारा
+az:Sol kənar
+ku:لێواری چەپ
+jv:Pinggir Kiwa
+lv:Kreisā mala
+co:Orlu manca
+fo:Vinstri kantur
+sat:ᱞᱮᱝᱜᱟ ᱫᱷᱟᱨᱮ
+:legacy
+af:klassiek
+am:դասական
+ar:تقليدي
+bg:класически
+bn:প্রচলিত
+br:clássico
+bs:klasično
+by:класічны
+ca-xv:clàssic
+ca:clàssic
+cn:传统
+cy:clasurol
+cz:klasický
+de:klassisch
+dk:klassisk
+el:κλασικό
+es:clásico
+et:klassikaline
+eu:klasikoa
+fa:کلاسیک
+fi:perinteinen
+fr:classique
+fy-nl:klassyk
+ga:clasaiceach
+gl:clásico
+he:קלאסי
+hi:पारंपरिक
+hr:klasično
+hu:hagyományos
+id:klasik
+it:classico
+ja:従来
+ka:კლასიკური
+kr:기존
+kw:klasek
+lt:klasikinis
+mk:класично
+ml:പരമ്പരാഗതം
+mm:ရိုးရာ
+my:klasik
+nl:klassiek
+nn:klassisk
+no:klassisk
+pa:ਰਵਾਇਤੀ
+pl:klasyczny
+pt:clássico
+ro:clasic
+ru:классический
+si:සාම්ප්‍රදායික
+sk:klasický
+sl:klasično
+sn:zvechinyakare
+sp-rs:klasično
+sq:klasik
+sr-rs:класично
+sv:klassisk
+ta:பாரம்பரிய
+th:แบบเดิม
+tl:klasiko
+tr:klasik
+tw:傳統
+uk:класичний
+uz:klassik
+vn:cổ điển
+ne:परम्परागत
+az:klassik
+ku:کلاسیکی
+jv:klasik
+lv:klasiskais
+co:classicu
+fo:klassiskt
+sat:ᱢᱟᱨᱮ
 :licenses
+af:lisensies
+am:արտոնագրեր
+ar:التراخيص
+bg:лицензи
+bn:লাইসেন্স
+br:licenças
+bs:licence
+by:ліцэнзіі
+ca-xv:llicències
+ca:llicències
+cn:许可证
+cy:trwyddedau
+cz:licence
+de:Lizenzen
+dk:licenser
+el:άδειες
 es:licencias
+et:litsentsid
+eu:lizentziak
+fa:مجوزها
+fi:lisenssit
+fr:licences
+fy-nl:lisinsjes
+ga:ceadúnais
+gl:licenzas
+he:רישיונות
+hi:लाइसेंस
+hr:licence
+hu:licencek
+id:lisensi
+it:licenze
+ja:ライセンス
+ka:ლიცენზიები
+kr:라이선스
+kw:kummyasow
+lt:licencijos
+mk:лиценци
+ml:ലൈസൻസുകൾ
+mm:လိုင်စင်များ
+my:lesen
+nl:licenties
+nn:lisensar
+no:lisenser
+pa:ਲਾਇਸੈਂਸ
+pl:licencje
+pt:licenças
+ro:licențe
+ru:лицензии
+si:බලපත්‍ර
+sk:licencie
+sl:licence
+sn:marezenisi
+sp-rs:licence
+sq:licenca
+sr-rs:лиценце
+sv:licenser
+ta:உரிமங்கள்
+th:สัญญาอนุญาต
+tl:mga lisensya
+tr:lisanslar
+tw:授權條款
+uk:ліцензії
+uz:litsenziyalar
+vn:giấy phép
+ne:इजाजतपत्रहरू
+az:lisenziyalar
+ku:مۆڵەتەکان
+jv:lisensi
+lv:licences
+co:licenze
+fo:loyvi
+sat:ᱞᱟᱭᱥᱮᱱᱥᱠᱚ
 :Lock document after signing (last signer)
+af:Sluit dokument na ondertekening (laaste ondertekenaar)
+am:Կողպել փաստաթուղթը ստորագրելուց հետո (վերջին ստորագրող)
+ar:قفل المستند بعد التوقيع (آخر موقِّع)
+bg:Заключи документа след подписване (последен подписващ)
+bn:স্বাক্ষরের পরে নথি লক করুন (শেষ স্বাক্ষরকারী)
+br:Bloquear o documento após assinar (último signatário)
+bs:Zaključaj dokument nakon potpisivanja (posljednji potpisnik)
+by:Заблакаваць дакумент пасля подпісу (апошні падпісант)
+ca-xv:Bloqueja el document després de signar (últim signant)
+ca:Bloca el document després de signar (últim signant)
+cn:签名后锁定文档（最后签名者）
+cy:Cloi'r ddogfen ar ôl llofnodi (llofnodwr olaf)
+cz:Uzamknout dokument po podepsání (poslední podepisující)
+de:Dokument nach dem Signieren sperren (letzter Unterzeichner)
+dk:Lås dokumentet efter signering (sidste underskriver)
+el:Κλείδωμα εγγράφου μετά την υπογραφή (τελευταίος υπογράφων)
 es:Bloquear el documento tras firmar (último firmante)
+et:Lukusta dokument pärast allkirjastamist (viimane allkirjastaja)
+eu:Blokeatu dokumentua sinatu ondoren (azken sinatzailea)
+fa:قفل کردن سند پس از امضا (آخرین امضاکننده)
+fi:Lukitse dokumentti allekirjoituksen jälkeen (viimeinen allekirjoittaja)
+fr:Verrouiller le document après la signature (dernier signataire)
+fy-nl:Dokumint beskoattelje nei ûndertekenjen (lêste ûndertekener)
+ga:Cuir glas ar an doiciméad tar éis síniú (an sínitheoir deireanach)
+gl:Bloquear o documento despois de asinar (último asinante)
+he:נעל את המסמך לאחר החתימה (החותם האחרון)
+hi:हस्ताक्षर के बाद दस्तावेज़ लॉक करें (अंतिम हस्ताक्षरकर्ता)
+hr:Zaključaj dokument nakon potpisivanja (posljednji potpisnik)
+hu:Dokumentum zárolása aláírás után (utolsó aláíró)
+id:Kunci dokumen setelah ditandatangani (penanda tangan terakhir)
+it:Blocca il documento dopo la firma (ultimo firmatario)
+ja:署名後にドキュメントをロック (最後の署名者)
+ka:დოკუმენტის ჩაკეტვა ხელმოწერის შემდეგ (ბოლო ხელმომწერი)
+kr:서명 후 문서 잠금(마지막 서명자)
+kw:Alhwedha an dokment wosa sina (diwettha siner)
+lt:Užrakinti dokumentą po pasirašymo (paskutinis pasirašantysis)
+mk:Заклучи го документот по потпишувањето (последен потписник)
+ml:ഒപ്പിട്ട ശേഷം പ്രമാണം ലോക്ക് ചെയ്യുക (അവസാന ഒപ്പുകാരൻ)
+mm:လက်မှတ်ထိုးပြီးနောက် စာတမ်းကို သော့ခတ်ရန် (နောက်ဆုံး လက်မှတ်ထိုးသူ)
+my:Kunci dokumen selepas menandatangani (penandatangan terakhir)
+nl:Document vergrendelen na ondertekenen (laatste ondertekenaar)
+nn:Lås dokumentet etter signering (siste signatar)
+no:Lås dokumentet etter signering (siste signatar)
+pa:ਦਸਤਖਤ ਤੋਂ ਬਾਅਦ ਦਸਤਾਵੇਜ਼ ਲਾਕ ਕਰੋ (ਆਖਰੀ ਦਸਤਖਤਕਰਤਾ)
+pl:Zablokuj dokument po podpisaniu (ostatni podpisujący)
+pt:Bloquear o documento após assinar (último signatário)
+ro:Blochează documentul după semnare (ultimul semnatar)
+ru:Заблокировать документ после подписания (последний подписант)
+si:අත්සන් කිරීමෙන් පසු ලේඛනය අගුළු දමන්න (අවසන් අත්සන්කරු)
+sk:Uzamknúť dokument po podpísaní (posledný podpisujúci)
+sl:Zakleni dokument po podpisu (zadnji podpisnik)
+sn:Kiya gwaro mushure mekusaina (musaini wekupedzisira)
+sp-rs:Zaključaj dokument posle potpisivanja (poslednji potpisnik)
+sq:Kyçe dokumentin pas nënshkrimit (nënshkruesi i fundit)
+sr-rs:Закључај документ после потписивања (последњи потписник)
+sv:Lås dokumentet efter signering (sista signerare)
+ta:கையொப்பமிட்ட பின் ஆவணத்தைப் பூட்டு (கடைசிக் கையொப்பமிடுபவர்)
+th:ล็อกเอกสารหลังลงนาม (ผู้ลงนามคนสุดท้าย)
+tl:I-lock ang dokumento pagkatapos lumagda (huling lumagda)
+tr:İmzaladıktan sonra belgeyi kilitle (son imzalayan)
+tw:簽署後鎖定文件（最後簽署者）
+uk:Заблокувати документ після підписання (останній підписант)
+uz:Imzolangandan keyin hujjatni qulflash (oxirgi imzolovchi)
+vn:Khóa tài liệu sau khi ký (người ký cuối)
+ne:हस्ताक्षरपछि कागजात लक गर्नुहोस् (अन्तिम हस्ताक्षरकर्ता)
+az:İmzaladıqdan sonra sənədi kilidlə (sonuncu imzalayan)
+ku:قوفڵکردنی بەڵگەنامە دوای واژووکردن (دوایین واژووکەر)
+jv:Kunci dokumen sawise ditandhatangani (panandhatangan pungkasan)
+lv:Bloķēt dokumentu pēc parakstīšanas (pēdējais parakstītājs)
+co:Bluccà u ducumentu dopu à a firma (ultimu firmatariu)
+fo:Lás skjalið eftir undirskriving (seinasti undirskrivari)
+sat:ᱥᱚᱦᱤ ᱛᱟᱭᱚᱢ ᱫᱚᱞᱤᱞ ᱞᱚᱠ ᱢᱮ (ᱢᱩᱪᱟᱹᱫ ᱥᱚᱦᱤᱭᱟᱹ)
 :Lock form &fields after signing
+af:Sluit vorm&velde na ondertekening
+am:Կողպել ձևի &դաշտերը ստորագրելուց հետո
+ar:قفل &حقول النموذج بعد التوقيع
+bg:Заключи &полетата на формуляра след подписване
+bn:স্বাক্ষরের পরে ফর্মের &ক্ষেত্র লক করুন
+br:Bloquear os &campos do formulário após assinar
+bs:Zaključaj &polja obrasca nakon potpisivanja
+by:Заблакаваць &палі формы пасля подпісу
+ca-xv:Bloqueja els &camps del formulari després de signar
+ca:Bloca els &camps del formulari després de signar
+cn:签名后锁定表单字段(&F)
+cy:Cloi &meysydd y ffurflen ar ôl llofnodi
+cz:Uzamknout &pole formuláře po podepsání
+de:Formular&felder nach dem Signieren sperren
+dk:Lås formular&felter efter signering
+el:Κλείδωμα &πεδίων φόρμας μετά την υπογραφή
 es:Bloquear los &campos del formulario tras firmar
+et:Lukusta vormi&väljad pärast allkirjastamist
+eu:Blokeatu inprimakiko &eremuak sinatu ondoren
+fa:قفل کردن &فیلدهای فرم پس از امضا
+fi:Lukitse lomakkeen &kentät allekirjoituksen jälkeen
+fr:Verrouiller les &champs du formulaire après la signature
+fy-nl:Formulier&fjilden beskoattelje nei ûndertekenjen
+ga:Cuir glas ar &réimsí na foirme tar éis síniú
+gl:Bloquear os &campos do formulario despois de asinar
+he:נעל את &שדות הטופס לאחר החתימה
+hi:हस्ताक्षर के बाद फ़ॉर्म &फ़ील्ड लॉक करें
+hr:Zaključaj &polja obrasca nakon potpisivanja
+hu:Űrlap&mezők zárolása aláírás után
+id:Kunci &bidang formulir setelah ditandatangani
+it:Blocca i &campi del modulo dopo la firma
+ja:署名後にフォームのフィールドをロック(&F)
+ka:ფორმის &ველების ჩაკეტვა ხელმოწერის შემდეგ
+kr:서명 후 양식 필드 잠금(&F)
+kw:Alhwedha &gwelyow an furvlenn wosa sina
+lt:Užrakinti formos &laukus po pasirašymo
+mk:Заклучи ги &полињата на формуларот по потпишувањето
+ml:ഒപ്പിട്ട ശേഷം ഫോമിലെ &ഫീൽഡുകൾ ലോക്ക് ചെയ്യുക
+mm:လက်မှတ်ထိုးပြီးနောက် ဖောင်&အကွက်များကို သော့ခတ်ရန်
+my:Kunci &medan borang selepas menandatangani
+nl:Formulier&velden vergrendelen na ondertekenen
+nn:Lås skjema&felt etter signering
+no:Lås skjema&felt etter signering
+pa:ਦਸਤਖਤ ਤੋਂ ਬਾਅਦ ਫ਼ਾਰਮ ਦੇ &ਖੇਤਰ ਲਾਕ ਕਰੋ
+pl:Zablokuj &pola formularza po podpisaniu
+pt:Bloquear os &campos do formulário após assinar
+ro:Blochează &câmpurile formularului după semnare
+ru:Заблокировать &поля формы после подписания
+si:අත්සන් කිරීමෙන් පසු පෝරමයේ &ක්ෂේත්‍ර අගුළු දමන්න
+sk:Uzamknúť &polia formulára po podpísaní
+sl:Zakleni &polja obrazca po podpisu
+sn:Kiya &minda yefomu mushure mekusaina
+sp-rs:Zaključaj &polja obrasca posle potpisivanja
+sq:Kyçi &fushat e formularit pas nënshkrimit
+sr-rs:Закључај &поља обрасца после потписивања
+sv:Lås formulär&fält efter signering
+ta:கையொப்பமிட்ட பின் படிவப் &புலங்களைப் பூட்டு
+th:ล็อก&ช่องของแบบฟอร์มหลังลงนาม
+tl:I-lock ang mga &field ng form pagkatapos lumagda
+tr:İmzaladıktan sonra form &alanlarını kilitle
+tw:簽署後鎖定表單欄位(&F)
+uk:Заблокувати &поля форми після підписання
+uz:Imzolangandan keyin shakl &maydonlarini qulflash
+vn:Khóa các &trường biểu mẫu sau khi ký
+ne:हस्ताक्षरपछि फारमका &क्षेत्रहरू लक गर्नुहोस्
+az:İmzaladıqdan sonra form &sahələrini kilidlə
+ku:قوفڵکردنی &خانەکانی فۆرم دوای واژووکردن
+jv:Kunci &kolom formulir sawise ditandhatangani
+lv:Bloķēt veidlapas &laukus pēc parakstīšanas
+co:Bluccà i &campi di u furmulariu dopu à a firma
+fo:Lás oyðublaðs&teigar eftir undirskriving
+sat:ᱥᱚᱦᱤ ᱛᱟᱭᱚᱢ ᱯᱷᱚᱨᱢ &ᱡᱟᱭᱜᱟᱠᱚ ᱞᱚᱠ ᱢᱮ
 :manual
+af:handleiding
+am:ձեռնարկ
+ar:الدليل
+bg:ръководство
+bn:ম্যানুয়াল
+br:manual
+bs:priručnik
+by:дапаможнік
+ca-xv:manual
+ca:manual
+cn:手册
+cy:llawlyfr
+cz:příručka
+de:Handbuch
+dk:manual
+el:εγχειρίδιο
 es:manual
+et:juhend
+eu:eskuliburua
+fa:راهنما
+fi:käyttöopas
+fr:manuel
+fy-nl:hantlieding
+ga:lámhleabhar
+gl:manual
+he:מדריך
+hi:मैनुअल
+hr:priručnik
+hu:kézikönyv
+id:panduan
+it:manuale
+ja:マニュアル
+ka:სახელმძღვანელო
+kr:설명서
+kw:dornlyver
+lt:vadovas
+mk:прирачник
+ml:മാനുവൽ
+mm:လက်စွဲ
+my:manual
+nl:handleiding
+nn:handbok
+no:håndbok
+pa:ਮੈਨੂਅਲ
+pl:podręcznik
+pt:manual
+ro:manual
+ru:руководство
+si:අත්පොත
+sk:príručka
+sl:priročnik
+sn:bhuku rerairo
+sp-rs:priručnik
+sq:manual
+sr-rs:приручник
+sv:handbok
+ta:கையேடு
+th:คู่มือ
+tl:manwal
+tr:kılavuz
+tw:手冊
+uk:посібник
+uz:qo‘llanma
+vn:hướng dẫn
+ne:पुस्तिका
+az:təlimat
+ku:ڕێبەر
+jv:pandhuan
+lv:rokasgrāmata
+co:manuale
+fo:handbók
+sat:ᱢᱮᱱᱩᱣᱟᱞ
 :Minimize
+af:Minimeer
+am:Փոքրացնել
+ar:تصغير
+bg:Минимизиране
+bn:ছোট করুন
+br:Minimizar
+bs:Minimiziraj
+by:Згарнуць
+ca-xv:Minimitza
+ca:Minimitza
+cn:最小化
+cy:Lleihau
+cz:Minimalizovat
+de:Im Dock ablegen
+dk:Minimer
+el:Ελαχιστοποίηση
 es:Minimizar
+et:Minimeeri
+eu:Minimizatu
+fa:کوچک کردن
+fi:Pienennä
+fr:Placer dans le Dock
+fy-nl:Minimalisearje
+ga:Íoslaghdaigh
+gl:Minimizar
+he:מזער
+hi:छोटा करें
+hr:Minimiziraj
+hu:Kis méret
+id:Minimalkan
+it:Contrai
+ja:しまう
+ka:ჩაკეცვა
+kr:최소화
+kw:Lehe
+lt:Sumažinti
+mk:Минимизирај
+ml:ചെറുതാക്കുക
+mm:အသေးချုံ့ရန်
+my:Minimumkan
+nl:Minimaliseer
+nn:Minimer
+no:Minimer
+pa:ਛੋਟਾ ਕਰੋ
+pl:Minimalizuj
+pt:Minimizar
+ro:Minimizează
+ru:Свернуть
+si:කුඩා කරන්න
+sk:Minimalizovať
+sl:Minimiziraj
+sn:Deredza
+sp-rs:Minimizuj
+sq:Minimizo
+sr-rs:Минимизуј
+sv:Minimera
+ta:சிறிதாக்கு
+th:ย่อ
+tl:I-minimize
+tr:Simge Durumuna Küçült
+tw:縮到最小
+uk:Згорнути
+uz:Kichraytirish
+vn:Thu nhỏ
+ne:सानो बनाउनुहोस्
+az:Kiçilt
+ku:بچووککردنەوە
+jv:Cilikake
+lv:Minimizēt
+co:Minimizà
+fo:Minka
+sat:ᱦᱩᱰᱤᱧ ᱢᱮ
 :more software by me
+af:meer sagteware van my
+am:իմ այլ ծրագրերը
+ar:المزيد من برامجي
+bg:още мой софтуер
+bn:আমার আরও সফটওয়্যার
+br:mais softwares do autor
+bs:još mojih programa
+by:іншыя мае праграмы
+ca-xv:més programari de l'autor
+ca:més programari de l'autor
+cn:我的更多软件
+cy:rhagor o feddalwedd gennyf i
+cz:další software ode mě
+de:weitere Software von mir
+dk:mere software fra mig
+el:περισσότερο λογισμικό από εμένα
 es:más software del autor
+et:veel minu tarkvara
+eu:egilearen software gehiago
+fa:نرم‌افزارهای دیگر من
+fi:lisää ohjelmia minulta
+fr:autres logiciels de l'auteur
+fy-nl:mear software fan my
+ga:tuilleadh bogearraí uaim
+gl:máis software do autor
+he:תוכנות נוספות שלי
+hi:मेरे और सॉफ़्टवेयर
+hr:još mojih programa
+hu:további szoftvereim
+id:perangkat lunak saya lainnya
+it:altri software dell'autore
+ja:作者のその他のソフトウェア
+ka:ჩემი სხვა პროგრამები
+kr:제작자의 다른 소프트웨어
+kw:moy medhelweyth ahanav vy
+lt:daugiau mano programų
+mk:уште мој софтвер
+ml:എന്റെ കൂടുതൽ സോഫ്റ്റ്‌വെയർ
+mm:ကျွန်ုပ်၏ အခြား ဆော့ဖ်ဝဲများ
+my:lagi perisian saya
+nl:meer software van mij
+nn:meir programvare frå meg
+no:mer programvare fra meg
+pa:ਮੇਰੇ ਹੋਰ ਸਾਫ਼ਟਵੇਅਰ
+pl:więcej mojego oprogramowania
+pt:mais software do autor
+ro:alte programe ale autorului
+ru:другие мои программы
+si:මගේ තවත් මෘදුකාංග
+sk:ďalší softvér odo mňa
+sl:več mojih programov
+sn:mamwe masoftware angu
+sp-rs:još mojih programa
+sq:më shumë software prej meje
+sr-rs:још мојих програма
+sv:mer programvara av mig
+ta:என் மேலும் மென்பொருள்கள்
+th:ซอฟต์แวร์อื่นของฉัน
+tl:iba ko pang software
+tr:diğer yazılımlarım
+tw:我的更多軟體
+uk:інші мої програми
+uz:mening boshqa dasturlarim
+vn:thêm phần mềm của tôi
+ne:मेरा थप सफ्टवेयर
+az:mənim digər proqramlarım
+ku:نەرمەکاڵای زیاتری من
+jv:piranti lunak liyane saka aku
+lv:vairāk manas programmatūras
+co:altri prugrammi di l’autore
+fo:meira ritbúnaður frá mær
+sat:ᱤᱧᱟᱜ ᱟᱨᱦᱚᱸ ᱥᱚᱯᱷᱴᱣᱮᱭᱟᱨ
 :Navigate Favorites
+af:Navigeer gunstelinge
+am:Նավարկել ընտրյալներում
+ar:التنقل في المفضلة
+bg:Навигация в любими
+bn:প্রিয়তে নেভিগেট করুন
+br:Navegar nos favoritos
+bs:Navigacija po favoritima
+by:Навігацыя па абраным
+ca-xv:Navegar pels preferits
+ca:Navega pels preferits
+cn:浏览收藏夹
+cy:Llywio Ffefrynnau
+cz:Procházet oblíbené
+de:Favoriten navigieren
+dk:Naviger i favoritter
+el:Πλοήγηση στα αγαπημένα
 es:Navegar favoritos
+et:Navigeeri lemmikutes
+eu:Nabigatu gogokoetan
+fa:پیمایش علاقه‌مندی‌ها
+fi:Selaa suosikkeja
+fr:Naviguer dans les favoris
+fy-nl:Favoriten navigearje
+ga:Nascleanúint sna Ceanáin
+gl:Navegar polos favoritos
+he:ניווט במועדפים
+hi:पसंदीदा में नेविगेट करें
+hr:Kretanje kroz favorite
+hu:Navigálás a kedvencek között
+id:Navigasi Favorit
+it:Naviga nei preferiti
+ja:お気に入りを移動
+ka:რჩეულებში ნავიგაცია
+kr:즐겨찾기 탐색
+kw:Peuvya Taklow Drudh
+lt:Naršyti mėgstamiausius
+mk:Навигирај низ омилени
+ml:പ്രിയപ്പെട്ടവയിൽ നാവിഗേറ്റ് ചെയ്യുക
+mm:အကြိုက်ဆုံးများတွင် သွားလာရန်
+my:Navigasi Kegemaran
+nl:Favorieten navigeren
+nn:Naviger i favorittar
+no:Naviger i favoritter
+pa:ਮਨਪਸੰਦ ਵਿੱਚ ਨੈਵੀਗੇਟ ਕਰੋ
+pl:Nawiguj ulubionymi
+pt:Navegar nos favoritos
+ro:Navighează în favorite
+ru:Навигация по избранному
+si:ප්‍රියතමයන් තුළ සංචාලනය කරන්න
+sk:Prechádzať obľúbené
+sl:Krmarjenje po priljubljenih
+sn:Fambisa Zvinodiwa
+sp-rs:Navigacija kroz omiljene
+sq:Lundro te të parapëlqyerit
+sr-rs:Навигација кроз омиљене
+sv:Navigera i favoriter
+ta:பிடித்தவைகளில் வழிசெல்
+th:นำทางรายการโปรด
+tl:Mag-navigate sa Mga Paborito
+tr:Sık Kullanılanlarda Gezin
+tw:瀏覽我的最愛
+uk:Навігація по обраному
+uz:Sevimlilar bo‘ylab harakatlanish
+vn:Duyệt mục yêu thích
+ne:मनपर्नेहरूमा नेभिगेट गर्नुहोस्
+az:Seçilmişlərdə naviqasiya
+ku:گەشتکردن لە پەسەندەکان
+jv:Navigasi Favorit
+lv:Pārvietoties izlasē
+co:Navigà in i favuriti
+fo:Kanna yndisstøð
+sat:ᱠᱩᱥᱤᱠᱚ ᱨᱮ ᱱᱮᱵᱷᱤᱜᱮᱴ ᱢᱮ
 :Navigate History
+af:Navigeer geskiedenis
+am:Նավարկել պատմության մեջ
+ar:التنقل في السجل
+bg:Навигация в историята
+bn:ইতিহাসে নেভিগেট করুন
+br:Navegar no histórico
+bs:Navigacija po historiji
+by:Навігацыя па гісторыі
+ca-xv:Navegar per l'historial
+ca:Navega per l'historial
+cn:浏览历史记录
+cy:Llywio Hanes
+cz:Procházet historii
+de:Verlauf navigieren
+dk:Naviger i historik
+el:Πλοήγηση στο ιστορικό
 es:Navegar historial
+et:Navigeeri ajaloos
+eu:Nabigatu historian
+fa:پیمایش تاریخچه
+fi:Selaa historiaa
+fr:Naviguer dans l'historique
+fy-nl:Skiednis navigearje
+ga:Nascleanúint sa Stair
+gl:Navegar polo historial
+he:ניווט בהיסטוריה
+hi:इतिहास में नेविगेट करें
+hr:Kretanje kroz povijest
+hu:Navigálás az előzmények között
+id:Navigasi Riwayat
+it:Naviga nella cronologia
+ja:履歴を移動
+ka:ისტორიაში ნავიგაცია
+kr:기록 탐색
+kw:Peuvya Istori
+lt:Naršyti istoriją
+mk:Навигирај низ историјата
+ml:ചരിത്രത്തിൽ നാവിഗേറ്റ് ചെയ്യുക
+mm:မှတ်တမ်းတွင် သွားလာရန်
+my:Navigasi Sejarah
+nl:Geschiedenis navigeren
+nn:Naviger i historikk
+no:Naviger i historikk
+pa:ਇਤਿਹਾਸ ਵਿੱਚ ਨੈਵੀਗੇਟ ਕਰੋ
+pl:Nawiguj historią
+pt:Navegar no histórico
+ro:Navighează în istoric
+ru:Навигация по истории
+si:ඉතිහාසය තුළ සංචාලනය කරන්න
+sk:Prechádzať históriu
+sl:Krmarjenje po zgodovini
+sn:Fambisa Nhoroondo
+sp-rs:Navigacija kroz istoriju
+sq:Lundro te historiku
+sr-rs:Навигација кроз историју
+sv:Navigera i historik
+ta:வரலாற்றில் வழிசெல்
+th:นำทางประวัติ
+tl:Mag-navigate sa Kasaysayan
+tr:Geçmişte Gezin
+tw:瀏覽歷史記錄
+uk:Навігація по історії
+uz:Tarix bo‘ylab harakatlanish
+vn:Duyệt lịch sử
+ne:इतिहासमा नेभिगेट गर्नुहोस्
+az:Tarixçədə naviqasiya
+ku:گەشتکردن لە مێژوو
+jv:Navigasi Riwayat
+lv:Pārvietoties vēsturē
+co:Navigà in a cronolugia
+fo:Kanna søgu
+sat:ᱱᱟᱜᱟᱢ ᱨᱮ ᱱᱮᱵᱷᱤᱜᱮᱴ ᱢᱮ
 :Navigate Table Of Contents
+af:Navigeer inhoudsopgawe
+am:Նավարկել բովանդակության մեջ
+ar:التنقل في جدول المحتويات
+bg:Навигация в съдържанието
+bn:সূচিপত্রে নেভিগেট করুন
+br:Navegar no sumário
+bs:Navigacija po sadržaju
+by:Навігацыя па змесце
+ca-xv:Navegar per la taula de continguts
+ca:Navega per la taula de continguts
+cn:浏览目录
+cy:Llywio'r Tabl Cynnwys
+cz:Procházet obsah
+de:Inhaltsverzeichnis navigieren
+dk:Naviger i indholdsfortegnelse
+el:Πλοήγηση στον πίνακα περιεχομένων
 es:Navegar tabla de contenidos
+et:Navigeeri sisukorras
+eu:Nabigatu eduki-taulan
+fa:پیمایش فهرست مطالب
+fi:Selaa sisällysluetteloa
+fr:Naviguer dans la table des matières
+fy-nl:Ynhâldsopjefte navigearje
+ga:Nascleanúint sa Chlár Ábhair
+gl:Navegar pola táboa de contidos
+he:ניווט בתוכן העניינים
+hi:विषय-सूची में नेविगेट करें
+hr:Kretanje kroz sadržaj
+hu:Navigálás a tartalomjegyzékben
+id:Navigasi Daftar Isi
+it:Naviga nel sommario
+ja:目次を移動
+ka:სარჩევში ნავიგაცია
+kr:목차 탐색
+kw:Peuvya Tabel an Dalgh
+lt:Naršyti turinį
+mk:Навигирај низ содржината
+ml:ഉള്ളടക്ക പട്ടികയിൽ നാവിഗേറ്റ് ചെയ്യുക
+mm:မာတိကာတွင် သွားလာရန်
+my:Navigasi Isi Kandungan
+nl:Inhoudsopgave navigeren
+nn:Naviger i innhaldsliste
+no:Naviger i innholdsfortegnelse
+pa:ਸਮੱਗਰੀ ਸੂਚੀ ਵਿੱਚ ਨੈਵੀਗੇਟ ਕਰੋ
+pl:Nawiguj spisem treści
+pt:Navegar no índice
+ro:Navighează în cuprins
+ru:Навигация по оглавлению
+si:පටුන තුළ සංචාලනය කරන්න
+sk:Prechádzať obsah
+sl:Krmarjenje po kazalu vsebine
+sn:Fambisa Rondedzero Yezviri Mukati
+sp-rs:Navigacija kroz sadržaj
+sq:Lundro te tryeza e lëndës
+sr-rs:Навигација кроз садржај
+sv:Navigera i innehållsförteckning
+ta:உள்ளடக்க அட்டவணையில் வழிசெல்
+th:นำทางสารบัญ
+tl:Mag-navigate sa Talaan ng Nilalaman
+tr:İçindekilerde Gezin
+tw:瀏覽目錄
+uk:Навігація по змісту
+uz:Mundarija bo‘ylab harakatlanish
+vn:Duyệt mục lục
+ne:विषयसूचीमा नेभिगेट गर्नुहोस्
+az:Mündəricatda naviqasiya
+ku:گەشتکردن لە پێڕستی ناوەڕۆک
+jv:Navigasi Daftar Isi
+lv:Pārvietoties satura rādītājā
+co:Navigà in a tavula di cuntenutu
+fo:Kanna innihaldsyvirlit
+sat:ᱥᱟᱱᱟᱢ ᱠᱚᱛᱷᱟ ᱛᱟᱹᱞᱠᱟᱹ ᱨᱮ ᱱᱮᱵᱷᱤᱜᱮᱴ ᱢᱮ
 :Navigate Tabs
+af:Navigeer oortjies
+am:Նավարկել ներդիրներում
+ar:التنقل في علامات التبويب
+bg:Навигация в разделите
+bn:ট্যাবে নেভিগেট করুন
+br:Navegar nas abas
+bs:Navigacija po karticama
+by:Навігацыя па ўкладках
+ca-xv:Navegar per les pestanyes
+ca:Navega per les pestanyes
+cn:浏览标签页
+cy:Llywio Tabiau
+cz:Procházet karty
+de:Tabs navigieren
+dk:Naviger i faner
+el:Πλοήγηση στις καρτέλες
 es:Navegar pestañas
+et:Navigeeri vahekaartidel
+eu:Nabigatu fitxetan
+fa:پیمایش زبانه‌ها
+fi:Selaa välilehtiä
+fr:Naviguer dans les onglets
+fy-nl:Ljepblêden navigearje
+ga:Nascleanúint sna Cluaisíní
+gl:Navegar polas lapelas
+he:ניווט בכרטיסיות
+hi:टैब में नेविगेट करें
+hr:Kretanje kroz kartice
+hu:Navigálás a lapok között
+id:Navigasi Tab
+it:Naviga nelle schede
+ja:タブを移動
+ka:ჩანართებში ნავიგაცია
+kr:탭 탐색
+kw:Peuvya Tabow
+lt:Naršyti korteles
+mk:Навигирај низ јазичињата
+ml:ടാബുകളിൽ നാവിഗേറ്റ് ചെയ്യുക
+mm:တဘ်များတွင် သွားလာရန်
+my:Navigasi Tab
+nl:Tabbladen navigeren
+nn:Naviger i faner
+no:Naviger i faner
+pa:ਟੈਬਾਂ ਵਿੱਚ ਨੈਵੀਗੇਟ ਕਰੋ
+pl:Nawiguj kartami
+pt:Navegar nos separadores
+ro:Navighează în file
+ru:Навигация по вкладкам
+si:ටැබ තුළ සංචාලනය කරන්න
+sk:Prechádzať karty
+sl:Krmarjenje po zavihkih
+sn:Fambisa Mataabhu
+sp-rs:Navigacija kroz kartice
+sq:Lundro te skedat
+sr-rs:Навигација кроз картице
+sv:Navigera i flikar
+ta:தாவல்களில் வழிசெல்
+th:นำทางแท็บ
+tl:Mag-navigate sa Mga Tab
+tr:Sekmelerde Gezin
+tw:瀏覽分頁
+uk:Навігація по вкладках
+uz:Varaqlar bo‘ylab harakatlanish
+vn:Duyệt các tab
+ne:ट्याबहरूमा नेभिगेट गर्नुहोस्
+az:Tablarda naviqasiya
+ku:گەشتکردن لە تابەکان
+jv:Navigasi Tab
+lv:Pārvietoties cilnēs
+co:Navigà in l’unghjette
+fo:Kanna teigar
+sat:ᱴᱮᱵᱽᱠᱚ ᱨᱮ ᱱᱮᱵᱷᱤᱜᱮᱴ ᱢᱮ
 :Navigation
+af:Navigasie
+am:Նավարկում
+ar:التنقل
+bg:Навигация
+bn:নেভিগেশন
+br:Navegação
+bs:Navigacija
+by:Навігацыя
+ca-xv:Navegació
+ca:Navegació
+cn:导航
+cy:Llywio
+cz:Navigace
+de:Navigation
+dk:Navigation
+el:Πλοήγηση
 es:Navegación
+et:Navigeerimine
+eu:Nabigazioa
+fa:پیمایش
+fi:Siirtyminen
+fr:Navigation
+fy-nl:Navigaasje
+ga:Nascleanúint
+gl:Navegación
+he:ניווט
+hi:नेविगेशन
+hr:Navigacija
+hu:Navigáció
+id:Navigasi
+it:Navigazione
+ja:ナビゲーション
+ka:ნავიგაცია
+kr:탐색
+kw:Peuvyans
+lt:Naršymas
+mk:Навигација
+ml:നാവിഗേഷൻ
+mm:သွားလာမှု
+my:Navigasi
+nl:Navigatie
+nn:Navigasjon
+no:Navigasjon
+pa:ਨੈਵੀਗੇਸ਼ਨ
+pl:Nawigacja
+pt:Navegação
+ro:Navigare
+ru:Навигация
+si:සංචාලනය
+sk:Navigácia
+sl:Krmarjenje
+sn:Kufambisa
+sp-rs:Navigacija
+sq:Lundrim
+sr-rs:Навигација
+sv:Navigering
+ta:வழிசெலுத்தல்
+th:การนำทาง
+tl:Nabigasyon
+tr:Gezinme
+tw:導覽
+uk:Навігація
+uz:Navigatsiya
+vn:Điều hướng
+ne:नेभिगेसन
+az:Naviqasiya
+ku:گەشتکردن
+jv:Navigasi
+lv:Navigācija
+co:Navigazione
+fo:Navigering
+sat:ᱱᱮᱵᱷᱤᱜᱮᱥᱚᱱ
 :No pages with annotations in the selected range.
+af:Geen bladsye met aantekeninge in die gekose reeks nie.
+am:Ընտրված միջակայքում ծանոթագրություններով էջեր չկան։
+ar:لا توجد صفحات تحتوي على تعليقات توضيحية في النطاق المحدد.
+bg:В избрания диапазон няма страници с анотации.
+bn:নির্বাচিত পরিসরে টীকাসহ কোনো পৃষ্ঠা নেই।
+br:Nenhuma página com anotações no intervalo selecionado.
+bs:U odabranom opsegu nema stranica s napomenama.
+by:У выбраным дыяпазоне няма старонак з анатацыямі.
+ca-xv:No hi ha pàgines amb anotacions en l'interval seleccionat.
+ca:No hi ha pàgines amb anotacions a l'interval seleccionat.
+cn:所选范围内没有带注释的页面。
+cy:Does dim tudalennau ag anodiadau yn yr ystod a ddewiswyd.
+cz:Ve vybraném rozsahu nejsou žádné stránky s poznámkami.
+de:Keine Seiten mit Anmerkungen im ausgewählten Bereich.
+dk:Ingen sider med annoteringer i det valgte område.
+el:Δεν υπάρχουν σελίδες με σχολιασμούς στο επιλεγμένο εύρος.
 es:No hay páginas con anotaciones en el rango seleccionado.
+et:Valitud vahemikus pole märkustega lehti.
+eu:Ez dago oharrik duen orririk hautatutako barrutian.
+fa:در محدوده انتخاب‌شده صفحه‌ای با حاشیه‌نویسی وجود ندارد.
+fi:Valitulla alueella ei ole sivuja, joilla on merkintöjä.
+fr:Aucune page avec des annotations dans la plage sélectionnée.
+fy-nl:Gjin siden mei annotaasjes yn it selektearre berik.
+ga:Níl aon leathanach le hanótálacha sa raon roghnaithe.
+gl:Non hai páxinas con anotacións no intervalo seleccionado.
+he:אין עמודים עם הערות בטווח שנבחר.
+hi:चयनित सीमा में एनोटेशन वाले कोई पृष्ठ नहीं हैं।
+hr:U odabranom rasponu nema stranica s bilješkama.
+hu:A kijelölt tartományban nincs jegyzetet tartalmazó oldal.
+id:Tidak ada halaman beranotasi dalam rentang yang dipilih.
+it:Nessuna pagina con annotazioni nell'intervallo selezionato.
+ja:選択した範囲に注釈のあるページはありません。
+ka:არჩეულ დიაპაზონში ანოტაციებიანი გვერდები არ არის.
+kr:선택한 범위에 주석이 있는 페이지가 없습니다.
+kw:Nyns eus folennow gans notenyans y'n kres dewisys.
+lt:Pasirinktame intervale nėra puslapių su anotacijomis.
+mk:Нема страници со прибелешки во избраниот опсег.
+ml:തിരഞ്ഞെടുത്ത ശ്രേണിയിൽ വ്യാഖ്യാനങ്ങളുള്ള പേജുകളില്ല.
+mm:ရွေးထားသော အပိုင်းအခြားတွင် မှတ်ချက်ပါသော စာမျက်နှာ မရှိပါ။
+my:Tiada halaman beranotasi dalam julat yang dipilih.
+nl:Geen pagina's met aantekeningen in het geselecteerde bereik.
+nn:Ingen sider med merknadar i det valde området.
+no:Ingen sider med merknader i det valgte området.
+pa:ਚੁਣੀ ਗਈ ਰੇਂਜ ਵਿੱਚ ਟਿੱਪਣੀਆਂ ਵਾਲੇ ਕੋਈ ਸਫ਼ੇ ਨਹੀਂ ਹਨ।
+pl:Brak stron z adnotacjami w wybranym zakresie.
+pt:Não há páginas com anotações no intervalo selecionado.
+ro:Nu există pagini cu adnotări în intervalul selectat.
+ru:В выбранном диапазоне нет страниц с аннотациями.
+si:තෝරාගත් පරාසයේ විවරණ සහිත පිටු නොමැත.
+sk:Vo vybranom rozsahu nie sú žiadne strany s anotáciami.
+sl:V izbranem obsegu ni strani s pripombami.
+sn:Hapana mapeji ane zvinyorwa muchikamu chasarudzwa.
+sp-rs:U izabranom opsegu nema stranica sa beleškama.
+sq:Nuk ka faqe me anotime në intervalin e përzgjedhur.
+sr-rs:У изабраном опсегу нема страница са белешкама.
+sv:Inga sidor med anteckningar i det valda intervallet.
+ta:தேர்ந்தெடுத்த வரம்பில் குறிப்புரைகள் கொண்ட பக்கங்கள் இல்லை.
+th:ไม่มีหน้าที่มีคำอธิบายประกอบในช่วงที่เลือก
+tl:Walang pahinang may anotasyon sa napiling saklaw.
+tr:Seçilen aralıkta ek açıklama içeren sayfa yok.
+tw:所選範圍內沒有含註解的頁面。
+uk:У вибраному діапазоні немає сторінок з анотаціями.
+uz:Tanlangan oraliqda izohli sahifalar yo‘q.
+vn:Không có trang nào có chú thích trong phạm vi đã chọn.
+ne:चयन गरिएको दायरामा एनोटेसन भएका कुनै पृष्ठ छैनन्।
+az:Seçilmiş aralıqda annotasiyalı səhifə yoxdur.
+ku:هیچ لاپەڕەیەکی تێبینیدار لە مەودای دیاریکراودا نییە.
+jv:Ora ana kaca sing duwe anotasi ing jangkauan sing dipilih.
+lv:Atlasītajā diapazonā nav lapu ar anotācijām.
+co:Nisuna pagina cù annutazioni in a stesa selezziunata.
+fo:Ongar síður við viðmerkingum í valda økinum.
+sat:ᱵᱟᱪᱷᱟᱣ ᱥᱤᱢᱟᱹ ᱨᱮ ᱪᱤᱱᱦᱟᱹ ᱢᱮᱱᱟᱜ ᱥᱟᱦᱴᱟ ᱵᱟᱹᱱᱩᱜᱼᱟ᱾
 :No result found
+af:Geen resultaat gevind nie
+am:Արդյունք չի գտնվել
+ar:لم يتم العثور على نتائج
+bg:Няма намерени резултати
+bn:কোনো ফলাফল পাওয়া যায়নি
+br:Nenhum resultado encontrado
+bs:Nema rezultata
+by:Нічога не знойдзена
+ca-xv:No s'ha trobat cap resultat
+ca:No s'ha trobat cap resultat
+cn:未找到结果
+cy:Dim canlyniad
+cz:Nebyl nalezen žádný výsledek
+de:Kein Ergebnis gefunden
+dk:Intet resultat fundet
+el:Δεν βρέθηκε αποτέλεσμα
 es:No se ha encontrado ningún resultado
+et:Tulemusi ei leitud
+eu:Ez da emaitzarik aurkitu
+fa:نتیجه‌ای یافت نشد
+fi:Tuloksia ei löytynyt
+fr:Aucun résultat trouvé
+fy-nl:Gjin resultaat fûn
+ga:Níor aimsíodh aon toradh
+gl:Non se atopou ningún resultado
+he:לא נמצאו תוצאות
+hi:कोई परिणाम नहीं मिला
+hr:Nema rezultata
+hu:Nincs találat
+id:Tidak ada hasil
+it:Nessun risultato trovato
+ja:結果が見つかりません
+ka:შედეგი ვერ მოიძებნა
+kr:결과를 찾을 수 없음
+kw:Ny veu kevys sewyans vyth
+lt:Rezultatų nerasta
+mk:Нема резултати
+ml:ഫലങ്ങളൊന്നും കണ്ടെത്തിയില്ല
+mm:ရလဒ် မတွေ့ပါ
+my:Tiada hasil ditemui
+nl:Geen resultaat gevonden
+nn:Fann ingen resultat
+no:Fant ingen resultater
+pa:ਕੋਈ ਨਤੀਜਾ ਨਹੀਂ ਮਿਲਿਆ
+pl:Nie znaleziono wyników
+pt:Nenhum resultado encontrado
+ro:Nu s-a găsit niciun rezultat
+ru:Ничего не найдено
+si:ප්‍රතිඵල හමු නොවීය
+sk:Nenašiel sa žiadny výsledok
+sl:Ni zadetkov
+sn:Hapana mhinduro yawanikwa
+sp-rs:Nema rezultata
+sq:Nuk u gjet asnjë përfundim
+sr-rs:Нема резултата
+sv:Inget resultat hittades
+ta:முடிவுகள் எதுவும் இல்லை
+th:ไม่พบผลลัพธ์
+tl:Walang nakitang resulta
+tr:Sonuç bulunamadı
+tw:找不到結果
+uk:Нічого не знайдено
+uz:Natija topilmadi
+vn:Không tìm thấy kết quả
+ne:कुनै नतिजा फेला परेन
+az:Nəticə tapılmadı
+ku:هیچ ئەنجامێک نەدۆزرایەوە
+jv:Ora ana asil
+lv:Nav atrasts neviens rezultāts
+co:Nisunu risultatu trovu
+fo:Einki úrslit funnið
+sat:ᱪᱮᱫ ᱦᱚᱸ ᱯᱷᱚᱞ ᱵᱟᱝ ᱧᱟᱢ ᱮᱱᱟ
 :Not available for this file type
+af:Nie beskikbaar vir hierdie lêertipe nie
+am:Հասանելի չէ այս ֆայլի տեսակի համար
+ar:غير متاح لهذا النوع من الملفات
+bg:Не е налично за този тип файл
+bn:এই ফাইল ধরনের জন্য উপলব্ধ নয়
+br:Não disponível para este tipo de arquivo
+bs:Nije dostupno za ovu vrstu datoteke
+by:Недаступна для гэтага тыпу файлаў
+ca-xv:No disponible per a este tipus de fitxer
+ca:No disponible per a aquest tipus de fitxer
+cn:不适用于此文件类型
+cy:Ddim ar gael ar gyfer y math hwn o ffeil
+cz:Není k dispozici pro tento typ souboru
+de:Für diesen Dateityp nicht verfügbar
+dk:Ikke tilgængelig for denne filtype
+el:Μη διαθέσιμο για αυτόν τον τύπο αρχείου
 es:No disponible para este tipo de archivo
+et:Pole selle failitüübi jaoks saadaval
+eu:Ez dago erabilgarri fitxategi mota honetarako
+fa:برای این نوع پرونده در دسترس نیست
+fi:Ei käytettävissä tälle tiedostotyypille
+fr:Non disponible pour ce type de fichier
+fy-nl:Net beskikber foar dit bestânstype
+ga:Níl sé ar fáil don chineál comhaid seo
+gl:Non dispoñible para este tipo de ficheiro
+he:לא זמין עבור סוג קובץ זה
+hi:इस फ़ाइल प्रकार के लिए उपलब्ध नहीं
+hr:Nije dostupno za ovu vrstu datoteke
+hu:Ehhez a fájltípushoz nem érhető el
+id:Tidak tersedia untuk jenis berkas ini
+it:Non disponibile per questo tipo di file
+ja:このファイルの種類では使用できません
+ka:მიუწვდომელია ამ ტიპის ფაილისთვის
+kr:이 파일 형식에서는 사용할 수 없음
+kw:Nyns yw kavadow rag an sort ma a restren
+lt:Negalima šiam failo tipui
+mk:Не е достапно за овој тип датотека
+ml:ഈ ഫയൽ തരത്തിന് ലഭ്യമല്ല
+mm:ဤဖိုင်အမျိုးအစားအတွက် မရနိုင်ပါ
+my:Tidak tersedia untuk jenis fail ini
+nl:Niet beschikbaar voor dit bestandstype
+nn:Ikkje tilgjengeleg for denne filtypen
+no:Ikke tilgjengelig for denne filtypen
+pa:ਇਸ ਫਾਈਲ ਕਿਸਮ ਲਈ ਉਪਲਬਧ ਨਹੀਂ
+pl:Niedostępne dla tego typu pliku
+pt:Não disponível para este tipo de ficheiro
+ro:Indisponibil pentru acest tip de fișier
+ru:Недоступно для этого типа файлов
+si:මෙම ගොනු වර්ගය සඳහා නොමැත
+sk:Nie je k dispozícii pre tento typ súboru
+sl:Ni na voljo za to vrsto datoteke
+sn:Hazviwanikwe pamhando iyi yefaira
+sp-rs:Nije dostupno za ovaj tip datoteke
+sq:Nuk ofrohet për këtë lloj skedari
+sr-rs:Није доступно за овај тип датотеке
+sv:Inte tillgängligt för den här filtypen
+ta:இந்தக் கோப்பு வகைக்குக் கிடைக்கவில்லை
+th:ไม่พร้อมใช้งานสำหรับไฟล์ประเภทนี้
+tl:Hindi available para sa ganitong uri ng file
+tr:Bu dosya türü için kullanılamaz
+tw:不適用於此檔案類型
+uk:Недоступно для цього типу файлів
+uz:Bu fayl turi uchun mavjud emas
+vn:Không khả dụng cho loại tệp này
+ne:यो फाइल प्रकारका लागि उपलब्ध छैन
+az:Bu fayl növü üçün mövcud deyil
+ku:بۆ ئەم جۆرە پەڕگەیە بەردەست نییە
+jv:Ora kasedhiya kanggo jinis berkas iki
+lv:Nav pieejams šim faila tipam
+co:Micca dispunibule per stu tipu di schedariu
+fo:Ikki tøkt fyri hetta fílusløgið
+sat:ᱱᱚᱶᱟ ᱨᱮᱫᱽ ᱞᱮᱠᱟᱱ ᱞᱟᱹᱜᱤᱫ ᱵᱟᱹᱱᱩᱜᱼᱟ
 :Nothing to take a screenshot of
+af:Niks om 'n skermskoot van te neem nie
+am:Էկրանի նկարի համար ոչինչ չկա
+ar:لا يوجد شيء لالتقاط لقطة شاشة له
+bg:Няма нищо за снимане
+bn:স্ক্রিনশট নেওয়ার মতো কিছু নেই
+br:Nada para capturar
+bs:Nema ničega za snimak ekrana
+by:Няма чаго здымаць
+ca-xv:No hi ha res per capturar
+ca:No hi ha res per capturar
+cn:没有可截图的内容
+cy:Dim byd i dynnu sgrinlun ohono
+cz:Není z čeho pořídit snímek obrazovky
+de:Nichts für ein Bildschirmfoto vorhanden
+dk:Intet at tage et skærmbillede af
+el:Δεν υπάρχει τίποτα για στιγμιότυπο οθόνης
 es:No hay nada que capturar
+et:Pole midagi, millest ekraanipilti teha
+eu:Ez dago pantaila-argazkia egiteko ezer
+fa:چیزی برای نماگرفت وجود ندارد
+fi:Ei mitään kaapattavaa
+fr:Rien à capturer
+fy-nl:Neat om in skermôfbylding fan te meitsjen
+ga:Níl aon rud le seat scáileáin a ghlacadh de
+gl:Non hai nada que capturar
+he:אין ממה לצלם מסך
+hi:स्क्रीनशॉट लेने के लिए कुछ नहीं है
+hr:Nema ničega za snimku zaslona
+hu:Nincs miről képernyőképet készíteni
+id:Tidak ada yang bisa ditangkap layarnya
+it:Niente da catturare
+ja:スクリーンショットを撮るものがありません
+ka:ეკრანის ანაბეჭდისთვის არაფერია
+kr:스크린샷을 찍을 대상이 없음
+kw:Travyth dhe gemmeres skeusenn skrin anodho
+lt:Nėra ko fotografuoti
+mk:Нема ништо за снимање
+ml:സ്ക്രീൻഷോട്ട് എടുക്കാൻ ഒന്നുമില്ല
+mm:ဖန်သားပြင်ဓာတ်ပုံ ရိုက်ရန် ဘာမှမရှိပါ
+my:Tiada apa-apa untuk ditangkap skrin
+nl:Niets om een schermafbeelding van te maken
+nn:Ingenting å ta skjermbilete av
+no:Ingenting å ta skjermbilde av
+pa:ਸਕ੍ਰੀਨਸ਼ਾਟ ਲੈਣ ਲਈ ਕੁਝ ਨਹੀਂ ਹੈ
+pl:Brak zawartości do zrzutu ekranu
+pt:Nada para capturar
+ro:Nu există nimic de capturat
+ru:Нечего снимать
+si:තිර රුවක් ගැනීමට කිසිවක් නැත
+sk:Nie je z čoho urobiť snímku obrazovky
+sl:Ni ničesar za posnetek zaslona
+sn:Hapana chekutora mufananidzo wechidzitiro
+sp-rs:Nema ničega za snimak ekrana
+sq:Nuk ka asgjë për pamje ekrani
+sr-rs:Нема ничега за снимак екрана
+sv:Inget att ta en skärmbild av
+ta:திரைப்பிடிப்பு எடுக்க எதுவும் இல்லை
+th:ไม่มีสิ่งที่จะจับภาพหน้าจอ
+tl:Walang maaaring i-screenshot
+tr:Ekran görüntüsü alınacak bir şey yok
+tw:沒有可截圖的內容
+uk:Немає чого знімати
+uz:Ekran rasmi uchun hech narsa yo‘q
+vn:Không có gì để chụp màn hình
+ne:स्क्रिनसट लिन केही छैन
+az:Ekran görüntüsü üçün heç nə yoxdur
+ku:هیچ شتێک نییە بۆ وێنەگرتنی شاشە
+jv:Ora ana sing bisa dijupuk gambar layare
+lv:Nav nekā, ko uzņemt ekrānuzņēmumā
+co:Nunda à catturà
+fo:Einki at taka skíggjamynd av
+sat:ᱥᱠᱨᱤᱱᱥᱚᱴ ᱞᱟᱹᱜᱤᱫ ᱪᱮᱫ ᱦᱚᱸ ᱵᱟᱹᱱᱩᱜᱼᱟ
+:off
+af:af
+am:անջատված
+ar:إيقاف
+bg:изкл.
+bn:বন্ধ
+br:desativado
+bs:isključeno
+by:выкл.
+ca-xv:desactivat
+ca:desactivat
+cn:关闭
+cy:i ffwrdd
+cz:vypnuto
+de:aus
+dk:fra
+el:ανενεργό
+es:desactivado
+et:väljas
+eu:desaktibatuta
+fa:خاموش
+fi:pois
+fr:désactivé
+fy-nl:út
+ga:as
+gl:desactivado
+he:כבוי
+hi:बंद
+hr:isključeno
+hu:ki
+id:nonaktif
+it:disattivato
+ja:オフ
+ka:გამორთული
+kr:끔
+kw:difeudhys
+lt:išjungta
+mk:исклучено
+ml:ഓഫ്
+mm:ပိတ်
+my:mati
+nl:uit
+nn:av
+no:av
+pa:ਬੰਦ
+pl:wyłączone
+pt:desativado
+ro:dezactivat
+ru:выкл.
+si:අක්‍රියයි
+sk:vypnuté
+sl:izklopljeno
+sn:kudzimwa
+sp-rs:isključeno
+sq:joaktiv
+sr-rs:искључено
+sv:av
+ta:முடக்கம்
+th:ปิด
+tl:naka-off
+tr:kapalı
+tw:關閉
+uk:вимк.
+uz:o‘chiq
+vn:tắt
+ne:निष्क्रिय
+az:söndürülüb
+ku:کوژاوە
+jv:mati
+lv:izslēgts
+co:disattivatu
+fo:sløkt
+sat:ᱵᱚᱸᱫᱚ
+:Open File With macOS File Picker...
+fa:باز کردن پرونده با انتخابگر پرونده macOS...
+ku:کردنەوەی پەڕگە بە هەڵبژاردەری پەڕگەی macOS...
+sat:macOS ᱨᱮᱫᱽ ᱵᱟᱪᱷᱚᱱᱤᱭᱟᱹ ᱛᱮ ᱨᱮᱫᱽ ᱡᱷᱤᱡᱽ ᱢᱮ...
+:Open using &macOS File Picker...
+fa:باز کردن با استفاده از انتخابگر فایل &macOS...
+pa:&macOS ਫਾਈਲ ਚੋਣਕਾਰ ਵਰਤ ਕੇ ਖੋਲ੍ਹੋ...
+ku:کردنەوە بە بەکارهێنانی هەڵبژاردەری پەڕگەی &macOS...
+sat:&macOS ᱨᱮᱫᱽ ᱵᱟᱪᱷᱚᱱᱤᱭᱟᱹ ᱵᱮᱵᱷᱟᱨ ᱠᱟᱛᱮ ᱡᱷᱤᱡᱽ ᱢᱮ...
 :Page Down
+af:Bladsy af
+am:Էջ ներքև
+ar:صفحة لأسفل
+bg:Страница надолу
+bn:পৃষ্ঠা নিচে
+br:Página abaixo
+bs:Stranica dolje
+by:Старонка ўніз
+ca-xv:Pàgina avall
+ca:Pàgina avall
+cn:向下翻页
+cy:Tudalen i Lawr
+cz:O stránku dolů
+de:Seite nach unten
+dk:Side ned
+el:Σελίδα κάτω
 es:Página abajo
+et:Leht alla
+eu:Orria behera
+fa:یک صفحه پایین
+fi:Sivu alas
+fr:Page suivante
+fy-nl:Side omleech
+ga:Leathanach Síos
+gl:Páxina abaixo
+he:עמוד למטה
+hi:पृष्ठ नीचे
+hr:Stranica dolje
+hu:Egy oldallal le
+id:Halaman Turun
+it:Pagina giù
+ja:1 ページ下へ
+ka:გვერდი ქვემოთ
+kr:한 페이지 아래로
+kw:Folen Wàr-nans
+lt:Puslapiu žemyn
+mk:Страница надолу
+ml:പേജ് താഴേക്ക്
+mm:စာမျက်နှာ အောက်သို့
+my:Halaman Ke Bawah
+nl:Pagina omlaag
+nn:Side ned
+no:Side ned
+pa:ਸਫ਼ਾ ਹੇਠਾਂ
+pl:Strona w dół
+pt:Página abaixo
+ro:Pagina în jos
+ru:Страница вниз
+si:පිටුව පහළට
+sk:O stranu nadol
+sl:Stran navzdol
+sn:Peji Pasi
+sp-rs:Stranica dole
+sq:Faqe poshtë
+sr-rs:Страница доле
+sv:Sida nedåt
+ta:பக்கம் கீழே
+th:หน้าถัดลง
+tl:Pahina Pababa
+tr:Sayfa Aşağı
+tw:下一頁
+uk:Сторінка вниз
+uz:Sahifa pastga
+vn:Trang xuống
+ne:पृष्ठ तल
+az:Səhifə aşağı
+ku:لاپەڕەیەک بۆ خوارەوە
+jv:Kaca Mudhun
+lv:Lapu uz leju
+co:Pagina in giò
+fo:Síða niður
+sat:ᱥᱟᱦᱴᱟ ᱞᱟᱛᱟᱨ
 :Page Left
+af:Bladsy links
+am:Էջ ձախ
+ar:صفحة لليسار
+bg:Страница наляво
+bn:পৃষ্ঠা বামে
+br:Página à esquerda
+bs:Stranica lijevo
+by:Старонка ўлева
+ca-xv:Pàgina a l'esquerra
+ca:Pàgina a l'esquerra
+cn:向左翻页
+cy:Tudalen i'r Chwith
+cz:O stránku doleva
+de:Seite nach links
+dk:Side til venstre
+el:Σελίδα αριστερά
 es:Página a la izquierda
+et:Leht vasakule
+eu:Orria ezkerrera
+fa:یک صفحه به چپ
+fi:Sivu vasemmalle
+fr:Page gauche
+fy-nl:Side nei lofts
+ga:Leathanach ar Clé
+gl:Páxina á esquerda
+he:עמוד שמאלה
+hi:पृष्ठ बाएँ
+hr:Stranica lijevo
+hu:Egy oldallal balra
+id:Halaman Kiri
+it:Pagina a sinistra
+ja:1 ページ左へ
+ka:გვერდი მარცხნივ
+kr:한 페이지 왼쪽으로
+kw:Folen a-Gledh
+lt:Puslapiu kairėn
+mk:Страница лево
+ml:പേജ് ഇടത്തേക്ക്
+mm:စာမျက်နှာ ဘယ်သို့
+my:Halaman Ke Kiri
+nl:Pagina naar links
+nn:Side til venstre
+no:Side til venstre
+pa:ਸਫ਼ਾ ਖੱਬੇ
+pl:Strona w lewo
+pt:Página à esquerda
+ro:Pagina la stânga
+ru:Страница влево
+si:පිටුව වමට
+sk:O stranu doľava
+sl:Stran levo
+sn:Peji Kuruboshwe
+sp-rs:Stranica levo
+sq:Faqe majtas
+sr-rs:Страница лево
+sv:Sida åt vänster
+ta:பக்கம் இடது
+th:หน้าไปทางซ้าย
+tl:Pahina Pakaliwa
+tr:Sayfa Sola
+tw:向左一頁
+uk:Сторінка вліво
+uz:Sahifa chapga
+vn:Trang sang trái
+ne:पृष्ठ बायाँ
+az:Səhifə sola
+ku:لاپەڕەیەک بۆ چەپ
+jv:Kaca Ngiwa
+lv:Lapu pa kreisi
+co:Pagina à manca
+fo:Síða til vinstru
+sat:ᱥᱟᱦᱴᱟ ᱞᱮᱝᱜᱟ
 :Page Right
+af:Bladsy regs
+am:Էջ աջ
+ar:صفحة لليمين
+bg:Страница надясно
+bn:পৃষ্ঠা ডানে
+br:Página à direita
+bs:Stranica desno
+by:Старонка ўправа
+ca-xv:Pàgina a la dreta
+ca:Pàgina a la dreta
+cn:向右翻页
+cy:Tudalen i'r Dde
+cz:O stránku doprava
+de:Seite nach rechts
+dk:Side til højre
+el:Σελίδα δεξιά
 es:Página a la derecha
+et:Leht paremale
+eu:Orria eskuinera
+fa:یک صفحه به راست
+fi:Sivu oikealle
+fr:Page droite
+fy-nl:Side nei rjochts
+ga:Leathanach ar Dheis
+gl:Páxina á dereita
+he:עמוד ימינה
+hi:पृष्ठ दाएँ
+hr:Stranica desno
+hu:Egy oldallal jobbra
+id:Halaman Kanan
+it:Pagina a destra
+ja:1 ページ右へ
+ka:გვერდი მარჯვნივ
+kr:한 페이지 오른쪽으로
+kw:Folen a-Dhyghow
+lt:Puslapiu dešinėn
+mk:Страница десно
+ml:പേജ് വലത്തേക്ക്
+mm:စာမျက်နှာ ညာသို့
+my:Halaman Ke Kanan
+nl:Pagina naar rechts
+nn:Side til høgre
+no:Side til høyre
+pa:ਸਫ਼ਾ ਸੱਜੇ
+pl:Strona w prawo
+pt:Página à direita
+ro:Pagina la dreapta
+ru:Страница вправо
+si:පිටුව දකුණට
+sk:O stranu doprava
+sl:Stran desno
+sn:Peji Kurudyi
+sp-rs:Stranica desno
+sq:Faqe djathtas
+sr-rs:Страница десно
+sv:Sida åt höger
+ta:பக்கம் வலது
+th:หน้าไปทางขวา
+tl:Pahina Pakanan
+tr:Sayfa Sağa
+tw:向右一頁
+uk:Сторінка вправо
+uz:Sahifa o‘ngga
+vn:Trang sang phải
+ne:पृष्ठ दायाँ
+az:Səhifə sağa
+ku:لاپەڕەیەک بۆ ڕاست
+jv:Kaca Nengen
+lv:Lapu pa labi
+co:Pagina à diritta
+fo:Síða til høgru
+sat:ᱥᱟᱦᱴᱟ ᱡᱚᱡᱚᱢ
 :Page Up
+af:Bladsy op
+am:Էջ վերև
+ar:صفحة لأعلى
+bg:Страница нагоре
+bn:পৃষ্ঠা উপরে
+br:Página acima
+bs:Stranica gore
+by:Старонка ўверх
+ca-xv:Pàgina amunt
+ca:Pàgina amunt
+cn:向上翻页
+cy:Tudalen i Fyny
+cz:O stránku nahoru
+de:Seite nach oben
+dk:Side op
+el:Σελίδα πάνω
 es:Página arriba
+et:Leht üles
+eu:Orria gora
+fa:یک صفحه بالا
+fi:Sivu ylös
+fr:Page précédente
+fy-nl:Side omheech
+ga:Leathanach Suas
+gl:Páxina arriba
+he:עמוד למעלה
+hi:पृष्ठ ऊपर
+hr:Stranica gore
+hu:Egy oldallal fel
+id:Halaman Naik
+it:Pagina su
+ja:1 ページ上へ
+ka:გვერდი ზემოთ
+kr:한 페이지 위로
+kw:Folen Wàr-vann
+lt:Puslapiu aukštyn
+mk:Страница нагоре
+ml:പേജ് മുകളിലേക്ക്
+mm:စာမျက်နှာ အပေါ်သို့
+my:Halaman Ke Atas
+nl:Pagina omhoog
+nn:Side opp
+no:Side opp
+pa:ਸਫ਼ਾ ਉੱਪਰ
+pl:Strona w górę
+pt:Página acima
+ro:Pagina în sus
+ru:Страница вверх
+si:පිටුව ඉහළට
+sk:O stranu nahor
+sl:Stran navzgor
+sn:Peji Kumusoro
+sp-rs:Stranica gore
+sq:Faqe sipër
+sr-rs:Страница горе
+sv:Sida uppåt
+ta:பக்கம் மேலே
+th:หน้าถัดขึ้น
+tl:Pahina Pataas
+tr:Sayfa Yukarı
+tw:上一頁
+uk:Сторінка вгору
+uz:Sahifa yuqoriga
+vn:Trang lên
+ne:पृष्ठ माथि
+az:Səhifə yuxarı
+ku:لاپەڕەیەک بۆ سەرەوە
+jv:Kaca Munggah
+lv:Lapu uz augšu
+co:Pagina in sù
+fo:Síða upp
+sat:ᱥᱟᱦᱴᱟ ᱪᱮᱛᱟᱱ
 :Quick Edit Settings
+af:Vinnige redigering van instellings
+am:Կարգավորումների արագ խմբագրում
+ar:تحرير سريع للإعدادات
+bg:Бърза редакция на настройките
+bn:সেটিংসের দ্রুত সম্পাদনা
+br:Edição rápida das configurações
+bs:Brzo uređivanje postavki
+by:Хуткае рэдагаванне налад
+ca-xv:Edició ràpida de la configuració
+ca:Edició ràpida de la configuració
+cn:快速编辑设置
+cy:Golygu Gosodiadau'n Gyflym
+cz:Rychlá úprava nastavení
+de:Einstellungen schnell bearbeiten
+dk:Hurtig redigering af indstillinger
+el:Γρήγορη επεξεργασία ρυθμίσεων
 es:Edición rápida de la configuración
+et:Seadete kiirredigeerimine
+eu:Ezarpenen edizio azkarra
+fa:ویرایش سریع تنظیمات
+fi:Asetusten pikamuokkaus
+fr:Modification rapide des paramètres
+fy-nl:Ynstellingen fluch bewurkje
+ga:Eagarthóireacht Thapa ar Shocruithe
+gl:Edición rápida da configuración
+he:עריכה מהירה של ההגדרות
+hi:सेटिंग्स का त्वरित संपादन
+hr:Brzo uređivanje postavki
+hu:Beállítások gyors szerkesztése
+id:Edit Cepat Pengaturan
+it:Modifica rapida impostazioni
+ja:設定のクイック編集
+ka:პარამეტრების სწრაფი რედაქტირება
+kr:빠른 설정 편집
+kw:Chanjya Settyansow Uskis
+lt:Greitas nustatymų redagavimas
+mk:Брзо уредување на поставките
+ml:ക്രമീകരണങ്ങൾ വേഗത്തിൽ എഡിറ്റ് ചെയ്യുക
+mm:ဆက်တင်များကို အမြန်ပြင်ရန်
+my:Sunting Pantas Tetapan
+nl:Instellingen snel bewerken
+nn:Snøggredigering av innstillingar
+no:Hurtigredigering av innstillinger
+pa:ਸੈਟਿੰਗਾਂ ਦਾ ਤੁਰੰਤ ਸੰਪਾਦਨ
+pl:Szybka edycja ustawień
+pt:Edição rápida das definições
+ro:Editare rapidă a setărilor
+ru:Быстрое изменение настроек
+si:සැකසුම් ඉක්මනින් සංස්කරණය කරන්න
+sk:Rýchla úprava nastavení
+sl:Hitro urejanje nastavitev
+sn:Kugadzirisa Kukurumidza Zvigadziriso
+sp-rs:Brza izmena podešavanja
+sq:Përpunim i shpejtë i rregullimeve
+sr-rs:Брза измена подешавања
+sv:Snabbredigera inställningar
+ta:அமைப்புகளை விரைவாகத் திருத்து
+th:แก้ไขการตั้งค่าด่วน
+tl:Mabilis na Pag-edit ng Mga Setting
+tr:Ayarları Hızlı Düzenle
+tw:快速編輯設定
+uk:Швидке редагування налаштувань
+uz:Sozlamalarni tez tahrirlash
+vn:Chỉnh sửa nhanh cài đặt
+ne:सेटिङहरूको द्रुत सम्पादन
+az:Parametrlərin sürətli redaktəsi
+ku:دەستکاریی خێرای ڕێکخستنەکان
+jv:Sunting Cepet Setelan
+lv:Ātrā iestatījumu rediģēšana
+co:Mudificazione rapida di i parametri
+fo:Skjót broyting av stillingum
+sat:ᱥᱟᱡᱟᱣᱠᱚ ᱞᱚᱜᱚᱱ ᱥᱟᱯᱲᱟᱣ
 :Quit %s
+af:Verlaat %s
+am:Դուրս գալ %s-ից
+ar:إنهاء %s
+bg:Изход от %s
+bn:%s বন্ধ করুন
+br:Encerrar %s
+bs:Zatvori %s
+by:Завяршыць %s
+ca-xv:Ix de %s
+ca:Surt de %s
+cn:退出%s
+cy:Gadael %s
+cz:Ukončit %s
+de:%s beenden
+dk:Slut %s
+el:Έξοδος από %s
 es:Salir de %s
+et:Sulge %s
+eu:Irten %s aplikaziotik
+fa:خروج از %s
+fi:Lopeta %s
+fr:Quitter %s
+fy-nl:%s ôfslute
+ga:Scoir %s
+gl:Saír de %s
+he:צא מ-%s
+hi:%s बंद करें
+hr:Zatvori %s
+hu:Kilépés: %s
+id:Keluar dari %s
+it:Esci da %s
+ja:%sを終了
+ka:%s-დან გასვლა
+kr:%s 종료
+kw:Kwitya %s
+lt:Išeiti iš %s
+mk:Излези од %s
+ml:%s ൽ നിന്ന് പുറത്തുകടക്കുക
+mm:%s မှ ထွက်ရန်
+my:Keluar %s
+nl:Stop %s
+nn:Avslutt %s
+no:Avslutt %s
+pa:%s ਬੰਦ ਕਰੋ
+pl:Zakończ %s
+pt:Sair de %s
+ro:Ieși din %s
+ru:Завершить %s
+si:%s වෙතින් ඉවත් වන්න
+sk:Ukončiť %s
+sl:Končaj %s
+sn:Buda mu%s
+sp-rs:Zatvori %s
+sq:Dil nga %s
+sr-rs:Затвори %s
+sv:Avsluta %s
+ta:%s ஐ விட்டு வெளியேறு
+th:ออกจาก %s
+tl:Umalis sa %s
+tr:%s Uygulamasından Çık
+tw:結束%s
+uk:Завершити %s
+uz:%s dan chiqish
+vn:Thoát %s
+ne:%s बन्द गर्नुहोस्
+az:%s proqramından çıx
+ku:دەرچوون لە %s
+jv:Metu saka %s
+lv:Iziet no %s
+co:Esce da %s
+fo:Gevst við %s
+sat:%s ᱵᱟᱹᱜᱤ ᱢᱮ
 :Resolution (DPI):
+af:Resolusie (DPI):
+am:Լուծաչափ (DPI)՝
+ar:الدقة (DPI):
+bg:Разделителна способност (DPI):
+bn:রেজোলিউশন (DPI):
+br:Resolução (DPI):
+bs:Rezolucija (DPI):
+by:Раздзяляльнасць (DPI):
+ca-xv:Resolució (PPP):
+ca:Resolució (PPP):
+cn:分辨率 (DPI)：
+cy:Cydraniad (DPI):
+cz:Rozlišení (DPI):
+de:Auflösung (DPI):
+dk:Opløsning (DPI):
+el:Ανάλυση (DPI):
 es:Resolución (PPP):
+et:Eraldusvõime (DPI):
+eu:Bereizmena (DPI):
+fa:وضوح (DPI):
+fi:Tarkkuus (DPI):
+fr:Résolution (PPP) :
+fy-nl:Resolúsje (DPI):
+ga:Taifeach (DPI):
+gl:Resolución (PPP):
+he:רזולוציה (DPI):
+hi:रिज़ॉल्यूशन (DPI):
+hr:Razlučivost (DPI):
+hu:Felbontás (DPI):
+id:Resolusi (DPI):
+it:Risoluzione (DPI):
+ja:解像度 (DPI):
+ka:გარჩევადობა (DPI):
+kr:해상도(DPI):
+kw:Klerder (DPI):
+lt:Skyra (DPI):
+mk:Резолуција (DPI):
+ml:റെസല്യൂഷൻ (DPI):
+mm:ပုံရိပ်ပြတ်သားမှု (DPI):
+my:Resolusi (DPI):
+nl:Resolutie (DPI):
+nn:Oppløysing (DPI):
+no:Oppløsning (DPI):
+pa:ਰੈਜ਼ੋਲਿਊਸ਼ਨ (DPI):
+pl:Rozdzielczość (DPI):
+pt:Resolução (PPP):
+ro:Rezoluție (DPI):
+ru:Разрешение (DPI):
+si:විභේදනය (DPI):
+sk:Rozlíšenie (DPI):
+sl:Ločljivost (DPI):
+sn:Kujeka (DPI):
+sp-rs:Rezolucija (DPI):
+sq:Qartësia (DPI):
+sr-rs:Резолуција (DPI):
+sv:Upplösning (DPI):
+ta:தெளிவுத்திறன் (DPI):
+th:ความละเอียด (DPI):
+tl:Resolusyon (DPI):
+tr:Çözünürlük (DPI):
+tw:解析度 (DPI)：
+uk:Роздільна здатність (DPI):
+uz:Ruxsat (DPI):
+vn:Độ phân giải (DPI):
+ne:रिजोल्युसन (DPI):
+az:Ölçü imkanı (DPI):
+ku:ڕوونی (DPI):
+jv:Resolusi (DPI):
+lv:Izšķirtspēja (DPI):
+co:Risuluzione (PPP) :
+fo:Upploysn (DPI):
+sat:ᱨᱮᱡᱚᱞᱩᱥᱚᱱ (DPI):
 :Right Edge
+af:Regterrand
+am:Աջ եզր
+ar:الحافة اليمنى
+bg:Десен край
+bn:ডান প্রান্ত
+br:Borda direita
+bs:Desni rub
+by:Правы край
+ca-xv:Vora dreta
+ca:Vora dreta
+cn:右边缘
+cy:Ymyl Dde
+cz:Pravý okraj
+de:Rechter Rand
+dk:Højre kant
+el:Δεξί άκρο
 es:Borde derecho
+et:Parem serv
+eu:Eskuineko ertza
+fa:لبه راست
+fi:Oikea reuna
+fr:Bord droit
+fy-nl:Rjochterrâne
+ga:Imeall Deas
+gl:Bordo dereito
+he:קצה ימני
+hi:दायाँ किनारा
+hr:Desni rub
+hu:Jobb szél
+id:Tepi Kanan
+it:Bordo destro
+ja:右端
+ka:მარჯვენა კიდე
+kr:오른쪽 가장자리
+kw:Amal Dyghow
+lt:Dešinysis kraštas
+mk:Десен раб
+ml:വലത് അറ്റം
+mm:ညာဘက်အစွန်း
+my:Pinggir Kanan
+nl:Rechterrand
+nn:Høgre kant
+no:Høyre kant
+pa:ਸੱਜਾ ਕਿਨਾਰਾ
+pl:Prawa krawędź
+pt:Margem direita
+ro:Marginea dreaptă
+ru:К правому краю
+si:දකුණු දාරය
+sk:Pravý okraj
+sl:Desni rob
+sn:Mupendero Wekurudyi
+sp-rs:Desni rub
+sq:Skaji i djathtë
+sr-rs:Десни руб
+sv:Högerkant
+ta:வலது விளிம்பு
+th:ขอบขวา
+tl:Kanang Gilid
+tr:Sağ Kenar
+tw:右邊緣
+uk:Правий край
+uz:O‘ng chet
+vn:Cạnh phải
+ne:दायाँ किनारा
+az:Sağ kənar
+ku:لێواری ڕاست
+jv:Pinggir Tengen
+lv:Labā mala
+co:Orlu diritta
+fo:Høgri kantur
+sat:ᱡᱚᱡᱚᱢ ᱫᱷᱟᱨᱮ
+:Save As
+fo:Goym sum
+sat:ᱞᱮᱠᱟ ᱥᱟᱧᱪᱟᱣ ᱢᱮ
 :Save Image
+af:Stoor Beeld
+am:ምስል አስቀምጥ
+ar:حفظ الصورة
+bg:Запазване на изображение
+bn:ছবি সংরক্ষণ করুন
+bs:Spremi sliku
+by:Захаваць выяву
+ca-xv:Desa la imatge
+ca:Desa la imatge
+cy:Cadw Delwedd
+cz:Uložit obrázek
+dk:Gem billede
+el:Αποθήκευση εικόνας
 es:Guardar imagen
+et:Salvesta pilt
+eu:Gorde irudia
+fa:ذخیره تصویر
+fi:Tallenna kuva
+fr:Enregistrer l'image
+fy-nl:Ofbylding bewarje
+ga:Sábháil Íomhá
+gl:Gardar imaxe
+he:שמור תמונה
+hi:इमेज सेव करें
+hr:Spremi sliku
+hu:Kép mentése
+id:Simpan Gambar
+ka:სურათის შენახვა
+kr:이미지 저장
+kw:Gwitha Skeusenn
+lt:Įrašyti paveikslą
+mk:Зачувај слика
+ml:ചിത്രം സംരക്ഷിക്കുക
+mm:ပုံကို သိမ်းဆည်းပါ
+my:ရုပ်ပုံကို သိမ်းဆည်းပါ
+nn:Lagre bilete
+no:Lagre bilde
+pa:ਚਿੱਤਰ ਸੰਭਾਲੋ
+pt:Guardar imagem
+ro:Salvează imaginea
+ru:Сохранить изображение
+si:රූපය සුරකින්න
+sl:Shrani sliko
+sn:Chengetedza Mufananidzo
+sp-rs:Сачувај слику
+sq:Ruaj Imazhin
+sr-rs:Сачувај слику
+sv:Spara bild
+ta:படத்தை சேமி
+th:บันทึกรูปภาพ
+tl:I-save ang Larawan
+tr:Resmi Kaydet
+uk:Зберегти зображення
+uz:Rasmni saqlash
+vn:Lưu ảnh
+ne:तस्बिर सुरक्षित गर्नुहोस्
+az:Şəkli Saxla
+ku:Wêneyê tomar bike
+jv:Simpen Gambar
+lv:Saglabāt attēlu
+fo:Goym Mynd
+sat:ᱪᱤᱛᱟᱹᱨ ᱥᱟᱧᱪᱟᱣ ᱢᱮ
 :Saved screenshot to '%s'
+af:Skermskoot gestoor in '%s'
+am:Էկրանի նկարը պահվեց '%s'-ում
+ar:تم حفظ لقطة الشاشة في '%s'
+bg:Екранната снимка е запазена в '%s'
+bn:স্ক্রিনশট '%s'-এ সংরক্ষিত হয়েছে
+br:Captura de tela salva em '%s'
+bs:Snimak ekrana spremljen u '%s'
+by:Здымак экрана захаваны ў '%s'
+ca-xv:S'ha guardat la captura de pantalla en '%s'
+ca:S'ha desat la captura de pantalla a '%s'
+cn:屏幕截图已保存到“%s”
+cy:Cadwyd y sgrinlun yn '%s'
+cz:Snímek obrazovky uložen do '%s'
+de:Bildschirmfoto gespeichert unter '%s'
+dk:Skærmbillede gemt i '%s'
+el:Το στιγμιότυπο οθόνης αποθηκεύτηκε στο '%s'
 es:Captura de pantalla guardada en '%s'
+et:Ekraanipilt salvestati asukohta '%s'
+eu:Pantaila-argazkia hemen gorde da: '%s'
+fa:نماگرفت در '%s' ذخیره شد
+fi:Kuvakaappaus tallennettu: '%s'
+fr:Capture d'écran enregistrée dans '%s'
+fy-nl:Skermôfbylding bewarre yn '%s'
+ga:Sábháladh an seat scáileáin i '%s'
+gl:Captura de pantalla gardada en '%s'
+he:צילום המסך נשמר ב-'%s'
+hi:स्क्रीनशॉट '%s' में सहेजा गया
+hr:Snimka zaslona spremljena u '%s'
+hu:Képernyőkép mentve ide: '%s'
+id:Tangkapan layar disimpan ke '%s'
+it:Screenshot salvato in '%s'
+ja:スクリーンショットを '%s' に保存しました
+ka:ეკრანის ანაბეჭდი შენახულია '%s'-ში
+kr:스크린샷을 '%s'에 저장했습니다
+kw:Skeusenn skrin gwithys yn '%s'
+lt:Ekrano kopija įrašyta į '%s'
+mk:Снимката од екранот е зачувана во '%s'
+ml:സ്ക്രീൻഷോട്ട് '%s' ൽ സംരക്ഷിച്ചു
+mm:ဖန်သားပြင်ဓာတ်ပုံကို '%s' တွင် သိမ်းပြီး
+my:Tangkapan skrin disimpan ke '%s'
+nl:Schermafbeelding opgeslagen in '%s'
+nn:Skjermbilete lagra i '%s'
+no:Skjermbilde lagret i '%s'
+pa:ਸਕ੍ਰੀਨਸ਼ਾਟ '%s' ਵਿੱਚ ਸੰਭਾਲਿਆ ਗਿਆ
+pl:Zapisano zrzut ekranu w '%s'
+pt:Captura de ecrã guardada em '%s'
+ro:Captura de ecran a fost salvată în '%s'
+ru:Снимок экрана сохранён в '%s'
+si:තිර රුව '%s' හි සුරැකිණි
+sk:Snímka obrazovky uložená do '%s'
+sl:Posnetek zaslona shranjen v '%s'
+sn:Mufananidzo wechidzitiro wachengetwa mu'%s'
+sp-rs:Snimak ekrana sačuvan u '%s'
+sq:Pamja e ekranit u ruajt te '%s'
+sr-rs:Снимак екрана сачуван у '%s'
+sv:Skärmbilden sparades i '%s'
+ta:திரைப்பிடிப்பு '%s' இல் சேமிக்கப்பட்டது
+th:บันทึกภาพหน้าจอไปที่ '%s' แล้ว
+tl:Na-save ang screenshot sa '%s'
+tr:Ekran görüntüsü '%s' konumuna kaydedildi
+tw:螢幕截圖已儲存至「%s」
+uk:Знімок екрана збережено в '%s'
+uz:Ekran rasmi '%s' ga saqlandi
+vn:Đã lưu ảnh chụp màn hình vào '%s'
+ne:स्क्रिनसट '%s' मा सुरक्षित गरियो
+az:Ekran görüntüsü '%s' yerində saxlanıldı
+ku:وێنەی شاشە لە '%s' پاشەکەوت کرا
+jv:Gambar layar disimpen ing '%s'
+lv:Ekrānuzņēmums saglabāts '%s'
+co:Cattura di screnu arregistrata in '%s'
+fo:Skíggjamynd goymd í '%s'
+sat:ᱥᱠᱨᱤᱱᱥᱚᱴ '%s' ᱨᱮ ᱥᱟᱧᱪᱟᱣ ᱮᱱᱟ
 :Scroll Here
+af:Rol hierheen
+am:Ոլորել այստեղ
+ar:التمرير إلى هنا
+bg:Превърти дотук
+bn:এখানে স্ক্রোল করুন
+br:Rolar até aqui
+bs:Pomjeri ovdje
+by:Пракруціць сюды
+ca-xv:Desplaça't ací
+ca:Desplaça't aquí
+cn:滚动到此处
+cy:Sgrolio Yma
+cz:Posunout sem
+de:Hier scrollen
+dk:Rul hertil
+el:Κύλιση εδώ
 es:Desplazar aquí
+et:Keri siia
+eu:Korritu hona
+fa:پیمایش به اینجا
+fi:Vieritä tähän
+fr:Défiler ici
+fy-nl:Hjirhinne skowe
+ga:Scrollaigh Anseo
+gl:Desprazar aquí
+he:גלול לכאן
+hi:यहाँ स्क्रॉल करें
+hr:Pomakni ovdje
+hu:Görgetés ide
+id:Gulir ke Sini
+it:Scorri qui
+ja:ここにスクロール
+ka:აქ გადახვევა
+kr:여기로 스크롤
+kw:Grolla Omma
+lt:Slinkti čia
+mk:Лизгај довде
+ml:ഇവിടേക്ക് സ്ക്രോൾ ചെയ്യുക
+mm:ဤနေရာသို့ လှိမ့်ရန်
+my:Tatal ke Sini
+nl:Hierheen scrollen
+nn:Rull hit
+no:Rull hit
+pa:ਇੱਥੇ ਸਕ੍ਰੋਲ ਕਰੋ
+pl:Przewiń tutaj
+pt:Deslocar para aqui
+ro:Derulează aici
+ru:Прокрутить сюда
+si:මෙතැනට අනුචලනය කරන්න
+sk:Posunúť sem
+sl:Pomakni sem
+sn:Kamura Pano
+sp-rs:Pomeri ovde
+sq:Rrëshqit këtu
+sr-rs:Помери овде
+sv:Rulla hit
+ta:இங்கே உருட்டு
+th:เลื่อนมาที่นี่
+tl:Mag-scroll Dito
+tr:Buraya Kaydır
+tw:捲動至此
+uk:Прокрутити сюди
+uz:Shu yerga aylantirish
+vn:Cuộn đến đây
+ne:यहाँ स्क्रोल गर्नुहोस्
+az:Bura sürüşdür
+ku:خشاندن بۆ ئێرە
+jv:Gulung Mrene
+lv:Ritināt šeit
+co:Sfilà quì
+fo:Rull higar
+sat:ᱱᱚᱸᱰᱮ ᱚᱛᱟᱭ ᱢᱮ
 :Search syntax
+af:Soeksintaksis
+am:Որոնման շարահյուսություն
+ar:صيغة البحث
+bg:Синтаксис на търсенето
+bn:অনুসন্ধানের সিনট্যাক্স
+br:Sintaxe de pesquisa
+bs:Sintaksa pretrage
+by:Сінтаксіс пошуку
+ca-xv:Sintaxi de busca
+ca:Sintaxi de cerca
+cn:搜索语法
+cy:Cystrawen chwilio
+cz:Syntaxe hledání
+de:Suchsyntax
+dk:Søgesyntaks
+el:Σύνταξη αναζήτησης
 es:Sintaxis de búsqueda
+et:Otsingu süntaks
+eu:Bilaketa-sintaxia
+fa:نحو جستجو
+fi:Hakusyntaksi
+fr:Syntaxe de recherche
+fy-nl:Syksyntaksis
+ga:Comhréir chuardaigh
+gl:Sintaxe de busca
+he:תחביר חיפוש
+hi:खोज सिंटैक्स
+hr:Sintaksa pretraživanja
+hu:Keresési szintaxis
+id:Sintaks pencarian
+it:Sintassi di ricerca
+ja:検索構文
+ka:ძებნის სინტაქსი
+kr:검색 구문
+kw:Kewerder hwilas
+lt:Paieškos sintaksė
+mk:Синтакса на пребарување
+ml:തിരയൽ വാക്യഘടന
+mm:ရှာဖွေမှု ဝါကျဖွဲ့ပုံ
+my:Sintaks carian
+nl:Zoeksyntaxis
+nn:Søkjesyntaks
+no:Søkesyntaks
+pa:ਖੋਜ ਸਿੰਟੈਕਸ
+pl:Składnia wyszukiwania
+pt:Sintaxe de pesquisa
+ro:Sintaxa căutării
+ru:Синтаксис поиска
+si:සෙවුම් වාක්‍ය ඛණ්ඩය
+sk:Syntax vyhľadávania
+sl:Skladnja iskanja
+sn:Mutemo wekutsvaga
+sp-rs:Sintaksa pretrage
+sq:Sintaksa e kërkimit
+sr-rs:Синтакса претраге
+sv:Söksyntax
+ta:தேடல் தொடரியல்
+th:ไวยากรณ์การค้นหา
+tl:Syntax ng paghahanap
+tr:Arama sözdizimi
+tw:搜尋語法
+uk:Синтаксис пошуку
+uz:Qidiruv sintaksisi
+vn:Cú pháp tìm kiếm
+ne:खोज वाक्य संरचना
+az:Axtarış sintaksisi
+ku:ڕێزمانی گەڕان
+jv:Sintaksis panelusuran
+lv:Meklēšanas sintakse
+co:Sintassa di ricerca
+fo:Leitisyntaks
+sat:ᱥᱮᱸᱫᱽᱨᱟ ᱥᱤᱱᱴᱮᱠᱥ
 :Services
+af:Dienste
+am:Ծառայություններ
+ar:الخدمات
+bg:Услуги
+bn:পরিষেবা
+br:Serviços
+bs:Usluge
+by:Службы
+ca-xv:Serveis
+ca:Serveis
+cn:服务
+cy:Gwasanaethau
+cz:Služby
+de:Dienste
+dk:Tjenester
+el:Υπηρεσίες
 es:Servicios
+et:Teenused
+eu:Zerbitzuak
+fa:خدمات
+fi:Palvelut
+fr:Services
+fy-nl:Tsjinsten
+ga:Seirbhísí
+gl:Servizos
+he:שירותים
+hi:सेवाएँ
+hr:Usluge
+hu:Szolgáltatások
+id:Layanan
+it:Servizi
+ja:サービス
+ka:სერვისები
+kr:서비스
+kw:Gonisogethow
+lt:Paslaugos
+mk:Услуги
+ml:സേവനങ്ങൾ
+mm:ဝန်ဆောင်မှုများ
+my:Perkhidmatan
+nl:Voorzieningen
+nn:Tenester
+no:Tjenester
+pa:ਸੇਵਾਵਾਂ
+pl:Usługi
+pt:Serviços
+ro:Servicii
+ru:Службы
+si:සේවා
+sk:Služby
+sl:Storitve
+sn:Masevhisi
+sp-rs:Usluge
+sq:Shërbime
+sr-rs:Услуге
+sv:Tjänster
+ta:சேவைகள்
+th:บริการ
+tl:Mga Serbisyo
+tr:Servisler
+tw:服務
+uk:Служби
+uz:Xizmatlar
+vn:Dịch vụ
+ne:सेवाहरू
+az:Xidmətlər
+ku:خزمەتگوزارییەکان
+jv:Layanan
+lv:Pakalpojumi
+co:Servizii
+fo:Tænastur
+sat:ᱥᱮᱵᱟᱠᱚ
+:set to false
+af:skakel af
+am:անջատել
+ar:إيقاف
+bg:изключи
+bn:বন্ধ করুন
+br:desativar
+bs:isključi
+by:выключыць
+ca-xv:desactiva
+ca:desactiva
+cn:关闭
+cy:diffodd
+cz:vypnout
+de:ausschalten
+dk:slå fra
+el:απενεργοποίηση
+es:desactivar
+et:lülita välja
+eu:desaktibatu
+fa:خاموش
+fi:pois
+fr:désactiver
+fy-nl:útskeakelje
+ga:cas as
+gl:desactivar
+he:כבה
+hi:बंद करें
+hr:isključi
+hu:kikapcsolás
+id:nonaktifkan
+it:disattiva
+ja:オフ
+ka:გამორთვა
+kr:끄기
+kw:difeudhi
+lt:išjungti
+mk:исклучи
+ml:ഓഫാക്കുക
+mm:ပိတ်ရန်
+my:matikan
+nl:uitschakelen
+nn:slå av
+no:slå av
+pa:ਬੰਦ ਕਰੋ
+pl:wyłącz
+pt:desativar
+ro:dezactivează
+ru:выключить
+si:අක්‍රිය කරන්න
+sk:vypnúť
+sl:izklopi
+sn:dzima
+sp-rs:isključi
+sq:çaktivizo
+sr-rs:искључи
+sv:slå av
+ta:முடக்கு
+th:ปิด
+tl:i-off
+tr:kapat
+tw:關閉
+uk:вимкнути
+uz:o‘chirish
+vn:tắt
+ne:निष्क्रिय गर्नुहोस्
+az:deaktiv et
+ku:کوژاندنەوە
+jv:pateni
+lv:izslēgt
+co:disattivà
+fo:sløkk
+sat:ᱵᱚᱸᱫᱚᱭ ᱢᱮ
+:set to true
+af:skakel aan
+am:միացնել
+ar:تشغيل
+bg:включи
+bn:চালু করুন
+br:ativar
+bs:uključi
+by:уключыць
+ca-xv:activa
+ca:activa
+cn:开启
+cy:troi ymlaen
+cz:zapnout
+de:einschalten
+dk:slå til
+el:ενεργοποίηση
+es:activar
+et:lülita sisse
+eu:aktibatu
+fa:روشن
+fi:päälle
+fr:activer
+fy-nl:ynskeakelje
+ga:cas air
+gl:activar
+he:הפעל
+hi:चालू करें
+hr:uključi
+hu:bekapcsolás
+id:aktifkan
+it:attiva
+ja:オン
+ka:ჩართვა
+kr:켜기
+kw:gorra yn fyw
+lt:įjungti
+mk:вклучи
+ml:ഓണാക്കുക
+mm:ဖွင့်ရန်
+my:hidupkan
+nl:inschakelen
+nn:slå på
+no:slå på
+pa:ਚਾਲੂ ਕਰੋ
+pl:włącz
+pt:ativar
+ro:activează
+ru:включить
+si:ක්‍රියාත්මක කරන්න
+sk:zapnúť
+sl:vklopi
+sn:batidza
+sp-rs:uključi
+sq:aktivizo
+sr-rs:укључи
+sv:slå på
+ta:இயக்கு
+th:เปิด
+tl:i-on
+tr:aç
+tw:開啟
+uk:увімкнути
+uz:yoqish
+vn:bật
+ne:सक्रिय गर्नुहोस्
+az:aktiv et
+ku:هەڵکردن
+jv:uripake
+lv:ieslēgt
+co:attivà
+fo:tendra
+sat:ᱮᱦᱚᱵ ᱢᱮ
 :Show All
+af:Wys alles
+am:Ցույց տալ բոլորը
+ar:إظهار الكل
+bg:Покажи всички
+bn:সব দেখান
+br:Mostrar Tudo
+bs:Prikaži sve
+by:Паказаць усе
+ca-xv:Mostra-ho tot
+ca:Mostra-ho tot
+cn:全部显示
+cy:Dangos y Cyfan
+cz:Zobrazit vše
+de:Alle einblenden
+dk:Vis alle
+el:Εμφάνιση όλων
 es:Mostrar todo
+et:Kuva kõik
+eu:Erakutsi denak
+fa:نمایش همه
+fi:Näytä kaikki
+fr:Tout afficher
+fy-nl:Alles toane
+ga:Taispeáin Uile
+gl:Amosar todo
+he:הצג הכול
+hi:सभी दिखाएँ
+hr:Prikaži sve
+hu:Az összes megjelenítése
+id:Tampilkan Semua
+it:Mostra tutte
+ja:すべてを表示
+ka:ყველას ჩვენება
+kr:모두 보기
+kw:Diskwedhes Oll
+lt:Rodyti viską
+mk:Прикажи ги сите
+ml:എല്ലാം കാണിക്കുക
+mm:အားလုံးပြရန်
+my:Tunjukkan Semua
+nl:Toon alles
+nn:Vis alle
+no:Vis alle
+pa:ਸਭ ਦਿਖਾਓ
+pl:Pokaż wszystkie
+pt:Mostrar tudo
+ro:Afișează tot
+ru:Показать все
+si:සියල්ල පෙන්වන්න
+sk:Zobraziť všetko
+sl:Prikaži vse
+sn:Ratidza Zvose
+sp-rs:Prikaži sve
+sq:Shfaqi të gjitha
+sr-rs:Прикажи све
+sv:Visa alla
+ta:அனைத்தையும் காட்டு
+th:แสดงทั้งหมด
+tl:Ipakita Lahat
+tr:Tümünü Göster
+tw:顯示全部
+uk:Показати всі
+uz:Hammasini ko‘rsatish
+vn:Hiển thị tất cả
+ne:सबै देखाउनुहोस्
+az:Hamısını göstər
+ku:پیشاندانی هەموو
+jv:Tampilake Kabeh
+lv:Rādīt visus
+co:Affissà tuttu
+fo:Vís alt
+sat:ᱡᱷᱚᱛᱚ ᱫᱮᱠᱷᱟᱣ ᱢᱮ
 :Show the selected annotation's note
+af:Wys die nota van die gekose aantekening
+am:Ցույց տալ ընտրված ծանոթագրության նշումը
+ar:إظهار ملاحظة التعليق التوضيحي المحدد
+bg:Покажи бележката на избраната анотация
+bn:নির্বাচিত টীকার নোট দেখান
+br:Mostrar a nota da anotação selecionada
+bs:Prikaži bilješku odabrane napomene
+by:Паказаць нататку вылучанай анатацыі
+ca-xv:Mostra la nota de l'anotació seleccionada
+ca:Mostra la nota de l'anotació seleccionada
+cn:显示所选注释的备注
+cy:Dangos nodyn yr anodiad a ddewiswyd
+cz:Zobrazit poznámku vybrané anotace
+de:Notiz der ausgewählten Anmerkung anzeigen
+dk:Vis noten til den valgte annotering
+el:Εμφάνιση της σημείωσης του επιλεγμένου σχολιασμού
 es:Mostrar la nota de la anotación seleccionada
+et:Kuva valitud märkuse sisu
+eu:Erakutsi hautatutako oharraren testua
+fa:نمایش یادداشت حاشیه‌نویسی انتخاب‌شده
+fi:Näytä valitun merkinnän muistiinpano
+fr:Afficher la note de l'annotation sélectionnée
+fy-nl:Notysje fan de selektearre annotaasje toane
+ga:Taispeáin nóta na hanótála roghnaithe
+gl:Amosar a nota da anotación seleccionada
+he:הצג את ההערה של הביאור שנבחר
+hi:चयनित एनोटेशन का नोट दिखाएँ
+hr:Prikaži napomenu odabrane bilješke
+hu:A kijelölt jegyzet megjegyzésének megjelenítése
+id:Tampilkan catatan anotasi yang dipilih
+it:Mostra la nota dell'annotazione selezionata
+ja:選択した注釈のメモを表示
+ka:არჩეული ანოტაციის შენიშვნის ჩვენება
+kr:선택한 주석의 메모 표시
+kw:Diskwedhes noten an notenyans dewisys
+lt:Rodyti pasirinktos anotacijos pastabą
+mk:Прикажи ја белешката на избраната прибелешка
+ml:തിരഞ്ഞെടുത്ത വ്യാഖ്യാനത്തിന്റെ കുറിപ്പ് കാണിക്കുക
+mm:ရွေးထားသော မှတ်ချက်၏ မှတ်စုကို ပြရန်
+my:Tunjukkan nota anotasi yang dipilih
+nl:Notitie van de geselecteerde aantekening tonen
+nn:Vis notatet til den valde merknaden
+no:Vis notatet til den valgte merknaden
+pa:ਚੁਣੀ ਗਈ ਟਿੱਪਣੀ ਦਾ ਨੋਟ ਦਿਖਾਓ
+pl:Pokaż notatkę zaznaczonej adnotacji
+pt:Mostrar a nota da anotação selecionada
+ro:Afișează nota adnotării selectate
+ru:Показать заметку выбранной аннотации
+si:තෝරාගත් විවරණයේ සටහන පෙන්වන්න
+sk:Zobraziť poznámku vybranej anotácie
+sl:Prikaži opombo izbrane pripombe
+sn:Ratidza noti yechinyorwa chasarudzwa
+sp-rs:Prikaži napomenu izabrane beleške
+sq:Shfaq shënimin e anotimit të përzgjedhur
+sr-rs:Прикажи напомену изабране белешке
+sv:Visa den markerade anteckningens notering
+ta:தேர்ந்தெடுத்த குறிப்புரையின் குறிப்பைக் காட்டு
+th:แสดงบันทึกของคำอธิบายประกอบที่เลือก
+tl:Ipakita ang tala ng napiling anotasyon
+tr:Seçili ek açıklamanın notunu göster
+tw:顯示所選註解的附註
+uk:Показати примітку вибраної анотації
+uz:Tanlangan izohning eslatmasini ko‘rsatish
+vn:Hiển thị ghi chú của chú thích đã chọn
+ne:चयन गरिएको एनोटेसनको टिप्पणी देखाउनुहोस्
+az:Seçilmiş annotasiyanın qeydini göstər
+ku:پیشاندانی تێبینیی نیشانەی دیاریکراو
+jv:Tampilake cathetan anotasi sing dipilih
+lv:Rādīt atlasītās anotācijas piezīmi
+co:Affissà a nota di l’annutazione selezziunata
+fo:Vís notatið hjá valdu viðmerkingini
+sat:ᱵᱟᱪᱷᱟᱣ ᱪᱤᱱᱦᱟᱹ ᱨᱮᱭᱟᱜ ᱱᱳᱴ ᱫᱮᱠᱷᱟᱣ ᱢᱮ
 :Signature &type:
+af:Handtekening&tipe:
+am:Ստորագրության &տեսակ՝
+ar:&نوع التوقيع:
+bg:&Тип подпис:
+bn:স্বাক্ষরের &ধরন:
+br:&Tipo de assinatura:
+bs:&Vrsta potpisa:
+by:&Тып подпісу:
+ca-xv:&Tipus de signatura:
+ca:&Tipus de signatura:
+cn:签名类型(&T)：
+cy:&Math o lofnod:
+cz:&Typ podpisu:
+de:Signatur&typ:
+dk:Signatur&type:
+el:&Τύπος υπογραφής:
 es:&Tipo de firma:
+et:Allkirja &tüüp:
+eu:Sinadura &mota:
+fa:&نوع امضا:
+fi:Allekirjoituksen &tyyppi:
+fr:&Type de signature :
+fy-nl:Hantekening&type:
+ga:&Cineál sínithe:
+gl:&Tipo de sinatura:
+he:&סוג חתימה:
+hi:हस्ताक्षर &प्रकार:
+hr:&Vrsta potpisa:
+hu:Aláírás &típusa:
+id:&Jenis tanda tangan:
+it:&Tipo di firma:
+ja:署名の種類(&T):
+ka:ხელმოწერის &ტიპი:
+kr:서명 유형(&T):
+kw:&Sort a sinans:
+lt:Parašo &tipas:
+mk:&Тип на потпис:
+ml:ഒപ്പിന്റെ &തരം:
+mm:လက်မှတ် &အမျိုးအစား:
+my:&Jenis tandatangan:
+nl:&Type handtekening:
+nn:Signatur&type:
+no:Signatur&type:
+pa:ਦਸਤਖਤ ਦੀ &ਕਿਸਮ:
+pl:&Typ podpisu:
+pt:&Tipo de assinatura:
+ro:&Tipul semnăturii:
+ru:&Тип подписи:
+si:අත්සන් &වර්ගය:
+sk:&Typ podpisu:
+sl:&Vrsta podpisa:
+sn:&Mhando yesiginecha:
+sp-rs:&Vrsta potpisa:
+sq:&Lloji i nënshkrimit:
+sr-rs:&Врста потписа:
+sv:Signatur&typ:
+ta:கையொப்ப &வகை:
+th:&ประเภทลายเซ็น:
+tl:&Uri ng lagda:
+tr:İmza &türü:
+tw:簽章類型(&T)：
+uk:&Тип підпису:
+uz:Imzo &turi:
+vn:&Loại chữ ký:
+ne:हस्ताक्षरको &प्रकार:
+az:İmza &növü:
+ku:&جۆری واژوو:
+jv:&Jinis tandha tangan:
+lv:Paraksta &veids:
+co:&Tipu di segnatura :
+fo:Undirskriftar&slag:
+sat:ᱥᱚᱦᱤ &ᱞᱮᱠᱟᱱ:
 :Signing this way locks the document: no further changes or signatures will be possible. Continue?
+af:Om so te onderteken sluit die dokument: verdere veranderinge of handtekeninge sal nie moontlik wees nie. Gaan voort?
+am:Այս կերպ ստորագրելը կողպում է փաստաթուղթը. հետագա փոփոխություններ կամ ստորագրություններ հնարավոր չեն լինի։ Շարունակե՞լ։
+ar:التوقيع بهذه الطريقة يقفل المستند: لن يكون من الممكن إجراء أي تغييرات أو توقيعات أخرى. هل تريد المتابعة؟
+bg:Подписването по този начин заключва документа: няма да са възможни други промени или подписи. Продължаване?
+bn:এভাবে স্বাক্ষর করলে নথিটি লক হয়ে যায়: আর কোনো পরিবর্তন বা স্বাক্ষর সম্ভব হবে না। চালিয়ে যাবেন?
+br:Assinar desta forma bloqueia o documento: não serão possíveis outras alterações ou assinaturas. Continuar?
+bs:Ovakvo potpisivanje zaključava dokument: dalje izmjene ili potpisi neće biti mogući. Nastaviti?
+by:Такі подпіс блакуе дакумент: далейшыя змены і подпісы будуць немагчымыя. Працягнуць?
+ca-xv:Signar d'esta manera bloqueja el document: no es podran fer més canvis ni afegir signatures. Voleu continuar?
+ca:Signar d'aquesta manera bloca el document: no es podran fer més canvis ni afegir signatures. Voleu continuar?
+cn:以这种方式签名会锁定文档：将无法再进行更改或签名。是否继续？
+cy:Mae llofnodi fel hyn yn cloi'r ddogfen: ni fydd modd gwneud rhagor o newidiadau na llofnodion. Parhau?
+cz:Takové podepsání dokument uzamkne: další změny ani podpisy nebudou možné. Pokračovat?
+de:Diese Art der Signatur sperrt das Dokument: Weitere Änderungen oder Signaturen sind nicht mehr möglich. Fortfahren?
+dk:Signering på denne måde låser dokumentet: yderligere ændringer eller signaturer vil ikke være mulige. Fortsæt?
+el:Η υπογραφή με αυτόν τον τρόπο κλειδώνει το έγγραφο: δεν θα είναι δυνατές περαιτέρω αλλαγές ή υπογραφές. Συνέχεια;
 es:Firmar de esta forma bloquea el documento: no se podrán hacer más cambios ni añadir firmas. ¿Continuar?
+et:Sel viisil allkirjastamine lukustab dokumendi: edasised muudatused ega allkirjad pole võimalikud. Kas jätkata?
+eu:Horrela sinatzeak dokumentua blokeatzen du: ezingo da aldaketa edo sinadura gehiagorik egin. Jarraitu?
+fa:امضا به این روش سند را قفل می‌کند: تغییر یا امضای بیشتری ممکن نخواهد بود. ادامه می‌دهید؟
+fi:Tällä tavalla allekirjoittaminen lukitsee dokumentin: lisämuutokset tai -allekirjoitukset eivät ole mahdollisia. Jatketaanko?
+fr:Signer de cette façon verrouille le document : aucune autre modification ni signature ne sera possible. Continuer ?
+fy-nl:Op dizze manier ûndertekenje beskoattelet it dokumint: fierdere wizigingen of hantekeningen binne net mear mooglik. Trochgean?
+ga:Cuireann síniú mar seo glas ar an doiciméad: ní bheidh tuilleadh athruithe ná sínithe indéanta. Lean ar aghaidh?
+gl:Asinar deste xeito bloquea o documento: non se poderán facer máis cambios nin engadir sinaturas. Continuar?
+he:חתימה בדרך זו נועלת את המסמך: לא יהיה ניתן לבצע שינויים או חתימות נוספים. להמשיך?
+hi:इस तरह हस्ताक्षर करने से दस्तावेज़ लॉक हो जाता है: आगे कोई बदलाव या हस्ताक्षर संभव नहीं होंगे। जारी रखें?
+hr:Ovakvo potpisivanje zaključava dokument: daljnje promjene ili potpisi neće biti mogući. Nastaviti?
+hu:Az ilyen aláírás zárolja a dokumentumot: további módosítás vagy aláírás nem lesz lehetséges. Folytatja?
+id:Menandatangani dengan cara ini akan mengunci dokumen: perubahan atau tanda tangan lebih lanjut tidak akan dimungkinkan. Lanjutkan?
+it:Firmare in questo modo blocca il documento: non saranno possibili ulteriori modifiche o firme. Continuare?
+ja:この方法で署名するとドキュメントがロックされ、以降の変更や署名はできなくなります。続行しますか?
+ka:ამგვარი ხელმოწერა ჩაკეტავს დოკუმენტს: შემდგომი ცვლილებები ან ხელმოწერები შეუძლებელი იქნება. გავაგრძელოთ?
+kr:이 방식으로 서명하면 문서가 잠깁니다. 이후 변경하거나 서명할 수 없습니다. 계속하시겠습니까?
+kw:Sina yndella a alhwedh an dokment: ny vydh possybyl chanjyow po sinansow pella. Pesya?
+lt:Toks pasirašymas užrakina dokumentą: tolesni pakeitimai ar parašai nebus galimi. Tęsti?
+mk:Потпишувањето на овој начин го заклучува документот: нема да бидат можни понатамошни промени или потписи. Да продолжи?
+ml:ഈ രീതിയിൽ ഒപ്പിടുന്നത് പ്രമാണം ലോക്ക് ചെയ്യും: കൂടുതൽ മാറ്റങ്ങളോ ഒപ്പുകളോ സാധ്യമാകില്ല. തുടരണോ?
+mm:ဤနည်းဖြင့် လက်မှတ်ထိုးခြင်းသည် စာတမ်းကို သော့ခတ်သည်- ထပ်မံ ပြောင်းလဲမှု သို့မဟုတ် လက်မှတ်များ မဖြစ်နိုင်တော့ပါ။ ဆက်လုပ်မလား?
+my:Menandatangani dengan cara ini mengunci dokumen: perubahan atau tandatangan lanjut tidak akan dapat dilakukan. Teruskan?
+nl:Op deze manier ondertekenen vergrendelt het document: verdere wijzigingen of handtekeningen zijn niet meer mogelijk. Doorgaan?
+nn:Signering på denne måten låser dokumentet: fleire endringar eller signaturar vil ikkje vere mogleg. Halde fram?
+no:Signering på denne måten låser dokumentet: flere endringer eller signaturer vil ikke være mulig. Fortsette?
+pa:ਇਸ ਤਰ੍ਹਾਂ ਦਸਤਖਤ ਕਰਨ ਨਾਲ ਦਸਤਾਵੇਜ਼ ਲਾਕ ਹੋ ਜਾਂਦਾ ਹੈ: ਅੱਗੇ ਕੋਈ ਤਬਦੀਲੀ ਜਾਂ ਦਸਤਖਤ ਸੰਭਵ ਨਹੀਂ ਹੋਣਗੇ। ਜਾਰੀ ਰੱਖਣਾ ਹੈ?
+pl:Podpisanie w ten sposób zablokuje dokument: dalsze zmiany ani podpisy nie będą możliwe. Kontynuować?
+pt:Assinar desta forma bloqueia o documento: não serão possíveis mais alterações nem assinaturas. Continuar?
+ro:Semnarea în acest mod blochează documentul: nu vor mai fi posibile alte modificări sau semnături. Continuați?
+ru:Такое подписание блокирует документ: дальнейшие изменения и подписи будут невозможны. Продолжить?
+si:මේ ආකාරයෙන් අත්සන් කිරීම ලේඛනය අගුළු දමයි: තවදුරටත් වෙනස්කම් හෝ අත්සන් කළ නොහැක. ඉදිරියට යන්නද?
+sk:Takéto podpísanie dokument uzamkne: ďalšie zmeny ani podpisy nebudú možné. Pokračovať?
+sl:Tak podpis zaklene dokument: nadaljnje spremembe ali podpisi ne bodo mogoči. Želite nadaljevati?
+sn:Kusaina nenzira iyi kunokiya gwaro: hapachazokwanisi kuita dzimwe shanduko kana masiginecha. Enderera?
+sp-rs:Ovakvo potpisivanje zaključava dokument: dalje izmene ili potpisi neće biti mogući. Nastaviti?
+sq:Nënshkrimi në këtë mënyrë kyç dokumentin: nuk do të jenë të mundshme ndryshime apo nënshkrime të tjera. Të vazhdohet?
+sr-rs:Овакво потписивање закључава документ: даље измене или потписи неће бити могући. Наставити?
+sv:Att signera på det här sättet låser dokumentet: inga fler ändringar eller signaturer blir möjliga. Fortsätta?
+ta:இவ்வாறு கையொப்பமிடுவது ஆவணத்தைப் பூட்டும்: மேலும் மாற்றங்கள் அல்லது கையொப்பங்கள் சாத்தியமில்லை. தொடரவா?
+th:การลงนามด้วยวิธีนี้จะล็อกเอกสาร: จะไม่สามารถเปลี่ยนแปลงหรือลงนามเพิ่มได้อีก ดำเนินการต่อหรือไม่
+tl:Ang paglagda sa ganitong paraan ay nagla-lock ng dokumento: hindi na posible ang karagdagang pagbabago o lagda. Magpatuloy?
+tr:Bu şekilde imzalamak belgeyi kilitler: başka değişiklik veya imza yapılamaz. Devam edilsin mi?
+tw:以此方式簽署會鎖定文件：之後將無法再進行變更或簽署。要繼續嗎？
+uk:Таке підписання блокує документ: подальші зміни чи підписи будуть неможливі. Продовжити?
+uz:Bunday imzolash hujjatni qulflaydi: boshqa o‘zgartirish yoki imzolar mumkin bo‘lmaydi. Davom etilsinmi?
+vn:Ký theo cách này sẽ khóa tài liệu: sẽ không thể thay đổi hoặc ký thêm. Tiếp tục?
+ne:यसरी हस्ताक्षर गर्दा कागजात लक हुन्छ: थप परिवर्तन वा हस्ताक्षर सम्भव हुने छैन। जारी राख्ने?
+az:Bu cür imzalamaq sənədi kilidləyir: əlavə dəyişiklik və ya imza mümkün olmayacaq. Davam edilsin?
+ku:واژووکردن بەم شێوەیە بەڵگەنامەکە قوفڵ دەکات: هیچ گۆڕانکاری یان واژوویەکی تر نابێت. بەردەوام بیت؟
+jv:Tandha tangan kanthi cara iki ngunci dokumen: owah-owahan utawa tandha tangan liyane ora bakal bisa. Terusake?
+lv:Šāda parakstīšana bloķē dokumentu: turpmākas izmaiņas vai paraksti nebūs iespējami. Turpināt?
+co:Firmà cusì blocca u ducumentu : ùn serà più pussibule alcuna mudificazione nè firma. Cuntinuà ?
+fo:At undirskriva soleiðis læsir skjalið: fleiri broytingar ella undirskriftir verða ikki møguligar. Halda fram?
+sat:ᱱᱚᱶᱟ ᱞᱮᱠᱟ ᱥᱚᱦᱤ ᱫᱚ ᱫᱚᱞᱤᱞ ᱞᱚᱠ ᱟᱭ: ᱟᱨᱦᱚᱸ ᱵᱚᱫᱚᱞ ᱟᱨ ᱥᱚᱦᱤ ᱵᱟᱝ ᱦᱩᱭ ᱫᱟᱲᱮᱭᱟᱜᱼᱟ᱾ ᱞᱟᱦᱟᱛᱮ ᱥᱮᱱ ᱢᱮ?
+:smart
+af:slim
+am:խելացի
+ar:ذكي
+bg:интелигентен
+bn:স্মার্ট
+br:inteligente
+bs:pametno
+by:разумны
+ca-xv:intel·ligent
+ca:intel·ligent
+cn:智能
+cy:clyfar
+cz:chytrý
+de:intelligent
+dk:smart
+el:έξυπνο
+es:inteligente
+et:nutikas
+eu:adimentsua
+fa:هوشمند
+fi:älykäs
+fr:intelligent
+fy-nl:tûk
+ga:cliste
+gl:intelixente
+he:חכם
+hi:स्मार्ट
+hr:pametno
+hu:intelligens
+id:pintar
+it:intelligente
+ja:スマート
+ka:ჭკვიანი
+kr:스마트
+kw:skentel
+lt:išmanusis
+mk:паметно
+ml:സ്മാർട്ട്
+mm:စမတ်
+my:pintar
+nl:slim
+nn:smart
+no:smart
+pa:ਸਮਾਰਟ
+pl:inteligentny
+pt:inteligente
+ro:inteligent
+ru:умный
+si:ස්මාර්ට්
+sk:inteligentný
+sl:pametno
+sn:ungwaru
+sp-rs:pametno
+sq:i zgjuar
+sr-rs:паметно
+sv:smart
+ta:ஸ்மார்ட்
+th:อัจฉริยะ
+tl:matalino
+tr:akıllı
+tw:智慧
+uk:розумний
+uz:aqlli
+vn:thông minh
+ne:स्मार्ट
+az:ağıllı
+ku:زیرەک
+jv:pinter
+lv:viedais
+co:intelligente
+fo:klókt
+sat:ᱥᱢᱟᱨᱴ
 :SumatraPDF forums
+af:SumatraPDF-forums
+am:SumatraPDF ֆորումներ
+ar:منتديات SumatraPDF
+bg:Форуми на SumatraPDF
+bn:SumatraPDF ফোরাম
+br:Fóruns do SumatraPDF
+bs:SumatraPDF forumi
+by:Форумы SumatraPDF
+ca-xv:Fòrums del SumatraPDF
+ca:Fòrums del SumatraPDF
+cn:SumatraPDF 论坛
+cy:Fforymau SumatraPDF
+cz:Fóra SumatraPDF
+de:SumatraPDF-Foren
+dk:SumatraPDF-fora
+el:Φόρουμ του SumatraPDF
 es:Foros de SumatraPDF
+et:SumatraPDF-i foorumid
+eu:SumatraPDF foroak
+fa:انجمن‌های SumatraPDF
+fi:SumatraPDF-foorumit
+fr:Forums SumatraPDF
+fy-nl:SumatraPDF-foarums
+ga:Fóraim SumatraPDF
+gl:Foros de SumatraPDF
+he:הפורומים של SumatraPDF
+hi:SumatraPDF फ़ोरम
+hr:Forumi za SumatraPDF
+hu:SumatraPDF fórumok
+id:Forum SumatraPDF
+it:Forum di SumatraPDF
+ja:SumatraPDF フォーラム
+ka:SumatraPDF-ის ფორუმები
+kr:SumatraPDF 포럼
+kw:Forumow SumatraPDF
+lt:SumatraPDF forumai
+mk:Форуми на SumatraPDF
+ml:SumatraPDF ഫോറങ്ങൾ
+mm:SumatraPDF ဖိုရမ်များ
+my:Forum SumatraPDF
+nl:SumatraPDF-forums
+nn:SumatraPDF-forum
+no:SumatraPDF-forum
+pa:SumatraPDF ਫੋਰਮ
+pl:Forum SumatraPDF
+pt:Fóruns do SumatraPDF
+ro:Forumurile SumatraPDF
+ru:Форумы SumatraPDF
+si:SumatraPDF සංසද
+sk:Fóra SumatraPDF
+sl:Forumi SumatraPDF
+sn:Maforamu eSumatraPDF
+sp-rs:SumatraPDF forumi
+sq:Forume SumatraPDF
+sr-rs:SumatraPDF форуми
+sv:SumatraPDF-forum
+ta:SumatraPDF மன்றங்கள்
+th:ฟอรัม SumatraPDF
+tl:Mga forum ng SumatraPDF
+tr:SumatraPDF forumları
+tw:SumatraPDF 論壇
+uk:Форуми SumatraPDF
+uz:SumatraPDF forumlari
+vn:Diễn đàn SumatraPDF
+ne:SumatraPDF फोरमहरू
+az:SumatraPDF forumları
+ku:مەکۆکانی SumatraPDF
+jv:Forum SumatraPDF
+lv:SumatraPDF forumi
+co:Fori di SumatraPDF
+fo:SumatraPDF kjak
+sat:SumatraPDF ᱯᱷᱚᱨᱚᱢᱠᱚ
 :SumatraPDF manual
+af:SumatraPDF-handleiding
+am:SumatraPDF ձեռնարկ
+ar:دليل SumatraPDF
+bg:Ръководство на SumatraPDF
+bn:SumatraPDF ম্যানুয়াল
+br:Manual do SumatraPDF
+bs:SumatraPDF priručnik
+by:Дапаможнік SumatraPDF
+ca-xv:Manual del SumatraPDF
+ca:Manual del SumatraPDF
+cn:SumatraPDF 手册
+cy:Llawlyfr SumatraPDF
+cz:Příručka SumatraPDF
+de:SumatraPDF-Handbuch
+dk:SumatraPDF-manual
+el:Εγχειρίδιο του SumatraPDF
 es:Manual de SumatraPDF
+et:SumatraPDF-i juhend
+eu:SumatraPDF eskuliburua
+fa:راهنمای SumatraPDF
+fi:SumatraPDF-käyttöopas
+fr:Manuel de SumatraPDF
+fy-nl:SumatraPDF-hantlieding
+ga:Lámhleabhar SumatraPDF
+gl:Manual de SumatraPDF
+he:המדריך של SumatraPDF
+hi:SumatraPDF मैनुअल
+hr:Priručnik za SumatraPDF
+hu:SumatraPDF kézikönyv
+id:Panduan SumatraPDF
+it:Manuale di SumatraPDF
+ja:SumatraPDF マニュアル
+ka:SumatraPDF-ის სახელმძღვანელო
+kr:SumatraPDF 설명서
+kw:Dornlyver SumatraPDF
+lt:SumatraPDF vadovas
+mk:Прирачник за SumatraPDF
+ml:SumatraPDF മാനുവൽ
+mm:SumatraPDF လက်စွဲ
+my:Manual SumatraPDF
+nl:SumatraPDF-handleiding
+nn:SumatraPDF-handbok
+no:SumatraPDF-håndbok
+pa:SumatraPDF ਮੈਨੂਅਲ
+pl:Podręcznik SumatraPDF
+pt:Manual do SumatraPDF
+ro:Manualul SumatraPDF
+ru:Руководство SumatraPDF
+si:SumatraPDF අත්පොත
+sk:Príručka SumatraPDF
+sl:Priročnik SumatraPDF
+sn:Bhuku rerairo reSumatraPDF
+sp-rs:SumatraPDF priručnik
+sq:Manual SumatraPDF
+sr-rs:SumatraPDF приручник
+sv:SumatraPDF-handbok
+ta:SumatraPDF கையேடு
+th:คู่มือ SumatraPDF
+tl:Manwal ng SumatraPDF
+tr:SumatraPDF kılavuzu
+tw:SumatraPDF 手冊
+uk:Посібник SumatraPDF
+uz:SumatraPDF qo‘llanmasi
+vn:Hướng dẫn SumatraPDF
+ne:SumatraPDF पुस्तिका
+az:SumatraPDF təlimatı
+ku:ڕێبەری SumatraPDF
+jv:Pandhuan SumatraPDF
+lv:SumatraPDF rokasgrāmata
+co:Manuale di SumatraPDF
+fo:SumatraPDF handbók
+sat:SumatraPDF ᱢᱮᱱᱩᱣᱟᱞ
 :SumatraPDF website
+af:SumatraPDF-webwerf
+am:SumatraPDF կայք
+ar:موقع SumatraPDF
+bg:Уебсайт на SumatraPDF
+bn:SumatraPDF ওয়েবসাইট
+br:Site do SumatraPDF
+bs:SumatraPDF web stranica
+by:Сайт SumatraPDF
+ca-xv:Lloc web del SumatraPDF
+ca:Lloc web del SumatraPDF
+cn:SumatraPDF 网站
+cy:Gwefan SumatraPDF
+cz:Web SumatraPDF
+de:SumatraPDF-Website
+dk:SumatraPDF-websted
+el:Ιστότοπος του SumatraPDF
 es:Sitio web de SumatraPDF
+et:SumatraPDF-i veebisait
+eu:SumatraPDF webgunea
+fa:وب‌سایت SumatraPDF
+fi:SumatraPDF-verkkosivusto
+fr:Site web de SumatraPDF
+fy-nl:SumatraPDF-website
+ga:Suíomh Gréasáin SumatraPDF
+gl:Sitio web de SumatraPDF
+he:האתר של SumatraPDF
+hi:SumatraPDF वेबसाइट
+hr:Web-stranica SumatraPDF-a
+hu:SumatraPDF webhely
+id:Situs web SumatraPDF
+it:Sito web di SumatraPDF
+ja:SumatraPDF Web サイト
+ka:SumatraPDF-ის ვებსაიტი
+kr:SumatraPDF 웹사이트
+kw:Gwiasva SumatraPDF
+lt:SumatraPDF svetainė
+mk:Веб-страница на SumatraPDF
+ml:SumatraPDF വെബ്സൈറ്റ്
+mm:SumatraPDF ဝဘ်ဆိုက်
+my:Laman web SumatraPDF
+nl:SumatraPDF-website
+nn:SumatraPDF-nettstad
+no:SumatraPDF-nettsted
+pa:SumatraPDF ਵੈੱਬਸਾਈਟ
+pl:Strona internetowa SumatraPDF
+pt:Site do SumatraPDF
+ro:Site-ul SumatraPDF
+ru:Сайт SumatraPDF
+si:SumatraPDF වෙබ් අඩවිය
+sk:Web SumatraPDF
+sl:Spletna stran SumatraPDF
+sn:Webhusaiti yeSumatraPDF
+sp-rs:SumatraPDF veb-sajt
+sq:Sajti SumatraPDF
+sr-rs:SumatraPDF веб-сајт
+sv:SumatraPDF-webbplats
+ta:SumatraPDF இணையதளம்
+th:เว็บไซต์ SumatraPDF
+tl:Website ng SumatraPDF
+tr:SumatraPDF web sitesi
+tw:SumatraPDF 網站
+uk:Сайт SumatraPDF
+uz:SumatraPDF veb-sayti
+vn:Trang web SumatraPDF
+ne:SumatraPDF वेबसाइट
+az:SumatraPDF veb-saytı
+ku:ماڵپەڕی SumatraPDF
+jv:Situs web SumatraPDF
+lv:SumatraPDF tīmekļa vietne
+co:Situ web di SumatraPDF
+fo:SumatraPDF heimasíða
+sat:SumatraPDF ᱣᱮᱵᱥᱟᱭᱤᱴ
+:switch to %s
+af:skakel oor na %s
+am:անցնել %s-ին
+ar:التبديل إلى %s
+bg:превключи на %s
+bn:%s-এ পরিবর্তন করুন
+br:mudar para %s
+bs:prebaci na %s
+by:пераключыць на %s
+ca-xv:canvia a %s
+ca:canvia a %s
+cn:切换到 %s
+cy:newid i %s
+cz:přepnout na %s
+de:wechseln zu %s
+dk:skift til %s
+el:εναλλαγή σε %s
+es:cambiar a %s
+et:lülita: %s
+eu:aldatu honetara: %s
+fa:تغییر به %s
+fi:vaihda: %s
+fr:passer à %s
+fy-nl:oerskeakelje nei %s
+ga:athraigh go %s
+gl:cambiar a %s
+he:עבור אל %s
+hi:%s पर स्विच करें
+hr:prebaci na %s
+hu:váltás erre: %s
+id:beralih ke %s
+it:passa a %s
+ja:%s に切り替え
+ka:გადართვა: %s
+kr:%s(으)로 전환
+kw:chanjya dhe %s
+lt:perjungti į %s
+mk:префрли на %s
+ml:%s ലേക്ക് മാറുക
+mm:%s သို့ ပြောင်းရန်
+my:tukar kepada %s
+nl:overschakelen naar %s
+nn:byt til %s
+no:bytt til %s
+pa:%s 'ਤੇ ਬਦਲੋ
+pl:przełącz na %s
+pt:mudar para %s
+ro:comută la %s
+ru:переключить на %s
+si:%s වෙත මාරු වන්න
+sk:prepnúť na %s
+sl:preklopi na %s
+sn:chinja kuenda ku%s
+sp-rs:prebaci na %s
+sq:kalo te %s
+sr-rs:пребаци на %s
+sv:växla till %s
+ta:%s க்கு மாற்று
+th:สลับเป็น %s
+tl:lumipat sa %s
+tr:%s seçeneğine geç
+tw:切換至 %s
+uk:перемкнути на %s
+uz:%s ga o‘tish
+vn:chuyển sang %s
+ne:%s मा बदल्नुहोस्
+az:%s rejiminə keç
+ku:گۆڕین بۆ %s
+jv:ganti dadi %s
+lv:pārslēgt uz %s
+co:passà à %s
+fo:skift til %s
+sat:%s ᱛᱮ ᱵᱚᱫᱚᱞ ᱢᱮ
 :System default
+af:Stelselverstek
+am:Համակարգի լռելյայն
+ar:افتراضي النظام
+bg:Системен по подразбиране
+bn:সিস্টেম ডিফল্ট
+br:Padrão do sistema
+bs:Sistemski zadano
+by:Сістэмны прадвызначаны
+ca-xv:Predeterminat del sistema
+ca:Predeterminat del sistema
+cn:系统默认
+cy:Rhagosodiad y system
+cz:Výchozí systémový
+de:Systemstandard
+dk:Systemstandard
+el:Προεπιλογή συστήματος
 es:Predeterminada del sistema
+et:Süsteemi vaikimisi
+eu:Sistemaren lehenetsia
+fa:پیش‌فرض سیستم
+fi:Järjestelmän oletus
+fr:Par défaut du système
+fy-nl:Systeemstandert
+ga:Réamhshocrú an chórais
+gl:Predeterminado do sistema
+he:ברירת המחדל של המערכת
+hi:सिस्टम डिफ़ॉल्ट
+hr:Zadano u sustavu
+hu:Rendszer alapértelmezése
+id:Bawaan sistem
+it:Predefinita di sistema
+ja:システムのデフォルト
+ka:სისტემის ნაგულისხმევი
+kr:시스템 기본값
+kw:Defowt an system
+lt:Sistemos numatytasis
+mk:Системски стандардно
+ml:സിസ്റ്റം സ്ഥിരസ്ഥിതി
+mm:စနစ် မူလ
+my:Lalai sistem
+nl:Systeemstandaard
+nn:Systemstandard
+no:Systemstandard
+pa:ਸਿਸਟਮ ਪੂਰਵ-ਨਿਰਧਾਰਤ
+pl:Domyślny systemowy
+pt:Predefinição do sistema
+ro:Implicit sistem
+ru:Системный по умолчанию
+si:පද්ධති පෙරනිමිය
+sk:Predvolený systémový
+sl:Sistemsko privzeto
+sn:Zvakajairwa nesystem
+sp-rs:Sistemski podrazumevano
+sq:Parazgjedhja e sistemit
+sr-rs:Системски подразумевано
+sv:Systemstandard
+ta:கணினி இயல்புநிலை
+th:ค่าเริ่มต้นของระบบ
+tl:Default ng system
+tr:Sistem varsayılanı
+tw:系統預設
+uk:Системний типовий
+uz:Tizim standarti
+vn:Mặc định hệ thống
+ne:प्रणाली पूर्वनिर्धारित
+az:Sistem standartı
+ku:بنەڕەتی سیستەم
+jv:Gawan sistem
+lv:Sistēmas noklusējums
+co:Predefinitu di u sistema
+fo:Skipanarvanligt
+sat:ᱥᱤᱥᱴᱚᱢ ᱰᱤᱯᱷᱚᱞᱴ
 :Tabs
+af:Oortjies
+am:Ներդիրներ
+ar:علامات التبويب
+bg:Раздели
+bn:ট্যাব
+br:Abas
+bs:Kartice
+by:Укладкі
+ca-xv:Pestanyes
+ca:Pestanyes
+cn:标签页
+cy:Tabiau
+cz:Karty
+de:Tabs
+dk:Faner
+el:Καρτέλες
 es:Pestañas
+et:Vahekaardid
+eu:Fitxak
+fa:زبانه‌ها
+fi:Välilehdet
+fr:Onglets
+fy-nl:Ljepblêden
+ga:Cluaisíní
+gl:Lapelas
+he:כרטיסיות
+hi:टैब
+hr:Kartice
+hu:Lapok
+id:Tab
+it:Schede
+ja:タブ
+ka:ჩანართები
+kr:탭
+kw:Tabow
+lt:Kortelės
+mk:Јазичиња
+ml:ടാബുകൾ
+mm:တဘ်များ
+my:Tab
+nl:Tabbladen
+nn:Faner
+no:Faner
+pa:ਟੈਬਾਂ
+pl:Karty
+pt:Separadores
+ro:File
+ru:Вкладки
+si:ටැබ
+sk:Karty
+sl:Zavihki
+sn:Mataabhu
+sp-rs:Kartice
+sq:Skeda
+sr-rs:Картице
+sv:Flikar
+ta:தாவல்கள்
+th:แท็บ
+tl:Mga Tab
+tr:Sekmeler
+tw:分頁
+uk:Вкладки
+uz:Varaqlar
+vn:Tab
+ne:ट्याबहरू
+az:Tablar
+ku:تابەکان
+jv:Tab
+lv:Cilnes
+co:Unghjette
+fo:Teigar
+sat:ᱴᱮᱵᱽᱠᱚ
 :Toggle Auto-Rotate Wide Pages
+af:Wissel outomatiese draai van wye bladsye
+am:Փոխարկել լայն էջերի ավտոմատ պտտումը
+ar:تبديل التدوير التلقائي للصفحات العريضة
+bg:Превключи автоматичното завъртане на широки страници
+bn:চওড়া পৃষ্ঠার স্বয়ংক্রিয় ঘূর্ণন টগল করুন
+br:Alternar giro automático de páginas largas
+bs:Uključi/isključi automatsko rotiranje širokih stranica
+by:Укл./выкл. аўтапаварот шырокіх старонак
+ca-xv:Commuta el gir automàtic de les pàgines amples
+ca:Commuta el gir automàtic de les pàgines amples
+cn:切换自动旋转宽页面
+cy:Toglo Cylchdroi Tudalennau Llydan yn Awtomatig
+cz:Přepnout automatické otáčení širokých stránek
+de:Breite Seiten automatisch drehen umschalten
+dk:Slå automatisk rotation af brede sider til/fra
+el:Εναλλαγή αυτόματης περιστροφής φαρδιών σελίδων
 es:Alternar giro automático de páginas anchas
+et:Lülita laiade lehtede automaatne pööramine sisse/välja
+eu:Txandakatu orri zabalen biraketa automatikoa
+fa:تغییر وضعیت چرخش خودکار صفحه‌های عریض
+fi:Leveiden sivujen automaattinen kierto päälle/pois
+fr:Basculer la rotation automatique des pages larges
+fy-nl:Brede siden automatysk draaie oan/út
+ga:Scoránaigh Rothlú Uathoibríoch Leathanach Leathan
+gl:Alternar a rotación automática das páxinas anchas
+he:הפעל/כבה סיבוב אוטומטי של עמודים רחבים
+hi:चौड़े पृष्ठों का स्वचालित घुमाव टॉगल करें
+hr:Uključi/isključi automatsko zakretanje širokih stranica
+hu:Széles oldalak automatikus forgatásának be/ki kapcsolása
+id:Alihkan Putar Otomatis Halaman Lebar
+it:Attiva/disattiva rotazione automatica pagine larghe
+ja:横長ページの自動回転を切り替え
+ka:ფართო გვერდების ავტომატური შემობრუნების გადართვა
+kr:넓은 페이지 자동 회전 전환
+kw:Skwychya Treylya Awtomatek Folennow Ledan
+lt:Perjungti automatinį plačių puslapių pasukimą
+mk:Вклучи/исклучи автоматска ротација на широки страници
+ml:വീതിയുള്ള പേജുകളുടെ സ്വയമേവയുള്ള തിരിക്കൽ ടോഗിൾ ചെയ്യുക
+mm:ကျယ်သော စာမျက်နှာ အလိုအလျောက်လှည့်ခြင်း ဖွင့်/ပိတ်
+my:Togol Putar Automatik Halaman Lebar
+nl:Brede pagina's automatisch draaien aan/uit
+nn:Slå automatisk rotering av breie sider av/på
+no:Slå automatisk rotering av brede sider av/på
+pa:ਚੌੜੇ ਸਫ਼ਿਆਂ ਦਾ ਆਪਣੇ ਆਪ ਘੁੰਮਣਾ ਟੌਗਲ ਕਰੋ
+pl:Przełącz automatyczne obracanie szerokich stron
+pt:Alternar rotação automática de páginas largas
+ro:Comută rotirea automată a paginilor late
+ru:Вкл./выкл. автоповорот широких страниц
+si:පළල් පිටු ස්වයංක්‍රීයව කරකැවීම ටොගල් කරන්න
+sk:Prepnúť automatické otáčanie širokých strán
+sl:Preklopi samodejno sukanje širokih strani
+sn:Chinja Kutenderedza Kwega Kwemapeji Akafara
+sp-rs:Uključi/isključi automatsku rotaciju širokih stranica
+sq:Aktivizo/çaktivizo rrotullimin automatik të faqeve të gjera
+sr-rs:Укључи/искључи аутоматску ротацију широких страница
+sv:Växla automatisk rotering av breda sidor
+ta:அகலமான பக்கங்களைத் தானாகச் சுழற்றுவதை நிலைமாற்று
+th:สลับการหมุนหน้ากว้างอัตโนมัติ
+tl:I-toggle ang Awtomatikong Pag-rotate ng Malalapad na Pahina
+tr:Geniş Sayfaları Otomatik Döndürmeyi Aç/Kapat
+tw:切換自動旋轉寬頁面
+uk:Увімк./вимк. автоповорот широких сторінок
+uz:Keng sahifalarni avtomatik aylantirishni yoqish/o‘chirish
+vn:Bật/tắt tự động xoay trang rộng
+ne:चौडा पृष्ठहरूको स्वतः घुमाइ टगल गर्नुहोस्
+az:Geniş səhifələrin avtomatik döndərilməsini aç/bağla
+ku:گۆڕینی خولاندنەوەی خۆکاری لاپەڕە پانەکان
+jv:Uripake/Pateni Puter Otomatis Kaca Amba
+lv:Pārslēgt plato lapu automātisko pagriešanu
+co:Attivà o disattivà a rutazione autumatica di e pagine larghe
+fo:Tendra/sløkk sjálvvirkandi snaring av breiðum síðum
+sat:ᱳᱥᱟᱨ ᱥᱟᱦᱴᱟᱠᱚ ᱟᱡ ᱛᱮ ᱟᱹᱪᱩᱨ ᱵᱚᱫᱚᱞ ᱢᱮ
 :Top
+af:Bokant
+am:Վերև
+ar:الأعلى
+bg:Горе
+bn:উপরে
+br:Parte superior
+bs:Vrh
+by:Уверх
+ca-xv:Dalt
+ca:A dalt
+cn:顶部
+cy:Brig
+cz:Horní okraj
+de:Oberer Rand
+dk:Top
+el:Πάνω
 es:Parte superior
+et:Ülemine serv
+eu:Goian
+fa:بالا
+fi:Yläreuna
+fr:Haut
+fy-nl:Boppekant
+ga:Barr
+gl:Arriba
+he:למעלה
+hi:ऊपर
+hr:Vrh
+hu:Teteje
+id:Atas
+it:In alto
+ja:上端
+ka:ზემოთ
+kr:맨 위
+kw:Penn
+lt:Viršus
+mk:Врв
+ml:മുകളിൽ
+mm:ထိပ်
+my:Atas
+nl:Bovenkant
+nn:Topp
+no:Topp
+pa:ਉੱਪਰ
+pl:Góra
+pt:Topo
+ro:Sus
+ru:В начало
+si:ඉහළ
+sk:Horný okraj
+sl:Vrh
+sn:Pamusoro
+sp-rs:Vrh
+sq:Sipër
+sr-rs:Врх
+sv:Överkant
+ta:மேலே
+th:ด้านบน
+tl:Itaas
+tr:Üst
+tw:頂端
+uk:Догори
+uz:Yuqori qism
+vn:Trên cùng
+ne:माथि
+az:Yuxarı
+ku:سەرەوە
+jv:Dhuwur
+lv:Augša
+co:In cima
+fo:Ovast
+sat:ᱪᱮᱛᱟᱱ
 :Try [Edna](https://edna.arslexis.io): a note taking web app for power users.
+af:Probeer [Edna](https://edna.arslexis.io): 'n webtoep vir notas vir kragverbruikers.
+am:Փորձեք [Edna](https://edna.arslexis.io)՝ նշումների վեբ հավելված փորձառու օգտատերերի համար։
+ar:جرّب [Edna](https://edna.arslexis.io): تطبيق ويب لتدوين الملاحظات للمستخدمين المتقدمين.
+bg:Опитайте [Edna](https://edna.arslexis.io): уеб приложение за бележки за напреднали потребители.
+bn:[Edna](https://edna.arslexis.io) ব্যবহার করে দেখুন: দক্ষ ব্যবহারকারীদের জন্য নোট নেওয়ার ওয়েব অ্যাপ।
+br:Experimente o [Edna](https://edna.arslexis.io): um aplicativo web de notas para usuários avançados.
+bs:Isprobajte [Edna](https://edna.arslexis.io): web aplikaciju za bilješke za napredne korisnike.
+by:Паспрабуйце [Edna](https://edna.arslexis.io): вэб-праграму для нататак для дасведчаных карыстальнікаў.
+ca-xv:Proveu [Edna](https://edna.arslexis.io): una aplicació web de notes per a usuaris avançats.
+ca:Proveu [Edna](https://edna.arslexis.io): una aplicació web de notes per a usuaris avançats.
+cn:试试 [Edna](https://edna.arslexis.io)：面向高级用户的笔记网页应用。
+cy:Rhowch gynnig ar [Edna](https://edna.arslexis.io): ap gwe nodiadau ar gyfer defnyddwyr profiadol.
+cz:Vyzkoušejte [Edna](https://edna.arslexis.io): webovou aplikaci na poznámky pro pokročilé uživatele.
+de:Probieren Sie [Edna](https://edna.arslexis.io): eine Notiz-Web-App für Power-User.
+dk:Prøv [Edna](https://edna.arslexis.io): en webapp til noter for superbrugere.
+el:Δοκιμάστε το [Edna](https://edna.arslexis.io): μια διαδικτυακή εφαρμογή σημειώσεων για προχωρημένους χρήστες.
 es:Prueba [Edna](https://edna.arslexis.io): una aplicación web de notas para usuarios avanzados.
+et:Proovi [Edna](https://edna.arslexis.io): märkmete veebirakendus kogenud kasutajatele.
+eu:Probatu [Edna](https://edna.arslexis.io): erabiltzaile aurreratuentzako oharrak hartzeko web-aplikazioa.
+fa:[Edna](https://edna.arslexis.io) را امتحان کنید: یک برنامه وب یادداشت‌برداری برای کاربران حرفه‌ای.
+fi:Kokeile [Edna](https://edna.arslexis.io): muistiinpanosovellus verkossa tehokäyttäjille.
+fr:Essayez [Edna](https://edna.arslexis.io) : une application web de prise de notes pour utilisateurs avancés.
+fy-nl:Besykje [Edna](https://edna.arslexis.io): in notysje-webapp foar betûfte brûkers.
+ga:Bain triail as [Edna](https://edna.arslexis.io): aip ghréasáin nótaí d'ard-úsáideoirí.
+gl:Proba [Edna](https://edna.arslexis.io): unha aplicación web de notas para usuarios avanzados.
+he:נסו את [Edna](https://edna.arslexis.io): אפליקציית רשת לרישום הערות למשתמשים מתקדמים.
+hi:[Edna](https://edna.arslexis.io) आज़माएँ: उन्नत उपयोगकर्ताओं के लिए नोट लेने का वेब ऐप।
+hr:Isprobajte [Edna](https://edna.arslexis.io): web-aplikaciju za bilješke za napredne korisnike.
+hu:Próbálja ki: [Edna](https://edna.arslexis.io) – jegyzetelő webalkalmazás haladó felhasználóknak.
+id:Coba [Edna](https://edna.arslexis.io): aplikasi web pencatat untuk pengguna mahir.
+it:Prova [Edna](https://edna.arslexis.io): un'app web per prendere appunti per utenti esperti.
+ja:[Edna](https://edna.arslexis.io) をお試しください: 上級ユーザー向けのメモ Web アプリです。
+ka:სცადეთ [Edna](https://edna.arslexis.io): ჩანაწერების ვებ-აპი გამოცდილი მომხმარებლებისთვის.
+kr:[Edna](https://edna.arslexis.io)를 사용해 보세요: 고급 사용자를 위한 메모 웹 앱입니다.
+kw:Assay [Edna](https://edna.arslexis.io): towlen wias rag notennow rag devnydhyoryon arbennik.
+lt:Išbandykite [Edna](https://edna.arslexis.io): užrašų žiniatinklio programą pažengusiems naudotojams.
+mk:Пробајте [Edna](https://edna.arslexis.io): веб-апликација за белешки за напредни корисници.
+ml:[Edna](https://edna.arslexis.io) പരീക്ഷിക്കുക: വിദഗ്ധ ഉപയോക്താക്കൾക്കുള്ള കുറിപ്പെടുക്കൽ വെബ് ആപ്പ്.
+mm:[Edna](https://edna.arslexis.io) ကို စမ်းကြည့်ပါ- ကျွမ်းကျင်သူများအတွက် မှတ်စုရေး ဝဘ်အက်ပ်။
+my:Cuba [Edna](https://edna.arslexis.io): aplikasi web mencatat nota untuk pengguna mahir.
+nl:Probeer [Edna](https://edna.arslexis.io): een notitie-webapp voor ervaren gebruikers.
+nn:Prøv [Edna](https://edna.arslexis.io): ein nettapp for notat for superbrukarar.
+no:Prøv [Edna](https://edna.arslexis.io): en nettapp for notater for superbrukere.
+pa:[Edna](https://edna.arslexis.io) ਅਜ਼ਮਾਓ: ਮਾਹਰ ਵਰਤੋਂਕਾਰਾਂ ਲਈ ਨੋਟਸ ਲੈਣ ਵਾਲੀ ਵੈੱਬ ਐਪ।
+pl:Wypróbuj [Edna](https://edna.arslexis.io): aplikację internetową do notatek dla zaawansowanych użytkowników.
+pt:Experimente o [Edna](https://edna.arslexis.io): uma aplicação web de notas para utilizadores avançados.
+ro:Încearcă [Edna](https://edna.arslexis.io): o aplicație web de notițe pentru utilizatori avansați.
+ru:Попробуйте [Edna](https://edna.arslexis.io): веб-приложение для заметок для опытных пользователей.
+si:[Edna](https://edna.arslexis.io) උත්සාහ කරන්න: උසස් පරිශීලකයින් සඳහා සටහන් තබන වෙබ් යෙදුමක්.
+sk:Vyskúšajte [Edna](https://edna.arslexis.io): webovú aplikáciu na poznámky pre pokročilých používateľov.
+sl:Preizkusite [Edna](https://edna.arslexis.io): spletno aplikacijo za zapiske za zahtevne uporabnike.
+sn:Edza [Edna](https://edna.arslexis.io): app yewebhu yekunyora noti yevashandisi vane hunyanzvi.
+sp-rs:Isprobajte [Edna](https://edna.arslexis.io): veb-aplikaciju za beleške za napredne korisnike.
+sq:Provoni [Edna](https://edna.arslexis.io): një aplikacion web shënimesh për përdorues të avancuar.
+sr-rs:Испробајте [Edna](https://edna.arslexis.io): веб-апликацију за белешке за напредне кориснике.
+sv:Prova [Edna](https://edna.arslexis.io): en webbapp för anteckningar för avancerade användare.
+ta:[Edna](https://edna.arslexis.io) ஐ முயற்சிக்கவும்: மேம்பட்ட பயனர்களுக்கான குறிப்பெடுக்கும் இணையப் பயன்பாடு.
+th:ลองใช้ [Edna](https://edna.arslexis.io): เว็บแอปจดบันทึกสำหรับผู้ใช้ขั้นสูง
+tl:Subukan ang [Edna](https://edna.arslexis.io): isang web app sa pagtatala para sa mga power user.
+tr:[Edna](https://edna.arslexis.io) uygulamasını deneyin: ileri düzey kullanıcılar için not alma web uygulaması.
+tw:試試 [Edna](https://edna.arslexis.io)：專為進階使用者打造的筆記網頁應用程式。
+uk:Спробуйте [Edna](https://edna.arslexis.io): вебзастосунок для нотаток для досвідчених користувачів.
+uz:[Edna](https://edna.arslexis.io) ni sinab ko‘ring: tajribali foydalanuvchilar uchun qaydlar veb-ilovasi.
+vn:Hãy thử [Edna](https://edna.arslexis.io): ứng dụng web ghi chú cho người dùng chuyên sâu.
+ne:[Edna](https://edna.arslexis.io) प्रयोग गरी हेर्नुहोस्: उन्नत प्रयोगकर्ताका लागि टिपोट लिने वेब एप।
+az:[Edna](https://edna.arslexis.io) sınayın: təcrübəli istifadəçilər üçün qeyd veb tətbiqi.
+ku:[Edna](https://edna.arslexis.io) تاقی بکەرەوە: بەرنامەیەکی وێب بۆ تێبینی بۆ بەکارهێنەرە پێشکەوتووەکان.
+jv:Jajal [Edna](https://edna.arslexis.io): aplikasi web cathetan kanggo pangguna mahir.
+lv:Izmēģiniet [Edna](https://edna.arslexis.io): piezīmju tīmekļa lietotni pieredzējušiem lietotājiem.
+co:Pruvate [Edna](https://edna.arslexis.io) : un’appiecazione web di note per l’utilizatori sperti.
+fo:Royn [Edna](https://edna.arslexis.io): ein netskipan til notat fyri royndar brúkarar.
+sat:[Edna](https://edna.arslexis.io) ᱪᱮᱥᱴᱟᱭ ᱢᱮ: ᱮᱠᱥᱯᱟᱨᱴ ᱵᱮᱵᱷᱟᱨᱤᱭᱟᱹ ᱞᱟᱹᱜᱤᱫ ᱱᱳᱴ ᱣᱮᱵ ᱮᱯ᱾
 :Try [MarkLexis](https://marklexis.arslexis.io): a bookmarking web application.
+af:Probeer [MarkLexis](https://marklexis.arslexis.io): 'n webtoepassing vir boekmerke.
+am:Փորձեք [MarkLexis](https://marklexis.arslexis.io)՝ էջանիշերի վեբ հավելված։
+ar:جرّب [MarkLexis](https://marklexis.arslexis.io): تطبيق ويب للإشارات المرجعية.
+bg:Опитайте [MarkLexis](https://marklexis.arslexis.io): уеб приложение за отметки.
+bn:[MarkLexis](https://marklexis.arslexis.io) ব্যবহার করে দেখুন: বুকমার্কের ওয়েব অ্যাপ্লিকেশন।
+br:Experimente o [MarkLexis](https://marklexis.arslexis.io): um aplicativo web de favoritos.
+bs:Isprobajte [MarkLexis](https://marklexis.arslexis.io): web aplikaciju za zabilješke.
+by:Паспрабуйце [MarkLexis](https://marklexis.arslexis.io): вэб-праграму для закладак.
+ca-xv:Proveu [MarkLexis](https://marklexis.arslexis.io): una aplicació web de marcadors.
+ca:Proveu [MarkLexis](https://marklexis.arslexis.io): una aplicació web d'adreces d'interès.
+cn:试试 [MarkLexis](https://marklexis.arslexis.io)：书签网页应用。
+cy:Rhowch gynnig ar [MarkLexis](https://marklexis.arslexis.io): rhaglen we nodau tudalen.
+cz:Vyzkoušejte [MarkLexis](https://marklexis.arslexis.io): webovou aplikaci pro záložky.
+de:Probieren Sie [MarkLexis](https://marklexis.arslexis.io): eine Web-Anwendung für Lesezeichen.
+dk:Prøv [MarkLexis](https://marklexis.arslexis.io): en webapplikation til bogmærker.
+el:Δοκιμάστε το [MarkLexis](https://marklexis.arslexis.io): μια διαδικτυακή εφαρμογή σελιδοδεικτών.
 es:Prueba [MarkLexis](https://marklexis.arslexis.io): una aplicación web de marcadores.
+et:Proovi [MarkLexis](https://marklexis.arslexis.io): järjehoidjate veebirakendus.
+eu:Probatu [MarkLexis](https://marklexis.arslexis.io): laster-markak kudeatzeko web-aplikazioa.
+fa:[MarkLexis](https://marklexis.arslexis.io) را امتحان کنید: یک برنامه وب نشانک‌گذاری.
+fi:Kokeile [MarkLexis](https://marklexis.arslexis.io): kirjanmerkkien verkkosovellus.
+fr:Essayez [MarkLexis](https://marklexis.arslexis.io) : une application web de gestion de signets.
+fy-nl:Besykje [MarkLexis](https://marklexis.arslexis.io): in webapplikaasje foar blêdwizers.
+ga:Bain triail as [MarkLexis](https://marklexis.arslexis.io): feidhmchlár gréasáin leabharmharcanna.
+gl:Proba [MarkLexis](https://marklexis.arslexis.io): unha aplicación web de marcadores.
+he:נסו את [MarkLexis](https://marklexis.arslexis.io): אפליקציית רשת לסימניות.
+hi:[MarkLexis](https://marklexis.arslexis.io) आज़माएँ: बुकमार्क के लिए वेब एप्लिकेशन।
+hr:Isprobajte [MarkLexis](https://marklexis.arslexis.io): web-aplikaciju za oznake.
+hu:Próbálja ki: [MarkLexis](https://marklexis.arslexis.io) – könyvjelzőkezelő webalkalmazás.
+id:Coba [MarkLexis](https://marklexis.arslexis.io): aplikasi web penanda buku.
+it:Prova [MarkLexis](https://marklexis.arslexis.io): un'applicazione web per i segnalibri.
+ja:[MarkLexis](https://marklexis.arslexis.io) をお試しください: ブックマーク Web アプリケーションです。
+ka:სცადეთ [MarkLexis](https://marklexis.arslexis.io): სანიშნეების ვებ-აპლიკაცია.
+kr:[MarkLexis](https://marklexis.arslexis.io)를 사용해 보세요: 북마크 웹 애플리케이션입니다.
+kw:Assay [MarkLexis](https://marklexis.arslexis.io): towlen wias rag folennosow.
+lt:Išbandykite [MarkLexis](https://marklexis.arslexis.io): žymelių žiniatinklio programą.
+mk:Пробајте [MarkLexis](https://marklexis.arslexis.io): веб-апликација за обележувачи.
+ml:[MarkLexis](https://marklexis.arslexis.io) പരീക്ഷിക്കുക: ബുക്ക്മാർക്കുകൾക്കുള്ള വെബ് ആപ്ലിക്കേഷൻ.
+mm:[MarkLexis](https://marklexis.arslexis.io) ကို စမ်းကြည့်ပါ- စာညှပ်များအတွက် ဝဘ်အပလီကေးရှင်း။
+my:Cuba [MarkLexis](https://marklexis.arslexis.io): aplikasi web penanda buku.
+nl:Probeer [MarkLexis](https://marklexis.arslexis.io): een webapplicatie voor bladwijzers.
+nn:Prøv [MarkLexis](https://marklexis.arslexis.io): ein nettapplikasjon for bokmerke.
+no:Prøv [MarkLexis](https://marklexis.arslexis.io): en nettapplikasjon for bokmerker.
+pa:[MarkLexis](https://marklexis.arslexis.io) ਅਜ਼ਮਾਓ: ਬੁੱਕਮਾਰਕਾਂ ਲਈ ਵੈੱਬ ਐਪਲੀਕੇਸ਼ਨ।
+pl:Wypróbuj [MarkLexis](https://marklexis.arslexis.io): aplikację internetową do zakładek.
+pt:Experimente o [MarkLexis](https://marklexis.arslexis.io): uma aplicação web de marcadores.
+ro:Încearcă [MarkLexis](https://marklexis.arslexis.io): o aplicație web pentru marcaje.
+ru:Попробуйте [MarkLexis](https://marklexis.arslexis.io): веб-приложение для закладок.
+si:[MarkLexis](https://marklexis.arslexis.io) උත්සාහ කරන්න: පිටු සලකුණු සඳහා වෙබ් යෙදුමක්.
+sk:Vyskúšajte [MarkLexis](https://marklexis.arslexis.io): webovú aplikáciu na záložky.
+sl:Preizkusite [MarkLexis](https://marklexis.arslexis.io): spletno aplikacijo za zaznamke.
+sn:Edza [MarkLexis](https://marklexis.arslexis.io): application yewebhu yemabhukumaki.
+sp-rs:Isprobajte [MarkLexis](https://marklexis.arslexis.io): veb-aplikaciju za obeleživače.
+sq:Provoni [MarkLexis](https://marklexis.arslexis.io): një aplikacion web për faqerojtës.
+sr-rs:Испробајте [MarkLexis](https://marklexis.arslexis.io): веб-апликацију за обележиваче.
+sv:Prova [MarkLexis](https://marklexis.arslexis.io): en webbapplikation för bokmärken.
+ta:[MarkLexis](https://marklexis.arslexis.io) ஐ முயற்சிக்கவும்: புக்மார்க்குகளுக்கான இணையப் பயன்பாடு.
+th:ลองใช้ [MarkLexis](https://marklexis.arslexis.io): เว็บแอปพลิเคชันสำหรับบุ๊กมาร์ก
+tl:Subukan ang [MarkLexis](https://marklexis.arslexis.io): isang web application para sa mga bookmark.
+tr:[MarkLexis](https://marklexis.arslexis.io) uygulamasını deneyin: yer imi web uygulaması.
+tw:試試 [MarkLexis](https://marklexis.arslexis.io)：書籤網頁應用程式。
+uk:Спробуйте [MarkLexis](https://marklexis.arslexis.io): вебзастосунок для закладок.
+uz:[MarkLexis](https://marklexis.arslexis.io) ni sinab ko‘ring: xatcho‘plar uchun veb-ilova.
+vn:Hãy thử [MarkLexis](https://marklexis.arslexis.io): ứng dụng web quản lý dấu trang.
+ne:[MarkLexis](https://marklexis.arslexis.io) प्रयोग गरी हेर्नुहोस्: बुकमार्कका लागि वेब अनुप्रयोग।
+az:[MarkLexis](https://marklexis.arslexis.io) sınayın: əlfəcinlər üçün veb tətbiq.
+ku:[MarkLexis](https://marklexis.arslexis.io) تاقی بکەرەوە: بەرنامەیەکی وێب بۆ نیشانەکان.
+jv:Jajal [MarkLexis](https://marklexis.arslexis.io): aplikasi web tetenger.
+lv:Izmēģiniet [MarkLexis](https://marklexis.arslexis.io): grāmatzīmju tīmekļa lietojumprogrammu.
+co:Pruvate [MarkLexis](https://marklexis.arslexis.io) : un’appiecazione web di indette.
+fo:Royn [MarkLexis](https://marklexis.arslexis.io): ein netskipan til bókamerki.
+sat:[MarkLexis](https://marklexis.arslexis.io) ᱪᱮᱥᱴᱟᱭ ᱢᱮ: ᱵᱩᱠᱢᱟᱨᱠ ᱣᱮᱵ ᱮᱯᱞᱤᱠᱮᱥᱚᱱ᱾
 :Try [Sumatra File Manager](https://sumatrafilemanager.com): file manager with super powers.
+af:Probeer [Sumatra File Manager](https://sumatrafilemanager.com): 'n lêerbestuurder met superkragte.
+am:Փորձեք [Sumatra File Manager](https://sumatrafilemanager.com)՝ գերհզորություններով ֆայլերի կառավարիչ։
+ar:جرّب [Sumatra File Manager](https://sumatrafilemanager.com): مدير ملفات بقدرات خارقة.
+bg:Опитайте [Sumatra File Manager](https://sumatrafilemanager.com): файлов мениджър със суперсили.
+bn:[Sumatra File Manager](https://sumatrafilemanager.com) ব্যবহার করে দেখুন: অসাধারণ ক্ষমতার ফাইল ম্যানেজার।
+br:Experimente o [Sumatra File Manager](https://sumatrafilemanager.com): um gerenciador de arquivos com superpoderes.
+bs:Isprobajte [Sumatra File Manager](https://sumatrafilemanager.com): upravitelj datoteka sa supermoćima.
+by:Паспрабуйце [Sumatra File Manager](https://sumatrafilemanager.com): файлавы менеджар з суперздольнасцямі.
+ca-xv:Proveu [Sumatra File Manager](https://sumatrafilemanager.com): un gestor de fitxers amb superpoders.
+ca:Proveu [Sumatra File Manager](https://sumatrafilemanager.com): un gestor de fitxers amb superpoders.
+cn:试试 [Sumatra File Manager](https://sumatrafilemanager.com)：拥有超能力的文件管理器。
+cy:Rhowch gynnig ar [Sumatra File Manager](https://sumatrafilemanager.com): rheolwr ffeiliau â phwerau arbennig.
+cz:Vyzkoušejte [Sumatra File Manager](https://sumatrafilemanager.com): správce souborů se superschopnostmi.
+de:Probieren Sie [Sumatra File Manager](https://sumatrafilemanager.com): ein Dateimanager mit Superkräften.
+dk:Prøv [Sumatra File Manager](https://sumatrafilemanager.com): en filhåndtering med superkræfter.
+el:Δοκιμάστε το [Sumatra File Manager](https://sumatrafilemanager.com): μια διαχείριση αρχείων με υπερδυνάμεις.
 es:Prueba [Sumatra File Manager](https://sumatrafilemanager.com): un gestor de archivos con superpoderes.
+et:Proovi [Sumatra File Manager](https://sumatrafilemanager.com): supervõimetega failihaldur.
+eu:Probatu [Sumatra File Manager](https://sumatrafilemanager.com): superbotereak dituen fitxategi-kudeatzailea.
+fa:[Sumatra File Manager](https://sumatrafilemanager.com) را امتحان کنید: مدیر پرونده با ابرقدرت‌ها.
+fi:Kokeile [Sumatra File Manager](https://sumatrafilemanager.com): supervoimilla varustettu tiedostonhallinta.
+fr:Essayez [Sumatra File Manager](https://sumatrafilemanager.com) : un gestionnaire de fichiers aux super-pouvoirs.
+fy-nl:Besykje [Sumatra File Manager](https://sumatrafilemanager.com): in bestânbehearder mei superkrêften.
+ga:Bain triail as [Sumatra File Manager](https://sumatrafilemanager.com): bainisteoir comhad le sárchumhachtaí.
+gl:Proba [Sumatra File Manager](https://sumatrafilemanager.com): un xestor de ficheiros con superpoderes.
+he:נסו את [Sumatra File Manager](https://sumatrafilemanager.com): מנהל קבצים עם כוחות-על.
+hi:[Sumatra File Manager](https://sumatrafilemanager.com) आज़माएँ: महाशक्तियों वाला फ़ाइल प्रबंधक।
+hr:Isprobajte [Sumatra File Manager](https://sumatrafilemanager.com): upravitelj datoteka sa supermoćima.
+hu:Próbálja ki: [Sumatra File Manager](https://sumatrafilemanager.com) – szuperképességű fájlkezelő.
+id:Coba [Sumatra File Manager](https://sumatrafilemanager.com): pengelola berkas dengan kekuatan super.
+it:Prova [Sumatra File Manager](https://sumatrafilemanager.com): un file manager con superpoteri.
+ja:[Sumatra File Manager](https://sumatrafilemanager.com) をお試しください: 超強力なファイルマネージャです。
+ka:სცადეთ [Sumatra File Manager](https://sumatrafilemanager.com): ფაილების მმართველი სუპერძალებით.
+kr:[Sumatra File Manager](https://sumatrafilemanager.com)를 사용해 보세요: 강력한 기능의 파일 관리자입니다.
+kw:Assay [Sumatra File Manager](https://sumatrafilemanager.com): rener restrennow gans galloesow bras.
+lt:Išbandykite [Sumatra File Manager](https://sumatrafilemanager.com): failų tvarkytuvę su supergaliomis.
+mk:Пробајте [Sumatra File Manager](https://sumatrafilemanager.com): управувач со датотеки со супермоќи.
+ml:[Sumatra File Manager](https://sumatrafilemanager.com) പരീക്ഷിക്കുക: അമാനുഷിക കഴിവുകളുള്ള ഫയൽ മാനേജർ.
+mm:[Sumatra File Manager](https://sumatrafilemanager.com) ကို စမ်းကြည့်ပါ- စွမ်းအားကြီး ဖိုင်စီမံခန့်ခွဲသူ။
+my:Cuba [Sumatra File Manager](https://sumatrafilemanager.com): pengurus fail dengan kuasa luar biasa.
+nl:Probeer [Sumatra File Manager](https://sumatrafilemanager.com): een bestandsbeheerder met superkrachten.
+nn:Prøv [Sumatra File Manager](https://sumatrafilemanager.com): ein filhandsamar med superkrefter.
+no:Prøv [Sumatra File Manager](https://sumatrafilemanager.com): en filbehandler med superkrefter.
+pa:[Sumatra File Manager](https://sumatrafilemanager.com) ਅਜ਼ਮਾਓ: ਸੁਪਰ ਸ਼ਕਤੀਆਂ ਵਾਲਾ ਫਾਈਲ ਮੈਨੇਜਰ।
+pl:Wypróbuj [Sumatra File Manager](https://sumatrafilemanager.com): menedżer plików z supermocami.
+pt:Experimente o [Sumatra File Manager](https://sumatrafilemanager.com): um gestor de ficheiros com superpoderes.
+ro:Încearcă [Sumatra File Manager](https://sumatrafilemanager.com): un manager de fișiere cu superputeri.
+ru:Попробуйте [Sumatra File Manager](https://sumatrafilemanager.com): файловый менеджер со сверхспособностями.
+si:[Sumatra File Manager](https://sumatrafilemanager.com) උත්සාහ කරන්න: අධි බලැති ගොනු කළමනාකරුවෙක්.
+sk:Vyskúšajte [Sumatra File Manager](https://sumatrafilemanager.com): správcu súborov so superschopnosťami.
+sl:Preizkusite [Sumatra File Manager](https://sumatrafilemanager.com): upravitelja datotek s supermočmi.
+sn:Edza [Sumatra File Manager](https://sumatrafilemanager.com): mutariri wemafaira ane masimba makuru.
+sp-rs:Isprobajte [Sumatra File Manager](https://sumatrafilemanager.com): menadžer datoteka sa supermoćima.
+sq:Provoni [Sumatra File Manager](https://sumatrafilemanager.com): një përgjegjës skedarësh me superfuqi.
+sr-rs:Испробајте [Sumatra File Manager](https://sumatrafilemanager.com): менаџер датотека са супермоћима.
+sv:Prova [Sumatra File Manager](https://sumatrafilemanager.com): en filhanterare med superkrafter.
+ta:[Sumatra File Manager](https://sumatrafilemanager.com) ஐ முயற்சிக்கவும்: அதீத சக்திகள் கொண்ட கோப்பு மேலாளர்.
+th:ลองใช้ [Sumatra File Manager](https://sumatrafilemanager.com): ตัวจัดการไฟล์ที่มีพลังพิเศษ
+tl:Subukan ang [Sumatra File Manager](https://sumatrafilemanager.com): isang file manager na may superpowers.
+tr:[Sumatra File Manager](https://sumatrafilemanager.com) uygulamasını deneyin: süper güçlere sahip dosya yöneticisi.
+tw:試試 [Sumatra File Manager](https://sumatrafilemanager.com)：擁有超能力的檔案管理器。
+uk:Спробуйте [Sumatra File Manager](https://sumatrafilemanager.com): файловий менеджер із суперсилами.
+uz:[Sumatra File Manager](https://sumatrafilemanager.com) ni sinab ko‘ring: super kuchli fayl menejeri.
+vn:Hãy thử [Sumatra File Manager](https://sumatrafilemanager.com): trình quản lý tệp với siêu năng lực.
+ne:[Sumatra File Manager](https://sumatrafilemanager.com) प्रयोग गरी हेर्नुहोस्: महाशक्ति भएको फाइल प्रबन्धक।
+az:[Sumatra File Manager](https://sumatrafilemanager.com) sınayın: super gücləri olan fayl meneceri.
+ku:[Sumatra File Manager](https://sumatrafilemanager.com) تاقی بکەرەوە: بەڕێوەبەری پەڕگە بە هێزی نائاسایی.
+jv:Jajal [Sumatra File Manager](https://sumatrafilemanager.com): pangatur berkas kanthi kekuwatan super.
+lv:Izmēģiniet [Sumatra File Manager](https://sumatrafilemanager.com): failu pārvaldnieku ar superspējām.
+co:Pruvate [Sumatra File Manager](https://sumatrafilemanager.com) : un gestiunariu di schedarii cù superputenze.
+fo:Royn [Sumatra File Manager](https://sumatrafilemanager.com): ein fílustjóri við ofurkreftum.
+sat:[Sumatra File Manager](https://sumatrafilemanager.com) ᱪᱮᱥᱴᱟᱭ ᱢᱮ: ᱥᱩᱯᱟᱨ ᱫᱟᱲᱮ ᱢᱮᱱᱟᱜ ᱨᱮᱫᱽ ᱢᱮᱱᱮᱡᱚᱨ᱾
 :Unsupported image format.
+af:Beeldformaat word nie ondersteun nie.
+am:Չաջակցվող պատկերի ձևաչափ։
+ar:تنسيق صورة غير مدعوم.
+bg:Неподдържан формат на изображението.
+bn:অসমর্থিত ছবির ফরম্যাট।
+br:Formato de imagem não suportado.
+bs:Nepodržan format slike.
+by:Фармат выявы не падтрымліваецца.
+ca-xv:Format d'imatge no admés.
+ca:Format d'imatge no admès.
+cn:不支持的图像格式。
+cy:Fformat delwedd heb ei gefnogi.
+cz:Nepodporovaný formát obrázku.
+de:Nicht unterstütztes Bildformat.
+dk:Billedformatet understøttes ikke.
+el:Μη υποστηριζόμενη μορφή εικόνας.
 es:Formato de imagen no compatible.
+et:Toetamata pildivorming.
+eu:Irudi-formatua ez da onartzen.
+fa:قالب تصویر پشتیبانی نمی‌شود.
+fi:Kuvamuotoa ei tueta.
+fr:Format d'image non pris en charge.
+fy-nl:Net-stipe ôfbyldingsformaat.
+ga:Formáid íomhá nach dtacaítear léi.
+gl:Formato de imaxe non compatible.
+he:תבנית תמונה לא נתמכת.
+hi:असमर्थित छवि प्रारूप।
+hr:Nepodržani format slike.
+hu:Nem támogatott képformátum.
+id:Format gambar tidak didukung.
+it:Formato immagine non supportato.
+ja:サポートされていない画像形式です。
+ka:მხარდაუჭერელი სურათის ფორმატი.
+kr:지원되지 않는 이미지 형식입니다.
+kw:Furvas skeusenn anskoodhys.
+lt:Nepalaikomas paveikslėlio formatas.
+mk:Неподдржан формат на слика.
+ml:പിന്തുണയ്ക്കാത്ത ചിത്ര ഫോർമാറ്റ്.
+mm:မပံ့ပိုးသော ပုံဖော်မတ်။
+my:Format imej tidak disokong.
+nl:Niet-ondersteund afbeeldingsformaat.
+nn:Biletformatet er ikkje støtta.
+no:Bildeformatet støttes ikke.
+pa:ਅਸਮਰਥਿਤ ਚਿੱਤਰ ਫਾਰਮੈਟ।
+pl:Nieobsługiwany format obrazu.
+pt:Formato de imagem não suportado.
+ro:Format de imagine neacceptat.
+ru:Неподдерживаемый формат изображения.
+si:සහාය නොදක්වන රූප ආකෘතිය.
+sk:Nepodporovaný formát obrázka.
+sl:Nepodprta oblika slike.
+sn:Fomati yemufananidzo isingatsigirwe.
+sp-rs:Nepodržan format slike.
+sq:Format figure i pambuluar.
+sr-rs:Неподржан формат слике.
+sv:Bildformatet stöds inte.
+ta:ஆதரிக்கப்படாத பட வடிவம்.
+th:ไม่รองรับรูปแบบรูปภาพนี้
+tl:Hindi suportadong format ng larawan.
+tr:Desteklenmeyen görüntü biçimi.
+tw:不支援的影像格式。
+uk:Непідтримуваний формат зображення.
+uz:Qo‘llab-quvvatlanmaydigan rasm formati.
+vn:Định dạng hình ảnh không được hỗ trợ.
+ne:असमर्थित छवि ढाँचा।
+az:Dəstəklənməyən şəkil formatı.
+ku:شێوازی وێنە پشتگیری ناکرێت.
+jv:Format gambar ora didhukung.
+lv:Neatbalstīts attēla formāts.
+co:Furmatu di fiura micca accettatu.
+fo:Myndasniðið verður ikki stuðlað.
+sat:ᱪᱤᱛᱟᱹᱨ ᱯᱷᱚᱨᱢᱮᱴ ᱥᱚᱦᱚᱫ ᱵᱟᱹᱱᱩᱜᱼᱟ᱾
 :Various Open Source
+af:Diverse oopbron
+am:Տարբեր բաց կոդով
+ar:برامج مفتوحة المصدر متنوعة
+bg:Различен софтуер с отворен код
+bn:বিভিন্ন ওপেন সোর্স
+br:Vários de código aberto
+bs:Razni otvoreni kod
+by:Рознае адкрытае ПЗ
+ca-xv:Diversos de codi obert
+ca:Diversos de codi obert
+cn:多种开源软件
+cy:Cod agored amrywiol
+cz:Různé open source
+de:Diverse Open Source
+dk:Diverse open source
+el:Διάφορο ανοιχτό λογισμικό
 es:Varias de código abierto
+et:Mitmesugune avatud lähtekood
+eu:Hainbat kode irekiko
+fa:متن‌باز گوناگون
+fi:Useita avoimen lähdekoodin
+fr:Divers logiciels libres
+fy-nl:Ferskate iepen boarne
+ga:Foinse oscailte éagsúil
+gl:Varias de código aberto
+he:קוד פתוח מגוון
+hi:विभिन्न ओपन सोर्स
+hr:Razni otvoreni kod
+hu:Különféle nyílt forráskódú
+id:Berbagai sumber terbuka
+it:Vari open source
+ja:各種オープンソース
+ka:სხვადასხვა ღია კოდი
+kr:다양한 오픈 소스
+kw:Fenten ygor divers
+lt:Įvairi atvirojo kodo
+mk:Разен отворен код
+ml:വിവിധ ഓപ്പൺ സോഴ്സ്
+mm:အမျိုးမျိုးသော open source
+my:Pelbagai sumber terbuka
+nl:Diverse open source
+nn:Diverse open kjeldekode
+no:Diverse åpen kildekode
+pa:ਵੱਖ-ਵੱਖ ਓਪਨ ਸੋਰਸ
+pl:Różne open source
+pt:Vários de código aberto
+ro:Diverse open source
+ru:Различное ПО с открытым кодом
+si:විවිධ විවෘත මූලාශ්‍ර
+sk:Rôzne open source
+sl:Razna odprta koda
+sn:Akasiyana-siyana open source
+sp-rs:Razni otvoreni kod
+sq:Software të ndryshëm me burim të hapur
+sr-rs:Разни отворени код
+sv:Diverse öppen källkod
+ta:பல்வேறு திறந்த மூலம்
+th:โอเพนซอร์สต่างๆ
+tl:Iba't ibang open source
+tr:Çeşitli açık kaynak
+tw:多種開放原始碼軟體
+uk:Різне відкрите ПЗ
+uz:Turli ochiq kodli
+vn:Nhiều phần mềm nguồn mở
+ne:विविध खुला स्रोत
+az:Müxtəlif açıq mənbə
+ku:سەرچاوە کراوەی جۆراوجۆر
+jv:Maneka sumber terbuka
+lv:Dažāda atvērtā pirmkoda
+co:Diversi prugrammi liberi
+fo:Ymiskur opin keldukoda
+sat:ᱵᱟᱨᱭᱟ ᱚᱯᱮᱱ ᱥᱚᱨᱥ
 :version
+af:weergawe
+am:տարբերակ
+ar:الإصدار
+bg:версия
+bn:সংস্করণ
+br:versão
+bs:verzija
+by:версія
+ca-xv:versió
+ca:versió
+cn:版本
+cy:fersiwn
+cz:verze
+de:Version
+dk:version
+el:έκδοση
 es:versión
+et:versioon
+eu:bertsioa
+fa:نسخه
+fi:versio
+fr:version
+fy-nl:ferzje
+ga:leagan
+gl:versión
+he:גרסה
+hi:संस्करण
+hr:verzija
+hu:verzió
+id:versi
+it:versione
+ja:バージョン
+ka:ვერსია
+kr:버전
+kw:versyon
+lt:versija
+mk:верзија
+ml:പതിപ്പ്
+mm:ဗားရှင်း
+my:versi
+nl:versie
+nn:versjon
+no:versjon
+pa:ਵਰਜਨ
+pl:wersja
+pt:versão
+ro:versiune
+ru:версия
+si:අනුවාදය
+sk:verzia
+sl:različica
+sn:vhezheni
+sp-rs:verzija
+sq:version
+sr-rs:верзија
+sv:version
+ta:பதிப்பு
+th:เวอร์ชัน
+tl:bersyon
+tr:sürüm
+tw:版本
+uk:версія
+uz:versiya
+vn:phiên bản
+ne:संस्करण
+az:versiya
+ku:وەشان
+jv:versi
+lv:versija
+co:versione
+fo:útgáva
+sat:ᱵᱷᱟᱹᱨᱥᱚᱱ
 :version history
+af:weergawegeskiedenis
+am:տարբերակների պատմություն
+ar:سجل الإصدارات
+bg:история на версиите
+bn:সংস্করণের ইতিহাস
+br:histórico de versões
+bs:historija verzija
+by:гісторыя версій
+ca-xv:historial de versions
+ca:historial de versions
+cn:版本历史
+cy:hanes fersiynau
+cz:historie verzí
+de:Versionsverlauf
+dk:versionshistorik
+el:ιστορικό εκδόσεων
 es:historial de versiones
+et:versiooniajalugu
+eu:bertsioen historia
+fa:تاریخچه نسخه‌ها
+fi:versiohistoria
+fr:historique des versions
+fy-nl:ferzjeskiednis
+ga:stair leaganacha
+gl:historial de versións
+he:היסטוריית גרסאות
+hi:संस्करण इतिहास
+hr:povijest verzija
+hu:verzióelőzmények
+id:riwayat versi
+it:cronologia versioni
+ja:バージョン履歴
+ka:ვერსიების ისტორია
+kr:버전 기록
+kw:istori versyonow
+lt:versijų istorija
+mk:историја на верзии
+ml:പതിപ്പ് ചരിത്രം
+mm:ဗားရှင်း မှတ်တမ်း
+my:sejarah versi
+nl:versiegeschiedenis
+nn:versjonshistorikk
+no:versjonshistorikk
+pa:ਵਰਜਨ ਇਤਿਹਾਸ
+pl:historia wersji
+pt:histórico de versões
+ro:istoricul versiunilor
+ru:история версий
+si:අනුවාද ඉතිහාසය
+sk:história verzií
+sl:zgodovina različic
+sn:nhoroondo yemavhezheni
+sp-rs:istorija verzija
+sq:historik versionesh
+sr-rs:историја верзија
+sv:versionshistorik
+ta:பதிப்பு வரலாறு
+th:ประวัติเวอร์ชัน
+tl:kasaysayan ng bersyon
+tr:sürüm geçmişi
+tw:版本歷史
+uk:історія версій
+uz:versiyalar tarixi
+vn:lịch sử phiên bản
+ne:संस्करण इतिहास
+az:versiya tarixçəsi
+ku:مێژووی وەشانەکان
+jv:riwayat versi
+lv:versiju vēsture
+co:cronolugia di e versioni
+fo:útgávusøga
+sat:ᱵᱷᱟᱹᱨᱥᱚᱱ ᱱᱟᱜᱟᱢ
 :View & Zoom
+af:Aansig en zoem
+am:Տեսք և մասշտաբ
+ar:العرض والتكبير
+bg:Изглед и мащаб
+bn:দৃশ্য ও জুম
+br:Exibição e zoom
+bs:Prikaz i zumiranje
+by:Выгляд і маштаб
+ca-xv:Visualització i zoom
+ca:Visualització i zoom
+cn:视图和缩放
+cy:Golwg a Chwyddo
+cz:Zobrazení a zvětšení
+de:Ansicht und Zoom
+dk:Visning og zoom
+el:Προβολή και ζουμ
 es:Vista y zoom
+et:Vaade ja suum
+eu:Ikuspegia eta zooma
+fa:نما و بزرگنمایی
+fi:Näkymä ja zoomaus
+fr:Affichage et zoom
+fy-nl:Werjefte en zoom
+ga:Amharc agus Súmáil
+gl:Vista e zoom
+he:תצוגה והגדלה
+hi:दृश्य और ज़ूम
+hr:Prikaz i zumiranje
+hu:Nézet és nagyítás
+id:Tampilan dan Zoom
+it:Vista e zoom
+ja:表示とズーム
+ka:ხედი და მასშტაბი
+kr:보기 및 확대/축소
+kw:Gwel ha Zoumya
+lt:Rodinys ir mastelis
+mk:Приказ и зумирање
+ml:കാഴ്ചയും സൂമും
+mm:မြင်ကွင်းနှင့် ချဲ့ချုံ့
+my:Paparan dan Zum
+nl:Weergave en zoom
+nn:Vising og zoom
+no:Visning og zoom
+pa:ਦ੍ਰਿਸ਼ ਅਤੇ ਜ਼ੂਮ
+pl:Widok i powiększenie
+pt:Vista e zoom
+ro:Vizualizare și zoom
+ru:Вид и масштаб
+si:දසුන සහ විශාලනය
+sk:Zobrazenie a lupa
+sl:Pogled in povečava
+sn:Maonero uye Zuma
+sp-rs:Prikaz i zumiranje
+sq:Pamja dhe zmadhimi
+sr-rs:Приказ и зумирање
+sv:Visning och zoom
+ta:காட்சி மற்றும் பெரிதாக்கல்
+th:มุมมองและการซูม
+tl:Tingnan at Zoom
+tr:Görünüm ve Yakınlaştırma
+tw:檢視與縮放
+uk:Вигляд і масштаб
+uz:Ko‘rinish va masshtab
+vn:Xem và thu phóng
+ne:दृश्य र जुम
+az:Görünüş və miqyas
+ku:پیشاندان و زووم
+jv:Tampilan lan Zoom
+lv:Skats un tālummaiņa
+co:Vista è zoom
+fo:Sýni og zoom
+sat:ᱧᱮᱞ ᱟᱨ ᱦᱩᱰᱤᱧᱢᱟᱨᱟᱝ
 :website
+af:webwerf
+am:կայք
+ar:الموقع
+bg:уебсайт
+bn:ওয়েবসাইট
+br:site
+bs:web stranica
+by:сайт
+ca-xv:lloc web
+ca:lloc web
+cn:网站
+cy:gwefan
+cz:web
+de:Website
+dk:websted
+el:ιστότοπος
 es:sitio web
+et:veebisait
+eu:webgunea
+fa:وب‌سایت
+fi:verkkosivusto
+fr:site web
+fy-nl:website
+ga:suíomh gréasáin
+gl:sitio web
+he:אתר
+hi:वेबसाइट
+hr:web-stranica
+hu:webhely
+id:situs web
+it:sito web
+ja:Web サイト
+ka:ვებსაიტი
+kr:웹사이트
+kw:gwiasva
+lt:svetainė
+mk:веб-страница
+ml:വെബ്സൈറ്റ്
+mm:ဝဘ်ဆိုက်
+my:laman web
+nl:website
+nn:nettstad
+no:nettsted
+pa:ਵੈੱਬਸਾਈਟ
+pl:strona internetowa
+pt:site
+ro:site web
+ru:сайт
+si:වෙබ් අඩවිය
+sk:web
+sl:spletna stran
+sn:webhusaiti
+sp-rs:veb-sajt
+sq:sajt
+sr-rs:веб-сајт
+sv:webbplats
+ta:இணையதளம்
+th:เว็บไซต์
+tl:website
+tr:web sitesi
+tw:網站
+uk:сайт
+uz:veb-sayt
+vn:trang web
+ne:वेबसाइट
+az:veb-sayt
+ku:ماڵپەڕ
+jv:situs web
+lv:tīmekļa vietne
+co:situ web
+fo:heimasíða
+sat:ᱣᱮᱵᱥᱟᱭᱤᱴ
 :What's new
+af:Wat's nuut
+am:Ինչ նոր կա
+ar:ما الجديد
+bg:Какво ново
+bn:নতুন কী
+br:Novidades
+bs:Novosti
+by:Што новага
+ca-xv:Novetats
+ca:Novetats
+cn:新功能
+cy:Beth sy'n newydd
+cz:Novinky
+de:Neuigkeiten
+dk:Nyheder
+el:Τι νέο υπάρχει
 es:Novedades
+et:Mis on uut
+eu:Berrikuntzak
+fa:تازه‌ها
+fi:Uutta
+fr:Nouveautés
+fy-nl:Wat is der nij
+ga:Cad atá nua
+gl:Novidades
+he:מה חדש
+hi:नया क्या है
+hr:Novosti
+hu:Újdonságok
+id:Yang baru
+it:Novità
+ja:新機能
+ka:რა არის ახალი
+kr:새로운 기능
+kw:Pyth yw nowydh
+lt:Kas naujo
+mk:Што е ново
+ml:പുതിയതെന്ത്
+mm:အသစ်များ
+my:Apa yang baharu
+nl:Wat is er nieuw
+nn:Nyheiter
+no:Nyheter
+pa:ਨਵਾਂ ਕੀ ਹੈ
+pl:Co nowego
+pt:Novidades
+ro:Noutăți
+ru:Что нового
+si:අලුත් මොනවාද
+sk:Novinky
+sl:Novosti
+sn:Zvitsva
+sp-rs:Novosti
+sq:Ç’ka të re
+sr-rs:Новости
+sv:Nyheter
+ta:புதியவை
+th:มีอะไรใหม่
+tl:Ano ang bago
+tr:Yenilikler
+tw:新功能
+uk:Що нового
+uz:Yangiliklar
+vn:Có gì mới
+ne:नयाँ के छ
+az:Yeniliklər
+ku:چی نوێیە
+jv:Apa sing anyar
+lv:Kas jauns
+co:Nuvità
+fo:Hvat er nýtt
+sat:ᱪᱮᱫ ᱱᱟᱣᱟ

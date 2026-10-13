@@ -56,7 +56,8 @@ where Windows takes `Ctrl` (`CtrlOrCmd()` in `gui/GpuiBridge.h`), and so do
 Ctrl-clicks (open in new tab, multi-select). The folder list adds Finder's
 `Cmd + Up`, `Cmd + [` and `Cmd + ]`. Key hints use the macOS glyphs
 (`MacKeyCapTemp()`), taken from the English hint since a translation may
-rename the key (Spanish `Supr` for `Del`): `⌘↩`, `⌃Tab`, `⌦`. The keyboard
+rename the key (Spanish `Supr` for `Del`): `⌘↩`, `⌃Tab`, `⌦`. Menus, keyboard
+help and palette show `←` `→` `⇞` `⇟` `↖` `↘` in every language. The keyboard
 selection caret (`F7`)
 moves as in a text view: `Option` by word, `Cmd + Left / Right` to the line's
 edge, `Cmd + Up / Down` to the document's. `Shift + Option + Left / Right`
@@ -71,7 +72,8 @@ ignored; shared sources and headers are staged under each build's
 copy it into `src/ng` and remove it from `ng-shared.ts`, then update its target.
 Translation staging lives in `.work/ng`; `bun cmd/trans-dl.ts` (run by CI)
 writes `.work/translations.txt` from apptranslator's public history, plus
-`translations/fork.txt` for strings the history lacks. The manual uses the same website checkout and `.work/docs` staging as the
+`translations/fork.txt` for strings the history lacks, so all of orig's
+languages are complete. Numbers and dates follow the macOS region. The manual uses the same website checkout and `.work/docs` staging as the
 original app.
 
 `mac-daily.yml` builds debug and release and runs the base unit tests.
