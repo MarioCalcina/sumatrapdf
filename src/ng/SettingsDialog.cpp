@@ -4,8 +4,9 @@
 // ng: orig's SettingsDialog.cpp is a WS_POPUPWINDOW with two DropDowns and five
 // Checkboxes. Here it is a gpui Dialog with the same rows in the same order:
 // the "View" section (Default Layout, Default Zoom, the two checkboxes), the
-// "Advanced" section (Use tabs, check for updates, remember opened files) and,
-// when TeX enhancements are on, the inverse search command line.
+// "Advanced" section (Use tabs, check for updates, remember opened files, and
+// macOS's default PDF reader) and, when TeX enhancements are on, the inverse
+// search command line.
 
 #include "gui/GpuiBridge.h"
 
@@ -26,6 +27,7 @@
 #include "Translations.h"
 #include "gui/AppShell.h"
 #include "gui/DialogWidgets.h"
+#include "gui/MacServices.h"
 #include "SumatraDialogs.h"
 
 #include "SumatraLog.h"
@@ -47,6 +49,10 @@ struct SettingsDlg {
     bool useTabs = false;
     bool checkUpdates = false;
     bool rememberOpened = false;
+    // macOS can't unset a default app: once SumatraPDF is it, the box is
+    // checked and disabled
+    bool defaultReader = false;
+    bool wasDefaultReader = false;
 };
 
 static SettingsDlg gSettingsDlg;
@@ -216,6 +222,8 @@ void ShowSettingsDialog(MainWindow* win) {
     gSettingsDlg.useTabs = gSettings->useTabs;
     gSettingsDlg.checkUpdates = gSettings->checkForUpdates;
     gSettingsDlg.rememberOpened = gSettings->rememberOpenedFiles;
+    gSettingsDlg.wasDefaultReader = MacIsDefaultPdfReader();
+    gSettingsDlg.defaultReader = gSettingsDlg.wasDefaultReader;
     gSettingsDlg.scrollY = 0;
     gSettingsDlg.visible = true;
     DlgWindowSpec spec;
@@ -247,6 +255,9 @@ static void SettingsOk() {
     gSettings->useTabs = gSettingsDlg.useTabs;
     gSettings->checkForUpdates = gSettingsDlg.checkUpdates;
     gSettings->rememberOpenedFiles = gSettingsDlg.rememberOpened;
+    if (gSettingsDlg.defaultReader && !gSettingsDlg.wasDefaultReader) {
+        MacMakeDefaultPdfReader();
+    }
     if (gSettingsDlg.showInverseSearch) {
         TempStr tmp = str::DupTemp(FromGpui(gp::InputValue(gSettingsDlg.editInverse)));
         str::ReplaceWithCopy(&gSettings->inverseSearchCmdLine, tmp);
@@ -293,6 +304,9 @@ void SettingsView::OnToggle(SettingsView*, gp::Ctx* cx, const gp::ClickEvent*, i
             break;
         case 4:
             gSettingsDlg.rememberOpened = !gSettingsDlg.rememberOpened;
+            break;
+        case 5:
+            gSettingsDlg.defaultReader = !gSettingsDlg.defaultReader;
             break;
     }
     gp::Notify(cx);
@@ -378,6 +392,8 @@ static gp::El* SettingsWinBuild(gp::Ctx* cx) {
                                 gSettingsDlg.checkUpdates, !HasPermission(Perm::InternetAccess), 3, kOptWinPadY));
     col->Child(SettingsWinCheck(cx, StrL("opt-opened"), Tr("Remember &opened files"), gSettingsDlg.rememberOpened,
                                 false, 4, kOptWinPadY));
+    col->Child(SettingsWinCheck(cx, StrL("opt-default-reader"), Tr("Use SumatraPDF as the &default PDF reader"),
+                                gSettingsDlg.defaultReader, gSettingsDlg.wasDefaultReader, 5, kOptWinPadY));
 
     if (gSettingsDlg.showInverseSearch) {
         col->Child(section(Tr("Set inverse search command line")));
@@ -438,6 +454,8 @@ gp::El* SettingsDialogBuild(MainWindow* win, gp::Ctx* cx) {
     body->Child(CheckRow(cx, StrL("opt-updates"), Tr("Automatically check for &updates"), gSettingsDlg.checkUpdates,
                          !HasPermission(Perm::InternetAccess), 3));
     body->Child(CheckRow(cx, StrL("opt-opened"), Tr("Remember &opened files"), gSettingsDlg.rememberOpened, false, 4));
+    body->Child(CheckRow(cx, StrL("opt-default-reader"), Tr("Use SumatraPDF as the &default PDF reader"),
+                         gSettingsDlg.defaultReader, gSettingsDlg.wasDefaultReader, 5));
 
     if (gSettingsDlg.showInverseSearch) {
         body->Child(SectionLabel(cx, Tr("Set inverse search command line")));

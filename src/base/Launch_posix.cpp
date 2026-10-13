@@ -117,6 +117,19 @@ bool LaunchFileShellArgs(const StrVec& args) {
     return SpawnDetached(args);
 }
 
+// the program's exit code once it is done; -1 if it couldn't run
+int RunAndWait(const StrVec& args) {
+    pid_t pid = SpawnArgs(args);
+    if (pid == 0) {
+        return -1;
+    }
+    int status = 0;
+    if (waitpid(pid, &status, 0) != pid) {
+        return -1;
+    }
+    return WIFEXITED(status) ? WEXITSTATUS(status) : -1;
+}
+
 bool LaunchFileShell(Str path, Str params, Str, bool) {
     if (len(path) == 0) {
         return false;

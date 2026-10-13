@@ -1,0 +1,77 @@
+# Info.plist texts macOS shows for the app, by our language codes (as in
+# translations.txt). cmd/helper/ng-mac-bundle.ts writes them into each
+# <apple language>.lproj/InfoPlist.strings; every key needs every language.
+:NSLocalNetworkUsageDescription
+en:SumatraPDF uses the local network to find printers.
+af:SumatraPDF gebruik die plaaslike netwerk om drukkers te vind.
+am:SumatraPDF-ը օգտագործում է տեղական ցանցը՝ տպիչներ գտնելու համար։
+ar:يستخدم SumatraPDF الشبكة المحلية للعثور على الطابعات.
+az:SumatraPDF printerləri tapmaq üçün yerli şəbəkədən istifadə edir.
+bg:SumatraPDF използва локалната мрежа, за да намира принтери.
+bn:প্রিন্টার খুঁজতে SumatraPDF স্থানীয় নেটওয়ার্ক ব্যবহার করে।
+br:O SumatraPDF usa a rede local para encontrar impressoras.
+bs:SumatraPDF koristi lokalnu mrežu za pronalaženje štampača.
+by:SumatraPDF выкарыстоўвае лакальную сетку, каб знаходзіць прынтары.
+ca:SumatraPDF utilitza la xarxa local per trobar impressores.
+ca-xv:SumatraPDF utilitza la xarxa local per a trobar impressores.
+cn:SumatraPDF 使用本地网络查找打印机。
+co:SumatraPDF adopra a reta lucale per truvà e stampatrici.
+cy:Mae SumatraPDF yn defnyddio'r rhwydwaith lleol i ddod o hyd i argraffyddion.
+cz:SumatraPDF používá místní síť k vyhledání tiskáren.
+de:SumatraPDF verwendet das lokale Netzwerk, um Drucker zu finden.
+dk:SumatraPDF bruger det lokale netværk til at finde printere.
+el:Το SumatraPDF χρησιμοποιεί το τοπικό δίκτυο για να βρίσκει εκτυπωτές.
+es:SumatraPDF usa la red local para encontrar impresoras.
+et:SumatraPDF kasutab printerite leidmiseks kohtvõrku.
+eu:SumatraPDF-k sare lokala erabiltzen du inprimagailuak aurkitzeko.
+fa:SumatraPDF برای یافتن چاپگرها از شبکهٔ محلی استفاده می‌کند.
+fi:SumatraPDF käyttää lähiverkkoa tulostimien etsimiseen.
+fo:SumatraPDF brúkar staðarnetið til at finna prentarar.
+fr:SumatraPDF utilise le réseau local pour trouver des imprimantes.
+fy-nl:SumatraPDF brûkt it lokale netwurk om printers te finen.
+ga:Úsáideann SumatraPDF an líonra áitiúil chun printéirí a aimsiú.
+gl:SumatraPDF usa a rede local para atopar impresoras.
+he:SumatraPDF משתמש ברשת המקומית כדי למצוא מדפסות.
+hi:SumatraPDF प्रिंटर खोजने के लिए स्थानीय नेटवर्क का उपयोग करता है।
+hr:SumatraPDF koristi lokalnu mrežu za pronalaženje pisača.
+hu:A SumatraPDF a helyi hálózaton keresi a nyomtatókat.
+id:SumatraPDF menggunakan jaringan lokal untuk menemukan printer.
+it:SumatraPDF usa la rete locale per trovare le stampanti.
+ja:SumatraPDF はプリンタを探すためにローカルネットワークを使用します。
+jv:SumatraPDF nggunakake jaringan lokal kanggo nggoleki printer.
+ka:SumatraPDF ლოკალურ ქსელს პრინტერების მოსაძებნად იყენებს.
+kr:SumatraPDF는 프린터를 찾기 위해 로컬 네트워크를 사용합니다.
+ku:SumatraPDF تۆڕی ناوخۆیی بەکاردەهێنێت بۆ دۆزینەوەی چاپکەرەکان.
+kw:SumatraPDF a dhevnydh an rosweyth leel rag kavos jynnow-pryntya.
+lt:SumatraPDF naudoja vietinį tinklą spausdintuvams rasti.
+lv:SumatraPDF izmanto lokālo tīklu, lai atrastu printerus.
+mk:SumatraPDF ја користи локалната мрежа за да пронаоѓа печатачи.
+ml:പ്രിന്ററുകൾ കണ്ടെത്താൻ SumatraPDF ലോക്കൽ നെറ്റ്‌വർക്ക് ഉപയോഗിക്കുന്നു.
+mm:SumatraPDF သည် ပရင်တာများကို ရှာရန် ဒေသတွင်း ကွန်ရက်ကို အသုံးပြုသည်။
+my:SumatraPDF menggunakan rangkaian setempat untuk mencari pencetak.
+ne:प्रिन्टरहरू फेला पार्न SumatraPDF ले स्थानीय नेटवर्क प्रयोग गर्छ।
+nl:SumatraPDF gebruikt het lokale netwerk om printers te vinden.
+nn:SumatraPDF brukar det lokale nettverket for å finne skrivarar.
+no:SumatraPDF bruker det lokale nettverket for å finne skrivere.
+pa:ਪ੍ਰਿੰਟਰ ਲੱਭਣ ਲਈ SumatraPDF ਸਥਾਨਕ ਨੈੱਟਵਰਕ ਵਰਤਦਾ ਹੈ।
+pl:SumatraPDF używa sieci lokalnej do wyszukiwania drukarek.
+pt:O SumatraPDF utiliza a rede local para encontrar impressoras.
+ro:SumatraPDF folosește rețeaua locală pentru a găsi imprimante.
+ru:SumatraPDF использует локальную сеть для поиска принтеров.
+sat:SumatraPDF ᱯᱨᱤᱱᱴᱟᱨ ᱯᱟᱱᱛᱮ ᱞᱟᱹᱜᱤᱫ ᱞᱚᱠᱟᱞ ᱱᱮᱴᱣᱟᱨᱠ ᱵᱮᱵᱷᱟᱨ ᱮᱫᱟᱭ ᱾
+si:මුද්‍රක සොයා ගැනීමට SumatraPDF දේශීය ජාලය භාවිත කරයි.
+sk:SumatraPDF používa lokálnu sieť na vyhľadanie tlačiarní.
+sl:SumatraPDF uporablja lokalno omrežje za iskanje tiskalnikov.
+sn:SumatraPDF inoshandisa network yepedyo kutsvaga maprinta.
+sp-rs:SumatraPDF koristi lokalnu mrežu za pronalaženje štampača.
+sq:SumatraPDF përdor rrjetin lokal për të gjetur printera.
+sr-rs:SumatraPDF користи локалну мрежу за проналажење штампача.
+sv:SumatraPDF använder det lokala nätverket för att hitta skrivare.
+ta:அச்சுப்பொறிகளைக் கண்டறிய SumatraPDF உள்ளூர் நெட்வொர்க்கைப் பயன்படுத்துகிறது.
+th:SumatraPDF ใช้เครือข่ายเฉพาะที่เพื่อค้นหาเครื่องพิมพ์
+tl:Ginagamit ng SumatraPDF ang lokal na network para maghanap ng mga printer.
+tr:SumatraPDF, yazıcıları bulmak için yerel ağı kullanır.
+tw:SumatraPDF 使用本機網路尋找印表機。
+uk:SumatraPDF використовує локальну мережу для пошуку принтерів.
+uz:SumatraPDF printerlarni topish uchun mahalliy tarmoqdan foydalanadi.
+vn:SumatraPDF sử dụng mạng cục bộ để tìm máy in.

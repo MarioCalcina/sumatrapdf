@@ -99,6 +99,7 @@ extern "C" {
 #include "ReadAloud.h"
 #include "ReadingAutoScroll.h"
 #include "ReadingBar.h"
+#include "UpdateCheck.h"
 #include "SumatraControl.h"
 #include "SumatraControlCommon.h"
 
@@ -780,6 +781,8 @@ enum class ControlCmd : u16 {
     TestRenameFile = 131,
     // ng: open a file the way a drop or a Finder open does
     TestOpenFiles = 132,
+    // ng: install a dmg over this app as a downloaded update would be
+    TestInstallUpdate = 133,
 };
 
 bool ParseArg(PacketReader& r, ControlArg** argOut) {
@@ -1960,6 +1963,13 @@ static void ExecuteControlRequest(ControlRequest* req) {
             }
             OpenDroppedFiles(win, &path, 1);
             AppendTestResult(req, 0, StrL("OK"));
+            break;
+        }
+
+        case ControlCmd::TestInstallUpdate: {
+            Str dmgPath = StringArg(req, 0);
+            bool ok = InstallUpdateFromDmg(FirstWindow(), dmgPath);
+            AppendTestResult(req, ok ? 0 : 1, ok ? StrL("OK") : StrL("this app can't be replaced"));
             break;
         }
 

@@ -20,6 +20,7 @@
 #include "Commands.h"
 #include "Translations.h"
 #include "SumatraDialogs.h"
+#include "gui/MacServices.h"
 #include "ExternalViewers.h"
 
 struct ExternalViewerInfo {
@@ -465,41 +466,14 @@ bool RunWithExe(WindowTab* tab, Str cmdLine, Str filter) {
 
 // --- send as e-mail attachment (step 14a) -----------------------------------
 
-// ng: Mail gets the file as an attachment; without it, a mailto names the
-// file so the user can attach it.
+// ng: the mail app gets the file as an attachment; without one, a mailto
+// names the file so the user can attach it.
 static bool IsEmailAttachmentSendAvailable() {
     return true;
 }
 
 static bool SendAsEmailAttachmentWithMail(Str filePath) {
-    TempStr name = path::GetBaseNameTemp(filePath);
-    StrVec args;
-    args.Append(StrL("/usr/bin/osascript"));
-    args.Append(StrL("-e"));
-    args.Append(StrL("on run argv"));
-    args.Append(StrL("-e"));
-    args.Append(StrL("set attachmentFile to POSIX file (item 1 of argv)"));
-    args.Append(StrL("-e"));
-    args.Append(StrL("tell application \"Mail\""));
-    args.Append(StrL("-e"));
-    args.Append(
-        StrL("set newMessage to make new outgoing message with properties {subject:(item 2 of argv), visible:true}"));
-    args.Append(StrL("-e"));
-    args.Append(StrL("tell content of newMessage"));
-    args.Append(StrL("-e"));
-    args.Append(StrL("make new attachment with properties {file name:attachmentFile} at after last paragraph"));
-    args.Append(StrL("-e"));
-    args.Append(StrL("end tell"));
-    args.Append(StrL("-e"));
-    args.Append(StrL("activate"));
-    args.Append(StrL("-e"));
-    args.Append(StrL("end tell"));
-    args.Append(StrL("-e"));
-    args.Append(StrL("end run"));
-    args.Append(StrL("--"));
-    args.Append(filePath);
-    args.Append(name);
-    return LaunchFileShellArgs(args);
+    return MacComposeEmail(filePath);
 }
 
 static bool SendAsEmailAttachmentWithMailto(Str filePath) {

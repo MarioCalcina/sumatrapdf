@@ -2,8 +2,8 @@
    License: GPLv3 */
 
 // ng: orig's UpdateCheck.cpp. The parsing is orig's; the http get goes through
-// gpui, and a new version is installed from its download page (a dmg on this
-// fork's GitHub release), not by an installer the app runs.
+// gpui, and a new version is the dmg of this fork's GitHub release, which the
+// app installs over itself (or the user gets from its download page).
 
 #include "gui/GpuiBridge.h"
 
@@ -12,7 +12,9 @@
 #include "base/Http.h"
 #include "base/File.h"
 #include "base/Crypto.h"
+#include "base/Launch.h"
 #include <sys/sysctl.h>
+#include <unistd.h>
 
 #include "gui/UIModels.h"
 
@@ -30,6 +32,7 @@
 #include "MainWindow.h"
 #include "HomePage.h"
 #include "SumatraDialogs.h"
+#include "gui/MacServices.h"
 #include "UpdateCheck.h"
 #include "UpdateCheckCommon.h"
 
@@ -154,11 +157,225 @@ static void OpenDownloadPage(UpdateInfo* updateInfo) {
     OpenWebPage(page);
 }
 
+// --- installing an update ---------------------------------------------------
+//
+// The release's dmg replaces the running app: downloaded and checked against
+// its SHA-256, its app is copied next to ours. Once we have quit, a script
+// swaps the two and starts the new one.
+//
+//   download -> sha256 -> hdiutil attach -> ditto -> .SumatraPDF.app.update
+//   quit -> script: mv App App.old, mv update App, rm App.old, open App
+
+static Kind kNotifUpdateInstall = "notifUpdateInstall";
+constexpr int kSha256HexLen = 64;
+
+struct UpdateInstall {
+    MainWindow* win = nullptr;
+    Str dmgUrl;     // empty: dmgPath is already here (TestInstallUpdate)
+    Str dmgSha256;  // hex
+    Str dmgPath;    // the downloaded dmg
+    Str app;        // the bundle we replace
+    Str staged;     // its replacement
+    Str updatePage; // the fallback when installing fails
+    bool ok = false;
+    ~UpdateInstall() {
+        str::Free(dmgUrl);
+        str::Free(dmgSha256);
+        str::Free(dmgPath);
+        str::Free(app);
+        str::Free(staged);
+        str::Free(updatePage);
+    }
+};
+
+// the bundle can be replaced: not run from the dmg, not translocated by
+// Gatekeeper, and in a folder we may write to
+static bool CanReplaceApp(Str app) {
+    if (!str::EndsWithI(app, StrL(".app")) || str::Contains(app, StrL("/AppTranslocation/"))) {
+        return false;
+    }
+    TempStr dir = path::GetDirTemp(app);
+    return access(CStrTemp(dir), W_OK) == 0 && access(CStrTemp(app), W_OK) == 0;
+}
+
+static bool CanInstallUpdate(UpdateInfo* info) {
+    if (len(info->dmgSha256) != kSha256HexLen || !IsTrustedUpdateDlUrl(info->dmgUrl)) {
+        return false;
+    }
+    return CanReplaceApp(MacAppBundlePathTemp());
+}
+
+static bool OnDmgData(void* ctx, const uint8_t* data, int n) {
+    return file::WriteAll(*(file::FileHandle*)ctx, Str((char*)data, n));
+}
+
+static bool DownloadDmg(UpdateInstall* d) {
+    file::FileHandle fh = file::OpenReadWrite(d->dmgPath, true);
+    if (fh == file::kInvalidFileHandle) {
+        return false;
+    }
+    gp::HttpReq req;
+    req.url = ToGpui(d->dmgUrl);
+    req.onBody = OnDmgData;
+    req.onBodyCtx = &fh;
+    gp::HttpRsp rsp;
+    bool ok = gp::HttpSend(req, &rsp) && rsp.status == 200;
+    gp::HttpRspFree(&rsp);
+    file::Close(fh);
+    if (!ok) {
+        logf("DownloadDmg: '%s' failed, status %d\n", d->dmgUrl, rsp.status);
+        return false;
+    }
+    Str data = file::ReadFile(d->dmgPath);
+    u8 digest[32];
+    CalcSHA2Digest(data, digest);
+    str::Free(data);
+    str::Builder hex;
+    for (u8 b : digest) {
+        hex.Append(fmt("%02x", (int)b));
+    }
+    ok = str::EqI(ToStr(hex), d->dmgSha256);
+    logf("DownloadDmg: sha256 %s, expected %s\n", ToStr(hex), d->dmgSha256);
+    return ok;
+}
+
+// the dmg's app, copied next to ours
+static bool StageUpdate(UpdateInstall* d) {
+    TempStr mnt = fmt("%s.mnt", d->dmgPath);
+    dir::RemoveAll(d->staged);
+    if (!dir::CreateAll(mnt)) {
+        return false;
+    }
+    StrVec attach;
+    attach.Append(StrL("/usr/bin/hdiutil"));
+    attach.Append(StrL("attach"));
+    attach.Append(StrL("-nobrowse"));
+    attach.Append(StrL("-readonly"));
+    attach.Append(StrL("-noautoopen"));
+    attach.Append(StrL("-mountpoint"));
+    attach.Append(mnt);
+    attach.Append(d->dmgPath);
+    if (RunAndWait(attach) != 0) {
+        rmdir(CStrTemp(mnt));
+        return false;
+    }
+    StrVec ditto;
+    ditto.Append(StrL("/usr/bin/ditto"));
+    ditto.Append(path::JoinTemp(mnt, StrL("SumatraPDF.app")));
+    ditto.Append(d->staged);
+    bool ok = RunAndWait(ditto) == 0;
+    StrVec detach;
+    detach.Append(StrL("/usr/bin/hdiutil"));
+    detach.Append(StrL("detach"));
+    detach.Append(mnt);
+    detach.Append(StrL("-force"));
+    RunAndWait(detach);
+    // only once unmounted, when it is empty
+    rmdir(CStrTemp(mnt));
+    return ok && file::Exists(path::JoinTemp(d->staged, StrL("Contents/MacOS/SumatraPDF")));
+}
+
+static void UpdateInstallFinish(UpdateInstall* d) {
+    AutoDelete delD(d);
+    MainWindow* win = IsMainWindowValidAndNotClosing(d->win) ? d->win : nullptr;
+    if (win) {
+        RemoveNotificationsForGroup(win, kNotifUpdateInstall);
+    }
+    if (!d->ok) {
+        logf("UpdateInstallFinish: failed, opening '%s'\n", d->updatePage);
+        if (win) {
+            NotificationCreateArgs args;
+            args.win = win;
+            args.msg = Tr("Installation could not be completed.");
+            args.warning = true;
+            args.timeoutMs = kNotif5SecsTimeOut;
+            ShowNotification(args);
+        }
+        OpenWebPage(d->updatePage);
+        return;
+    }
+    // waits for us to quit; puts the old app back if the new one can't move in
+    constexpr const char* kSwapScript =
+        "while kill -0 \"$1\" 2>/dev/null; do sleep 0.2; done\n"
+        "if mv \"$3\" \"$3.old\"; then\n"
+        "  if mv \"$2\" \"$3\"; then rm -rf \"$3.old\"; else mv \"$3.old\" \"$3\"; fi\n"
+        "fi\n"
+        "open \"$3\"\n";
+    StrVec args;
+    args.Append(StrL("/bin/sh"));
+    args.Append(StrL("-c"));
+    args.Append(Str(kSwapScript));
+    args.Append(StrL("sh"));
+    args.Append(fmt("%d", (int)getpid()));
+    args.Append(d->staged);
+    args.Append(d->app);
+    if (!LaunchFileShellArgs(args)) {
+        OpenWebPage(d->updatePage);
+        return;
+    }
+    logf("UpdateInstallFinish: '%s' replaces '%s' once we quit\n", d->staged, d->app);
+    OnMenuExit();
+}
+
+static void UpdateInstallAsync(UpdateInstall* d) {
+    d->ok = (len(d->dmgUrl) == 0 || DownloadDmg(d)) && StageUpdate(d);
+    if (len(d->dmgUrl) > 0) {
+        file::Delete(d->dmgPath);
+    }
+    uitask::Post(MkFunc0<UpdateInstall>(UpdateInstallFinish, d), "UpdateInstallFinish");
+}
+
+// dmgPath set: install that dmg, no download (TestInstallUpdate)
+static void StartUpdateInstall(MainWindow* win, UpdateInfo* info, Str dmgPath) {
+    auto* d = new UpdateInstall();
+    d->win = win;
+    d->app = str::Dup(MacAppBundlePathTemp());
+    d->staged = str::Dup(path::JoinTemp(path::GetDirTemp(d->app), StrL(".SumatraPDF.app.update")));
+    d->updatePage = str::Dup(info && IsTrustedUpdateDlUrl(info->downloadPage) ? info->downloadPage
+                                                                               : StrL(kWebisteDownloadPageURL));
+    if (len(dmgPath) > 0) {
+        d->dmgPath = str::Dup(dmgPath);
+    } else {
+        d->dmgUrl = str::Dup(info->dmgUrl);
+        d->dmgSha256 = str::Dup(info->dmgSha256);
+        d->dmgPath = str::Dup(GetTempFilePathTemp(StrL("SumatraPDF-update-")));
+    }
+    logf("StartUpdateInstall: '%s' -> '%s'\n", len(d->dmgUrl) > 0 ? d->dmgUrl : d->dmgPath, d->app);
+    if (win) {
+        NotificationCreateArgs args;
+        args.win = win;
+        args.msg = Tr("Downloading update...");
+        args.timeoutMs = kNotifNoTimeout;
+        args.groupId = kNotifUpdateInstall;
+        ShowNotification(args);
+    }
+    RunAsync(MkFunc0<UpdateInstall>(UpdateInstallAsync, d), StrL("UpdateInstallAsync"));
+}
+
+// TestInstallUpdate: the given dmg as if it were downloaded. False when this
+// copy of the app can't be replaced
+bool InstallUpdateFromDmg(MainWindow* win, Str dmgPath) {
+    if (!CanReplaceApp(MacAppBundlePathTemp()) || !file::Exists(dmgPath)) {
+        return false;
+    }
+    StartUpdateInstall(win, nullptr, dmgPath);
+    return true;
+}
+
+// installs it when we can, else the browser gets its download page
+static void InstallUpdate(UpdateInfo* updateInfo) {
+    if (CanInstallUpdate(updateInfo)) {
+        StartUpdateInstall(updateInfo->win, updateInfo, {});
+        return;
+    }
+    OpenDownloadPage(updateInfo);
+}
+
 static void OnInstallAnswer(UpdateInfo* updateInfo, int res) {
     AutoDelete delInfo(updateInfo);
     ScheduleSaveSettings();
     if (res == MbRetYes) {
-        OpenDownloadPage(updateInfo);
+        InstallUpdate(updateInfo);
     }
 }
 
@@ -202,7 +419,7 @@ static void ShowUpdateAvailableNotification(MainWindow* win, UpdateInfo* updateI
     ShowNotification(args);
 }
 
-// the "Update" link of the pre-release update notification: the download page
+// the "Update" link of the pre-release update notification
 void DownloadAndInstallPendingUpdate(MainWindow* win) {
     if (!win || !gPendingUpdate) {
         return;
@@ -211,7 +428,8 @@ void DownloadAndInstallPendingUpdate(MainWindow* win) {
     gPendingUpdate = nullptr;
     AutoDelete delInfo(updateInfo);
     RemoveNotificationsForGroup(win, kNotifUpdateAvailable);
-    OpenDownloadPage(updateInfo);
+    updateInfo->win = win;
+    InstallUpdate(updateInfo);
 }
 
 static bool ShouldDownloadUpdate(UpdateInfo* updateInfo) {

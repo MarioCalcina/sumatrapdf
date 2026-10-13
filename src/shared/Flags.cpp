@@ -532,8 +532,7 @@ static void ParseFlagNodes(Arena* a, StrNode* firstArg, Flags& i, Str toolNames)
             continue;
         }
         if (arg == Arg::ReuseInstance) {
-            // accepted for command lines written for orig (LaTeX editor
-            // setups); no effect here
+            i.reuseInstance = true;
             continue;
         }
         if (arg == Arg::EscToExit) {

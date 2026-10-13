@@ -51,7 +51,8 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       # the release page is a download without a GitHub login, and its
-      # update-check-mac.txt is what the app's update check reads
+      # update-check-mac.txt is what the app's update check reads: the app
+      # downloads Dmg, checks Sha256 and installs it over itself
       - name: Release
         if: ${{ inputs.release }}
         env:
@@ -59,12 +60,20 @@ jobs:
         run: |
           ver=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" out/mac/rel-universal/SumatraPDF.app/Contents/Info.plist)
           url="https://github.com/$GITHUB_REPOSITORY/releases/tag/v$ver"
-          printf '[SumatraPDF]\nLatest: %s\nBuiltOn: %s\nDownloadPage: %s\n' "$ver" "$(date +%Y-%m-%d)" "$url" \
-            > update-check-mac.txt
+          dmg="https://github.com/$GITHUB_REPOSITORY/releases/download/v$ver/SumatraPDF-mac.dmg"
+          sha=$(shasum -a 256 SumatraPDF-mac.dmg | cut -d ' ' -f 1)
+          printf '[SumatraPDF]\nLatest: %s\nBuiltOn: %s\nDownloadPage: %s\nDmg: %s\nSha256: %s\n' \
+            "$ver" "$(date +%Y-%m-%d)" "$url" "$dmg" "$sha" > update-check-mac.txt
           cat update-check-mac.txt
+          cat > notes.md <<EOF
+          SumatraPDF for macOS 11 or later, Apple Silicon and Intel. Built from ${GITHUB_SHA::7}.
+
+          **Install:** open SumatraPDF-mac.dmg and drag SumatraPDF to Applications. Apple has not notarized the app, so the first time macOS won't open it: try to open it once, then in System Settings > Privacy & Security click **Open Anyway**. Later versions install themselves from Check for Updates.
+
+          **Instalar:** abre SumatraPDF-mac.dmg y arrastra SumatraPDF a Aplicaciones. Apple no ha notarizado la app, así que la primera vez macOS no la abre: intenta abrirla una vez y luego, en Ajustes del Sistema > Privacidad y seguridad, pulsa **Abrir igualmente**. Las versiones siguientes se instalan solas desde Buscar actualizaciones.
+          EOF
           gh release create "v$ver" SumatraPDF-mac.dmg update-check-mac.txt -R "$GITHUB_REPOSITORY" \
-            --target "$GITHUB_SHA" --title "SumatraPDF $ver" --latest \
-            --notes "macOS build of ${GITHUB_SHA::7}. Download SumatraPDF-mac.dmg, open it and drag SumatraPDF to Applications."
+            --target "$GITHUB_SHA" --title "SumatraPDF $ver" --latest --notes-file notes.md
 
       # screenshots of the app installed from the dmg; best effort
       - name: Screenshots
@@ -111,13 +120,26 @@ jobs:
             t 20 osascript -e "tell application \"System Events\" to tell process \"SumatraPDF\" to get name of every menu item of menu 1 of menu bar item $m of menu bar 1" \
               > shots/es-menubar-$m.txt 2>&1 || echo "menu $m: exit $?"
           done
+          # File > Abrir con (Open With) and Compartir (Share), opened as a user would
+          for sub in "Abrir con" Compartir; do
+            f=shots/es-$(echo "$sub" | tr -d ' ').txt
+            t 30 osascript -e 'on run argv' -e 'tell application "System Events" to tell process "SumatraPDF"' \
+              -e 'set frontmost to true' -e 'click menu bar item 3 of menu bar 1' -e 'delay 1' \
+              -e 'click menu item (item 1 of argv) of menu 1 of menu bar item 3 of menu bar 1' -e 'delay 2' \
+              -e 'get name of every menu item of menu 1 of menu item (item 1 of argv) of menu 1 of menu bar item 3 of menu bar 1' \
+              -e 'end tell' -e 'end run' "$sub" > "$f" 2>&1 || echo "$sub: exit $?"
+            screencapture -x "${f%.txt}.png"
+            t 10 osascript -e 'tell application "System Events" to key code 53' -e 'delay 0.5' \
+              -e 'tell application "System Events" to key code 53' || true
+            sleep 1
+          done
           printf 'pegado-con-cmd-v' | pbcopy
+          # after ⌘V the name field has the focus
           t 60 osascript -e 'tell application "System Events" to tell process "SumatraPDF"' \
             -e 'set frontmost to true' -e 'keystroke "s" using command down' -e 'delay 3' \
             -e 'keystroke "a" using command down' -e 'keystroke "v" using command down' -e 'delay 1' \
-            -e 'set out to {}' -e 'repeat with w in windows' -e 'repeat with e in (entire contents of w)' \
-            -e 'if role of e is "AXTextField" then set end of out to value of e' -e 'end repeat' -e 'end repeat' \
-            -e 'out' -e 'end tell' > shots/es-save-paste.txt 2>&1 || echo "keystroke: exit $?"
+            -e 'get value of (value of attribute "AXFocusedUIElement")' \
+            -e 'end tell' > shots/es-save-paste.txt 2>&1 || echo "keystroke: exit $?"
           sleep 2
           screencapture -x shots/es-save.png
           pkill -f "SumatraPDF -for-testing" || true
@@ -143,6 +165,57 @@ jobs:
           cp -R "$HOME/Library/Application Support/SumatraPDF/crashinfo" shots/ || true
           defaults delete -g AppleLanguages || true
           hdiutil detach /Volumes/SumatraPDF || true
+      # a LaTeX editor's forward search: a second SumatraPDF hands it to the one
+      # running (not -for-testing, which always starts its own) and quits. A
+      # .pdfsync maps line 5 of zlib.3.tex to the top of page 1
+      - name: Reuse instance
+        continue-on-error: true
+        timeout-minutes: 5
+        run: |
+          t() { perl -e 'alarm shift; exec @ARGV' "$@"; }
+          APP="$PWD/out/mac/rel-universal/SumatraPDF.app"
+          mkdir -p fs shots
+          cp ext/a-zlib/zlib.3.pdf fs/
+          : > fs/zlib.3.tex
+          printf 'zlib.3\nversion 1\nl 1 5\ns 1\np 1 4000000 46000000\n' > fs/zlib.3.pdfsync
+          open -n -a "$APP" --args -log-to-file "$PWD/shots/reuse-server.log"
+          sleep 8
+          t 20 "$APP/Contents/MacOS/SumatraPDF" -reuse-instance -forward-search "$PWD/fs/zlib.3.tex" 5 \
+            "$PWD/fs/zlib.3.pdf" -log-to-file "$PWD/shots/reuse-client.log"
+          echo "client exit $?" > shots/reuse.txt
+          sleep 4
+          pgrep -fl "SumatraPDF.app/Contents/MacOS/SumatraPDF" >> shots/reuse.txt || true
+          screencapture -x shots/reuse.png
+          grep -h "InstanceCmds\|ForwardSearch\|SendToRunningInstance" shots/reuse-*.log >> shots/reuse.txt || true
+          pkill -f "SumatraPDF.app/Contents/MacOS/SumatraPDF" || true
+          sleep 2
+      # Check for Updates' install, on a dmg already here: the app copies it in,
+      # quits, and a script swaps the bundles and starts the new one
+      - name: Install an update
+        continue-on-error: true
+        timeout-minutes: 5
+        run: |
+          t() { perl -e 'alarm shift; exec @ARGV' "$@"; }
+          mkdir -p inst shots
+          ditto out/mac/rel-universal/SumatraPDF.app inst/SumatraPDF.app
+          cp SumatraPDF-mac.dmg update.dmg
+          before=$(stat -f %i inst/SumatraPDF.app)
+          open -n -a "$PWD/inst/SumatraPDF.app" --args -for-testing -dbg-control upd \
+            -log-to-file "$PWD/shots/update.log"
+          sleep 8
+          t 20 bun cmd/ng-dbg-control.ts -pipe upd -- TestInstallUpdate "$PWD/update.dmg" > shots/update.txt 2>&1 \
+            || echo "TestInstallUpdate: exit $?" >> shots/update.txt
+          for i in $(seq 30); do
+            sleep 2
+            if [ "$(stat -f %i inst/SumatraPDF.app 2>/dev/null)" != "$before" ] \
+              && pgrep -f "inst/SumatraPDF.app/Contents/MacOS/SumatraPDF" > /dev/null; then
+              break
+            fi
+          done
+          echo "inode before $before after $(stat -f %i inst/SumatraPDF.app 2>/dev/null)" >> shots/update.txt
+          ls -la inst >> shots/update.txt
+          pgrep -fl "inst/SumatraPDF.app" >> shots/update.txt || echo "not running" >> shots/update.txt
+          pkill -f "inst/SumatraPDF.app" || true
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         if: always()
         with:

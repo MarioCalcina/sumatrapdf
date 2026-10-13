@@ -8,6 +8,7 @@
 // executable is handed to the desktop (open).
 bool LaunchFileShell(Str path, Str params = {}, Str verb = {}, bool hidden = false);
 bool LaunchFileShellArgs(const StrVec& args);
+int RunAndWait(const StrVec& args);
 bool LaunchBrowser(Str url);
 // shows the file's directory in the desktop file manager
 void OpenPathInDefaultFileManager(Str path);

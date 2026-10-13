@@ -2383,6 +2383,79 @@ lv:Fails %s jau pastāv. Pārrakstīt?
 co:U schedariu %s esiste dighjà. Rimpiazzallu ?
 fo:Fílan %s finst longu. Skriva yvir?
 sat:ᱨᱮᱫᱽ %s ᱢᱮᱱᱟᱜᱼᱟ ᱾ ᱪᱮᱛᱟᱱ ᱛᱮ ᱚᱞ ᱢᱮ?
+:File type:
+af:Lêertipe:
+am:Ֆայլի տեսակը՝
+ar:نوع الملف:
+bg:Тип на файла:
+bn:ফাইলের ধরন:
+br:Tipo de arquivo:
+bs:Vrsta datoteke:
+by:Тып файла:
+ca-xv:Tipus de fitxer:
+ca:Tipus de fitxer:
+cn:文件类型：
+cy:Math o ffeil:
+cz:Typ souboru:
+de:Dateityp:
+dk:Filtype:
+el:Τύπος αρχείου:
+es:Tipo de archivo:
+et:Failitüüp:
+eu:Fitxategi mota:
+fa:نوع فایل:
+fi:Tiedostotyyppi:
+fr:Type de fichier :
+fy-nl:Triemtype:
+ga:Cineál comhaid:
+gl:Tipo de ficheiro:
+he:סוג קובץ:
+hi:फ़ाइल प्रकार:
+hr:Vrsta datoteke:
+hu:Fájltípus:
+id:Jenis file:
+it:Tipo di file:
+ja:ファイルの種類:
+ka:ფაილის ტიპი:
+kr:파일 유형:
+kw:Eghen restren:
+lt:Failo tipas:
+mk:Тип на датотека:
+ml:ഫയൽ തരം:
+mm:ဖိုင်အမျိုးအစား-
+my:Jenis fail:
+nl:Bestandstype:
+nn:Filtype:
+no:Filtype:
+pa:ਫ਼ਾਈਲ ਦੀ ਕਿਸਮ:
+pl:Typ pliku:
+pt:Tipo de ficheiro:
+ro:Tip fișier:
+ru:Тип файла:
+si:ගොනු වර්ගය:
+sk:Typ súboru:
+sl:Vrsta datoteke:
+sn:Rudzi rwefaira:
+sp-rs:Tip datoteke:
+sq:Lloji i skedarit:
+sr-rs:Тип датотеке:
+sv:Filtyp:
+ta:கோப்பு வகை:
+th:ประเภทไฟล์:
+tl:Uri ng file:
+tr:Dosya türü:
+tw:檔案類型：
+uk:Тип файлу:
+uz:Fayl turi:
+vn:Loại tệp:
+ne:फाइलको प्रकार:
+az:Fayl növü:
+ku:جۆری فایل:
+jv:Jinis berkas:
+lv:Faila tips:
+co:Tipu di schedariu:
+fo:Fíluslag:
+sat:ᱨᱮᱫ ᱞᱮᱠᱟᱱ:
 :Find & Select
 af:Soek en kies
 am:Որոնել և ընտրել
@@ -4150,6 +4223,152 @@ fa:باز کردن با استفاده از انتخابگر فایل &macOS...
 pa:&macOS ਫਾਈਲ ਚੋਣਕਾਰ ਵਰਤ ਕੇ ਖੋਲ੍ਹੋ...
 ku:کردنەوە بە بەکارهێنانی هەڵبژاردەری پەڕگەی &macOS...
 sat:&macOS ᱨᱮᱫᱽ ᱵᱟᱪᱷᱚᱱᱤᱭᱟᱹ ᱵᱮᱵᱷᱟᱨ ᱠᱟᱛᱮ ᱡᱷᱤᱡᱽ ᱢᱮ...
+:Open With
+af:Maak oop met
+am:Բացել ծրագրով
+ar:فتح باستخدام
+bg:Отваряне с
+bn:এর মাধ্যমে খুলুন
+br:Abrir com
+bs:Otvori pomoću
+by:Адкрыць з дапамогай
+ca-xv:Obri amb
+ca:Obre amb
+cn:打开方式
+cy:Agor gyda
+cz:Otevřít v aplikaci
+de:Öffnen mit
+dk:Åbn med
+el:Άνοιγμα με
+es:Abrir con
+et:Ava rakendusega
+eu:Ireki honekin
+fa:باز کردن با
+fi:Avaa sovelluksella
+fr:Ouvrir avec
+fy-nl:Iepenje mei
+ga:Oscail le
+gl:Abrir con
+he:פתח באמצעות
+hi:इसके साथ खोलें
+hr:Otvori pomoću
+hu:Megnyitás ezzel
+id:Buka Dengan
+it:Apri con
+ja:このアプリケーションで開く
+ka:გახსნა პროგრამით
+kr:다음으로 열기
+kw:Ygeri gans
+lt:Atidaryti naudojant
+mk:Отвори со
+ml:ഇതുപയോഗിച്ച് തുറക്കുക
+mm:ဖြင့် ဖွင့်ရန်
+my:Buka Dengan
+nl:Open met
+nn:Opne med
+no:Åpne med
+pa:ਇਸ ਨਾਲ ਖੋਲ੍ਹੋ
+pl:Otwórz za pomocą
+pt:Abrir com
+ro:Deschide cu
+ru:Открыть в программе
+si:මෙයින් විවෘත කරන්න
+sk:Otvoriť v aplikácii
+sl:Odpri z
+sn:Vhura ne
+sp-rs:Otvori pomoću
+sq:Hape me
+sr-rs:Отвори помоћу
+sv:Öppna med
+ta:இதன் மூலம் திற
+th:เปิดด้วย
+tl:Buksan Gamit ang
+tr:Birlikte Aç
+tw:打開檔案的應用程式
+uk:Відкрити за допомогою
+uz:Bilan ochish
+vn:Mở bằng
+ne:यसबाट खोल्नुहोस्
+az:Bununla aç
+ku:کردنەوە بە
+jv:Bukak Nganggo
+lv:Atvērt ar
+co:Apre cù
+fo:Lat upp við
+sat:ᱥᱟᱶ ᱡᱷᱤᱡᱽ ᱢᱮ
+:Other...
+af:Ander...
+am:Այլ...
+ar:غير ذلك...
+bg:Друго...
+bn:অন্যান্য...
+br:Outro...
+bs:Ostalo...
+by:Іншае...
+ca-xv:Altres...
+ca:Altres...
+cn:其他...
+cy:Arall...
+cz:Jiná...
+de:Andere ...
+dk:Andet...
+el:Άλλο...
+es:Otra...
+et:Muu...
+eu:Beste bat...
+fa:سایر...
+fi:Muu...
+fr:Autre...
+fy-nl:Oare...
+ga:Eile...
+gl:Outra...
+he:אחר...
+hi:अन्य...
+hr:Ostalo...
+hu:Egyéb...
+id:Lainnya...
+it:Altro...
+ja:その他...
+ka:სხვა...
+kr:기타...
+kw:Ken...
+lt:Kita...
+mk:Друго...
+ml:മറ്റുള്ളവ...
+mm:အခြား...
+my:Lain-lain...
+nl:Andere...
+nn:Anna...
+no:Annet...
+pa:ਹੋਰ...
+pl:Inna...
+pt:Outra...
+ro:Altele...
+ru:Другое...
+si:වෙනත්...
+sk:Iná...
+sl:Drugo...
+sn:Zvimwe...
+sp-rs:Ostalo...
+sq:Tjetër...
+sr-rs:Остало...
+sv:Annat...
+ta:மற்றவை...
+th:อื่นๆ...
+tl:Iba pa...
+tr:Diğer...
+tw:其他...
+uk:Інше...
+uz:Boshqa...
+vn:Khác...
+ne:अन्य...
+az:Digər...
+ku:هیتر...
+jv:Liyane...
+lv:Cita...
+co:Altru...
+fo:Annað...
+sat:ᱮᱴᱟᱜ...
 :Page Down
 af:Bladsy af
 am:Էջ ներքև
@@ -5311,6 +5530,79 @@ lv:ieslēgt
 co:attivà
 fo:tendra
 sat:ᱮᱦᱚᱵ ᱢᱮ
+:Share
+af:Deel
+am:Կիսվել
+ar:مشاركة
+bg:Споделяне
+bn:শেয়ার করুন
+br:Compartilhar
+bs:Podijeli
+by:Падзяліцца
+ca-xv:Compartix
+ca:Comparteix
+cn:共享
+cy:Rhannu
+cz:Sdílet
+de:Teilen
+dk:Del
+el:Κοινή χρήση
+es:Compartir
+et:Jaga
+eu:Partekatu
+fa:اشتراک‌گذاری
+fi:Jaa
+fr:Partager
+fy-nl:Diele
+ga:Comhroinn
+gl:Compartir
+he:שתף
+hi:शेयर करें
+hr:Podijeli
+hu:Megosztás
+id:Bagikan
+it:Condividi
+ja:共有
+ka:გაზიარება
+kr:공유
+kw:Kevrenna
+lt:Bendrinti
+mk:Сподели
+ml:പങ്കിടുക
+mm:မျှဝေရန်
+my:Kongsi
+nl:Deel
+nn:Del
+no:Del
+pa:ਸਾਂਝਾ ਕਰੋ
+pl:Udostępnij
+pt:Partilhar
+ro:Partajează
+ru:Поделиться
+si:බෙදා ගන්න
+sk:Zdieľať
+sl:Deli
+sn:Govera
+sp-rs:Deli
+sq:Ndaj
+sr-rs:Дели
+sv:Dela
+ta:பகிர்
+th:แชร์
+tl:Ibahagi
+tr:Paylaş
+tw:分享
+uk:Поширити
+uz:Ulashish
+vn:Chia sẻ
+ne:साझा गर्नुहोस्
+az:Paylaş
+ku:هاوبەشکردن
+jv:Bagekake
+lv:Kopīgot
+co:Sparte
+fo:Deil
+sat:ᱦᱟᱹᱴᱤᱧ ᱢᱮ
 :Show All
 af:Wys alles
 am:Ցույց տալ բոլորը
@@ -6625,6 +6917,18 @@ lv:Neatbalstīts attēla formāts.
 co:Furmatu di fiura micca accettatu.
 fo:Myndasniðið verður ikki stuðlað.
 sat:ᱪᱤᱛᱟᱹᱨ ᱯᱷᱚᱨᱢᱮᱴ ᱥᱚᱦᱚᱫ ᱵᱟᱹᱱᱩᱜᱼᱟ᱾
+:Use SumatraPDF as the &default PDF reader
+af:Gebruik SumatraPDF as die &verstek-PDF-leser
+fy-nl:SumatraPDF as &standert PDF-lêzer brûke
+hi:SumatraPDF को &डिफ़ॉल्ट PDF रीडर के रूप में उपयोग करें
+ml:SumatraPDF-നെ &ഡിഫോൾട്ട് PDF റീഡറായി ഉപയോഗിക്കുക
+mm:SumatraPDF ကို &မူလ PDF ဖတ်စက်အဖြစ် အသုံးပြုရန်
+pa:SumatraPDF ਨੂੰ &ਡਿਫ਼ੌਲਟ PDF ਰੀਡਰ ਵਜੋਂ ਵਰਤੋ
+sn:Shandisa SumatraPDF se&muverengi wePDF wekutanga
+tl:Gamitin ang SumatraPDF bilang &default na PDF reader
+jv:Gunakake SumatraPDF minangka pamaca PDF &gawan
+fo:Nýt SumatraPDF sum &vanligan PDF-lesara
+sat:SumatraPDF ᱫᱚ &ᱢᱩᱞ PDF ᱯᱟᱲᱦᱟᱣᱤᱡ ᱞᱮᱠᱟ ᱵᱮᱵᱷᱟᱨ ᱢᱮ
 :Various Open Source
 af:Diverse oopbron
 am:Տարբեր բաց կոդով

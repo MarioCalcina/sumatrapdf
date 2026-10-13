@@ -75,5 +75,8 @@ UpdateInfo* ParseUpdateInfo(Str d) {
     }
     // optional: without it the user is sent to the releases page
     res->downloadPage = str::Dup(node->GetValue(StrL("DownloadPage")));
+    // optional: without them the download page is the way to update
+    res->dmgUrl = str::Dup(node->GetValue(StrL("Dmg")));
+    res->dmgSha256 = str::Dup(node->GetValue(StrL("Sha256")));
     return res;
 }

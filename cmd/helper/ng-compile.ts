@@ -412,6 +412,7 @@ const macFrameworks = [
   "AudioToolbox",
   "AVFoundation",
   "Cocoa",
+  "CoreServices",
   "CoreText",
   "CoreGraphics",
   "ImageIO",
@@ -419,6 +420,7 @@ const macFrameworks = [
   "PDFKit",
   "Security",
   "Speech",
+  "UniformTypeIdentifiers",
   "WebKit",
 ];
 

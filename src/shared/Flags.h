@@ -85,6 +85,8 @@ struct Flags {
     bool inNewWindow = false;
     // -new-window-tabs: one new window, all files as tabs in that window
     bool inNewWindowTabs = false;
+    // -reuse-instance: the files go to the SumatraPDF already running
+    bool reuseInstance = false;
     bool stressRandomizeFiles = false;
     // -for-testing: for ad-hoc testing by humans or agents. Always starts
     // a new instance, doesn't restore session, doesn't save settings

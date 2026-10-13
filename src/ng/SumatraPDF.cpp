@@ -75,6 +75,7 @@
 #include "gui/DocCanvas.h"
 #include "gui/DialogWidgets.h"
 #include "gui/TabsUI.h"
+#include "gui/MacServices.h"
 #include "Selection.h"
 #include "SelectionToolbar.h"
 #include "LinkFollow.h"
@@ -6101,6 +6102,58 @@ static void TestExtractPages(const Flags& ci) {
 }
 #endif
 
+// DDE commands from a command line started after us (MacSendToRunningInstance)
+static void ExecuteInstanceCmds(Str* cmds) {
+    logf("ExecuteInstanceCmds: '%s'\n", *cmds);
+    ExecuteDdeCmds(*cmds);
+    str::Free(*cmds);
+    delete cmds;
+}
+
+static void OnInstanceCmds(Str cmds) {
+    auto* copy = new Str(str::Dup(cmds));
+    uitask::Post(MkFunc0<Str>(ExecuteInstanceCmds, copy), "ExecuteInstanceCmds");
+}
+
+// orig's ReuseInstance: the files of a command line go to the SumatraPDF
+// already running, as DDE commands, so a LaTeX editor's forward search lands
+// in the open window. -for-testing always starts its own instance.
+static bool SendToRunningInstance(const Flags& flags) {
+    bool forwardSearch = len(flags.forwardSearchOrigin) > 0 && flags.forwardSearchLine > 0;
+    bool reuse = flags.reuseInstance || gSettings->reuseInstance || forwardSearch;
+    if (flags.forTesting || !reuse || len(flags.fileNames) == 0) {
+        return false;
+    }
+    str::Builder cmds;
+    for (Str path : flags.fileNames) {
+        TempStr fullPath = path::NormalizeTemp(path);
+        // a DDE string can't hold a quote
+        if (str::IndexOfChar(fullPath, '"') >= 0) {
+            return false;
+        }
+        if (forwardSearch) {
+            TempStr src = path::NormalizeTemp(flags.forwardSearchOrigin);
+            cmds.Append(fmt("[ForwardSearch(\"%s\",\"%s\",%d,0,0,1)]", fullPath, src, flags.forwardSearchLine));
+            continue;
+        }
+        cmds.Append(fmt("[Open(\"%s\",%d,1,0)]", fullPath, flags.inNewWindow ? 1 : 0));
+        if (flags.pageNumber > 0) {
+            cmds.Append(fmt("[GotoPage(\"%s\",%d)]", fullPath, flags.pageNumber));
+        }
+        if (len(flags.namedDest) > 0) {
+            cmds.Append(fmt("[GotoNamedDest(\"%s\",\"%s\")]", fullPath, flags.namedDest));
+        }
+        if (flags.enterPresentation) {
+            cmds.Append(fmt("[Presentation(\"%s\")]", fullPath));
+        } else if (flags.enterFullScreen) {
+            cmds.Append(fmt("[FullScreen(\"%s\")]", fullPath));
+        }
+    }
+    bool sent = MacSendToRunningInstance(ToStr(cmds));
+    logf("SendToRunningInstance: %s '%s'\n", sent ? StrL("sent") : StrL("no instance for"), ToStr(cmds));
+    return sent;
+}
+
 int GpuiMain(int argc, char** argv) {
     int toolRes = MaybeRunCliTool(argc, argv);
     if (toolRes != kNoCliTool) {
@@ -6214,6 +6267,15 @@ int GpuiMain(int argc, char** argv) {
         uitask::Destroy();
         return printExitCode;
     }
+    if (SendToRunningInstance(*gFlags)) {
+        CleanUpSettings();
+        trans::Destroy();
+        FreeAcceleratorTables();
+        delete gFlags;
+        gFlags = nullptr;
+        uitask::Destroy();
+        return 0;
+    }
 
     // LoadSettings() already built the accelerator table (orig's WinMain does
     // not build it either); building it twice trips ReportIf(gAccels)
@@ -6304,6 +6366,9 @@ int GpuiMain(int argc, char** argv) {
     }
     StartAsyncUpdateCheck(win, UpdateCheck::Automatic);
     StartSumatraControl(gFlags->controlPipeName);
+    if (!gFlags->forTesting) {
+        MacStartInstanceServer(OnInstanceCmds);
+    }
 
     // on by default in debug builds; release builds can opt in by calling
     // StartUiHangDetector() themselves

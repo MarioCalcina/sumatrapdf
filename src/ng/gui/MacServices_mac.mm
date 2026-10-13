@@ -3,7 +3,7 @@
 
 // AppKit and IOKit services gpui has no counterpart for: images on the
 // pasteboard (gpui writes text only), Finder's file icons, keeping the display
-// awake.
+// awake, mail, the default PDF reader and the running instance's port.
 
 #include "base/Base.h"
 
@@ -13,7 +13,9 @@
 #pragma push_macro("defer")
 #undef defer
 #import <AppKit/AppKit.h>
+#import <CoreServices/CoreServices.h>
 #import <IOKit/pwr_mgt/IOPMLib.h>
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 #pragma pop_macro("defer")
 #undef BOOL
 #include "base/MacTypesShow.h"
@@ -99,4 +101,143 @@ void MacPreventDisplaySleep(bool on) {
     if (res != kIOReturnSuccess) {
         gNoSleep = kIOPMNullAssertionID;
     }
+}
+
+static NSString* ToNSStr(Str s) {
+    return [[NSString alloc] initWithBytes:s.s length:(NSUInteger)len(s) encoding:NSUTF8StringEncoding];
+}
+
+// a new message in the mail app with the file attached. Through the sharing
+// service: no permission to script Mail needed
+bool MacComposeEmail(Str path) {
+    NSString* p = ToNSStr(path);
+    if (!p) {
+        return false;
+    }
+    NSURL* url = [NSURL fileURLWithPath:p];
+    NSSharingService* mail = [NSSharingService sharingServiceNamed:NSSharingServiceNameComposeEmail];
+    if (!mail || ![mail canPerformWithItems:@[ url ]]) {
+        return false;
+    }
+    mail.subject = url.lastPathComponent;
+    [mail performWithItems:@[ url ]];
+    return true;
+}
+
+static NSString* const kPdfType = @"com.adobe.pdf";
+
+bool MacIsDefaultPdfReader() {
+    NSString* me = NSBundle.mainBundle.bundleIdentifier;
+    if (@available(macOS 12.0, *)) {
+        NSURL* app = [[NSWorkspace sharedWorkspace] URLForApplicationToOpenContentType:UTTypePDF];
+        return app && [[NSBundle bundleWithURL:app].bundleIdentifier isEqualToString:me];
+    }
+    CFStringRef handler = LSCopyDefaultRoleHandlerForContentType((__bridge CFStringRef)kPdfType, kLSRolesAll);
+    bool isMe = handler && [(__bridge NSString*)handler caseInsensitiveCompare:me] == NSOrderedSame;
+    if (handler) {
+        CFRelease(handler);
+    }
+    return isMe;
+}
+
+// macOS may ask the user to confirm
+void MacMakeDefaultPdfReader() {
+    if (@available(macOS 12.0, *)) {
+        [[NSWorkspace sharedWorkspace] setDefaultApplicationAtURL:NSBundle.mainBundle.bundleURL
+                                                toOpenContentType:UTTypePDF
+                                                completionHandler:^(NSError* err) {
+                                                  if (err) {
+                                                      logf("MacMakeDefaultPdfReader: %s\n",
+                                                           Str((char*)err.localizedDescription.UTF8String));
+                                                  }
+                                                }];
+        return;
+    }
+    LSSetDefaultRoleHandlerForContentType((__bridge CFStringRef)kPdfType, kLSRolesAll,
+                                          (__bridge CFStringRef)NSBundle.mainBundle.bundleIdentifier);
+}
+
+// --- the running instance ---------------------------------------------------
+
+// A command line started while SumatraPDF runs hands its files to it (orig's
+// ReuseInstance) as DDE commands sent to this port. The reply is the running
+// instance's pid, so the sender can bring it to the front.
+static NSString* const kInstancePortName = @"org.sumatrapdfreader.SumatraPDF.instance";
+static void (*gOnInstanceCmds)(Str) = nullptr;
+static CFMessagePortRef gInstancePort = nullptr;
+
+static CFDataRef OnInstanceMessage(CFMessagePortRef, SInt32, CFDataRef data, void*) {
+    if (data && gOnInstanceCmds) {
+        gOnInstanceCmds(Str((char*)CFDataGetBytePtr(data), (int)CFDataGetLength(data)));
+    }
+    pid_t pid = getpid();
+    return CFDataCreate(nullptr, (const UInt8*)&pid, sizeof(pid));
+}
+
+// false when another instance has the port
+bool MacStartInstanceServer(void (*onCmds)(Str)) {
+    if (gInstancePort) {
+        return true;
+    }
+    CFMessagePortContext ctx{};
+    gInstancePort =
+        CFMessagePortCreateLocal(nullptr, (__bridge CFStringRef)kInstancePortName, OnInstanceMessage, &ctx, nullptr);
+    if (!gInstancePort) {
+        return false;
+    }
+    gOnInstanceCmds = onCmds;
+    CFRunLoopSourceRef src = CFMessagePortCreateRunLoopSource(nullptr, gInstancePort, 0);
+    CFRunLoopAddSource(CFRunLoopGetMain(), src, kCFRunLoopCommonModes);
+    CFRelease(src);
+    return true;
+}
+
+static void ActivateApp(pid_t pid) {
+    NSRunningApplication* app = [NSRunningApplication runningApplicationWithProcessIdentifier:pid];
+    if (!app.bundleURL) {
+        return;
+    }
+    // what `open -a` does: a launched process may not activate another app itself
+    NSWorkspaceOpenConfiguration* cfg = [NSWorkspaceOpenConfiguration configuration];
+    cfg.activates = YES;
+    dispatch_semaphore_t done = dispatch_semaphore_create(0);
+    [[NSWorkspace sharedWorkspace] openApplicationAtURL:app.bundleURL
+                                          configuration:cfg
+                                      completionHandler:^(NSRunningApplication*, NSError*) {
+                                        dispatch_semaphore_signal(done);
+                                      }];
+    constexpr int64_t kWaitSecs = 3;
+    dispatch_semaphore_wait(done, dispatch_time(DISPATCH_TIME_NOW, kWaitSecs * NSEC_PER_SEC));
+}
+
+// false when no instance runs or it doesn't answer
+bool MacSendToRunningInstance(Str cmds) {
+    CFMessagePortRef port = CFMessagePortCreateRemote(nullptr, (__bridge CFStringRef)kInstancePortName);
+    if (!port) {
+        return false;
+    }
+    constexpr CFTimeInterval kTimeoutSecs = 5;
+    CFDataRef data = CFDataCreate(nullptr, (const UInt8*)cmds.s, len(cmds));
+    CFDataRef reply = nullptr;
+    SInt32 res =
+        CFMessagePortSendRequest(port, 0, data, kTimeoutSecs, kTimeoutSecs, kCFRunLoopDefaultMode, &reply);
+    CFRelease(data);
+    CFRelease(port);
+    pid_t pid = 0;
+    bool ok = res == kCFMessagePortSuccess && reply && CFDataGetLength(reply) == sizeof(pid);
+    if (ok) {
+        memcpy(&pid, CFDataGetBytePtr(reply), sizeof(pid));
+    }
+    if (reply) {
+        CFRelease(reply);
+    }
+    if (ok) {
+        ActivateApp(pid);
+    }
+    return ok;
+}
+
+// "/Applications/SumatraPDF.app"
+TempStr MacAppBundlePathTemp() {
+    return str::DupTemp(Str((char*)NSBundle.mainBundle.bundlePath.fileSystemRepresentation));
 }

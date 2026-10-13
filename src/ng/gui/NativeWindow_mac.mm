@@ -9,6 +9,7 @@
 #pragma push_macro("defer")
 #undef defer
 #import <AppKit/AppKit.h>
+#import <CoreServices/CoreServices.h>
 #import <PDFKit/PDFKit.h>
 #pragma pop_macro("defer")
 #undef BOOL
@@ -17,7 +18,10 @@
 #include "base/UITask.h"
 #include "base/File.h"
 #include "SumatraPDF.h"
+#include "Commands.h"
+#include "WindowTab.h"
 #include "MainWindow.h"
+#include "ExternalViewers.h"
 #include "Theme.h"
 #include "Translations.h"
 #include "Version.h"
@@ -157,6 +161,199 @@ static NSMenuItem* StdMenuItem(Str title, SEL action, NSString* key, NSEventModi
     return item;
 }
 
+// --- File > Open With and Share ----------------------------------------------
+
+// the file shown in the window the user works in; nil for none
+static NSURL* KeyDocURL() {
+    MainWindow* win = MainWindowFor([NSApp keyWindow] ?: [NSApp mainWindow]);
+    if (!win && len(gWindows) > 0) {
+        win = gWindows[0];
+    }
+    WindowTab* tab = win ? win->CurrentTab() : nullptr;
+    // a file on disk, as Send by Email needs
+    if (!tab || !CanSendAsEmailAttachment(tab)) {
+        return nil;
+    }
+    return [NSURL fileURLWithPath:ToNSString(tab->filePath)];
+}
+
+static NSImage* MenuIcon(NSImage* img) {
+    constexpr CGFloat kIconDx = 16;
+    NSImage* icon = [img copy];
+    icon.size = NSMakeSize(kIconDx, kIconDx);
+    return icon;
+}
+
+// the apps Finder's Open With offers for the file
+static NSArray<NSURL*>* AppsForDoc(NSURL* doc) {
+    if (@available(macOS 12.0, *)) {
+        return [[NSWorkspace sharedWorkspace] URLsForApplicationsToOpenURL:doc];
+    }
+    CFArrayRef apps = LSCopyApplicationURLsForURL((__bridge CFURLRef)doc, kLSRolesAll);
+    return apps ? (__bridge_transfer NSArray<NSURL*>*)apps : @[];
+}
+
+static NSString* AppName(NSURL* app) {
+    NSString* name = [[NSFileManager defaultManager] displayNameAtPath:app.path];
+    if ([name.pathExtension isEqualToString:@"app"]) {
+        name = name.stringByDeletingPathExtension;
+    }
+    return name;
+}
+
+// Finder's File > Open With and Share, filled when they open: they depend on
+// the current document. Not gpui menu rows, whose commands are fixed.
+@interface SumatraFileMenus : NSObject <NSMenuDelegate>
+@property(strong) NSURL* doc;
+@end
+
+@implementation SumatraFileMenus
+- (MacObjcBool)menuHasKeyEquivalent:(NSMenu*)menu
+                           forEvent:(NSEvent*)event
+                             target:(__autoreleasing id*)target
+                             action:(SEL*)action {
+    // without this AppKit fills the menu to look for one on every key press
+    return NO;
+}
+
+- (void)menuNeedsUpdate:(NSMenu*)menu {
+    [menu removeAllItems];
+    self.doc = KeyDocURL();
+    if (!self.doc) {
+        return;
+    }
+    if ([menu.identifier isEqualToString:@"sumatra-open-with"]) {
+        [self fillOpenWith:menu];
+    } else {
+        [self fillShare:menu];
+    }
+}
+
+// the default app first, as Finder has it, then the others by name
+- (void)fillOpenWith:(NSMenu*)menu {
+    NSWorkspace* ws = [NSWorkspace sharedWorkspace];
+    NSURL* def = [ws URLForApplicationToOpenURL:self.doc];
+    NSString* me = NSBundle.mainBundle.bundleIdentifier;
+    NSMutableArray<NSMenuItem*>* others = [NSMutableArray array];
+    NSMenuItem* defItem = nil;
+    for (NSURL* app in AppsForDoc(self.doc)) {
+        if ([[NSBundle bundleWithURL:app].bundleIdentifier isEqualToString:me]) {
+            continue;
+        }
+        bool isDef = def && [app.URLByStandardizingPath isEqual:def.URLByStandardizingPath];
+        NSString* title = AppName(app);
+        if (isDef) {
+            title = [NSString stringWithFormat:@"%@ %@", title, ToNSString(Tr("(default)"))];
+        }
+        NSMenuItem* item = [[NSMenuItem alloc] initWithTitle:title action:@selector(openWith:) keyEquivalent:@""];
+        item.target = self;
+        item.representedObject = app;
+        item.image = MenuIcon([ws iconForFile:app.path]);
+        if (isDef && !defItem) {
+            defItem = item;
+        } else {
+            [others addObject:item];
+        }
+    }
+    [others sortUsingComparator:^NSComparisonResult(NSMenuItem* a, NSMenuItem* b) {
+      return [a.title localizedStandardCompare:b.title];
+    }];
+    if (defItem) {
+        [menu addItem:defItem];
+        if (others.count > 0) {
+            [menu addItem:[NSMenuItem separatorItem]];
+        }
+    }
+    for (NSMenuItem* item in others) {
+        [menu addItem:item];
+    }
+    if (menu.numberOfItems > 0) {
+        [menu addItem:[NSMenuItem separatorItem]];
+    }
+    NSMenuItem* other = StdMenuItem(Tr("Other..."), @selector(openWithOther:), @"", 0);
+    other.target = self;
+    [menu addItem:other];
+}
+
+- (void)fillShare:(NSMenu*)menu {
+    for (NSSharingService* service in [NSSharingService sharingServicesForItems:@[ self.doc ]]) {
+        NSMenuItem* item = [[NSMenuItem alloc] initWithTitle:service.menuItemTitle
+                                                      action:@selector(share:)
+                                               keyEquivalent:@""];
+        item.target = self;
+        item.representedObject = service;
+        item.image = MenuIcon(service.image);
+        [menu addItem:item];
+    }
+}
+
+- (void)openDoc:(NSURL*)doc withApp:(NSURL*)app {
+    [[NSWorkspace sharedWorkspace] openURLs:@[ doc ]
+                       withApplicationAtURL:app
+                              configuration:[NSWorkspaceOpenConfiguration configuration]
+                          completionHandler:nil];
+}
+
+- (void)openWith:(NSMenuItem*)item {
+    [self openDoc:self.doc withApp:item.representedObject];
+}
+
+// Finder's Other...: any app from Applications
+- (void)openWithOther:(NSMenuItem*)item {
+    NSURL* doc = self.doc;
+    NSOpenPanel* panel = [NSOpenPanel openPanel];
+    panel.directoryURL = [NSURL fileURLWithPath:@"/Applications"];
+    panel.allowedFileTypes = @[ @"app" ];
+    panel.treatsFilePackagesAsDirectories = NO;
+    if ([panel runModal] == NSModalResponseOK && panel.URL) {
+        [self openDoc:doc withApp:panel.URL];
+    }
+}
+
+- (void)share:(NSMenuItem*)item {
+    NSSharingService* service = item.representedObject;
+    [service performWithItems:@[ self.doc ]];
+}
+@end
+
+static SumatraFileMenus* gFileMenus = nil;
+
+static NSMenuItem* FileSubmenuItem(Str title, NSString* identifier) {
+    if (!gFileMenus) {
+        gFileMenus = [[SumatraFileMenus alloc] init];
+    }
+    NSMenuItem* item = StdMenuItem(title, nil, @"", 0);
+    NSMenu* sub = [[NSMenu alloc] initWithTitle:item.title];
+    sub.identifier = identifier;
+    sub.delegate = gFileMenus;
+    item.submenu = sub;
+    return item;
+}
+
+// before Send by Email, as enabled as it: both need a file on disk
+static void AddOpenWithAndShare(NSMenu* file) {
+    for (NSMenuItem* item in file.itemArray) {
+        if ([item.submenu.identifier isEqualToString:@"sumatra-open-with"]) {
+            return;
+        }
+    }
+    for (NSInteger i = 0; i < file.numberOfItems; i++) {
+        NSMenuItem* email = [file itemAtIndex:i];
+        uint32_t action = 0;
+        int64_t cmd = 0;
+        if (email.submenu || !gp::AppMenuRowForId((int)email.tag, &action, &cmd) || cmd != CmdSendByEmail) {
+            continue;
+        }
+        NSMenuItem* openWith = FileSubmenuItem(Tr("Open With"), @"sumatra-open-with");
+        NSMenuItem* share = FileSubmenuItem(Tr("Share"), @"sumatra-share");
+        openWith.enabled = email.enabled;
+        share.enabled = email.enabled;
+        [file insertItem:openWith atIndex:i];
+        [file insertItem:share atIndex:i + 1];
+        return;
+    }
+}
+
 // What every Mac app has and gpui's menu bar, built from the app's menu model,
 // leaves out: Services and Hide in the app menu, the Edit menu, Minimize and
 // Bring All to Front in the Window menu, which gpui finds by its English title,
@@ -185,6 +382,10 @@ void AppShellMacFinishMenus() {
             [appMenu insertItem:items[i] atIndex:(NSInteger)(2 + i)];
         }
         [appMenu insertItem:[NSMenuItem separatorItem] atIndex:1];
+    }
+
+    if (bar.numberOfItems > 1) {
+        AddOpenWithAndShare([bar itemAtIndex:1].submenu);
     }
 
     // AppKit's own text fields (the save, open and print panels) cut, copy and

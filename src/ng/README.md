@@ -78,8 +78,8 @@ original app.
 
 `mac-daily.yml` builds debug and release and runs the base unit tests.
 `mac-app.yml` (manual) builds `SumatraPDF-mac.dmg`, publishes it as a GitHub
-release with `update-check-mac.txt` (what Check for Updates reads) and takes
-screenshots of the app.
+release with `update-check-mac.txt` (what Check for Updates reads: the version,
+the dmg and its SHA-256) and takes screenshots of the app.
 
 ## macOS integration
 
@@ -118,6 +118,20 @@ AppKit code lives in `*_mac.mm` files, mostly `gui/NativeWindow_mac.mm`:
 - the Home page lists recent files with Finder's icon for their type
 - File > Open Recent and Show in Finder; About, Settings and Quit only in the
   app menu
+- File > Open With lists the apps Finder offers for the document, Share the
+  sharing services (AirDrop, Mail, Messages...); Send by Email goes through the
+  mail sharing service. Orig's Open in Acrobat / Foxit / ... rows look for
+  Windows programs and never show
+- Settings can make SumatraPDF the default PDF reader
+- `InfoPlist.strings` in every language (`translations/infoplist.txt`) tell
+  why macOS asks for the local network: the print panel looks for printers
+- a command line naming files hands them to the SumatraPDF already running
+  (`-reuse-instance`, the ReuseInstance setting, `-forward-search`), so a LaTeX
+  editor's forward search lands in the open window
+- Check for Updates downloads the release's dmg, checks its SHA-256 and
+  installs it over the app, which restarts. A copy it can't replace (run from
+  the dmg, translocated by Gatekeeper, a folder it can't write) gets the
+  download page
 - tabs sit in the title bar beside the traffic lights
 - one universal app for Apple Silicon and Intel, macOS 11 or later
 

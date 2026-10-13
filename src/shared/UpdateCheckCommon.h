@@ -22,12 +22,17 @@ struct UpdateInfo {
     Str builtOn; // optional "yyyy-mm-dd" from the update-check file
     // optional, where the browser gets this build when we can't install it (ng)
     Str downloadPage;
+    // optional, the dmg the app installs itself and its SHA-256 in hex (ng)
+    Str dmgUrl;
+    Str dmgSha256;
 
     UpdateInfo() = default;
     ~UpdateInfo() {
         str::Free(latestVer);
         str::Free(builtOn);
         str::Free(downloadPage);
+        str::Free(dmgUrl);
+        str::Free(dmgSha256);
     }
 };
 
