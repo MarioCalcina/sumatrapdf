@@ -186,7 +186,7 @@ static int CollectKbSections(KeyboardHelpDataSource* ds, KbSection* sections) {
         if (len(sec.keys) == 0) {
             continue;
         }
-        sec.title = str::DupTemp(ds->Translate(Str(definition.title)));
+        sec.title = str::DupTemp(ds->Translate(definition.title));
         sec.column = definition.column;
         n++;
     }

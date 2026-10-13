@@ -53,16 +53,16 @@ static const int kSecIface[] = {
 // clang-format on
 
 struct KbSectionDef {
-    const char* title;
+    Str title;
     const int* commands;
     int column; // which of the two columns this section is laid out in
 };
 // column 0 (left): Navigation, Interface, Find & Select
 // column 1 (right): View & Zoom, Document, Tabs, Annotations
 static const KbSectionDef kSections[] = {
-    {"Navigation", kSecNav, 0},    {"View & Zoom", kSecView, 1},   {"Interface", kSecIface, 0},
-    {"Document", kSecDoc, 1},      {"Find & Select", kSecFind, 0}, {"Tabs", kSecTabs, 1},
-    {"Annotations", kSecAnnot, 1},
+    {TrN("Navigation"), kSecNav, 0},    {TrN("View & Zoom"), kSecView, 1},   {TrN("Interface"), kSecIface, 0},
+    {TrN("Document"), kSecDoc, 1},      {TrN("Find & Select"), kSecFind, 0}, {TrN("Tabs"), kSecTabs, 1},
+    {TrN("Annotations"), kSecAnnot, 1},
 };
 bool IsHelpListedCmd(int cmdId);
 // fallback shortcuts for platforms without an accelerator table (the Windows

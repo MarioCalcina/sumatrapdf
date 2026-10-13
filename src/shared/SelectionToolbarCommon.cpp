@@ -27,12 +27,12 @@
 // GetCommandVisibility (hidden buttons are dropped, disabled ones grayed)
 static const SelectionToolbarButton gCandidateButtons[] = {
     {CmdCopySelection, TrN("Copy to clipboard"), {}, Str(gIconCopy)},
-    {CmdTranslateSelection, StrL("Translate"), {}, Str(gIconTranslate)},
-    {CmdReadAloudSelection, StrL("Read Aloud"), {}, Str(gIconSpeak)},
-    {CmdCreateAnnotHighlight, StrL("Highlight"), {}, Str(gIconAnnotHighlight)},
-    {CmdCreateAnnotUnderline, StrL("Underline"), {}, Str(gIconAnnotUnderline)},
-    {CmdCreateAnnotSquiggly, StrL("Squiggly"), {}, Str(gIconAnnotSquiggly)},
-    {CmdCreateAnnotStrikeOut, StrL("Strike Out"), {}, Str(gIconAnnotStrikeOut)},
+    {CmdTranslateSelection, TrN("Translate"), {}, Str(gIconTranslate)},
+    {CmdReadAloudSelection, TrN("Read Aloud"), {}, Str(gIconSpeak)},
+    {CmdCreateAnnotHighlight, TrN("Highlight"), {}, Str(gIconAnnotHighlight)},
+    {CmdCreateAnnotUnderline, TrN("Underline"), {}, Str(gIconAnnotUnderline)},
+    {CmdCreateAnnotSquiggly, TrN("Squiggly"), {}, Str(gIconAnnotSquiggly)},
+    {CmdCreateAnnotStrikeOut, TrN("Strike Out"), {}, Str(gIconAnnotStrikeOut)},
     {CmdCreateAnnotText, TrN("Add text annotation"), {}, Str(gIconAnnotText)},
 };
 

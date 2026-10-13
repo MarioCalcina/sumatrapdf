@@ -96,3 +96,6 @@ AppKit code lives in `*_mac.mm` files, mostly `gui/NativeWindow_mac.mm`:
 - Print opens the macOS print panel (PDFKit) on the PDF itself, or on a
   rendered one for a selection, a rotation or unsaved annotations
 - tabs sit in the title bar beside the traffic lights
+
+gpui gap: a text field's context menu (Cut, Copy, Paste, Select All) is
+gpui's and stays English.

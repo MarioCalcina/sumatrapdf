@@ -160,7 +160,7 @@ static TempStr CustomCommandToolbarToolTipTemp(CustomCommand* cmd, Str fallback)
     if (!str::IsEmptyOrWhiteSpace(fallback)) {
         return fallback;
     }
-    return StrL("External Viewer");
+    return Tr("External Viewer");
 }
 
 void PopulateCustomToolbarButtons() {

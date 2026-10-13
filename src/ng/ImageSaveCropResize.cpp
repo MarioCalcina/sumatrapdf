@@ -767,7 +767,7 @@ static void DoSave() {
 
     if (writeOriginal) {
         if (!file::WriteFile(dest, w.originalData)) {
-            MessageBoxWarning(w.win, HostTr(StrL("Failed to save image")), StrL("Save Image"));
+            MessageBoxWarning(w.win, HostTr(StrL("Failed to save image")), HostTr(StrL("Save Image")));
             return;
         }
         FinishSave(dest);
@@ -792,7 +792,7 @@ static void DoSave() {
         result = owned;
     }
     if (!result) {
-        MessageBoxWarning(w.win, HostTr(StrL("Failed to save image")), StrL("Save Image"));
+        MessageBoxWarning(w.win, HostTr(StrL("Failed to save image")), HostTr(StrL("Save Image")));
         return;
     }
 
@@ -804,7 +804,7 @@ static void DoSave() {
     }
     FreePixmap(owned);
     if (!saved) {
-        MessageBoxWarning(w.win, HostTr(StrL("Failed to save image")), StrL("Save Image"));
+        MessageBoxWarning(w.win, HostTr(StrL("Failed to save image")), HostTr(StrL("Save Image")));
         return;
     }
     FinishSave(dest);
@@ -1048,7 +1048,7 @@ void ImageEditView::OnCopy(ImageEditView*, gp::Ctx* cx, const gp::ClickEvent*) {
     }
     bool ok = ImageEditCopyToClipboard(px);
     FreePixmap(owned);
-    str::ReplaceWithCopy(&w.statusMsg, ok ? StrL("Copied to clipboard") : StrL("Copy failed"));
+    str::ReplaceWithCopy(&w.statusMsg, ok ? HostTr(StrL("Copied to clipboard")) : HostTr(StrL("Copy failed")));
     w.statusMs = 0;
     gp::Notify(cx);
     AppShellInvalidate(w.win);

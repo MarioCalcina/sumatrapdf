@@ -1251,11 +1251,11 @@ MenuDef menuDefContextToc[] = {
     },
     // note: strings cannot be "" or else items are not there
     {
-        StrL("Add to favorites"),
+        TrN("Add to favorites"),
         CmdFavoriteAdd,
     },
     {
-        StrL("Remove from favorites"),
+        TrN("Remove from favorites"),
         CmdFavoriteDel,
     },
     {

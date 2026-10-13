@@ -8,10 +8,16 @@
 es:%s: restaurar valor predeterminado
 :About %s
 es:Acerca de %s
+:Agent is working...
+es:El agente está trabajando...
 :Approval signature
 es:Firma de aprobación
+:Ask about this document...
+es:Pregunta sobre este documento...
 :Auto-Rotate Wide Pages
 es:Girar automáticamente las páginas anchas
+:Bottom
+es:Parte inferior
 :Bring All to Front
 es:Traer todo al frente
 :Certify: form filling and signing allowed
@@ -20,18 +26,56 @@ es:Certificar: se permite rellenar formularios y firmar
 es:Certificar: se permite rellenar formularios, firmar y anotar
 :Certify: no changes allowed
 es:Certificar: no se permiten cambios
+:Copied to clipboard
+es:Copiado al portapapeles
+:Copy failed
+es:Error al copiar
 :Del restore default
 es:Supr restaurar valor predeterminado
+:Document
+es:Documento
+:External Viewer
+es:Visor externo
+:Failed to bake PDF file.
+es:Error al aplanar el archivo PDF.
+:Failed to compress PDF file.
+es:Error al comprimir el archivo PDF.
+:Failed to convert PDF to images.
+es:Error al convertir el PDF en imágenes.
+:Failed to decompress PDF file.
+es:Error al descomprimir el archivo PDF.
+:Failed to decrypt PDF file.
+es:Error al descifrar el archivo PDF.
+:Failed to delete pages from PDF file.
+es:Error al eliminar páginas del archivo PDF.
+:Failed to encrypt PDF file.
+es:Error al cifrar el archivo PDF.
+:Failed to extract pages from PDF file.
+es:Error al extraer páginas del archivo PDF.
+:Failed to extract text.
+es:Error al extraer el texto.
+:Failed to read annotations from PDF file.
+es:Error al leer las anotaciones del archivo PDF.
 :Failed to save image
 es:Error al guardar la imagen
 :Failed to save the screenshot
 es:Error al guardar la captura de pantalla
+:Failed to save the selection as an image.
+es:Error al guardar la selección como imagen.
 :File %s already exists. Overwrite?
 es:El archivo %s ya existe. ¿Sobrescribirlo?
+:Find & Select
+es:Buscar y seleccionar
 :Hide %s
 es:Ocultar %s
 :Hide Others
 es:Ocultar otros
+:Highlight
+es:Resaltar
+:Interface
+es:Interfaz
+:Left Edge
+es:Borde izquierdo
 :Lock document after signing (last signer)
 es:Bloquear el documento tras firmar (último firmante)
 :Lock form &fields after signing
@@ -46,20 +90,48 @@ es:Navegar historial
 es:Navegar tabla de contenidos
 :Navigate Tabs
 es:Navegar pestañas
+:Navigation
+es:Navegación
+:No pages with annotations in the selected range.
+es:No hay páginas con anotaciones en el rango seleccionado.
 :No result found
 es:No se ha encontrado ningún resultado
+:Not available for this file type
+es:No disponible para este tipo de archivo
 :Nothing to take a screenshot of
 es:No hay nada que capturar
+:Page Down
+es:Página abajo
+:Page Left
+es:Página a la izquierda
+:Page Right
+es:Página a la derecha
+:Page Up
+es:Página arriba
 :Quick Edit Settings
 es:Edición rápida de la configuración
 :Quit %s
 es:Salir de %s
+:Remove from favorites
+es:Eliminar de favoritos
 :Resolution (DPI):
 es:Resolución (PPP):
+:Right Edge
+es:Borde derecho
 :Save Image
 es:Guardar imagen
 :Saved screenshot to '%s'
 es:Captura de pantalla guardada en '%s'
+:Scroll Down
+es:Desplazar hacia abajo
+:Scroll Here
+es:Desplazar aquí
+:Scroll Left
+es:Desplazar a la izquierda
+:Scroll Right
+es:Desplazar a la derecha
+:Scroll Up
+es:Desplazar hacia arriba
 :Search syntax
 es:Sintaxis de búsqueda
 :Services
@@ -72,7 +144,25 @@ es:Mostrar la nota de la anotación seleccionada
 es:&Tipo de firma:
 :Signing this way locks the document: no further changes or signatures will be possible. Continue?
 es:Firmar de esta forma bloquea el documento: no se podrán hacer más cambios ni añadir firmas. ¿Continuar?
+:Squiggly
+es:Ondulado
+:Strike Out
+es:Tachar
+:System default
+es:Predeterminada del sistema
+:Tabs
+es:Pestañas
 :Toggle Auto-Rotate Wide Pages
 es:Alternar giro automático de páginas anchas
+:Top
+es:Parte superior
+:Translate
+es:Traducir
+:Underline
+es:Subrayar
+:Unsupported image format.
+es:Formato de imagen no compatible.
+:View & Zoom
+es:Vista y zoom
 :Window
 es:Ventana

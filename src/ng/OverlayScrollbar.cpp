@@ -688,16 +688,16 @@ static gpc::PopupMenu* BuildScrollbarMenu(gp::Ctx* cx, OverlayScrollbar* sb, Str
         int64_t arg = (int64_t)(vert ? vertMsg : horzMsg);
         menu->Menu(vert ? vertLabel : horzLabel)->OnClick(gp::ListenTo(view, &ScrollbarView::OnMenu, arg));
     };
-    menu->Menu(GStrL("Scroll Here"))->OnClick(gp::ListenTo(view, &ScrollbarView::OnMenu, (int64_t)kScrollHere));
+    menu->Menu(ToGpui(Tr("Scroll Here")))->OnClick(gp::ListenTo(view, &ScrollbarView::OnMenu, (int64_t)kScrollHere));
     menu->Separator();
-    add(GStrL("Top"), GStrL("Left Edge"), ScrollMsg::Top, ScrollMsg::Left);
-    add(GStrL("Bottom"), GStrL("Right Edge"), ScrollMsg::Bottom, ScrollMsg::Right);
+    add(ToGpui(Tr("Top")), ToGpui(Tr("Left Edge")), ScrollMsg::Top, ScrollMsg::Left);
+    add(ToGpui(Tr("Bottom")), ToGpui(Tr("Right Edge")), ScrollMsg::Bottom, ScrollMsg::Right);
     menu->Separator();
-    add(GStrL("Page Up"), GStrL("Page Left"), ScrollMsg::PageUp, ScrollMsg::PageLeft);
-    add(GStrL("Page Down"), GStrL("Page Right"), ScrollMsg::PageDown, ScrollMsg::PageRight);
+    add(ToGpui(Tr("Page Up")), ToGpui(Tr("Page Left")), ScrollMsg::PageUp, ScrollMsg::PageLeft);
+    add(ToGpui(Tr("Page Down")), ToGpui(Tr("Page Right")), ScrollMsg::PageDown, ScrollMsg::PageRight);
     menu->Separator();
-    add(GStrL("Scroll Up"), GStrL("Scroll Left"), ScrollMsg::LineUp, ScrollMsg::LineLeft);
-    add(GStrL("Scroll Down"), GStrL("Scroll Right"), ScrollMsg::LineDown, ScrollMsg::LineRight);
+    add(ToGpui(Tr("Scroll Up")), ToGpui(Tr("Scroll Left")), ScrollMsg::LineUp, ScrollMsg::LineLeft);
+    add(ToGpui(Tr("Scroll Down")), ToGpui(Tr("Scroll Right")), ScrollMsg::LineDown, ScrollMsg::LineRight);
     return menu;
 }
 

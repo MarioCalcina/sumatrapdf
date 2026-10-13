@@ -986,11 +986,11 @@ gp::El* AIChatPanelBuild(MainWindow* win, gp::Ctx* cx) {
     bool working = AIChatIsWorking(win);
     bool enableInput = supported && !working;
     p->input->onChange = gp::ListenTo(gAIChatView, &AIChatView::OnInput);
-    gp::Str cue = GStrL("Ask about this document...");
+    gp::Str cue = ToGpui(Tr("Ask about this document..."));
     if (!supported) {
-        cue = GStrL("Not available for this file type");
+        cue = ToGpui(Tr("Not available for this file type"));
     } else if (working) {
-        cue = GStrL("Agent is working...");
+        cue = ToGpui(Tr("Agent is working..."));
     }
     gp::InputSetPlaceholder(p->input, cue);
 

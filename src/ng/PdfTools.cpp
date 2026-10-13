@@ -128,7 +128,7 @@ void FinishSaveSelImg(SaveSelImgWork* d) {
             LoadDocument(d->win, d->destPath);
         }
     } else {
-        MessageBoxWarning(winOk ? d->win : nullptr, StrL("Failed to save the selection as an image."),
+        MessageBoxWarning(winOk ? d->win : nullptr, Tr("Failed to save the selection as an image."),
                           Tr("Save Selection As Image"));
     }
     str::Free(d->destPath);
@@ -676,7 +676,7 @@ static void PdfBakeDoIt() {
     if (engine && EngineHasUnsavedAnnotations(engine)) {
         tmpPath = GetTempFilePathTemp(StrL("bake"));
         if (len(tmpPath) == 0 || !EngineMupdfSaveCopy(engine, tmpPath)) {
-            MessageBoxWarning(win, StrL("Failed to bake PDF file."), Tr("Bake PDF"));
+            MessageBoxWarning(win, Tr("Failed to bake PDF file."), Tr("Bake PDF"));
             return;
         }
         inputPath = tmpPath;
@@ -700,7 +700,7 @@ static void PdfBakeDoIt() {
         return;
     }
     logf("PdfBakeDoIt: pdfbake_main failed with %d\n", res);
-    MessageBoxWarning(win, StrL("Failed to bake PDF file."), Tr("Bake PDF"));
+    MessageBoxWarning(win, Tr("Failed to bake PDF file."), Tr("Bake PDF"));
 }
 
 static void PdfExtractTextDoIt() {
@@ -738,7 +738,7 @@ static void PdfExtractTextDoIt() {
         return;
     }
     logf("PdfExtractTextDoIt: failed to extract text, isPdf: %d\n", (int)isPdf);
-    MessageBoxWarning(win, StrL("Failed to extract text."), Tr("Extract Text"));
+    MessageBoxWarning(win, Tr("Failed to extract text."), Tr("Extract Text"));
 }
 
 static void PdfCleanDoIt(bool decompress) {
@@ -767,7 +767,7 @@ static void PdfCleanDoIt(bool decompress) {
         return;
     }
     logf("PdfCleanDoIt: pdfclean_main failed with %d\n", res);
-    Str msg = decompress ? StrL("Failed to decompress PDF file.") : StrL("Failed to compress PDF file.");
+    Str msg = decompress ? Tr("Failed to decompress PDF file.") : Tr("Failed to compress PDF file.");
     MessageBoxWarning(win, msg, decompress ? Tr("Decompress PDF") : Tr("Compress PDF"));
 }
 
@@ -792,11 +792,11 @@ static void PdfDeletePageDoIt() {
     EngineBase* sourceEngine = sourceTab ? sourceTab->GetEngine() : nullptr;
     if (isExtract && gTool.onlyWithAnnotations) {
         if (!sourceEngine || !KeepOnlyPagesWithAnnotations(sourceEngine, parsedPages)) {
-            MessageBoxWarning(win, StrL("Failed to read annotations from PDF file."), Tr("Extract Pages From PDF"));
+            MessageBoxWarning(win, Tr("Failed to read annotations from PDF file."), Tr("Extract Pages From PDF"));
             return;
         }
         if (len(parsedPages) == 0) {
-            MessageBoxWarning(win, StrL("No pages with annotations in the selected range."),
+            MessageBoxWarning(win, Tr("No pages with annotations in the selected range."),
                               Tr("Extract Pages From PDF"));
             return;
         }
@@ -820,7 +820,7 @@ static void PdfDeletePageDoIt() {
     if (isExtract && sourceEngine && EngineHasUnsavedAnnotations(sourceEngine)) {
         tmpPath = GetTempFilePathTemp(StrL("extract-pages"));
         if (len(tmpPath) == 0 || !EngineMupdfSaveCopy(sourceEngine, tmpPath)) {
-            MessageBoxWarning(win, StrL("Failed to extract pages from PDF file."), Tr("Extract Pages From PDF"));
+            MessageBoxWarning(win, Tr("Failed to extract pages from PDF file."), Tr("Extract Pages From PDF"));
             return;
         }
         inputPath = tmpPath;
@@ -846,8 +846,7 @@ static void PdfDeletePageDoIt() {
         return;
     }
     logf("PdfDeletePageDoIt: pdfclean_main failed with %d for %s\n", res, op);
-    Str msg =
-        isExtract ? StrL("Failed to extract pages from PDF file.") : StrL("Failed to delete pages from PDF file.");
+    Str msg = isExtract ? Tr("Failed to extract pages from PDF file.") : Tr("Failed to delete pages from PDF file.");
     Str title = isExtract ? Tr("Extract Pages From PDF") : Tr("Delete Pages From PDF");
     MessageBoxWarning(win, msg, title);
 }
@@ -879,7 +878,7 @@ static void PdfEncryptDoIt() {
         return;
     }
     logf("PdfEncryptDoIt: pdfclean_main failed with %d\n", res);
-    MessageBoxWarning(win, StrL("Failed to encrypt PDF file."), Tr("Encrypt PDF"));
+    MessageBoxWarning(win, Tr("Failed to encrypt PDF file."), Tr("Encrypt PDF"));
 }
 
 static void PdfDecryptDoIt() {
@@ -906,7 +905,7 @@ static void PdfDecryptDoIt() {
     }
     logf("PdfDecryptDoIt: pdfclean_main failed with %d, src: '%s', password len: %d\n", res, gTool.srcPath,
          len(gTool.password));
-    MessageBoxWarning(win, StrL("Failed to decrypt PDF file."), Tr("Decrypt PDF"));
+    MessageBoxWarning(win, Tr("Failed to decrypt PDF file."), Tr("Decrypt PDF"));
 }
 
 static void ConvertToPdfDoIt() {
@@ -945,7 +944,7 @@ static void ConvertPdfToImagesDoIt() {
     DisplayModel* dm = win ? win->AsFixed() : nullptr;
     EngineBase* engine = dm ? dm->GetEngine() : nullptr;
     if (!engine) {
-        MessageBoxWarning(win, StrL("Failed to convert PDF to images."), Tr("Convert PDF to Images"));
+        MessageBoxWarning(win, Tr("Failed to convert PDF to images."), Tr("Convert PDF to Images"));
         return;
     }
 
@@ -981,7 +980,7 @@ static void ConvertPdfToImagesDoIt() {
 
     if (nOk == 0) {
         str::Free(firstPath);
-        MessageBoxWarning(win, StrL("Failed to convert PDF to images."), Tr("Convert PDF to Images"));
+        MessageBoxWarning(win, Tr("Failed to convert PDF to images."), Tr("Convert PDF to Images"));
         return;
     }
     logf("ConvertPdfToImages: wrote %d of %d file(s)\n", nOk, len(pages));
@@ -1004,7 +1003,7 @@ static void SaveSelectionAsImageDoIt() {
     }
     TempStr withExt = WithDefaultImageExtTemp(destPath);
     if (len(withExt) == 0) {
-        MessageBoxWarning(win, StrL("Unsupported image format."), Tr("Save Selection As Image"));
+        MessageBoxWarning(win, Tr("Unsupported image format."), Tr("Save Selection As Image"));
         return;
     }
     int dpi = SelectedDpi();
@@ -1013,7 +1012,7 @@ static void SaveSelectionAsImageDoIt() {
     }
     Pixmap* px = RenderSelectionPixmap(engine, dm->GetRotation(), gTool.pageNo, gTool.selRect, (float)dpi);
     if (!px) {
-        MessageBoxWarning(win, StrL("Failed to save the selection as an image."), Tr("Save Selection As Image"));
+        MessageBoxWarning(win, Tr("Failed to save the selection as an image."), Tr("Save Selection As Image"));
         return;
     }
 
