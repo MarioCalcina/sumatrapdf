@@ -46,6 +46,8 @@ es:Edición rápida de la configuración
 es:Salir
 :Resolution (DPI):
 es:Resolución (PPP):
+:Save Image
+es:Guardar imagen
 :Saved screenshot to '%s'
 es:Captura de pantalla guardada en '%s'
 :Search syntax
