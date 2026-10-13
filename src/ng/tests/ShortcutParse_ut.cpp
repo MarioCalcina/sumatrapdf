@@ -104,12 +104,12 @@ bool ShortcutParse_UnitTestShiftedPunct() {
 #if OS_DARWIN
     // the menu bar's glyphs in every ui language, not orig's "<-" / "->"
     gShortcutLangCode = [] { return StrL("es"); };
-    utassert(AccelShowsAs(kCmd | kVirt, VK_LEFT, StrL("⌘←")));
-    utassert(AccelShowsAs(kShift | kCmd | kVirt, VK_RIGHT, StrL("⇧⌘→")));
-    utassert(AccelShowsAs(kVirt, VK_PRIOR, StrL("⇞")));
-    utassert(AccelShowsAs(kVirt, VK_NEXT, StrL("⇟")));
-    utassert(AccelShowsAs(kVirt, VK_HOME, StrL("↖")));
-    utassert(AccelShowsAs(kVirt, VK_END, StrL("↘")));
+    utassert(AccelShowsAs(kCmd | kVirt, VK_LEFT, StrL("\u2318\u2190")));
+    utassert(AccelShowsAs(kShift | kCmd | kVirt, VK_RIGHT, StrL("\u21e7\u2318\u2192")));
+    utassert(AccelShowsAs(kVirt, VK_PRIOR, StrL("\u21de")));
+    utassert(AccelShowsAs(kVirt, VK_NEXT, StrL("\u21df")));
+    utassert(AccelShowsAs(kVirt, VK_HOME, StrL("\u2196")));
+    utassert(AccelShowsAs(kVirt, VK_END, StrL("\u2198")));
 #endif
 
     gShortcutLangCode = prevLang;

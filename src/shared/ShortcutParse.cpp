@@ -157,17 +157,8 @@ static bool skipVirtKey(Str& s, Str key) {
 
 // used in menu shortcuts
 static TempStr getVirtTemp(u8 key, bool isEng) {
-    // over-rides for non-english languages
-    if (!isEng) {
-        switch (key) {
-            case VK_LEFT:
-                return StrL("<-");
-            case VK_RIGHT:
-                return StrL("->");
-        }
-    }
 #if OS_DARWIN
-    // the glyphs the menu bar draws for these keys
+    // the glyphs the menu bar draws for these keys, in every language
     switch (key) {
         case VK_LEFT:
             return StrL("\u2190");
@@ -187,8 +178,25 @@ static TempStr getVirtTemp(u8 key, bool isEng) {
             return StrL("\u21e5");
         case VK_ESCAPE:
             return StrL("\u238b");
+        case VK_PRIOR:
+            return StrL("\u21de");
+        case VK_NEXT:
+            return StrL("\u21df");
+        case VK_HOME:
+            return StrL("\u2196");
+        case VK_END:
+            return StrL("\u2198");
     }
 #endif
+    // over-rides for non-english languages
+    if (!isEng) {
+        switch (key) {
+            case VK_LEFT:
+                return StrL("<-");
+            case VK_RIGHT:
+                return StrL("->");
+        }
+    }
     return SeqStrNumStrByNumber(gVirtKeysNum, key);
 }
 
