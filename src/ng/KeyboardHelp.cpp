@@ -174,6 +174,10 @@ static int CollectKbSections(KeyboardHelpDataSource* ds, KbSection* sections) {
     for (const KbSectionDef& definition : kSections) {
         KbSection& sec = sections[n];
         for (const int* cmdId = definition.commands; *cmdId; cmdId++) {
+            // the macOS menu bar is the system's: F9 has nothing to hide
+            if (*cmdId == CmdToggleMenuBar && AppShellNativeMenu()) {
+                continue;
+            }
             TempStr k = ds->CommandShortcutTemp(*cmdId, 2);
             TempStr d = ds->CommandDescriptionTemp(*cmdId);
             // skip commands with no keyboard shortcut (e.g. un-bound by the user)

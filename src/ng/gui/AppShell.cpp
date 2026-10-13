@@ -1291,6 +1291,14 @@ static bool MenuContainsCmd(const MenuModel* menu, int cmdId) {
 static int FillMenuRows(gp::MenuRow* dst, const MenuModel* menu) {
     int n = 0;
     for (const MenuItemModel& it : menu->items) {
+        // the application menu has them (InstallNativeMenu), as macOS apps do
+        if (!it.submenu && (it.cmdId == CmdExit || it.cmdId == CmdHelpAbout || it.cmdId == CmdOptions)) {
+            continue;
+        }
+        // no separator first, last or after another (once those rows are gone)
+        if (it.separator && (n == 0 || dst[n - 1].separator)) {
+            continue;
+        }
         gp::MenuRow& row = dst[n++];
         if (it.separator) {
             row.separator = true;
@@ -1308,6 +1316,9 @@ static int FillMenuRows(gp::MenuRow* dst, const MenuModel* menu) {
         row.action = ActSumatraCmd();
         row.arg = it.cmdId;
         row.checked = it.checked;
+    }
+    if (n > 0 && dst[n - 1].separator) {
+        n--;
     }
     return n;
 }

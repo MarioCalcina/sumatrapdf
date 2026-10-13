@@ -484,7 +484,8 @@ AppCommandCtx NewAppCommandCtx(MainWindow* win, Point cursorPos) {
     ctx.tab = win->CurrentTab();
     ctx.isDocLoaded = win->IsDocLoaded();
     ctx.filePath = ctx.tab ? ctx.tab->filePath : Str();
-    ctx.allowToggleMenuBar = true;
+    // the macOS menu bar is the system's: F9 has nothing to hide
+    ctx.allowToggleMenuBar = !AppShellNativeMenu();
     ctx.hasOpenDocuments = HasOpenedDocuments(win);
     ctx.debugDpiOverrideAvailable = true;
 
