@@ -168,23 +168,31 @@ async function readExactly(s: Socket, n: number): Promise<Buffer> {
   const chunks: Buffer[] = [];
   let total = 0;
   while (total < n) {
-    const chunk = s.read(n - total) as Buffer | null;
-    if (chunk) {
-      chunks.push(chunk);
-      total += chunk.length;
+    // read(size) of a reply bigger than the stream buffer waits forever under
+    // Bun: take what arrived and give back the bytes past n
+    const chunk = s.read() as Buffer | null;
+    if (chunk && chunk.length > 0) {
+      const need = n - total;
+      if (chunk.length > need) s.unshift(chunk.subarray(need));
+      const part = chunk.subarray(0, need);
+      chunks.push(part);
+      total += part.length;
       continue;
     }
+    if (s.readableEnded || s.destroyed) throw new Error("control socket closed while reading");
     await new Promise<void>((resolve, reject) => {
-      const onReadable = () => {
-        s.off("error", onError);
-        resolve();
-      };
-      const onError = (e: Error) => {
+      const done = (e?: Error) => {
         s.off("readable", onReadable);
-        reject(e);
+        s.off("error", onError);
+        s.off("end", onEnd);
+        e ? reject(e) : resolve();
       };
+      const onReadable = () => done();
+      const onError = (e: Error) => done(e);
+      const onEnd = () => done(new Error("control socket closed while reading"));
       s.once("readable", onReadable);
       s.once("error", onError);
+      s.once("end", onEnd);
     });
   }
   return Buffer.concat(chunks);
