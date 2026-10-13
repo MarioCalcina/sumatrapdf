@@ -19,7 +19,7 @@ const commandsRaw = [
     "CmdCloseAllTabs", "Close All Tabs",
     "CmdSaveAs", "Save File As...",
     "CmdPrint", "Print Document...",
-    "CmdShowInFolder", "Show File In Folder...",
+    "CmdShowInFolder", "Show in Finder",
     "CmdRenameFile", "Rename File...",
     "CmdDeleteFile", "Delete File",
     "CmdExit", "Exit Application",

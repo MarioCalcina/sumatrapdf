@@ -38,6 +38,15 @@
 // The menus that are the same in orig and ng. An entry is a title and either a
 // command id or, cast to an integer, the table of its submenu.
 
+// a Mac app reveals a file in Finder
+#if OS_DARWIN
+#define kShowInFolderMenu TrN("Show in Finder")
+#define kShowInFolderCtx TrN("Show in Finder")
+#else
+#define kShowInFolderMenu TrN("Show in fo&lder")
+#define kShowInFolderCtx TrN("Show in folder")
+#endif
+
 // clang-format off
 //[ ACCESSKEY_GROUP File Open Menu
 MenuDef menuDefFileOpen[] = {
@@ -99,7 +108,7 @@ MenuDef menuDefFile[] = {
         CmdClose,
     },
     {
-        TrN("Show in fo&lder"),
+        kShowInFolderMenu,
         CmdShowInFolder,
     },
     {
@@ -1079,7 +1088,7 @@ MenuDef menuDefDocumentOperations[] = {
         CmdConvertPdfToImages,
     },
     {
-        TrN("Show in fo&lder"),
+        kShowInFolderMenu,
         CmdShowInFolder,
     },
     {
@@ -1096,7 +1105,7 @@ MenuDef menuDefContextStart[] = {
         CmdOpenSelectedDocument,
     },
     {
-        TrN("Show in folder"),
+        kShowInFolderCtx,
         CmdShowInFolder,
     },
     {
@@ -1147,7 +1156,7 @@ MenuDef menuDefContextTab[] = {
         CmdProperties,
     },
     {
-        TrN("Show in folder"),
+        kShowInFolderCtx,
         CmdShowInFolder,
     },
     {

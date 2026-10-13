@@ -5122,6 +5122,79 @@ lv:Rādīt visus
 co:Affissà tuttu
 fo:Vís alt
 sat:ᱡᱷᱚᱛᱚ ᱫᱮᱠᱷᱟᱣ ᱢᱮ
+:Show in Finder
+af:Wys in Finder
+am:Ցույց տալ Finder-ում
+ar:إظهار في Finder
+bg:Покажи във Finder
+bn:Finder-এ দেখান
+br:Mostrar no Finder
+bs:Prikaži u Finderu
+by:Паказаць у Finder
+ca-xv:Mostrar al Finder
+ca:Mostrar al Finder
+cn:在访达中显示
+cy:Dangos yn Finder
+cz:Zobrazit ve Finderu
+de:Im Finder anzeigen
+dk:Vis i Finder
+el:Εμφάνιση στο Finder
+es:Mostrar en Finder
+et:Kuva Finderis
+eu:Erakutsi Finder-en
+fa:نمایش در Finder
+fi:Näytä Finderissa
+fr:Afficher dans le Finder
+fy-nl:Toane yn Finder
+ga:Taispeáin in Finder
+gl:Amosar no Finder
+he:הצג ב-Finder
+hi:Finder में दिखाएँ
+hr:Prikaži u Finderu
+hu:Megjelenítés a Finderben
+id:Tampilkan di Finder
+it:Mostra nel Finder
+ja:Finderで表示
+ka:Finder-ში ჩვენება
+kr:Finder에서 보기
+kw:Diskwedhes yn Finder
+lt:Rodyti Finder
+mk:Прикажи во Finder
+ml:Finder-ൽ കാണിക്കുക
+mm:Finder တွင် ပြရန်
+my:Tunjukkan dalam Finder
+nl:Toon in Finder
+nn:Vis i Finder
+no:Vis i Finder
+pa:Finder ਵਿੱਚ ਦਿਖਾਓ
+pl:Pokaż w Finderze
+pt:Mostrar no Finder
+ro:Afișează în Finder
+ru:Показать в Finder
+si:Finder හි පෙන්වන්න
+sk:Zobraziť vo Finderi
+sl:Prikaži v Finderju
+sn:Ratidza muFinder
+sp-rs:Prikaži u Finderu
+sq:Shfaqe në Finder
+sr-rs:Прикажи у Finder-у
+sv:Visa i Finder
+ta:Finder இல் காட்டு
+th:แสดงใน Finder
+tl:Ipakita sa Finder
+tr:Finder'da Göster
+tw:在 Finder 中顯示
+uk:Показати у Finder
+uz:Finder’da ko‘rsatish
+vn:Hiển thị trong Finder
+ne:Finder मा देखाउनुहोस्
+az:Finder-də göstər
+ku:پیشاندان لە Finder
+jv:Tampilake ing Finder
+lv:Rādīt programmā Finder
+co:Affissà in Finder
+fo:Vís í Finder
+sat:Finder ᱨᱮ ᱫᱮᱠᱷᱟᱣ ᱢᱮ
 :Show the selected annotation's note
 af:Wys die nota van die gekose aantekening
 am:Ցույց տալ ընտրված ծանոթագրության նշումը

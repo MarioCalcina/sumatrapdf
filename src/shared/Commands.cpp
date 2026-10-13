@@ -24,7 +24,7 @@ const CommandInfo gCommands[] = {
     {CmdCloseAllTabs, "CmdCloseAllTabs\0", StrL("Close All Tabs")},
     {CmdSaveAs, "CmdSaveAs\0", StrL("Save File As...")},
     {CmdPrint, "CmdPrint\0", StrL("Print Document...")},
-    {CmdShowInFolder, "CmdShowInFolder\0", StrL("Show File In Folder...")},
+    {CmdShowInFolder, "CmdShowInFolder\0", StrL("Show in Finder")},
     {CmdRenameFile, "CmdRenameFile\0", StrL("Rename File...")},
     {CmdDeleteFile, "CmdDeleteFile\0", StrL("Delete File")},
     {CmdExit, "CmdExit\0", StrL("Exit Application")},
