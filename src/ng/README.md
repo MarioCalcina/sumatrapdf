@@ -47,6 +47,9 @@ macOS: `Ctrl` in a default becomes `Cmd`, except for switching tabs
 
 The Windows default keeps working where its key is still free (`F3`, `F11`,
 `Cmd + B`, `Cmd + 1`). Shortcuts are shown as the menu bar writes them (`⇧⌘G`).
+Keyboards that type `[` and `]` with Option (Spanish) can't reach the bracket
+shortcuts, so, as in Safari and Chrome, `Cmd + Left / Right` also go back /
+forward and `Cmd + Alt + Left / Right` switch tabs.
 
 Keys the app handles itself (dialogs, the command palette, lists) take `Cmd`
 where Windows takes `Ctrl` (`CtrlOrCmd()` in `gui/GpuiBridge.h`), and so do

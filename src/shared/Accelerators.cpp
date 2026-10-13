@@ -219,6 +219,11 @@ static Accel gPlatformAccelerators[] = {
     {{kShift | kCmd | kVirt, VK_OEM_6}, CmdNextTab},
     {{kCmd | kVirt, VK_OEM_4}, CmdNavigateBack},
     {{kCmd | kVirt, VK_OEM_6}, CmdNavigateForward},
+    // as in Safari and Chrome, for keyboards where [ ] need Option (Spanish)
+    {{kCmd | kVirt, VK_LEFT}, CmdNavigateBack},
+    {{kCmd | kVirt, VK_RIGHT}, CmdNavigateForward},
+    {{kAlt | kCmd | kVirt, VK_LEFT}, CmdPrevTab},
+    {{kAlt | kCmd | kVirt, VK_RIGHT}, CmdNextTab},
 
     {{kCmd | kVirt, VK_UP}, CmdGoToFirstPage},
     {{kCmd | kVirt, VK_DOWN}, CmdGoToLastPage},
