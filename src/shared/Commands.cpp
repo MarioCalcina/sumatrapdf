@@ -273,7 +273,7 @@ const CommandInfo gCommands[] = {
     {CmdDebugToggleDpiOverride, "CmdDebugToggleDpiOverride\0", StrL("Debug: Toggle DPI Override")},
     {CmdToggleImages, "CmdToggleImages\0", StrL("Toggle Show Images")},
     {CmdSelectTextViaKeyboard, "CmdSelectTextViaKeyboard\0", StrL("Select Text With Keyboard")},
-    {CmdOpenFileWithOSFilePicker, "CmdOpenFileWithOSFilePicker\0", StrL("Open File With Windows File Picker...")},
+    {CmdOpenFileWithOSFilePicker, "CmdOpenFileWithOSFilePicker\0", StrL("Open File With macOS File Picker...")},
     {CmdToggleFilePicker, "CmdToggleFilePicker\0", StrL("SumatraPDF File Picker")},
     {CmdToggleBoolSetting, "CmdToggleBoolSetting\0", StrL("Toggle Boolean Setting")},
     {CmdFixDefaultApp, "CmdFixDefaultApp\0", StrL("Fix Default App For Extension")},

@@ -55,7 +55,7 @@ constexpr int kAdvSettingsMinClientDx = 480;
 
 // the key that restores a setting's default, for the help line
 #if OS_DARWIN
-#define kRestoreDefaultKeyName "Cmd+Backspace"
+#define kRestoreDefaultKeyName "\u2318\u232b"
 #else
 #define kRestoreDefaultKeyName "Del"
 #endif

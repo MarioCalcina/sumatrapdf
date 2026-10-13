@@ -46,7 +46,11 @@ MenuDef menuDefFileOpen[] = {
         CmdOpenFile,
     },
     {
+#if OS_DARWIN
+        TrN("Open using &macOS File Picker..."),
+#else
         TrN("Open using &Windows File Picker..."),
+#endif
         CmdOpenFileWithOSFilePicker,
     },
     {

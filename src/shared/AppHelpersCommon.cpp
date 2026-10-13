@@ -54,7 +54,11 @@ Str ScrollbarModeDisplayName(int idx) {
     if (idx == kScrollbarHidden) {
         return Tr("Hidden");
     }
+#if OS_DARWIN
+    return StrL("macOS");
+#else
     return Tr("Windows");
+#endif
 }
 
 // list index of the match starting at (page, glyph), or -1 if there is none

@@ -1266,13 +1266,23 @@ struct AboutDims {
     RectF box;
 };
 
+// GetUserGuiFont() turns Windows pixels into CoreText points, 3/4 of them,
+// while gpui draws the About texts in pixels: measure them at their drawn size
+static int AboutFontSize(int px) {
+#if OS_DARWIN
+    return MulDiv(px, 96, 72);
+#else
+    return px;
+#endif
+}
+
 static void MeasureAbout(MainWindow* win, AboutDims& d) {
     int dpi = std::max(AppShellWindowDpi(win), 96);
     float toDip = 96.f / (float)dpi;
     auto scale = [dpi](int v) { return MulDiv(v, dpi, 96); };
-    PlatformFont* fontLogo = GetUserGuiFont(StrL("Arial Black"), scale(kSumatraTxtFontSize));
-    PlatformFont* fontLeft = GetUserGuiFont(Str(kLeftTextFont), scale(kLeftTextFontSize));
-    PlatformFont* fontRight = GetUserGuiFont(Str(kRightTextFont), scale(kRightTextFontSize));
+    PlatformFont* fontLogo = GetUserGuiFont(StrL("Arial Black"), scale(AboutFontSize(kSumatraTxtFontSize)));
+    PlatformFont* fontLeft = GetUserGuiFont(Str(kLeftTextFont), scale(AboutFontSize(kLeftTextFontSize)));
+    PlatformFont* fontRight = GetUserGuiFont(Str(kRightTextFont), scale(AboutFontSize(kRightTextFontSize)));
 
     Size logo = PlatformFontMeasureText(fontLogo, StrL(kAppName));
     int headerDx = logo.dx + 2 * scale(kInnerPadding);

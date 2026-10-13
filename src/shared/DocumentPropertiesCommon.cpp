@@ -413,6 +413,10 @@ static void AppendPropTranslated(str::Builder& out, DocProp prop, Str val) {
             break;
         }
     }
+    // mupdf's word for an unencrypted file
+    if (prop == DocProp::Encryption && str::Eq(val, StrL("None"))) {
+        val = Tr("None");
+    }
     if (len(s) > 0) {
         // found a display label (e.g. "Application:"); show its translation
         Str trans = trans::GetTranslation(s);

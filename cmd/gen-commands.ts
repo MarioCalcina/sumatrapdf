@@ -274,7 +274,7 @@ const commandsRaw = [
     "CmdDebugToggleDpiOverride", "Debug: Toggle DPI Override",
     "CmdToggleImages", "Toggle Show Images",
     "CmdSelectTextViaKeyboard", "Select Text With Keyboard",
-    "CmdOpenFileWithOSFilePicker", "Open File With Windows File Picker...",
+    "CmdOpenFileWithOSFilePicker", "Open File With macOS File Picker...",
     "CmdToggleFilePicker", "SumatraPDF File Picker",
     "CmdToggleBoolSetting", "Toggle Boolean Setting",
     "CmdFixDefaultApp", "Fix Default App For Extension",

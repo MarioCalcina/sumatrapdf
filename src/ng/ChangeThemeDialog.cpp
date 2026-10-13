@@ -40,7 +40,8 @@ static constexpr int kThemePreviewDebounceMs = 300;
 static constexpr float kThemeRowDy = 22;
 static constexpr float kThemeListMinDy = 180;
 static constexpr float kThemeListMaxDy = 320;
-static SeqStrings gDocumentColorsFollowThemeNames = "off\0smart\0legacy\0";
+// DocumentColorsFollowTheme values, shown in the ui language
+static const Str gDocumentColorsFollowThemeNames[] = {TrN("off"), TrN("smart"), TrN("legacy")};
 
 struct ChangeThemeDlg {
     MainWindow* win = nullptr;
@@ -491,8 +492,8 @@ void ShowThemeDialog(MainWindow* win, bool documentColorsFollowThemeOnly) {
     gChangeTheme.scrollY = 0;
     ScrollSelIntoView();
     StrVec modes;
-    for (int i = 0; i < 3; i++) {
-        modes.Append(SeqStrByIndex(gDocumentColorsFollowThemeNames, i));
+    for (Str name : gDocumentColorsFollowThemeNames) {
+        modes.Append(Tr(name));
     }
     gChangeTheme.ddFollow.Init(win->gpuiWin ? win->gpuiWin->app : nullptr);
     gChangeTheme.ddFollow.SetItems(modes, FollowThemeToIndex(gChangeTheme.startDocumentColorsFollowTheme));

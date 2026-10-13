@@ -1205,7 +1205,7 @@ static TempStr UpdateCommandNameTemp(MainWindow* win, int cmdId, Str s) {
     }
 
     if (isToggle) {
-        return str::JoinTemp(s, newIsOn ? StrL(": set to true") : StrL(": set to false"));
+        return str::JoinTemp(s, StrL(": "), newIsOn ? Tr("set to true") : Tr("set to false"));
     }
 
     // these cycle through values rather than on and off, so they name what
@@ -1215,7 +1215,7 @@ static TempStr UpdateCommandNameTemp(MainWindow* win, int cmdId, Str s) {
         if (tab && tab->IsDocLoaded()) {
             Str zoomName;
             ZoomToString(&zoomName, tab->NextToggleZoom(), nullptr);
-            TempStr res = str::JoinTemp(s, StrL(": switch to "), zoomName);
+            TempStr res = str::JoinTemp(s, StrL(": "), fmt(Tr("switch to %s").s, zoomName));
             str::Free(zoomName);
             return res;
         }
@@ -1224,15 +1224,18 @@ static TempStr UpdateCommandNameTemp(MainWindow* win, int cmdId, Str s) {
     // the cursor-position tip cycles pt -> mm -> in -> off
     if (cmdId == CmdToggleCursorPosition) {
         Str unit = NextCursorPositionUnitName(win);
+        if (str::Eq(unit, StrL("off"))) {
+            unit = Tr("off");
+        }
         if (len(unit) > 0) {
-            return str::JoinTemp(s, StrL(": switch to "), unit);
+            return str::JoinTemp(s, StrL(": "), fmt(Tr("switch to %s").s, unit));
         }
     }
 
     if (cmdId == CmdToggleLightDarkTheme) {
         Str target = ToggleLightDarkThemeTargetName();
         if (target) {
-            return str::JoinTemp(s, StrL(": switch to "), target);
+            return str::JoinTemp(s, StrL(": "), fmt(Tr("switch to %s").s, target));
         }
     }
 
@@ -1724,7 +1727,7 @@ void RunCommandPalette(MainWindow* win, Str prefix, int smartTabAdvance) {
 
     auto* s = new gp::InputState();
     s->focus = gp::FocusHandleNew(win->gpuiWin ? win->gpuiWin->app : nullptr);
-    gp::InputSetPlaceholder(s, GStrL("enter search term"));
+    gp::InputSetPlaceholder(s, ToGpui(Tr("enter search term")));
     gp::InputSetValue(s, ToGpui(prefix));
     wnd->editQuery = s;
     wnd->wantFocus = true;
@@ -2066,7 +2069,12 @@ static gp::El* BuildThumbnails(CommandPaletteWnd* wnd, gp::Ctx* cx, float listDx
 static gp::El* BuildSwitchRow(CommandPaletteWnd* wnd, gp::Ctx* cx) {
     const gp::Theme& th = gp::ThemeNow(cx->app);
     gp::El* row = gp::Div(cx->a)->FlexRow()->W(gp::kFill)->JustifyCenter()->ItemsCenter()->Gap(4)->Shrink0();
-    auto addSwitch = [&](Str label, int prefixIdx) {
+    auto addSwitch = [&](Str enLabel, int prefixIdx) {
+        // the key comes from the English label: a translation may drop it
+        // ("& Thumbnails" borrows "Thumbnails" for want of its own)
+        Str key = Str(enLabel.s, 1);
+        Str label = Tr(enLabel);
+        label = str::StartsWith(label, key) ? Str(label.s + 1, len(label) - 1) : str::JoinTemp(StrL(" "), label);
         gp::El* el = gp::Div(cx->a)
                          ->FlexRow()
                          ->ItemsCenter()
@@ -2078,26 +2086,26 @@ static gp::El* BuildSwitchRow(CommandPaletteWnd* wnd, gp::Ctx* cx) {
                          ->PathClick(GpuiDup(cx->a, fmt("palette-switch-%d", prefixIdx)))
                          ->OnClick(gp::ListenTo(gPaletteView, &PaletteView::OnSwitchClick, (intptr_t)prefixIdx));
         // the leading character is the prefix: draw it as a key cap, as orig does
-        el->Child(KeyCap(cx, gp::TextEl(cx->a, GpuiDup(cx->a, Str(label.s, 1)))->Font(12)->Fg(th.foreground)));
-        el->Child(gp::TextEl(cx->a, GpuiDup(cx->a, Str(label.s + 1, len(label) - 1)))->Font(12)->Fg(th.mutedFg));
+        el->Child(KeyCap(cx, gp::TextEl(cx->a, GpuiDup(cx->a, key))->Font(12)->Fg(th.foreground)));
+        el->Child(gp::TextEl(cx->a, GpuiDup(cx->a, label))->Font(12)->Fg(th.mutedFg));
         row->Child(el);
     };
-    addSwitch(Tr("> Commands"), 0);
-    addSwitch(Tr("@ Tabs"), 1);
-    addSwitch(Tr("# History"), 2);
+    addSwitch(TrN("> Commands"), 0);
+    addSwitch(TrN("@ Tabs"), 1);
+    addSwitch(TrN("# History"), 2);
     if (len(wnd->favorites) > 0) {
-        addSwitch(Tr("$ Favorites"), 3);
+        addSwitch(TrN("$ Favorites"), 3);
     }
     if (len(wnd->toc) > 0) {
-        addSwitch(Tr("% TOC"), 4);
+        addSwitch(TrN("% TOC"), 4);
     }
     if (wnd->win->AsFixed()) {
-        addSwitch(Tr("& Thumbnails"), 5);
+        addSwitch(TrN("& Thumbnails"), 5);
     }
     if (len(wnd->annotations) > 0) {
-        addSwitch(Tr("* Annotations"), 6);
+        addSwitch(TrN("* Annotations"), 6);
     }
-    addSwitch(Tr("= Settings"), 7);
+    addSwitch(TrN("= Settings"), 7);
     return row;
 }
 
