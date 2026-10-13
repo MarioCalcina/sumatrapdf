@@ -101,6 +101,17 @@ bool ShortcutParse_UnitTestShiftedPunct() {
     utassert(ParseShortcutString(StrL("Ctrl + '"), a));
     utassert(a.vk == VK_OEM_7 && a.Mods() == (kCtrl | kVirt));
 
+#if OS_DARWIN
+    // the menu bar's glyphs in every ui language, not orig's "<-" / "->"
+    gShortcutLangCode = [] { return StrL("es"); };
+    utassert(AccelShowsAs(kCmd | kVirt, VK_LEFT, StrL("⌘←")));
+    utassert(AccelShowsAs(kShift | kCmd | kVirt, VK_RIGHT, StrL("⇧⌘→")));
+    utassert(AccelShowsAs(kVirt, VK_PRIOR, StrL("⇞")));
+    utassert(AccelShowsAs(kVirt, VK_NEXT, StrL("⇟")));
+    utassert(AccelShowsAs(kVirt, VK_HOME, StrL("↖")));
+    utassert(AccelShowsAs(kVirt, VK_END, StrL("↘")));
+#endif
+
     gShortcutLangCode = prevLang;
     return true;
 }
