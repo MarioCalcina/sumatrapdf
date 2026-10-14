@@ -476,9 +476,7 @@ static Str themesTxt = StrL(R"(Themes [
 )");
 
 extern void UpdateAfterThemeChange();
-extern void ThemeStartPlatformColors();
 extern void ThemeApplyPlatformColors();
-extern void ThemeFinishPlatformColors();
 
 int gFirstSetThemeCmdId;
 int gLastSetThemeCmdId;
@@ -586,14 +584,12 @@ void SetThemeByIndex(int themeIdx) {
     gCurrentTheme = (*gThemes)[gCurrThemeIndex];
     str::ReplaceWithCopy(&gSettings->theme, gCurrentTheme->name);
     RememberLastLightDarkTheme();
-    ThemeStartPlatformColors();
     // always, not only when the theme changed: the same theme can resolve to
     // different colors (the System theme, high contrast, a settings edit)
     ThemeApplyPlatformColors();
     if (themeChanged) {
         UpdateAfterThemeChange();
     }
-    ThemeFinishPlatformColors();
 };
 
 // Map removed / renamed themes so existing settings keep working.
@@ -992,10 +988,7 @@ Color ThemeNotificationsProgressColor() {
 }
 
 bool ThemeColorizeControls() {
-    if (gCurrentTheme->colorizeControls) {
-        return true;
-    }
-    return !IsMenuFontSizeDefault();
+    return gCurrentTheme->colorizeControls;
 }
 
 // macOS light-mode defaults

@@ -28,7 +28,6 @@ void ApplySettingsToOpenWindows();
 void CleanUpSettings();
 void RegisterSettingsForFileChanges();
 void UnregisterSettingsForFileChanges();
-bool IsMenuFontSizeDefault();
 
 void ParseColorList(Str, Vec<Color>& out, int maxColors);
 TempStr SerializeColorList(const Vec<Color>&);

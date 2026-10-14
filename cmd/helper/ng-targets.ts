@@ -1189,8 +1189,6 @@ export const targets: Target[] = [
       "src/ng/SumatraTestCommon.cpp",
       "src/ng/gui/GpuiLog.cpp",
       "src/ng/SumatraLog.cpp",
-      // ng: what the shell still owes the layers below it (step 9/12/14/17)
-      "src/ng/ShellStubs.cpp",
       "src/ng/SumatraCrashHandler.cpp",
       "src/ng/SumatraCrashCommon.cpp",
       // the app links the real crash handler; the console tools link

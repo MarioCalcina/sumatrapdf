@@ -1,10 +1,8 @@
 /* Copyright 2026 the SumatraPDF project authors (see AUTHORS file).
    License: GPLv3 */
 
-// ng: what the engines and the application model expect from the layers above
-// them. Everything here is replaced by the real file as the port gets to it:
-// the document model in step 5b, the gpui shell in step 6, the theme and the
-// toolbar in step 12. Delete this file when it is empty.
+// What the engines and the application model ask of the shell, for the
+// targets that have none: the console tools and the Quick Look library.
 
 #include "base/Base.h"
 #include "base/SettingsUtil.h"
@@ -40,7 +38,7 @@ bool IsStressTesting() {
     return false;
 }
 
-// SumatraPDF.cpp (step 6)
+// SumatraPDF.cpp
 void InitializePolicies(bool) {}
 
 bool HasPermission(Perm) {
@@ -89,8 +87,7 @@ SeqStrings gScrollbarModeNames = "windows\0smart\0overlay\0hidden\0";
 SeqStrings gToolbarModeNames = "show\0hide\0overlay\0";
 SeqStrings gToolbarPositionNames = "top\0bottom\0";
 
-// ng: bodies copied from orig SumatraPDF.cpp; the model asks for them, the
-// window that owns the render cache and the scrollbars comes in step 6
+// bodies as in SumatraPDF.cpp: the model asks for them
 RenderCache* gRenderCache;
 
 int ScrollbarModeFromPrefs() {
@@ -110,12 +107,12 @@ bool ScrollbarsUseOverlay() {
     return mode == kScrollbarSmart || mode == kScrollbarOverlay;
 }
 
-// Canvas.cpp (step 7)
+// Canvas.cpp
 bool ShowTransparencyGrid() {
     return false;
 }
 
-// Print.cpp / TextViewWnd.cpp (step 14 / step 11)
+// Print.cpp / TextViewWnd.cpp
 void GetPrintersInfo(str::Builder&) {}
 
 void ShowTextInWindow(MainWindow*, Str, Str) {}
@@ -128,18 +125,18 @@ bool IsTextViewWindowVisible() {
     return false;
 }
 
-// Menu.cpp (step 6)
+// Menu.cpp
 int CmdIdFromVirtualZoom(float) {
     return CmdZoomCustom;
 }
 
-// Favorites.cpp is UI now (step 9a) and lives in the SumatraPDF target;
+// Favorites.cpp is UI now and lives in the SumatraPDF target;
 // CommandAvailability only asks whether there are any
 bool HasFavorites() {
     return false;
 }
 
-// HomePage.cpp (step 9b); FileThumbnails.cpp is in the app lib now
+// HomePage.cpp; FileThumbnails.cpp is in the app lib now
 void HomePageInvalidateLayoutCache() {}
 
 struct FileState;
@@ -148,24 +145,18 @@ void HomePageThumbnailChanged(FileState*) {}
 // SumatraPDFCommon.cpp, which only the app builds
 void OnThumbnailsTypeChanged() {}
 
-// Theme.cpp asks the UI to repaint; AppSettings owns the UI fonts (step 6/12)
+// Theme.cpp asks the UI to repaint; AppSettings owns the UI fonts
 void UpdateAfterThemeChange() {}
 
-void ThemeStartPlatformColors() {}
 void ThemeApplyPlatformColors() {}
-void ThemeFinishPlatformColors() {}
 
-bool IsMenuFontSizeDefault() {
-    return true;
-}
-
-// Notifications.cpp (step 6)
+// Notifications.cpp
 void MaybeDelayedWarningNotification(Str msg) {
     logf("warning: %s\n", msg);
 }
 
 // gui/DocCanvas.cpp: RenderCache draws through the gpui canvas, which the
-// console tools have no window for (step 7)
+// console tools have no window for
 struct BitmapCacheEntry;
 namespace gpui {
 struct PaintCtx;
@@ -180,23 +171,21 @@ void CanvasDrawTileOutline(gpui::PaintCtx*, Rect) {}
 void CanvasFreeTileImage(BitmapCacheEntry*) {}
 
 // ExternalViewers.cpp is in the SumatraPDF target (it needs WindowTab); the
-// command policy asks it whether a viewer is there (step 10b)
-struct WindowTab;
-struct CustomCommand;
+// command policy asks it whether a viewer's filter matches
 
 bool PathMatchFilter(Str, Str) {
     return false;
 }
 
-// UpdateCheck.cpp (step 14a) is in the app target only
+// UpdateCheck.cpp is in the app target only
 bool HasPendingPreReleaseUpdate() {
     return false;
 }
 
-// GlobalHotkeys.cpp (step 14a) is app-target only
+// GlobalHotkeys.cpp is app-target only
 void ReRegisterGlobalHotkeys() {}
 
-// ReadAloud.cpp (step 14c) is app-target only; the settings apply the voice
+// ReadAloud.cpp is app-target only; the settings apply the voice
 bool ApplyReadAloudVoiceFromSettings() {
     return false;
 }

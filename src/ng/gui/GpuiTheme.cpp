@@ -170,8 +170,6 @@ static void FillTheme(gp::Theme* t) {
     (void)disabled;
 }
 
-void ThemeStartPlatformColors() {}
-
 void ThemeApplyPlatformColors() {
     gp::App* app = AppShellGetApp();
     if (!app) {
@@ -192,5 +190,3 @@ void ThemeApplyPlatformColors() {
         AppShellInvalidate(win);
     }
 }
-
-void ThemeFinishPlatformColors() {}
