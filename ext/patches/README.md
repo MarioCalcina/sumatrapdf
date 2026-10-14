@@ -20,10 +20,8 @@ relative to `ext/mupdf`, so `-p1` from inside that directory.
 | --- | --- |
 | `0001-tools-usage-say-sumatrapdf` | usage text names `SumatraPDF <tool>`, not `mutool` |
 | `0002-tools-reset-fz-optind` | tool mains can be called more than once in-process |
-| `0003-signatures-windows-pkcs7` | tools use our Windows CryptoAPI pkcs7 helper (`src/mupdf/pkcs7-windows.[ch]`) instead of OpenSSL |
-| `0004-console-io-for-gui-subsystem-exe` | stdio for a GUI-subsystem exe (#5677, #5665, #5681) |
+| `0003-signatures-mac-pkcs7` | tools use our Security.framework pkcs7 helper (`src/ng/mupdf/pkcs7_mac.[ch]`) instead of OpenSSL |
 | `0005-pdfinfo-to-buffer` | `mutool info` output as a buffer, for the properties window |
-| `0006-jpeg-xr-via-windows-wic` | JPEG-XR decoding through the Windows WIC codec |
 | `0007-thread-local-secret-contexts` | harfbuzz / openjpeg context smuggling is not thread safe |
 | `0008-report-last-uncaught-throw` | an uncaught `fz_throw` reaches the crash report |
 | `0009-forms-cp1250-latin2-encoding` | Central European Latin in form fields (#5404) |
@@ -45,7 +43,6 @@ relative to `ext/mupdf`, so `-p1` from inside that directory.
 | `0042-merge-backwards-range-bookmarks` | `merge` with a range like `3-1` renumbers the bookmarks too |
 | `0043-merge-exit-code-on-failure` | `merge` exits 1 when an input or the save fails |
 | `0044-svg-unsized-image` | `<image>` with no width/height uses the raster's pixel size; a percentage `<svg>` with no viewBox adopts that size (#6266) |
-| `0045-console-utf8-via-writeconsolew` | UTF-8 to a Windows console through `WriteConsoleW`; the CRT failed the write on a DBCS code page (#6276) |
 | `0046-grep-keep-page-of-pending-line` | `grep` read a text page the search had already dropped (#6276) |
 | `0047-jpeg-xl-pdf` | JPEG XL images and PDF `/JXLDecode` via jxldec (`src/mupdf/load-jxl.cpp`) |
 | `0048-pdf-compress-enum` | `compress=flate` and `compress=brotli` reach the enum; a non-boolean used to be taken as success |

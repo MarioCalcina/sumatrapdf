@@ -380,7 +380,6 @@ export const sharedFiles = [
   "src/shared/mupdf/mupdf_load_system_font.c",
   "src/shared/mupdf/noto_sumatra.c",
   "src/shared/mupdf/noto_sumatra.h",
-  "src/shared/mupdf/pkcs7-windows.h",
   "src/shared/tests/AnnotSearch_ut.cpp",
   "src/shared/tests/CachedObjects_ut.cpp",
   "src/shared/tests/ChapterTable_ut.cpp",

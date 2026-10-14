@@ -8,6 +8,7 @@
 #include "mupdf/pdf/form.h"
 
 pdf_pkcs7_signer* pkcs7_mac_read_pfx(fz_context* ctx, const char* pfile, const char* pw);
+pdf_pkcs7_signer* pkcs7_mac_read_pfx_from_buffer(fz_context* ctx, fz_buffer* buf, const char* pw);
 pdf_pkcs7_verifier* pkcs7_mac_new_verifier(fz_context* ctx);
 
 #endif

@@ -298,13 +298,11 @@ static OSStatus import_identity(CFDataRef pfx, CFStringRef password, SecIdentity
     return st;
 }
 
-pdf_pkcs7_signer* pkcs7_mac_read_pfx(fz_context* ctx, const char* pfile, const char* pw) {
+pdf_pkcs7_signer* pkcs7_mac_read_pfx_from_buffer(fz_context* ctx, fz_buffer* buf, const char* pw) {
     mac_signer* signer = NULL;
-    fz_buffer* buf = NULL;
     CFDataRef pfx = NULL;
     CFStringRef password = NULL;
     fz_var(signer);
-    fz_var(buf);
     fz_var(pfx);
     fz_var(password);
 
@@ -317,7 +315,6 @@ pdf_pkcs7_signer* pkcs7_mac_read_pfx(fz_context* ctx, const char* pfile, const c
         signer->base.create_digest = signer_create_digest;
         signer->refs = 1;
 
-        buf = fz_read_file(ctx, pfile);
         unsigned char* data = NULL;
         size_t n = fz_buffer_storage(ctx, buf, &data);
         pfx = CFDataCreate(NULL, data, (CFIndex)n);
@@ -340,7 +337,6 @@ pdf_pkcs7_signer* pkcs7_mac_read_pfx(fz_context* ctx, const char* pfile, const c
         if (pfx) {
             CFRelease(pfx);
         }
-        fz_drop_buffer(ctx, buf);
     }
     fz_catch(ctx) {
         if (signer) {
@@ -349,6 +345,21 @@ pdf_pkcs7_signer* pkcs7_mac_read_pfx(fz_context* ctx, const char* pfile, const c
         fz_rethrow(ctx);
     }
     return &signer->base;
+}
+
+pdf_pkcs7_signer* pkcs7_mac_read_pfx(fz_context* ctx, const char* pfile, const char* pw) {
+    pdf_pkcs7_signer* signer = NULL;
+    fz_buffer* buf = fz_read_file(ctx, pfile);
+    fz_try(ctx) {
+        signer = pkcs7_mac_read_pfx_from_buffer(ctx, buf, pw);
+    }
+    fz_always(ctx) {
+        fz_drop_buffer(ctx, buf);
+    }
+    fz_catch(ctx) {
+        fz_rethrow(ctx);
+    }
+    return signer;
 }
 
 // The size of the DER element at sig, 0 if malformed. /Contents is padded

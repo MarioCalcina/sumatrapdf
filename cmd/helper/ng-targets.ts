@@ -632,8 +632,6 @@ export const targets: Target[] = [
     exclude: [
       "ext/mupdf/source/fitz/leptonica-wrap.c", // no OCR
       "ext/mupdf/source/fitz/noto.c", // src/mupdf/noto_sumatra.c instead
-      // JPEG-XR through WIC: Windows only; load-jxr.c is the stub
-      "ext/mupdf/source/fitz/load-jxr-win.c",
       "ext/mupdf/source/tools/cmapdump.c",
       "ext/mupdf/source/tools/mubar.c",
       // both define main(); nothing calls muraster and GNU ld rejects the

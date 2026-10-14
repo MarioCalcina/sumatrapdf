@@ -6020,7 +6020,6 @@ int pdftrim_main(int argc, char** argv);
 int pdfbake_main(int argc, char** argv);
 int mugrep_main(int argc, char** argv);
 int pdfaudit_main(int argc, char** argv);
-int fz_redirect_io_to_existing_console();
 }
 
 // won't collide with a tool's own exit code
@@ -6057,7 +6056,6 @@ static int MaybeRunCliTool(int argc, char** argv) {
     if (!fn) {
         return kNoCliTool;
     }
-    fz_redirect_io_to_existing_console();
     InstallEmbeddedFontLoader();
     return fn(argc - 1, argv + 1);
 }
