@@ -136,6 +136,19 @@ async function runExe(exe: string, args: string[]): Promise<number> {
   return p.exited;
 }
 
+// an app's bundled targets (its Quick Look extensions) are built just before it
+function withBundled(targets: Target[]): Target[] {
+  const out: Target[] = [];
+  for (const t of targets) {
+    for (const name of t.bundled ?? []) {
+      const b = findTarget(name) ?? fail(`target ${t.name}: unknown bundled target ${name}`);
+      if (!out.includes(b)) out.push(b);
+    }
+    if (!out.includes(t)) out.push(t);
+  }
+  return out;
+}
+
 function usesEmbedded(targets: Target[]): boolean {
   return targets.some((t) => t.embedded || depsOf(t, fail).some((d) => d.embedded));
 }
@@ -202,7 +215,9 @@ async function main(): Promise<void> {
   }
   const { flags } = opts;
   const names = opts.all ? allTargets.map((t) => t.name) : opts.targets.length > 0 ? opts.targets : [defaultTarget];
-  const targets = names.map((n) => findTarget(n) ?? fail(`unknown target: ${n} (bun cmd/ng-build.ts for the list)`));
+  const targets = withBundled(
+    names.map((n) => findTarget(n) ?? fail(`unknown target: ${n} (bun cmd/ng-build.ts for the list)`)),
+  );
   const tc = findToolchain(fail);
 
   const started = performance.now();

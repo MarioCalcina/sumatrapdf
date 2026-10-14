@@ -5,6 +5,9 @@
 //                          /MacOS/SumatraPDF
 //                          /Resources/SumatraPDF.icns
 //                          /Resources/<lang>.lproj/InfoPlist.strings
+//                          /Frameworks/SumatraQL
+//                          /PlugIns/SumatraThumbnails.appex  Finder's thumbnails
+//                          /PlugIns/SumatraPreview.appex     Quick Look's previews
 
 import { constants, copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
@@ -35,6 +38,58 @@ const docTypes: DocType[] = [
   { name: "HEIF Image", exts: ["heic", "heif"] },
   { name: "JPEG XL Image", exts: ["jxl"] },
 ];
+
+// The formats our Quick Look extensions draw: what macOS has no thumbnails or
+// previews for. They have no system UTI, so the app declares these.
+type ImportedType = { id: string; name: string; exts: string[] };
+const quickLookTypes: ImportedType[] = [
+  { id: `${bundleId}.cbz`, name: "Comic Book (CBZ)", exts: ["cbz"] },
+  { id: `${bundleId}.cbr`, name: "Comic Book (CBR)", exts: ["cbr"] },
+  { id: `${bundleId}.cb7`, name: "Comic Book (CB7)", exts: ["cb7"] },
+  { id: `${bundleId}.cbt`, name: "Comic Book (CBT)", exts: ["cbt"] },
+  { id: `${bundleId}.djvu`, name: "DjVu Document", exts: ["djvu", "djv"] },
+  { id: `${bundleId}.xps`, name: "XPS Document", exts: ["xps", "oxps"] },
+  { id: `${bundleId}.mobi`, name: "Mobipocket Ebook", exts: ["mobi", "azw", "azw3"] },
+  { id: `${bundleId}.fb2`, name: "FictionBook", exts: ["fb2", "fb2z"] },
+];
+
+// the library both extensions load, built by the SumatraQL target
+const quickLookLib = "SumatraQL";
+
+type Extension = { target: string; id: string; point: string; provider: string; minOs: string; attrs: string };
+const quickLookIds = quickLookTypes.map((t) => t.id);
+const extensions: Extension[] = [
+  {
+    target: "SumatraThumbnails",
+    id: `${bundleId}.Thumbnails`,
+    point: "com.apple.quicklook.thumbnail",
+    provider: "SumatraThumbnailProvider",
+    minOs: macMinVersion,
+    attrs: `<key>QLSupportedContentTypes</key>${plistArray(quickLookIds)}
+        <key>QLThumbnailMinimumDimension</key><integer>0</integer>`,
+  },
+  {
+    // data-based previews are macOS 12's
+    target: "SumatraPreview",
+    id: `${bundleId}.Preview`,
+    point: "com.apple.quicklook.preview",
+    provider: "SumatraPreviewProvider",
+    minOs: "12.0",
+    attrs: `<key>QLIsDataBasedPreview</key><true/>
+        <key>QLSupportedContentTypes</key>${plistArray(quickLookIds)}
+        <key>QLSupportsSearchableItems</key><false/>`,
+  },
+];
+
+// an app extension runs sandboxed; Quick Look lets it read the file it shows
+const appexEntitlements = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>com.apple.security.app-sandbox</key><true/>
+</dict>
+</plist>
+`;
 
 // the languages of src/shared/TranslationLangs.cpp as Apple language ids. Listed
 // in CFBundleLocalizations, they let AppKit's own UI (print and open panels, the
@@ -123,6 +178,69 @@ function docTypePlist(t: DocType): string {
     </dict>`;
 }
 
+function importedTypePlist(t: ImportedType): string {
+  return `    <dict>
+      <key>UTTypeIdentifier</key><string>${t.id}</string>
+      <key>UTTypeDescription</key><string>${t.name}</string>
+      <key>UTTypeConformsTo</key>${plistArray(["public.data", "public.content"])}
+      <key>UTTypeTagSpecification</key><dict><key>public.filename-extension</key>${plistArray(t.exts)}</dict>
+    </dict>`;
+}
+
+function appexPlist(e: Extension, version: string): string {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleName</key><string>${e.target}</string>
+  <key>CFBundleDisplayName</key><string>SumatraPDF</string>
+  <key>CFBundleIdentifier</key><string>${e.id}</string>
+  <key>CFBundleExecutable</key><string>${e.target}</string>
+  <key>CFBundlePackageType</key><string>XPC!</string>
+  <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+  <key>CFBundleShortVersionString</key><string>${version}</string>
+  <key>CFBundleVersion</key><string>${version}</string>
+  <key>LSMinimumSystemVersion</key><string>${e.minOs}</string>
+  <key>NSExtension</key>
+  <dict>
+    <key>NSExtensionPointIdentifier</key><string>${e.point}</string>
+    <key>NSExtensionPrincipalClass</key><string>${e.provider}</string>
+    <key>NSExtensionAttributes</key>
+    <dict>
+        ${e.attrs}
+    </dict>
+  </dict>
+</dict>
+</plist>
+`;
+}
+
+// the Quick Look library and extensions, when the build made them: built
+// alone, the app has none. Nested code is signed before the app
+function embedQuickLook(outDir: string, app: string, version: string): void {
+  const lib = join(outDir, quickLookLib);
+  if (!existsSync(lib)) return;
+  const fwDir = join(app, "Contents", "Frameworks");
+  mkdirSync(fwDir, { recursive: true });
+  const bundleLib = join(fwDir, quickLookLib);
+  rmSync(bundleLib, { force: true });
+  copyFileSync(lib, bundleLib, constants.COPYFILE_FICLONE);
+  run(["codesign", "--force", "--sign", "-", bundleLib]);
+
+  const entitlements = join(outDir, "appex.entitlements");
+  writeFileSync(entitlements, appexEntitlements);
+  for (const e of extensions) {
+    const exe = join(outDir, e.target);
+    if (!existsSync(exe)) continue;
+    const appex = join(app, "Contents", "PlugIns", `${e.target}.appex`);
+    const macOsDir = join(appex, "Contents", "MacOS");
+    mkdirSync(macOsDir, { recursive: true });
+    copyFileSync(exe, join(macOsDir, e.target));
+    writeFileSync(join(appex, "Contents", "Info.plist"), appexPlist(e, version));
+    run(["codesign", "--force", "--sign", "-", "--entitlements", entitlements, appex]);
+  }
+}
+
 function infoPlist(exeName: string, version: string, texts: PlistTexts): string {
   const textKeys = [...texts].map(([key, byLang]) => `  <key>${key}</key><string>${byLang.get("en")}</string>`);
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -147,6 +265,10 @@ ${textKeys.join("\n")}
   <key>CFBundleDocumentTypes</key>
   <array>
 ${docTypes.map(docTypePlist).join("\n")}
+  </array>
+  <key>UTImportedTypeDeclarations</key>
+  <array>
+${quickLookTypes.map(importedTypePlist).join("\n")}
   </array>
 </dict>
 </plist>
@@ -181,7 +303,8 @@ export function makeMacBundle(root: string, exe: string, version: string): strin
   const texts = readPlistTexts(root);
   writePlistTexts(resDir, texts);
   writeFileSync(join(app, "Contents", "Info.plist"), infoPlist(exeName, version, texts));
-  // seals Info.plist, the icon and the texts into the signature
+  embedQuickLook(outDir, app, version);
+  // seals Info.plist, the icon, the texts and the extensions into the signature
   run(["codesign", "--force", "--sign", "-", app]);
   return app;
 }

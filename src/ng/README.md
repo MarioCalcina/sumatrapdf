@@ -128,6 +128,10 @@ AppKit code lives in `*_mac.mm` files, mostly `gui/NativeWindow_mac.mm`:
 - a command line naming files hands them to the SumatraPDF already running
   (`-reuse-instance`, the ReuseInstance setting, `-forward-search`), so a LaTeX
   editor's forward search lands in the open window
+- Finder's thumbnails and Quick Look's previews of comics, DjVu, XPS, MOBI
+  and FB2 (`QuickLook_mac.mm`): two app extensions in `Contents/PlugIns` load
+  the engines from `Contents/Frameworks/SumatraQL`, and the app declares those
+  types (`ng-mac-bundle.ts`). A preview is the first 20 pages; it needs macOS 12
 - Check for Updates downloads the release's dmg, checks its SHA-256 and
   installs it over the app, which restarts. A copy it can't replace (run from
   the dmg, translocated by Gatekeeper, a folder it can't write) gets the

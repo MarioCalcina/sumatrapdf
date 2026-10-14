@@ -1275,9 +1275,11 @@ Str HandleSyncCmd(Str cmd, bool* ack) {
     if (pdfFile) {
         // check if the PDF is already opened
         win = FindMainWindowByFile(pdfFile, !newWindow);
-        // if not then open it
+        // if not then open it: ng's LoadDocument needs the window, which orig
+        // picks itself (the last used one, or a new one)
         if (newWindow || !win) {
-            win = LoadDocument(!newWindow ? win : nullptr, pdfFile);
+            MainWindow* into = newWindow ? nullptr : LastActiveWindow();
+            win = LoadDocument(into ? into : CreateAndShowMainWindow(), pdfFile);
         } else if (!win->IsDocLoaded()) {
             ReloadDocument(win, false);
         }
@@ -1285,7 +1287,7 @@ Str HandleSyncCmd(Str cmd, bool* ack) {
         // check if any opened PDF has sync information for the source file
         win = FindMainWindowBySyncFile(srcFile, true);
         if (win && newWindow) {
-            win = LoadDocument(nullptr, win->CurrentTab()->filePath);
+            win = LoadDocument(CreateAndShowMainWindow(), win->CurrentTab()->filePath);
         }
     }
 

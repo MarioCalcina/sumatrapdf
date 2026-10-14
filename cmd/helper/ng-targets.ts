@@ -6,7 +6,9 @@
 
 import type { Arch } from "./ng-toolchain";
 
-export type TargetKind = "app" | "console" | "staticlib";
+// dylib: a shared library an app bundles in Contents/Frameworks; appex: the
+// executable of an app extension in Contents/PlugIns
+export type TargetKind = "app" | "console" | "staticlib" | "dylib" | "appex";
 
 /**
  * A config header a library expects the build system to produce. Written to
@@ -42,6 +44,12 @@ export type Target = {
   versionDefines?: boolean;
   /** static library targets this one links (apps and console tools only) */
   deps?: string[];
+  /** dylib targets this one links, built before it */
+  dylibs?: string[];
+  /** targets built before this app and put into its bundle (ng-mac-bundle.ts) */
+  bundled?: string[];
+  /** frameworks linked besides the app's (ng-compile.ts macFrameworks) */
+  frameworks?: string[];
   /** native libraries needed only by the archive packer */
   systemDeps?: "archive";
   /** true: our code, -Wall -Werror; false: third-party, warnings relaxed */
@@ -1009,8 +1017,40 @@ export const targets: Target[] = [
     exceptions: true,
   },
   {
+    // Finder's thumbnails and Quick Look's previews of the formats macOS
+    // can't show, for the two app extensions below (src/ng/QuickLook_mac.mm)
+    name: "SumatraQL",
+    kind: "dylib",
+    sources: [
+      "src/ng/QuickLook_mac.mm",
+      "src/ng/tools/AppStubs.cpp",
+      "src/ng/gui/BrowserViewNoOp.cpp",
+      "src/ng/CrashHandlerNoOp.cpp",
+    ],
+    includes: ["src/ng", "ext/mupdf/include"],
+    deps: ["app"],
+    frameworks: ["QuickLookThumbnailing", "QuickLookUI"],
+    strict: true,
+    exceptions: true,
+  },
+  {
+    name: "SumatraThumbnails",
+    kind: "appex",
+    sources: ["src/ng/QuickLookAppex.c"],
+    dylibs: ["SumatraQL"],
+    strict: true,
+  },
+  {
+    name: "SumatraPreview",
+    kind: "appex",
+    sources: ["src/ng/QuickLookAppex.c"],
+    dylibs: ["SumatraQL"],
+    strict: true,
+  },
+  {
     name: "SumatraPDF",
     kind: "app",
+    bundled: ["SumatraQL", "SumatraThumbnails", "SumatraPreview"],
     sources: [
       "src/ng/SumatraPDF.cpp",
       "src/ng/SumatraPDFCommon.cpp",

@@ -428,15 +428,24 @@ const macFrameworks = [
 // conversion needs it
 const macLibs = ["-lcurl", "-liconv"];
 
+// where an app extension's executable finds the app's Contents/Frameworks:
+// SumatraPDF.app/Contents/PlugIns/<name>.appex/Contents/MacOS/<name>
+const appexFrameworksRpath = "@executable_path/../../../../Frameworks";
+
 function linkCmd(tc: Toolchain, t: Target, f: BuildFlags, out: string, inputs: string[]): string[] {
   const ld = [...archFlags(f.arch)];
-  if (t.systemDeps === "archive") {
+  if (t.kind === "dylib") ld.push("-dynamiclib", "-install_name", `@rpath/${t.name}`);
+  if (t.kind === "appex") {
+    // Foundation's NSExtensionMain runs the extension; its code is in a dylib
+    ld.push("-e", "_NSExtensionMain", "-rpath", appexFrameworksRpath, "-framework", "Foundation");
+  } else if (t.systemDeps === "archive") {
     // base's number formatting asks Foundation for the region's separators
     ld.push("-liconv", "-framework", "Foundation");
   } else {
     for (const fw of macFrameworks) ld.push("-framework", fw);
     ld.push(...macLibs);
   }
+  for (const fw of t.frameworks ?? []) ld.push("-framework", fw);
   if (f.asan) ld.push("-fsanitize=address");
   return [tc.cxx, ...inputs, "-o", out, ...ld];
 }
@@ -507,6 +516,11 @@ export async function buildTarget(tc: Toolchain, t: Target, f: BuildFlags, fail:
       const objs = await compileTarget(tc, dep, f, dir, fail);
       libs.push(await archive(tc, dep, dir, objs, fail));
     }
+  }
+  for (const name of t.dylibs ?? []) {
+    const lib = join(dir, name);
+    if (!existsSync(lib)) fail(`target ${t.name}: build ${name} first`);
+    libs.push(lib);
   }
   const objs = await compileTarget(tc, t, f, dir, fail);
   if (t.kind === "staticlib") return archive(tc, t, dir, objs, fail);

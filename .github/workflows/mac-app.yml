@@ -189,6 +189,40 @@ jobs:
           grep -h "InstanceCmds\|ForwardSearch\|SendToRunningInstance" shots/reuse-*.log >> shots/reuse.txt || true
           pkill -f "SumatraPDF.app/Contents/MacOS/SumatraPDF" || true
           sleep 2
+      # Finder's thumbnails and Quick Look's previews from the app's extensions,
+      # for files macOS can't show itself
+      - name: Quick Look
+        continue-on-error: true
+        timeout-minutes: 6
+        run: |
+          t() { perl -e 'alarm shift; exec @ARGV' "$@"; }
+          mkdir -p shots/ql ~/Desktop/qltest
+          ditto out/mac/rel-universal/SumatraPDF.app /Applications/SumatraPDF.app
+          /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister \
+            -f -R /Applications/SumatraPDF.app
+          for e in Thumbnails Preview; do
+            pluginkit -a /Applications/SumatraPDF.app/Contents/PlugIns/Sumatra$e.appex || true
+          done
+          sleep 3
+          for e in Thumbnails Preview; do
+            pluginkit -m -v -A -i org.sumatrapdfreader.SumatraPDF.$e >> shots/ql/pluginkit.txt 2>&1 || true
+          done
+          cp docs/test/test.cbz docs/test/test.djvu tests/issue-2254.fb2 tests/issue-4315.azw3 ~/Desktop/qltest/
+          for f in ~/Desktop/qltest/*; do
+            t 60 qlmanage -t -s 512 -o shots/ql "$f" >> shots/ql/qlmanage.txt 2>&1 || echo "$f: exit $?" >> shots/ql/qlmanage.txt
+          done
+          ls -la shots/ql >> shots/ql/qlmanage.txt
+          # the space bar's preview
+          t 20 qlmanage -p ~/Desktop/qltest/test.cbz > /dev/null 2>&1 &
+          sleep 10
+          screencapture -x shots/ql/preview.png
+          pkill -f qlmanage || true
+          # Finder's icons
+          open ~/Desktop/qltest
+          sleep 3
+          t 20 osascript -e 'tell application "Finder" to set current view of front window to icon view' || true
+          sleep 8
+          screencapture -x shots/ql/finder.png
       # Check for Updates' install, on a dmg already here: the app copies it in,
       # quits, and a script swaps the bundles and starts the new one
       - name: Install an update
