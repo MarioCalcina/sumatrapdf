@@ -7,7 +7,6 @@
 // must be last due to assert() over-write
 #include "base/tests/UtAssert.h"
 
-extern void AppendStoreTest();
 extern void ArchiveTest();
 extern void BaseUtilTest();
 extern void ByteOrderTests();
@@ -102,7 +101,6 @@ int main(int argc, char** argv) {
     }
     printf("Running unit tests\n");
 
-    AppendStoreTest();
     ArchiveTest();
     BaseUtilTest();
     ByteOrderTests();

@@ -624,7 +624,6 @@ static void validateStringMatchesData(StrVecWithData<T>* v) {
 
 template <typename T>
 static void InsertRandData2(StrVecWithData<T>* v) {
-    Str got;
     for (int i = 0; i < kMaxStringN; i++) {
         int op = rand() % 12;
         if (op <= 5) {

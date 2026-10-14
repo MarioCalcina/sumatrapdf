@@ -39,7 +39,6 @@
 #include "SelectionTranslate.h"
 #include "SimpleBrowserWindow.h"
 #include "gui/DialogWidgets.h"
-#include "gui/NativeMsgBox.h"
 #include "SumatraDialogs.h"
 
 #include "SumatraLog.h"

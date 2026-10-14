@@ -64,14 +64,6 @@ enum class ExifProp : u16 {
     SensitivityType = 0x8830,
 };
 
-enum class ExifValueKind : u8 {
-    Unknown,
-    Bytes,
-    String,
-    Int,
-    Rational,
-};
-
 struct ExifRational {
     i64 num = 0;
     i64 den = 0;

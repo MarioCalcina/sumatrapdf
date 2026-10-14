@@ -162,9 +162,6 @@ void CreateThumbnailFromFileFinish(CreateThumbnailFromFileData* d);
 
 constexpr const char* kSumatraWindowTitle = "SumatraPDF";
 
-// Cap how many extension links we put in the bar
-constexpr int kMaxDefaultAppLinks = 8;
-
 static Kind kNotifPersistentWarning = "persistentWarning";
 static Kind kNotifDocErrors = "docErrors";
 // Kind used so only one default-app bar is shown at a time

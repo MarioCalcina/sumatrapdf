@@ -37,13 +37,12 @@ struct DirIter {
         DirIterEntry data;
 
         iterator(const DirIter*, bool);
-        iterator(const iterator&);
-        iterator& operator=(const iterator&);
+        iterator(const iterator&) = delete;
+        iterator& operator=(const iterator&) = delete;
         ~iterator();
 
         DirIterEntry* operator*();
         iterator& operator++();   // ++it
-        friend bool operator==(const iterator& a, const iterator& b);
         friend bool operator!=(const iterator& a, const iterator& b);
     };
     iterator begin() const;

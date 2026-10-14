@@ -73,7 +73,6 @@
 #include "gui/ToolWindowPlat.h"
 #include "gui/ToolWindow.h"
 #include "gui/NativeFileDlg.h"
-#include "gui/NativeMsgBox.h"
 #include "gui/DocCanvas.h"
 #include "gui/Sidebar.h"
 #include "SumatraDialogs.h"
@@ -695,7 +694,6 @@ enum class ControlCmd : u16 {
     TestSelectionToolbar = 73,
     TestMarkupAnnots = 74,
     TestCmykImageSave = 75,
-    TestContextMenuPoint = 76,
     TestFindWindowContents = 77,
     TestFindUiState = 78,
     TestRenderViewPrint = 79,
@@ -704,7 +702,6 @@ enum class ControlCmd : u16 {
     TestChapterInfo = 82,
     TestGoToLocation = 83,
     TestTocSidebarNav = 84,
-    TestSelectionSurvivesRenumber = 85,
     TestConvertToPdf = 86,
     TestInvokeCommand = 87,
     TestCurrentTab = 88,
@@ -745,9 +742,6 @@ enum class ControlCmd : u16 {
     // orig's. A wheel while CloseWindow is in progress.
     TestWheelWhileClosing = 116,
     TestMainMenu = 117,
-    // ng: shows the "no longer the default app" bar for the given extensions
-    // (".pdf,.epub"); the real check needs an installation and a UserChoice
-    TestDefaultAppNotif = 118,
     // ng: orig's 101 / 102, which the port had given to its own test commands
     StartPerfLog = 119,
     StopPerfLog = 120,
@@ -755,15 +749,9 @@ enum class ControlCmd : u16 {
     // one line of shell state to check it against
     TestInput = 121,
     TestUiState = 122,
-    // ng: Windows; exercises the OLE drag source / drop target in-process
-    TestOleDragDrop = 123,
-    // ng: Windows; the system file dialogs: off / on / state / cancel / accept
-    TestNativeFileDlg = 124,
     // ng: not one of orig's; the tool windows (gui/ToolWindow.h) and input
     // into one of them
     TestToolWindow = 125,
-    // ng: Windows; the system message boxes: on / off / state / answer <id>
-    TestNativeMsgBox = 126,
     // ng: the page context menu at a canvas point, same rows as TestMainMenu
     TestContextMenuAt = 127,
     // ng: not one of orig's; answers the open save-path dialog, which orig
@@ -773,8 +761,6 @@ enum class ControlCmd : u16 {
     // ng: DDE execute grammar ([GotoPageWord], [Open], ...). Orig receives
     // these as WM_COPYDATA; macOS has no such message.
     TestDdeExecute = 129,
-    // the installer's KillProcWithId on a process id (Windows only)
-    TestQuitProcess = 130,
     // Rename File without its dialog
     TestRenameFile = 131,
     // ng: open a file the way a drop or a Finder open does

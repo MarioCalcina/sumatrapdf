@@ -3,7 +3,6 @@
 
 #include "base/Base.h"
 
-#include "resource.h"
 #include "Version.h"
 #include "SumatraConfig.h"
 

@@ -72,7 +72,6 @@ export enum ControlCommand {
   TestSelectionToolbar = 73,
   TestMarkupAnnots = 74,
   TestCmykImageSave = 75,
-  TestContextMenuPoint = 76,
   TestFindWindowContents = 77,
   TestFindUiState = 78,
   TestRenderViewPrint = 79,
@@ -81,7 +80,6 @@ export enum ControlCommand {
   TestChapterInfo = 82,
   TestGoToLocation = 83,
   TestTocSidebarNav = 84,
-  TestSelectionSurvivesRenumber = 85,
   TestConvertToPdf = 86,
   TestInvokeCommand = 87,
   TestCurrentTab = 88,
@@ -123,9 +121,6 @@ export enum ControlCommand {
   TestToolWindow = 125,
   // ng only: page context menu at a canvas point.
   TestContextMenuAt = 127,
-  // the installer's KillProcWithId on a process id: asks a SumatraPDF to quit,
-  // terminates whatever is left
-  TestQuitProcess = 130,
   // Rename File (F2) to a path, without its dialog
   TestRenameFile = 131,
 }
@@ -725,25 +720,6 @@ export class ControlClient {
     if (code !== 0) {
       throw new Error(`TestRenameFile failed: ${String(res[1] ?? "").trim() || code}`);
     }
-  }
-
-  // stops another process the way the installer does; true once it is gone
-  async quitProcess(pid: number): Promise<boolean> {
-    const res = await this.request(ControlCommand.TestQuitProcess, [pid]);
-    return typeof res[0] === "number" && res[0] === 0;
-  }
-
-  async selectionSurvivesRenumber(
-    layoutChapter: number,
-  ): Promise<{ survived: boolean; pageNo: number; textSurvived: boolean }> {
-    const res = await this.request(ControlCommand.TestSelectionSurvivesRenumber, [layoutChapter]);
-    const raw = String(res[1] ?? "").trim();
-    const m = /^OK survived=1 pageNo=(-?\d+)$/m.exec(raw);
-    const textSurvived = /^textSurvived=1 /m.test(raw);
-    if (m) {
-      return { survived: true, pageNo: parseInt(m[1], 10), textSurvived };
-    }
-    return { survived: false, pageNo: -1, textSurvived };
   }
 
   // Toggles the idx-th (0-based) checkbox / radio widget on pageNo of the

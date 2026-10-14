@@ -54,7 +54,3 @@ Str ExtractP7m(Str d) {
     }
     return out;
 }
-
-TempStr GetExecutableSignerTemp(Str /*exePath*/) {
-    return {};
-}

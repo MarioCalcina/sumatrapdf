@@ -17,7 +17,6 @@
 #include "gui/AppShell.h"
 
 #include "GlobalHotkeys.h"
-#include "GlobalHotkeysCommon.h"
 
 // Cocoa has no global-hotkey abstraction in gpui yet.
 void ReRegisterGlobalHotkeys() {}

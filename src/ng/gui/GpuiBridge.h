@@ -93,8 +93,3 @@ inline bool CtrlOrCmd(const gp::KeyEvent* ev) {
     return ev->ctrl || ev->platform;
 }
 
-// ng: gpui's Listen() needs the listener's owner entity type, so it can't be
-// wrapped generically. This is the one shape the shell repeats: a handler on
-// the root view entity.
-#define GpuiListen(cx, fn) gp::Listen(cx, fn)
-#define GpuiListenArg(cx, fn, arg) gp::Listen(cx, fn, arg)

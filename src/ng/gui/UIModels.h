@@ -15,20 +15,6 @@ enum class Key : int {
     Escape = 27,
 };
 
-// The mouse cursors the UI asks for by name. The platform layer maps them to
-// its own (on Windows, the IDC_* cursors)
-enum class CursorId {
-    None = 0,
-    Arrow,
-    IBeam,
-    Hand,
-    Cross,
-    Move,
-    SizeNS,
-    SizeWE,
-    No,
-};
-
 // TreeItem represents an item in a TreeView control
 typedef uintptr_t TreeItem;
 
@@ -69,7 +55,6 @@ struct TreeModelItems {
         iterator(TreeModel* tm, TreeItem curr);
         TreeItem operator*() const;
         iterator& operator++(); // ++it
-        friend bool operator==(const iterator& a, const iterator& b);
         friend bool operator!=(const iterator& a, const iterator& b);
     };
     explicit TreeModelItems(TreeModel* tm);

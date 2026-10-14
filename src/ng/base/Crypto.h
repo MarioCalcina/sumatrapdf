@@ -6,5 +6,3 @@ void CalcSHA1Digest(Str data, u8 digest[20]);
 void CalcSHA2Digest(Str data, u8 digest[32]);
 
 Str ExtractP7m(Str d);
-
-TempStr GetExecutableSignerTemp(Str exePath);

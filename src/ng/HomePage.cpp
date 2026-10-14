@@ -144,9 +144,8 @@ static void AppendBugReportInfo(str::Builder& s) {
     if (gitCommidId) {
         s.Append(fmt("Git: %s\n", gitCommidId));
     }
-    Str exeType = IsDllBuild() ? StrL("dll") : StrL("static");
     Str instType = IsRunningInPortableMode() ? StrL("portable") : StrL("installed");
-    s.Append(fmt("Type: %s, %s\n", exeType, instType));
+    s.Append(fmt("Type: %s\n", instType));
     if (gIsPreReleaseBuild) {
         s.Append(StrL("Pre-release: yes\n"));
     }
@@ -1199,7 +1198,6 @@ static void MeasureAbout(MainWindow* win, AboutDims& d) {
     int btnDx = btnText.dx + 2 * scale(kAboutBtnPadDx);
     int btnDy = btnText.dy + 2 * scale(kAboutBtnPadDy);
     int copyBlockDy = scale(kAboutCopyGap) + btnDy;
-    AboutRow& software = gAboutRows[kAboutSoftwareRow];
     Size softwareHeader = PlatformFontMeasureText(fontLeft, AboutLeftText(kAboutSoftwareRow));
     Size softwareLink = PlatformFontMeasureText(fontRight, AboutRightText(kAboutSoftwareRow));
     int softwareDy = softwareHeader.dy + scale(kAboutCopyGap) + softwareLink.dy;

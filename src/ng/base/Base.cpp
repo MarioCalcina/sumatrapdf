@@ -1636,34 +1636,6 @@ void FreeStrNode(Arena* a, StrNode* head) {
     }
 }
 
-// Append n as the new last node. Clears n->next. List does not free nodes.
-void StrNodeListPush(StrNodeList* list, StrNode* n) {
-    ReportIf(!list || !n);
-    n->next = nullptr;
-    if (list->tail) {
-        list->tail->next = n;
-    } else {
-        list->head = n;
-    }
-    list->tail = n;
-}
-
-// Unlink the last node. Does not free it; list becomes empty if it was the only node.
-void StrNodeListPop(StrNodeList* list) {
-    ReportIf(!list || !list->tail);
-    if (list->head == list->tail) {
-        list->head = nullptr;
-        list->tail = nullptr;
-        return;
-    }
-    StrNode* prev = list->head;
-    while (prev->next != list->tail) {
-        prev = prev->next;
-    }
-    prev->next = nullptr;
-    list->tail = prev;
-}
-
 namespace str {
 
 // length up to the first NUL within len: a Str may span more than its C string
@@ -2190,35 +2162,6 @@ int NormalizeNewlinesToLFInPlace(Str& s) {
     s.len = dst;
 
     return dst;
-}
-
-// Every kLF not already preceded by a kCR becomes kCR kLF (what win32 edit
-// controls expect). Returns s unchanged (no allocation) if there's nothing to do.
-TempStr LFToCRLFTemp(Str s) {
-    int n = s.len;
-    int nLF = 0;
-    for (int i = 0; i < n; i++) {
-        if (s.s[i] == kLF && (i == 0 || s.s[i - 1] != kCR)) {
-            nLF++;
-        }
-    }
-    if (nLF == 0) {
-        return s;
-    }
-    char* res = AllocArrayTemp<char>(n + nLF + 1);
-    if (!res) {
-        return {};
-    }
-    int dst = 0;
-    for (int i = 0; i < n; i++) {
-        char c = s.s[i];
-        if (c == kLF && (i == 0 || s.s[i - 1] != kCR)) {
-            res[dst++] = kCR;
-        }
-        res[dst++] = c;
-    }
-    res[dst] = 0;
-    return Str(res, dst);
 }
 
 // Remove all characters in "toRemove" from "str", in place.
@@ -3358,10 +3301,6 @@ TempStr JoinTemp(Str s1, Str s2, Str s3) {
 
 TempStr JoinTemp(Str s1, Str s2, Str s3, Str s4) {
     return Join(GetTempArena(), s1, s2, s3, s4, Str{});
-}
-
-TempStr JoinTemp(Str s1, Str s2, Str s3, Str s4, Str s5) {
-    return Join(GetTempArena(), s1, s2, s3, s4, s5);
 }
 
 TempStr ReplaceTemp(Str s, Str toReplace, Str replaceWith) {
@@ -5519,10 +5458,6 @@ StrVec::iterator StrVec::iterator::operator+(int n) const {
     AdvanceStrVecIter(res, n);
     return res;
 }
-
-bool operator==(const StrVec::iterator& a, const StrVec::iterator& b) {
-    return (a.v == b.v) && (a.idx == b.idx);
-};
 
 bool operator!=(const StrVec::iterator& a, const StrVec::iterator& b) {
     return (a.v != b.v) || (a.idx != b.idx);

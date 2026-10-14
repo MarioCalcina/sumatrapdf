@@ -10,8 +10,6 @@ struct DisplayModel;
 struct AnnotCreateArgs;
 enum class AnnotationType;
 
-constexpr u16 kAnnotationPlacementCommandCode = 0x5341;
-
 bool CommandUsesPlacementMode(int cmdId);
 AnnotPlacementKind PlacementKindFromCommand(int cmdId);
 

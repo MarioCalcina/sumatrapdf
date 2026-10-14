@@ -21,14 +21,6 @@ class EngineBase;
 struct MainWindow;
 struct Print_Advanced_Data;
 
-struct PrintPageLayout {
-    float zoom = 1.f;
-    int rotation = 0;
-    Point offset;
-    Rect stretch;
-    bool isStretch = false;
-};
-
 // result of command-line printing; the numeric values double as the process
 // exit code so an automated caller can tell why printing failed (issue #3478)
 enum class PrintResult {

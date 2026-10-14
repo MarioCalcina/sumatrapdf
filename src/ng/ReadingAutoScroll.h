@@ -10,8 +10,6 @@ struct MainWindow;
 struct WindowTab;
 struct ReadingAutoScrollBar;
 
-constexpr uintptr_t kReadingAutoScrollTimerID = 16;
-
 void ReadingAutoScrollToggle(MainWindow*);
 void ReadingAutoScrollStop(MainWindow*);
 void ReadingAutoScrollPause(MainWindow*);

@@ -56,7 +56,6 @@
 #define __unused [[maybe_unused]]
 #endif
 
-#define _USE_MATH_DEFINES
 #include <math.h>
 
 using i8 = int8_t;
@@ -71,8 +70,6 @@ using uint = unsigned int;
 
 // the message-dispatch types the input code was written with
 using WPARAM = uintptr_t;
-using LPARAM = intptr_t;
-using LRESULT = intptr_t;
 
 // Same 100 ns ticks since 1601 representation as Win32, so settings and
 // metadata stay portable.
@@ -123,8 +120,6 @@ int AtomicRefCountDec(AtomicRefCount* v);
 void* AtomicPtrExchange(AtomicPtr* p, void* v);
 
 u64 GetTickCount64();
-
-i64 UnixTimeMsNow();
 
 struct Arena;
 
@@ -289,19 +284,10 @@ FORCEINLINE T* AllocStruct() {
     return (T*)AllocZero(1, sizeofi(T));
 }
 
-template <typename T>
-inline void ZeroStruct(T* s) {
-    memset((void*)s, 0, sizeof(T));
-}
-
 namespace bit {
 template <typename T>
 bool IsSet(T v, int bitNo) {
     return (v & ((T)1 << bitNo)) != 0;
-}
-template <typename T, typename M>
-bool IsMaskSet(T v, M mask) {
-    return (v & (T)mask) != 0;
 }
 } // namespace bit
 
@@ -340,16 +326,6 @@ inline float ClampF(float x, float min, float max) {
     return x;
 }
 
-inline double ClampD(double x, double min, double max) {
-    if (x < min) {
-        x = min;
-    }
-    if (x > max) {
-        x = max;
-    }
-    return x;
-}
-
 // return true if adding n to val overflows. Only valid for n > 0
 template <typename T>
 inline bool addOverflows(T val, T n) {
@@ -360,45 +336,6 @@ inline bool addOverflows(T val, T n) {
     ReportIf(val < 0);
     T res = val + n;
     return val > res;
-}
-
-struct VecStr {
-    int len;
-    int cap;
-    Str* els;
-};
-
-template <typename T>
-inline bool addSafe(T* valInOut, T n) {
-    if (n == 0 || *valInOut == 0) {
-        valInOut = 0;
-        return true;
-    }
-    ReportIf(n < 0);
-    ReportIf(*valInOut < 0);
-    T res = *valInOut + n;
-    if (res < *valInOut) {
-        return false;
-    }
-    *valInOut = res;
-    return true;
-}
-
-template <typename T>
-inline bool mulSafe(T* valInOut, T n) {
-    if (n == 0 || *valInOut == 0) {
-        *valInOut = 0;
-        return true;
-    }
-    ReportIf(n < 0);
-    ReportIf(*valInOut < 0);
-    T res = *valInOut * n;
-    if (res < *valInOut || res < n) {
-        // multiplication overflowed
-        return false;
-    }
-    *valInOut = res;
-    return true;
 }
 
 bool MemEq(const void* s1, const void* s2, int n);
@@ -1047,26 +984,6 @@ struct AutoArenaSavepoint {
 extern Arena* gPermArena;
 Arena* GetPermArena();
 
-template <typename T>
-inline T* PushArrayNoZeroAligned(Arena* arena, u64 count, u64 align) {
-    return (T*)arena->Push(sizeof(T) * count, align, false);
-}
-
-template <typename T>
-inline T* PushArrayAligned(Arena* arena, u64 count, u64 align) {
-    return (T*)arena->Push(sizeof(T) * count, align, true);
-}
-
-template <typename T>
-inline T* PushArrayNoZero(Arena* arena, u64 count) {
-    return PushArrayNoZeroAligned<T>(arena, count, (alignof(T) > 8) ? alignof(T) : 8);
-}
-
-template <typename T>
-inline T* PushArray(Arena* arena, u64 count) {
-    return PushArrayAligned<T>(arena, count, (alignof(T) > 8) ? alignof(T) : 8);
-}
-
 void* Alloc(struct Arena* arena, int size);
 void Free(struct Arena* arena, void* mem);
 
@@ -1583,13 +1500,6 @@ void VecReverse(Vec<T>& v) {
     }
 }
 
-template <typename T, typename E>
-bool VecPush(Arena* arena, T& v, E el) {
-    if (!VecGrow(arena, v, 1)) return false;
-    v.els[v.len++] = el;
-    return true;
-}
-
 //--- Str.h ------------------------------------------------------------------
 
 #define kUtf8Bom "\xEF\xBB\xBF"
@@ -1604,14 +1514,6 @@ struct StrNode {
 };
 StrNode* AllocStrNode(Arena* a, Str s);
 void FreeStrNode(Arena* a, StrNode* head);
-
-// Head/tail list of StrNodes (first→…→last via next). Does not own/free nodes.
-struct StrNodeList {
-    StrNode* head = nullptr;
-    StrNode* tail = nullptr;
-};
-void StrNodeListPush(StrNodeList* list, StrNode* n);
-void StrNodeListPop(StrNodeList* list);
 
 namespace str {
 
@@ -1648,7 +1550,6 @@ FORCEINLINE Str Join(Str s1, Str s2, Str s3, Str s4) {
 }
 TempStr JoinTemp(Str s1, Str s2, Str s3 = {});
 TempStr JoinTemp(Str s1, Str s2, Str s3, Str s4);
-TempStr JoinTemp(Str s1, Str s2, Str s3, Str s4, Str s5);
 
 bool Eq(Str s1, Str s2);
 bool EqI(Str s1, Str s2);
@@ -1707,7 +1608,6 @@ void TransCharsInPlace(Str& str, Str oldChars, Str newChars);
 int NormalizeWSInPlace(Str str);
 TempStr NormalizeWSTemp(Str s);
 int NormalizeNewlinesToLFInPlace(Str& s);
-TempStr LFToCRLFTemp(Str s);
 int RemoveCharsInPlace(Str str, Str toRemove);
 
 int BufSet(Str dst, Str src);
@@ -2120,7 +2020,6 @@ struct StrVec {
         iterator& operator++();        // ++it
         iterator operator++(int);      // it++
         iterator operator+(int) const; // it + n
-        friend bool operator==(const iterator& a, const iterator& b);
         friend bool operator!=(const iterator& a, const iterator& b);
     };
     iterator begin() const;
@@ -2232,13 +2131,6 @@ struct AutoDelete : NonCopyable {
     }
 };
 
-// frees a StrNode list (FreeStrNode(nullptr, head)) at the end of the scope
-struct AutoFreeStrNode : NonCopyable {
-    StrNode* head = nullptr;
-    explicit AutoFreeStrNode(StrNode* head) : head(head) {}
-    ~AutoFreeStrNode() { FreeStrNode(nullptr, head); }
-};
-
 // calls Release() on a ref-counted object (engine, COM interface) at the end of
 // the scope
 template <typename T>
@@ -2334,10 +2226,6 @@ constexpr Color kColorNoChange((Color)0xfdffffff);
 // explicit "don't paint" / no fill / no border (not inherit/default)
 constexpr Color kColorTransparent = (Color)0xfcffffff;
 
-constexpr bool ColorSkipsPaint(Color c) {
-    return c == kColorUnset || c == kColorTransparent;
-}
-
 // PdfColor is aarrggbb, where 0xff alpha is opaque and 0x0 alpha is transparent
 // Color is ggrrbb (Win32 COLORREF layout) and typically has no alpha
 using PdfColor = uint64_t;
@@ -2365,7 +2253,6 @@ constexpr Color MkGray(u8 x) {
 constexpr Color kColWhite = MkRgb(0xff, 0xff, 0xff);
 constexpr Color kColBlack = MkRgb(0, 0, 0);
 constexpr Color kColRed = MkRgb(0xff, 0, 0);
-constexpr Color kColGreen = MkRgb(0, 0xff, 0);
 constexpr Color kColBlue = MkRgb(0, 0, 0xff);
 constexpr Color kColYellow = MkRgb(0xff, 0xff, 0);
 constexpr Color kColGray = MkGray(0xdd);

@@ -1816,7 +1816,6 @@ bool OpenFileExternally(Str path) {
         return false;
     }
 
-    // TODO: only do this for trusted files (cf. IsUntrustedFile)?
     return LaunchFileShell(path);
 }
 

@@ -5,11 +5,9 @@
 // detection live here; registry services and window placement remain win32.
 
 #include "base/Base.h"
-#include "base/Crypto.h"
 #include "base/File.h"
 
 #include <unistd.h>
-#include <sys/xattr.h>
 
 #include "SumatraConfig.h"
 #include "Version.h"
@@ -87,48 +85,6 @@ int CurrentProcessId() {
     return (int)getpid();
 }
 
-// resources embedded in the exe are a win32 concept; there is no dll build
-// off Windows
-bool IsDllBuild() {
-    return false;
-}
-
-static char gAppSha1[41]{};
-
-Str Sha1OfAppExe() {
-    if (gAppSha1[0]) {
-        return Str(gAppSha1);
-    }
-    TempStr appPath = GetSelfExePathTemp();
-    Str data = file::ReadFile(appPath);
-    if (len(data) == 0) {
-        return {};
-    }
-    u8 sha1[20]{};
-    CalcSHA1Digest(data, sha1);
-    str::Free(data);
-    for (int i = 0; i < dimofi(sha1); i++) {
-        snprintf(gAppSha1 + i * 2, 3, "%02x", sha1[i]);
-    }
-    return Str(gAppSha1);
-}
-
-static bool HasDownloadMetadata(Str path) {
-    if (len(path) == 0) {
-        return false;
-    }
-    return getxattr(CStrTemp(path), "com.apple.quarantine", nullptr, 0, 0, 0) >= 0;
-}
-
-bool IsUntrustedFile(Str filePath, Str fileUrl) {
-    TempStr protocol;
-    if (fileUrl && !str::IsNull(str::Parse(fileUrl, "%S:", &protocol)) && len(protocol) > 1 &&
-        !str::EqI(protocol, StrL("file"))) {
-        return true;
-    }
-    return HasDownloadMetadata(filePath);
-}
-
 struct PosixEditorRule {
     Str binary;
     Str inverseSearchArgs;
@@ -198,11 +154,7 @@ void DetectTextEditors(Vec<TextEditor*>& out) {
 bool AppToolsPosix_UnitTests() {
     TempStr shell = FindInPathTemp(StrL("sh"), StrL("/bin:/usr/bin"));
     TempStr absent = FindInPathTemp(StrL("sumatrapdf-ng-no-such-editor"), StrL("/bin:/usr/bin"));
-    Str sha1 = Sha1OfAppExe();
-    return file::Exists(shell) && len(absent) == 0 && len(sha1) == 40 &&
-           str::ContainsChar(StrL("0123456789abcdef"), sha1.s[0]) &&
-           IsUntrustedFile({}, StrL("https://example.org/file.pdf")) &&
-           !IsUntrustedFile({}, StrL("file:///tmp/file.pdf"));
+    return file::Exists(shell) && len(absent) == 0;
 }
 
 void CollectInverseSearchCommands(StrVec& out, Str cmdLine) {

@@ -482,7 +482,6 @@ SpeakChunkResult ReadAloudSpeakChunk(WindowTab* tab, Str errMsg) {
     }
 
     int start = tab->readAloudChunkEnd;
-    int textLen = tab->readAloudText.len;
     int end = ReadAloudFindChunkEnd(tab->readAloudText, start, kReadAloudMaxChunkLen);
     if (start >= end) {
         return SpeakChunkResult::Failed;
@@ -502,11 +501,11 @@ SpeakChunkResult ReadAloudSpeakChunk(WindowTab* tab, Str errMsg) {
     }
     if (!ok) {
         logf("tts: SpeakChunk: TtsSpeakUtf8 failed\n");
-        dbgtts("chunk speak failed %d..%d of %d\n", start, end, textLen);
+        dbgtts("chunk speak failed %d..%d of %d\n", start, end, len(tab->readAloudText));
         ReadAloudShowNotif(tab, errMsg);
         return SpeakChunkResult::Failed;
     }
-    dbgtts("chunk %d..%d of %d mapBase=%d\n", start, end, textLen, tab->readAloudHighlightBase);
+    dbgtts("chunk %d..%d of %d mapBase=%d\n", start, end, len(tab->readAloudText), tab->readAloudHighlightBase);
 
     tab->readAloudChunkStart = start;
     tab->readAloudChunkEnd = end;
@@ -808,9 +807,8 @@ static void ReadAloudStartText(WindowTab* tab, Str cleaned, ReadAloudHighlightMa
         return;
     }
 
-    int cleanedLen = cleaned.len;
-    int mapLen = newMap ? newMap->len : -1;
-    dbgtts("StartText: cleanedLen=%d mapLen=%d highlightBase=%d\n", cleanedLen, mapLen, highlightBase);
+    dbgtts("StartText: cleanedLen=%d mapLen=%d highlightBase=%d\n", len(cleaned), newMap ? newMap->len : -1,
+           highlightBase);
 
     if (newMap) {
         if (!tab->readAloudHighlight) {

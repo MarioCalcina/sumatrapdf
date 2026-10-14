@@ -103,8 +103,6 @@ void ChipColorPicked(AnnotEditToolbarBase* tb, Color col);
 
 constexpr int kBtnPadX = 8;
 
-constexpr int kBtnPadY = 4;
-
 constexpr int kMargin = 5;
 
 constexpr int kBtnGap = 2;

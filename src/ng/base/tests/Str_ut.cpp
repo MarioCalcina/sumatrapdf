@@ -538,20 +538,6 @@ static void StrNormalizeNewlinesToLFInPlaceTest() {
     utassert(str::NormalizeNewlinesToLFInPlace(s) == 4 && s.len == 4 && s.s[4] == 0);
 }
 
-static void StrLFToCRLFTempTest() {
-    // bare LF becomes CRLF, an existing CRLF is left alone
-    utassert(str::Eq(str::LFToCRLFTemp(StrL("a\nb")), StrL("a\r\nb")));
-    utassert(str::Eq(str::LFToCRLFTemp(StrL("a\r\nb")), StrL("a\r\nb")));
-    utassert(str::Eq(str::LFToCRLFTemp(StrL("\na\n")), StrL("\r\na\r\n")));
-    utassert(str::Eq(str::LFToCRLFTemp(StrL("a\n\nb")), StrL("a\r\n\r\nb")));
-
-    // nothing to do: returns s as-is, no allocation
-    Str s = StrL("abc");
-    TempStr res = str::LFToCRLFTemp(s);
-    utassert(res.s == s.s && res.len == s.len);
-    utassert(len(str::LFToCRLFTemp(Str{})) == 0);
-}
-
 static void StrTrimWsTest() {
     // TrimWs / TrimNonWs eat from the front and report how much they ate
     Str s = StrL("  \t ab c");
@@ -1169,7 +1155,6 @@ void StrTest() {
     StrNextLineTest();
     StrTrimWsTest();
     StrNormalizeNewlinesToLFInPlaceTest();
-    StrLFToCRLFTempTest();
     StrStartsWithTest();
     // ParseUntilTest();
 }

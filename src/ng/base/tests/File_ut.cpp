@@ -84,7 +84,6 @@ void FileUtilTest() {
 
     TempStr tempDir = path::GetDirTemp(GetTempFilePathTemp(StrL("local-fs")));
     utassert(!path::IsOnNetworkDrive(tempDir));
-    utassert(path::IsOnFixedDrive(tempDir));
 
     {
         // write a temp file, map it and verify the view matches what was written

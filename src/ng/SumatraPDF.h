@@ -26,7 +26,6 @@ TempStr WindowStateDuringLoadResultTemp(int* exitCodeOut = nullptr);
 TempStr RenameFileResultTemp(Str dstPath, int* exitCodeOut);
 Str CliPassword();
 
-// orig's sidebar layout limits (SumatraPDF.cpp)
 // orig re-arms a WM_TIMER on the canvas; the shell's tick counts this down
 constexpr int kAutoReloadDelayInMs = 100;
 // give up waiting for a writer to go quiet after this long

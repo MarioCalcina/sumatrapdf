@@ -28,10 +28,6 @@ TreeModelItems::iterator& TreeModelItems::iterator::operator++() {
     return *this;
 }
 
-bool operator==(const TreeModelItems::iterator& a, const TreeModelItems::iterator& b) {
-    return a.curr == b.curr;
-}
-
 bool operator!=(const TreeModelItems::iterator& a, const TreeModelItems::iterator& b) {
     return a.curr != b.curr;
 }

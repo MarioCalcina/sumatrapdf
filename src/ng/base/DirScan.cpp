@@ -19,23 +19,6 @@ DirIter::iterator::iterator(const DirIter* di, bool didFinish) {
     AdvanceDirIter(this, 1);
 }
 
-DirIter::iterator::iterator(const iterator& that) {
-    *this = that;
-}
-
-DirIter::iterator& DirIter::iterator::operator=(const iterator& that) {
-    if (this == &that) {
-        return *this;
-    }
-    CloseDirIter(this);
-    this->di = that.di;
-    this->didFinish = that.didFinish;
-    this->dirsToVisit = that.dirsToVisit;
-    this->currDir = that.currDir;
-    this->data = that.data;
-    return *this;
-}
-
 DirIter::iterator::~iterator() {
     CloseDirIter(this);
 }
@@ -59,10 +42,6 @@ DirIter::iterator& DirIter::iterator::operator++() {
     AdvanceDirIter(this, 1);
     return *this;
 }
-
-bool operator==(const DirIter::iterator& a, const DirIter::iterator& b) {
-    return (a.di == b.di) && (a.didFinish == b.didFinish);
-};
 
 bool operator!=(const DirIter::iterator& a, const DirIter::iterator& b) {
     return (a.di != b.di) || (a.didFinish != b.didFinish);

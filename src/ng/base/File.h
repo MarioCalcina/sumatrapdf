@@ -28,7 +28,6 @@ TempStr ToOSTemp(Str path);
 
 bool IsSame(Str path1, Str path2);
 bool HasVariableDriveLetter(Str path);
-bool IsOnFixedDrive(Str path);
 bool IsOnNetworkDrive(Str path);
 bool IsOnAvailableDrive(Str path);
 bool IsCloudPlaceholder(Str path);
@@ -73,9 +72,6 @@ FileHandle OpenReadWrite(Str path, bool createIfMissing);
 void Close(FileHandle);
 i64 SeekEnd(FileHandle);
 bool WriteAll(FileHandle, Str data);
-bool ReadAt(FileHandle, i64 offset, void* buf, int size);
-bool Flush(FileHandle);
-TempStr LastErrorTemp();
 
 Str ReadFileWithArena(Str path, Arena*);
 Str ReadFile(Str path);
