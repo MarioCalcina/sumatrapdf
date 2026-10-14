@@ -716,7 +716,6 @@ enum class ControlCmd : u16 {
     TestReadingAutoScroll = 97,
     TestReadingBar = 98,
     TestSeedTextSelection = 99,
-    TestTtsPumpOnSpeak = 107,
     TestRenderSelections = 108,
     TestToggleFormButton = 109,
     ResolveUnsavedChanges = 110,
@@ -3003,23 +3002,6 @@ static void ExecuteControlRequest(ControlRequest* req) {
             int exitCode = 0;
             Str res = GoToLocationResultTemp(chapter, page, &exitCode);
             AppendTestResult(req, exitCode, res);
-            break;
-        }
-
-        case ControlCmd::TestTtsPumpOnSpeak: {
-            TtsTestPumpOnNextSpeak();
-            // mac sendMessage runs at once, so the close would be sent only
-            // after speak returned. Queue it, then speak, and the pump runs it.
-            if (str::Eq(StringArg(req, 0), StrL("close-during-speak"))) {
-                MainWindow* win = FirstWindow();
-                if (!win) {
-                    AppendTestResult(req, 2, StrL("NOTREADY no-window"));
-                    break;
-                }
-                uitask::Post(MkFunc0(TestPostCloseWindow, win), "TestWM_CLOSE");
-                ExecuteCmd(win, CmdReadAloudFromTopPage);
-            }
-            AppendTestResult(req, 0, StrL("OK"));
             break;
         }
 

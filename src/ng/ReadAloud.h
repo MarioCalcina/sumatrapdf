@@ -44,7 +44,6 @@ Str TtsGetVoiceId();
 void TtsSetSpeed(float speed);
 float TtsGetSpeed();
 
-void TtsTestPumpOnNextSpeak();
 bool ApplyReadAloudVoiceFromSettings();
 void ReadAloudFreeVoiceCache();
 
@@ -164,7 +163,6 @@ bool HandleReadAloudMenuCommand(MainWindow* win, int cmdId);
 enum class SpeakChunkResult {
     Ok,
     Failed,
-    TabGone,
 };
 
 extern int gReadAloudPaintLogState;

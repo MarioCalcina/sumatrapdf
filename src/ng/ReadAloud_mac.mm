@@ -8,8 +8,6 @@
 #import <AVFoundation/AVFoundation.h>
 #include "base/MacTypesShow.h"
 
-#include "base/UITask.h"
-
 #include "ChapterTable.h"
 #include "ReadAloud.h"
 
@@ -128,15 +126,7 @@ bool TtsIsAvailable() {
     return true;
 }
 
-static bool gTtsTestPumpOnSpeak = false;
-
 bool TtsSpeakUtf8(Str text) {
-    // A Windows speech call pumps messages, so a queued close runs inside it.
-    if (gTtsTestPumpOnSpeak) {
-        gTtsTestPumpOnSpeak = false;
-        uitask::DrainQueue();
-        return false;
-    }
     NSString* value = TtsString(text);
     if (!value || !TtsInit()) {
         return false;
@@ -255,8 +245,4 @@ void TtsMacRelease() {
     gTtsDelegate = nil;
     str::Free(gTtsVoiceId);
     gTtsVoiceId = {};
-}
-
-void TtsTestPumpOnNextSpeak() {
-    gTtsTestPumpOnSpeak = true;
 }

@@ -403,7 +403,7 @@ static void ReadAloudQueueNext(WindowTab* tab) {
     }
 
     TempStr chunk = str::DupTemp(Str(tab->readAloudText.s + start, end - start));
-    if (!TtsQueueUtf8(chunk) || !IsWindowTabValid(tab)) {
+    if (!TtsQueueUtf8(chunk)) {
         return;
     }
     tab->readAloudQueuedEnd = end;
@@ -489,17 +489,7 @@ SpeakChunkResult ReadAloudSpeakChunk(WindowTab* tab, Str errMsg) {
 
     int chunkLen = end - start;
     TempStr chunk = str::DupTemp(Str(tab->readAloudText.s + start, (int)((size_t)chunkLen)));
-    // the backend call pumps messages (COM's modal loop), so the user can close
-    // the tab's window inside it; ~WindowTab already reset the session then
-    bool ok = TtsSpeakUtf8(chunk);
-    if (!IsWindowTabValid(tab)) {
-        logf("tts: SpeakChunk: tab closed during speak\n");
-        if (ok) {
-            TtsStop();
-        }
-        return SpeakChunkResult::TabGone;
-    }
-    if (!ok) {
+    if (!TtsSpeakUtf8(chunk)) {
         logf("tts: SpeakChunk: TtsSpeakUtf8 failed\n");
         dbgtts("chunk speak failed %d..%d of %d\n", start, end, len(tab->readAloudText));
         ReadAloudShowNotif(tab, errMsg);
@@ -511,11 +501,6 @@ SpeakChunkResult ReadAloudSpeakChunk(WindowTab* tab, Str errMsg) {
     tab->readAloudChunkEnd = end;
     tab->readAloudQueuedEnd = 0;
     ReadAloudQueueNext(tab);
-    if (!IsWindowTabValid(tab)) {
-        logf("tts: SpeakChunk: tab closed during queue\n");
-        TtsStop();
-        return SpeakChunkResult::TabGone;
-    }
     ToolbarUpdateStateForWindow(tab->win, true);
     tab->win->RedrawCanvas();
     return SpeakChunkResult::Ok;
@@ -841,9 +826,6 @@ static void ReadAloudStartText(WindowTab* tab, Str cleaned, ReadAloudHighlightMa
     ReadAloudHighlightTimerStart(tab->win);
 
     SpeakChunkResult res = ReadAloudSpeakChunk(tab, errMsg);
-    if (res == SpeakChunkResult::TabGone) {
-        return;
-    }
     if (res == SpeakChunkResult::Failed) {
         ReadAloudFinishSession(tab, tab->win);
         return;
@@ -1031,9 +1013,6 @@ void ReadAloudContinueInTab(WindowTab* tab) {
     ReadAloudHighlightTimerStart(tab->win);
 
     SpeakChunkResult res = ReadAloudSpeakChunk(tab, Tr("No text available to read aloud"));
-    if (res == SpeakChunkResult::TabGone) {
-        return;
-    }
     if (res == SpeakChunkResult::Failed) {
         ReadAloudFinishSession(tab, tab->win);
         return;

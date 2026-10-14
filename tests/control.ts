@@ -100,7 +100,6 @@ export enum ControlCommand {
   TestNavFiles = 104,
   TestSaveFileAs = 105,
   TestImageOrientation = 106,
-  TestTtsPumpOnSpeak = 107,
   TestRenderSelections = 108,
   TestToggleFormButton = 109,
   ResolveUnsavedChanges = 110,
