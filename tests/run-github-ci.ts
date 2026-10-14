@@ -1,4 +1,4 @@
-// The suite the daily GitHub Actions job runs (.github/workflows/windows-daily.yml).
+// The suite the mac-tests GitHub Actions job runs (.github/workflows/mac-tests.yml).
 //
 // Two things make it different from run-all.ts:
 //
@@ -11,8 +11,8 @@
 //    nothing to stay out of the way of, and tests get room for toolbars,
 //    sidebars and dialogs.
 //
-// It does not build: the workflow builds (debug ASan) and points
-// SUMATRA_TEST_EXE at the resulting exe.
+// It does not build: the workflow builds the debug ASan app, which is where
+// the tests look for it (tests/util.ts).
 //
 // Run:  bun tests/run-github-ci.ts [test-name ...]
 //
@@ -28,12 +28,6 @@ import { tests as allTests } from "./run-all.ts";
 // Tests that need something a hosted runner doesn't have. Keep the reason with
 // the name: it is what tells the next person whether it is still true.
 export const excludedTests: Record<string, string> = {
-  // "Microsoft Print to PDF" is a Windows client feature; the runner images are
-  // Windows Server and don't have it (nor any other printer)
-  "issue-4967": "prints through Microsoft Print to PDF",
-  "issue-5065": "prints through Microsoft Print to PDF",
-  "issue-5353": "prints through Microsoft Print to PDF",
-  "issue-6150": "prints through Microsoft Print to PDF",
   // a TeX distribution is a big install we don't want on the runner; the LaTeX
   // suite itself (tests/latex.ts) is only in run-pre-release, not here
   "issue-5040": "needs pdflatex (MiKTeX / TeX Live)",
@@ -42,7 +36,6 @@ export const excludedTests: Record<string, string> = {
   // (issue-1136 was the other one; it now waits on the home page's own state
   // over -dbg-control instead of on focus, so it runs here.)
   "issue-2254": "depends on keyboard focus, flaky without an interactive desktop",
-  "issue-6279": "drives the system Save dialog on an administrative share, untried on a runner",
 };
 
 export function ciTests(): NamedTest[] {

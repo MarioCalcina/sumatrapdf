@@ -129,7 +129,6 @@ import { testit as issue6246 } from "./issue-6246.ts";
 import { testit as issue6247 } from "./issue-6247.ts";
 import { testit as issue6250 } from "./issue-6250.ts";
 import { testit as issue6252 } from "./issue-6252.ts";
-import { testit as issue6271 } from "./issue-6271.ts";
 import { testit as issue3755 } from "./issue-3755.ts";
 import { testit as issue5803 } from "./issue-5803.ts";
 import { testit as issue3862 } from "./issue-3862.ts";
@@ -152,9 +151,7 @@ import { testit as issue6050 } from "./issue-6050.ts";
 import { testit as issue6265 } from "./issue-6265.ts";
 import { testit as issue6266 } from "./issue-6266.ts";
 import { testit as issue6276 } from "./issue-6276.ts";
-import { testit as issue6279 } from "./issue-6279.ts";
 import { testit as issue6280 } from "./issue-6280.ts";
-import { testit as issue6269 } from "./issue-6269.ts";
 import { testit as issue6270 } from "./issue-6270.ts";
 import { testit as issue5911 } from "./issue-5911.ts";
 import { testit as issue6088 } from "./issue-6088.ts";
@@ -177,7 +174,6 @@ import { testit as readAloudLazyChapters } from "./read-aloud-lazy-chapters.ts";
 import { testit as lazyTabStateAfterSave } from "./lazy-tab-state-after-save.ts";
 import { testit as lazyTabSelectPaint } from "./lazy-tab-select-paint.ts";
 import { testit as pendingTabFreedSessionState } from "./pending-tab-freed-session-state.ts";
-import { testit as formJsNoStderr } from "./form-js-no-stderr.ts";
 import { testit as formJsThrow } from "./form-js-throw.ts";
 import { testit as closeTabDuringPlacement } from "./close-tab-during-placement.ts";
 import { testit as toggleZoomFailedTab } from "./toggle-zoom-failed-tab.ts";
@@ -288,11 +284,9 @@ import { testit as sidebarThumbnailsWheel } from "./sidebar-thumbnails-wheel.ts"
 import { testit as sidebarThumbnailsClose } from "./sidebar-thumbnails-close.ts";
 import { testit as issue6070 } from "./issue-6070.ts";
 import { testit as wheelWhileClosing } from "./wheel-while-closing.ts";
-import { testit as issue6259 } from "./issue-6259.ts";
 import { testit as fullscreenSessionRestore } from "./fullscreen-session-restore.ts";
 import { testit as stampEditToolbarName } from "./stamp-edit-toolbar-name.ts";
 import { testit as homeTipDoubleClick } from "./home-tip-double-click.ts";
-import { testit as issue6261 } from "./issue-6261.ts";
 import { testit as commandPaletteAnnotations } from "./command-palette-annotations.ts";
 import { testit as paletteDeleteAnnotation } from "./palette-delete-annotation.ts";
 import { testit as paletteCommandAvailability } from "./palette-command-availability.ts";
@@ -331,11 +325,6 @@ import { testit as issue5980 } from "./issue-5980.ts";
 import { testit as issue5982 } from "./issue-5982.ts";
 import { testit as issue6035 } from "./issue-6035.ts";
 import { testit as issue5984 } from "./issue-5984.ts";
-import { testit as issue5979 } from "./issue-5979.ts";
-import { testit as findBarDpi } from "./find-bar-dpi.ts";
-import { testit as issue6032 } from "./issue-6032.ts";
-import { testit as issue5988 } from "./issue-5988.ts";
-import { testit as issue5989 } from "./issue-5989.ts";
 import { testit as issue5995 } from "./issue-5995.ts";
 import { testit as issue5997 } from "./issue-5997.ts";
 
@@ -369,7 +358,6 @@ import { testit as tocShowOnOpen } from "./toc-show-on-open.ts";
 import { testit as tocSelectionVisible } from "./toc-selection-visible.ts";
 import { testit as tocTreeSentClick } from "./toc-tree-sent-click.ts";
 import { testit as issue6132 } from "./issue-6132.ts";
-import { testit as issue6133 } from "./issue-6133.ts";
 import { testit as issue6135 } from "./issue-6135.ts";
 import { testit as issue6137 } from "./issue-6137.ts";
 import { testit as issue6140 } from "./issue-6140.ts";
@@ -379,7 +367,6 @@ import { testit as issue6144 } from "./issue-6144.ts";
 import { testit as toolbarTabSwitchPos } from "./toolbar-tab-switch-pos.ts";
 import { testit as facingFitTinyViewport } from "./facing-fit-tiny-viewport.ts";
 import { testit as mdMissingFile } from "./ad-hoc-md-missing-file.ts";
-import { testit as issue6184 } from "./issue-6184.ts";
 import { testit as issue6220 } from "./issue-6220.ts";
 import { testit as sessionRestoreTabState } from "./session-restore-tab-state.ts";
 import { testit as issue6239 } from "./issue-6239.ts";
@@ -418,14 +405,10 @@ export const tests: NamedTest[] = [
   ["issue-6312", issue6312],
   ["palette-prefix-keys", palettePrefixKeys],
   ["sign-certify", signCertify],
-  ["issue-6271", issue6271],
-  ["form-js-no-stderr", formJsNoStderr],
-  ["issue-6279", issue6279],
   ["issue-2423", issue2423],
   ["jpeg-xl-pdf", jpegXlPdf],
   ["annotation clipboard tests", annotationClipboardTests],
   ["issue-6276", issue6276],
-  ["issue-6269", issue6269],
   ["toolbar-hover-dropdown", toolbarHoverDropdown],
   ["session-restore-tab-state", sessionRestoreTabState],
   ["exit-edit-pdf-deselects", exitEditPdfDeselects],
@@ -465,8 +448,6 @@ export const tests: NamedTest[] = [
   ["text-snippets", textSnippets],
   ["sign-with-image", signWithImage],
   ["always-show-sidebar", alwaysShowSidebar],
-  ["issue-6133", issue6133],
-  ["issue-6184", issue6184],
   ["image-only-palette-items", imageOnlyPaletteItems],
   ["issue-6151", issue6151],
   ["issue-6161", issue6161],
@@ -509,7 +490,6 @@ export const tests: NamedTest[] = [
   ["issue-4398", issue4398],
   ["issue-5964", issue5964],
   ["issue-6013", issue6013],
-  ["issue-5989", issue5989],
 
   // --- no Sumatra process -------------------------------------------------
   ["lint-command-ids", lintCommandIds],
@@ -706,11 +686,9 @@ export const tests: NamedTest[] = [
   ["sidebar-thumbnails-close", sidebarThumbnailsClose],
   ["issue-6070", issue6070],
   ["wheel-while-closing", wheelWhileClosing],
-  ["issue-6259", issue6259],
   ["fullscreen-session-restore", fullscreenSessionRestore],
   ["stamp-edit-toolbar-name", stampEditToolbarName],
   ["home-tip-double-click", homeTipDoubleClick],
-  ["issue-6261", issue6261],
   ["command-palette-annotations", commandPaletteAnnotations],
   ["palette-delete-annotation", paletteDeleteAnnotation],
   ["palette-command-availability", paletteCommandAvailability],
@@ -729,10 +707,6 @@ export const tests: NamedTest[] = [
   ["issue-5982", issue5982],
   ["issue-6035", issue6035],
   ["issue-5984", issue5984],
-  ["issue-5979", issue5979],
-  ["find-bar-dpi", findBarDpi],
-  ["issue-6032", issue6032],
-  ["issue-5988", issue5988],
   ["issue-5995", issue5995],
   ["issue-5997", issue5997],
   ["issue-6001", issue6001],

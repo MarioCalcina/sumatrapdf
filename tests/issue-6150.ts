@@ -12,7 +12,7 @@
 import { copyFileSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { runStandalone, tmpPath } from "./util.ts";
-import { pdfPageCount, requirePrintToPdf, runPrintToPdf, tempPrintOutput } from "./print-util.ts";
+import { pdfPageCount, runPrintToPdf, tempPrintOutput } from "./print-util.ts";
 
 const SRC_GIF = join(import.meta.dir, "issue-6150.gif");
 
@@ -24,7 +24,6 @@ function pdfHasImage(path: string): boolean {
 }
 
 export async function testit(): Promise<void> {
-  requirePrintToPdf();
 
   const dir = tmpPath("issue-6150");
   rmSync(dir, { recursive: true, force: true });

@@ -1,8 +1,7 @@
-// Shared helpers for print-to-PDF tests (Microsoft Print to PDF + output= path).
+// Shared helpers for print-to-PDF tests (-print-settings output=<path>).
 import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
-import { IS_WIN } from "./host.ts";
 import { EXE } from "./util.ts";
 
 export const PRINT_TO_PDF = "Microsoft Print to PDF";
@@ -125,27 +124,6 @@ export function runPrintToPdf(
 
 export function tempPrintOutput(name: string): string {
   return join(tmpdir(), `sumatra-print-test-${name}-${Date.now()}.pdf`);
-}
-
-export function requirePrintToPdf(): void {
-  if (!IS_WIN) {
-    // ng writes -print-settings output=<path> itself.
-    return;
-  }
-  const p = Bun.spawnSync({
-    cmd: [
-      "powershell",
-      "-NoProfile",
-      "-Command",
-      `(Get-Printer -Name '${PRINT_TO_PDF}' -ErrorAction SilentlyContinue) -ne $null`,
-    ],
-    stdout: "pipe",
-  });
-  if (p.stdout.toString().trim() !== "True") {
-    throw new Error(
-      `"${PRINT_TO_PDF}" printer not found. Enable it in Windows Settings > Bluetooth & devices > Printers & scanners.`,
-    );
-  }
 }
 
 export function pdfMediaBox(path: string): { w: number; h: number } {

@@ -6,12 +6,11 @@
 
 import { join } from "node:path";
 import { runStandalone, ROOT } from "./util.ts";
-import { pdfMediaBox, requirePrintToPdf, runPrintToPdf, tempPrintOutput } from "./print-util.ts";
+import { pdfMediaBox, runPrintToPdf, tempPrintOutput } from "./print-util.ts";
 
 const INPUT = join(ROOT, "tests", "issue-5597.pdf");
 
 export async function testit(): Promise<void> {
-  requirePrintToPdf();
 
   const portraitOut = tempPrintOutput("5353-portrait");
   const portraitRes = runPrintToPdf(INPUT, portraitOut, "portrait,disable-auto-rotation,noscale");

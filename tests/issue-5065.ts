@@ -7,7 +7,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { runStandalone, ROOT } from "./util.ts";
-import { requirePrintToPdf, runPrintToPdf, tempPrintOutput } from "./print-util.ts";
+import { runPrintToPdf, tempPrintOutput } from "./print-util.ts";
 
 const INPUT = join(ROOT, "tests", "issue-5597.pdf");
 const DOCNAME = "SumatraTestDoc-5065";
@@ -19,7 +19,6 @@ function pdfContainsDocName(path: string, docName: string): boolean {
 }
 
 export async function testit(): Promise<void> {
-  requirePrintToPdf();
   const out = tempPrintOutput("5065");
   const res = runPrintToPdf(INPUT, out, `docname=${DOCNAME}`);
   if (!res.ok) {
