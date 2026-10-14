@@ -17,7 +17,7 @@ bool BrowserViewCreateInProgress() {
     return false;
 }
 
-BrowserView* BrowserViewCreate(MainWindow*, HWND, BrowserViewCallback*, Str) {
+BrowserView* BrowserViewCreate(MainWindow*, BrowserViewCallback*, Str) {
     return nullptr;
 }
 

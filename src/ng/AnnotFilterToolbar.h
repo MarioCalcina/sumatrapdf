@@ -15,7 +15,6 @@ void ClearAnnotFilterAnnotations(MainWindow*);
 void ToggleFloatingAnnotList(MainWindow*);
 bool IsFloatingAnnotListVisible(MainWindow*);
 void ApplyAnnotFilterText(MainWindow* win, Str text);
-void PaintAnnotFilterWindow(MainWindow* win);
 bool AnnotFilterOnKeyDown(MainWindow*, int vk, bool ctrl, bool shift, bool alt);
 void AnnotFilterOnMouseDown(MainWindow*, float x, float y);
 bool AnnotFilterOnEscape(MainWindow*);

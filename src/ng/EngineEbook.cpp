@@ -64,7 +64,7 @@ static float GetDefaultFontSize() {
     if (gDefaultFontSize == 0) {
         gDefaultFontSize = 10;
     }
-    return gDefaultFontSize * 96.0f / (float)DpiGetForHwnd(nullptr);
+    return gDefaultFontSize * 96.0f / (float)DpiGet();
 }
 
 void SetDefaultEbookFont(Str name, float size) {

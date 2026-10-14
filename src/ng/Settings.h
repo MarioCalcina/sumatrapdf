@@ -271,8 +271,6 @@ struct FileState {
     Vec<int>* tocState;
     // thumbnails are saved as PNG files in sumatrapdfcache directory
     Pixmap* thumbnail;
-    // image list holding the file's shell icon
-    HIMAGELIST himl;
     // path of the document
     Str filePath;
     // hex encoded MD5 fingerprint of the file content (32 chars) followed
@@ -312,8 +310,6 @@ struct FileState {
     int sidebarDx;
     // temporary value needed for FileHistory::cmpOpenCount
     int index;
-    // index of the file's shell icon in Himl, -1 if not loaded yet
-    int iconIdx;
     // how far this document has been scrolled (in x and y direction)
     PointF scrollPos;
     // default position (can be on any monitor)

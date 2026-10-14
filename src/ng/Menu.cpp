@@ -87,11 +87,11 @@ static MenuDef menuDefSelection[] = {
     },
     {
         TrN("&Translate with"),
-        (UINT_PTR)menuDefTranslateWith,
+        (uintptr_t)menuDefTranslateWith,
     },
     {
         TrN("S&earch with"),
-        (UINT_PTR)menuDefSearchWith,
+        (uintptr_t)menuDefSearchWith,
     },
     {
         TrN("Select C&urrent Page"),
@@ -112,11 +112,11 @@ static MenuDef menuDefSelection[] = {
 static MenuDef menuDefContext[] = {
     {
         TrN("S&election"),
-        (UINT_PTR)menuDefSelection,
+        (uintptr_t)menuDefSelection,
     },
     {
         TrN("Visual Search With Google &Lens"),
-        (UINT_PTR)menuDefGoogleLens,
+        (uintptr_t)menuDefGoogleLens,
     },
     {
         TrN("Copy Link &Address"),
@@ -136,7 +136,7 @@ static MenuDef menuDefContext[] = {
     },
     {
         TrN("Selected &Image"),
-        (UINT_PTR)menuDefContextImage,
+        (uintptr_t)menuDefContextImage,
     },
     // note: strings cannot be "" or else items are not there
     {
@@ -165,19 +165,19 @@ static MenuDef menuDefContext[] = {
     },
     {
         TrN("AI chat with document using"),
-        (UINT_PTR)menuDefDocumentAIChat,
+        (uintptr_t)menuDefDocumentAIChat,
     },
     {
         TrN("Document"),
-        (UINT_PTR)menuDefDocumentOperations,
+        (uintptr_t)menuDefDocumentOperations,
     },
     {
         TrN("Read Aloud"),
-        (UINT_PTR)menuDefContextReadAloud,
+        (uintptr_t)menuDefContextReadAloud,
     },
     {
         TrN("Annotations"),
-        (UINT_PTR)menuDefContextAnnotations,
+        (uintptr_t)menuDefContextAnnotations,
     },
     {
         TrN("Show Errors"),
@@ -535,7 +535,7 @@ MenuModel* BuildMenuFromDef(MenuDef* menuDef, BuildMenuCtx* ctx) {
             AppendExternalViewersToMenu(menu, evTab ? evTab->filePath : Str{});
         }
         // custom selection handlers go before the built-in translate / search submenus
-        if (md.idOrSubmenu == (UINT_PTR)menuDefTranslateWith) {
+        if (md.idOrSubmenu == (uintptr_t)menuDefTranslateWith) {
             if (menuDef == menuDefMainSelection) {
                 AppendSelectionHandlersToMenu(menu, true);
             } else if (menuDef == menuDefSelection) {

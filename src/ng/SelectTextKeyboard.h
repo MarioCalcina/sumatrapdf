@@ -22,7 +22,6 @@ bool SelectTextWithKeyboardOnKeyDown(MainWindow*, int key, bool ctrl, bool shift
 bool SelectTextWithKeyboardOnChar(MainWindow*, int key);
 bool CanExtendTextSelection(MainWindow*);
 bool ExtendTextSelection(MainWindow*, TextSelectUnit, int dir);
-void SelectTextWithKeyboardBlinkCaret(MainWindow*);
 void SelectTextWithKeyboardBlinkTick(MainWindow*, int elapsedMs);
 void PaintKeyboardTextCaret(MainWindow*, Gfx*);
 void PaintKeyboardTextCaret(MainWindow*, gpui::PaintCtx*);

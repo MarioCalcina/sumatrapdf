@@ -416,20 +416,20 @@ void strStrTest() {
 
 static void wstrBuilderTest() {
     // grows out of the lent buffer and keeps the content
-    WCHAR stack[8];
+    wchar_t stack[8];
     wstr::Builder b;
     b.UseExternalBuffer(WStr(stack, dimofi(stack)));
     utassert(b.els == stack);
     for (int i = 0; i < 100; i++) {
-        b.AppendChar((WCHAR)(L'a' + (i % 26)));
+        b.AppendChar((wchar_t)(L'a' + (i % 26)));
     }
     utassert(len(b) == 100);
     utassert(b.els != stack); // moved to the heap
-    utassert(b.LastChar() == (WCHAR)(L'a' + (99 % 26)));
+    utassert(b.LastChar() == (wchar_t)(L'a' + (99 % 26)));
 
-    utassert(b.RemoveLast() == (WCHAR)(L'a' + (99 % 26)));
+    utassert(b.RemoveLast() == (wchar_t)(L'a' + (99 % 26)));
     utassert(len(b) == 99);
-    utassert(b.LastChar() == (WCHAR)(L'a' + (98 % 26)));
+    utassert(b.LastChar() == (wchar_t)(L'a' + (98 % 26)));
 
     b.Append(L"xyz");
     utassert(len(b) == 102);
@@ -638,8 +638,8 @@ static void StrStartsWithTest() {
     utassert(str::StartsWithI(StrL("abc"), empty1));
     utassert(str::StartsWithI(empty1, empty2));
 
-    WCHAR emptyWBuf1[] = L"";
-    WCHAR emptyWBuf2[] = L"";
+    wchar_t emptyWBuf1[] = L"";
+    wchar_t emptyWBuf2[] = L"";
     WStr emptyW1(emptyWBuf1, 0);
     WStr emptyW2(emptyWBuf2, 0);
     utassert(wstr::StartsWith(WStrL(L"abc"), emptyW1));
@@ -927,7 +927,7 @@ void StrTest() {
                  f[5] == -20);
     }
 
-    utassert(str::IsDigit('0') && str::IsDigit(TEXT('5')) && str::IsDigit(L'9'));
+    utassert(str::IsDigit('0') && str::IsDigit(L'5') && str::IsDigit(L'9'));
     // wchar_t is 4 bytes here, so name the narrow overload explicitly
     utassert(!str::IsDigit((char)L'\xB2'));
 
@@ -959,7 +959,7 @@ void StrTest() {
     // clang-format on
 
     for (int i = 0; i < dimof(formatNumData); i++) {
-        TempStr tmp = str::FormatNumWithThousandSepTemp((i64)formatNumData[i].number, LOCALE_INVARIANT);
+        TempStr tmp = str::FormatNumWithThousandSepTemp((i64)formatNumData[i].number, NumberLocale::Invariant);
         utassert(str::Eq(tmp, formatNumData[i].result));
     }
 
@@ -979,7 +979,7 @@ void StrTest() {
     // clang-format on
 
     for (int i = 0; i < dimof(formatFloatData); i++) {
-        TempStr tmp = str::FormatFloatWithThousandSepTemp(formatFloatData[i].number, LOCALE_INVARIANT);
+        TempStr tmp = str::FormatFloatWithThousandSepTemp(formatFloatData[i].number, NumberLocale::Invariant);
         utassert(str::Eq(tmp, formatFloatData[i].result));
     }
 
@@ -1152,7 +1152,7 @@ void StrTest() {
             utassert(!!isspace((u8)c) == str::IsWs((char)c));
         }
         for (int c = 0x00; c < 0x10000; c++) {
-            utassert(!!iswspace((WCHAR)c) == wstr::IsWs((WCHAR)c));
+            utassert(!!iswspace((wchar_t)c) == wstr::IsWs((wchar_t)c));
         }
         setlocale(LC_CTYPE, CStrTemp(saved));
     }

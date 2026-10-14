@@ -204,7 +204,7 @@ static void EnsureWebViewReady(MainWindow* win) {
     EnsureMarkedLoaded();
     MakeChatPage(p, provider);
     p->res.panel = p;
-    p->view = BrowserViewCreate(win, nullptr, &p->res, provider->virtualHost);
+    p->view = BrowserViewCreate(win, &p->res, provider->virtualHost);
     if (!p->view) {
         return;
     }
@@ -384,10 +384,6 @@ void OnAIChatFinished(MainWindow* win, AIChatProvider* p, AIChatTabState* st, bo
         SetAIChatWorking(win, false);
         PopulateSessionCombo(win);
     }
-}
-
-MainWindow* AIChatUpdateWindow(HWND, MainWindow* win) {
-    return win;
 }
 
 bool AIChatPanelShown(MainWindow* win) {

@@ -8,7 +8,6 @@
 
 // AppKit's MacTypes and the `defer:` parameter collide with ours
 #include "base/MacTypesHide.h"
-#define BOOL MacObjcBool
 #pragma push_macro("defer")
 #undef defer
 #import <AppKit/AppKit.h>
@@ -53,7 +52,6 @@ static bool WindowWantsKey(NSWindow* w) {
 }
 
 #pragma pop_macro("defer")
-#undef BOOL
 #include "base/MacTypesShow.h"
 
 #include "gui/ToolWindowPlat.h"

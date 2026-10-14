@@ -3,7 +3,6 @@
 
 #include "base/Base.h"
 #include "base/File.h"
-#include "base/DbgHelpDyn.h"
 
 // must be last due to assert() over-write
 #include "base/tests/UtAssert.h"

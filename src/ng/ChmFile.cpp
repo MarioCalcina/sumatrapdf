@@ -149,7 +149,7 @@ void ChmFile::ParseWindowsData() {
 
 constexpr int kCpChmDefault = 1252;
 
-static uint LcidToCodepage(DWORD lcid) {
+static uint LcidToCodepage(u32 lcid) {
     // cf. http://msdn.microsoft.com/en-us/library/bb165625(v=VS.90).aspx
     static const struct {
         u16 lcid;
@@ -178,7 +178,7 @@ bool ChmFile::ParseSystemData() {
     }
 
     ByteReader r(d);
-    DWORD n = 0;
+    u32 n = 0;
     // Note: skipping DWORD version at offset 0. It's supposed to be 2 or 3.
     for (int off = 4; off + 4 < d.len; off += (int)n + 4) {
         // Note: at some point we seem to get off-sync i.e. I'm seeing
@@ -187,7 +187,7 @@ bool ChmFile::ParseSystemData() {
         if (n == 0) {
             continue;
         }
-        WORD type = r.UInt16LE(off);
+        u16 type = r.UInt16LE(off);
         if (type == 4 && !codepage && n >= 4) {
             codepage = LcidToCodepage(r.UInt32LE(off + 4));
         }
@@ -258,7 +258,7 @@ bool ChmFile::Load(Str path) {
     int n = file::ReadN(path, (u8*)header, sizeof(header));
     if (n < sizeofi(header)) {
         ByteReader r(Str(header, sizeof(header)));
-        DWORD lcid = r.UInt32LE(20);
+        u32 lcid = r.UInt32LE(20);
         fileCodepage = LcidToCodepage(lcid);
     }
     if (!codepage) {
@@ -468,7 +468,7 @@ static bool ChmTocNeedsEntityRemap(uint cp) {
 }
 
 // Recover an entity's source byte, or -1 if the codepoint cannot represent one.
-static int ChmEntityByte(WCHAR c) {
+static int ChmEntityByte(wchar_t c) {
     if (c <= 0xFF) {
         return (int)c; // Latin-1: codepoint == byte value
     }

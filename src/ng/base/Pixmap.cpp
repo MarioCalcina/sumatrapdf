@@ -251,9 +251,9 @@ static int LinkWeight(const u8* pixel) {
 // Pixel bytes are B,G,R[,A]; rows are stride bytes apart.
 static void RecolorPixels(u8* data, int w, int h, size_t stride, int bpp, Color textColor, Color bgColor,
                           Color linkColor, Vec<Rect>* skipRects) {
-    byte linkR = 0, linkG = 0, linkB = 0;
+    u8 linkR = 0, linkG = 0, linkB = 0;
     UnpackColor(linkColor, linkR, linkG, linkB);
-    byte textR, textG, textB, bgR, bgG, bgB;
+    u8 textR, textG, textB, bgR, bgG, bgB;
     UnpackColor(textColor, textR, textG, textB);
     UnpackColor(bgColor, bgR, bgG, bgB);
     const int base[4] = {textB, textG, textR, 0};

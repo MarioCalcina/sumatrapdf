@@ -1162,8 +1162,6 @@ const fileState: Field[] = [
     "thumbnails are saved as PNG files in sumatrapdfcache directory",
   ).notSaved(),
   field("Index", Int, 0, "temporary value needed for FileHistory::cmpOpenCount").notSaved(),
-  field("Himl", { name: "", ctype: "HIMAGELIST" }, "NULL", "image list holding the file's shell icon").notSaved(),
-  field("IconIdx", Int, -1, "index of the file's shell icon in Himl, -1 if not loaded yet").notSaved(),
 ];
 
 // Keep the frequently repeated FileState instances compact: pointers and
@@ -1173,7 +1171,6 @@ const fileStateLayout = [
   "EBookUI",
   "TocState",
   "Thumbnail",
-  "Himl",
   "FilePath",
   "DecryptionKey",
   "SidebarView",
@@ -1188,7 +1185,6 @@ const fileStateLayout = [
   "WindowState",
   "SidebarDx",
   "Index",
-  "IconIdx",
   "ScrollPos",
   "WindowPos",
   "IsPinned",

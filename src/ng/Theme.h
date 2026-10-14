@@ -50,8 +50,6 @@ void SetInvertPageColors(bool);
 struct VirtButton;
 struct PlatformFont;
 
-VirtButton* NewThemedButton(HWND hwndForDpi, Str text, PlatformFont*, bool isDefault);
-
 extern int gFirstSetThemeCmdId;
 extern int gLastSetThemeCmdId;
 extern int gCurrSetThemeCmdId;

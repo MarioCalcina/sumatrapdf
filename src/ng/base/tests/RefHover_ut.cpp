@@ -19,7 +19,7 @@ constexpr int kLineH = 12;
 
 // Helper: append the WCHARs of `s` starting at (x, y) with fixed-width glyphs.
 // Caller passes pre-allocated text/coords buffers and the current length.
-static void AddText(WCHAR* text, Rect* coords, int& n, int cap, WStr s, int x, int y) {
+static void AddText(wchar_t* text, Rect* coords, int& n, int cap, WStr s, int x, int y) {
     for (int i = 0; i < s.len && n < cap; i++) {
         text[n] = s.s[i];
         coords[n] = Rect{x + (i * kCharW), y, kCharW, kLineH};
@@ -38,7 +38,7 @@ static bool IsEmpty(RectF r) {
 // (1) Sparse-text destination page (< 50 non-empty glyphs): DetectEntryBox
 // returns the whole page so an image-heavy page renders fully.
 static void SparseTextReturnsWholePage() {
-    WCHAR text[64];
+    wchar_t text[64];
     Rect coords[64];
     int n = 0;
     AddText(text, coords, n, 64, L"Heading only", 100, 100);
@@ -52,7 +52,7 @@ static void SparseTextReturnsWholePage() {
 // (2) destY < 0 with rich text: DetectEntryBox delegates to LandscapeBox,
 // which returns a full-width strip anchored at the page top.
 static void NegativeDestYFallsToLandscape() {
-    WCHAR text[512];
+    wchar_t text[512];
     Rect coords[512];
     int n = 0;
     for (int i = 0; i < 10; i++) {
@@ -69,7 +69,7 @@ static void NegativeDestYFallsToLandscape() {
 // A broken named destination can stay at the end of one page while its
 // heading moves to the next. An empty result lets the caller try that page.
 static void DestBeforeFooterIsEmpty() {
-    WCHAR text[256];
+    wchar_t text[256];
     Rect coords[256];
     int n = 0;
     AddText(text, coords, n, 256, L"body text ending before the destination", 52, 380);
@@ -89,7 +89,7 @@ static void LateDestSearchesNextPage() {
 // (3) Bracket-style bibliography "[Foo10]" / "[Bar11]": DetectEntryBox fits
 // to the first entry and does not include the second.
 static void BracketEntryFitsToOneEntry() {
-    WCHAR text[512];
+    wchar_t text[512];
     Rect coords[512];
     int n = 0;
     // Entry 1 at y=200, two lines (line 2 indented).
@@ -111,7 +111,7 @@ static void BracketEntryFitsToOneEntry() {
 // entry is detected by the indent change — a new line back at the entry's
 // first-line X after an indented continuation line (rule (b)).
 static void AuthorYearEntryFitsToOneEntry() {
-    WCHAR text[1024];
+    wchar_t text[1024];
     Rect coords[1024];
     int n = 0;
     AddText(text, coords, n, 1024, L"Smith, J. (2010). Some title here.", 72, 200);
@@ -131,7 +131,7 @@ static void AuthorYearEntryFitsToOneEntry() {
 // leading: the next entry is detected by a new line back at the entry's X
 // before any continuation indent was seen (rule (d)).
 static void SingleLineEntryList() {
-    WCHAR text[1024];
+    wchar_t text[1024];
     Rect coords[1024];
     int n = 0;
     AddText(text, coords, n, 1024, L"JVM Java Virtual Machine. 19, 36", 72, 200);
@@ -147,7 +147,7 @@ static void SingleLineEntryList() {
 // (3f) Single-line entries separated by blank lines: the vertical paragraph
 // gap ends the entry (rule (c)).
 static void GapSeparatedEntryList() {
-    WCHAR text[1024];
+    wchar_t text[1024];
     Rect coords[1024];
     int n = 0;
     AddText(text, coords, n, 1024, L"First footnote text goes here.", 72, 200);
@@ -162,7 +162,7 @@ static void GapSeparatedEntryList() {
 // extend into the left column's same-y body text (the start-of-line walk must
 // not cross the column gutter).
 static void TwoColumnRightEntryStaysInColumn() {
-    WCHAR text[1024];
+    wchar_t text[1024];
     Rect coords[1024];
     int n = 0;
     // Left column body text at x=72 (right edge ≈ 72+29*6=246), same y range.
@@ -184,7 +184,7 @@ static void TwoColumnRightEntryStaysInColumn() {
 // (3b) 2-column layout, entry in the left column: the detected box must not
 // extend into the right column's same-y text.
 static void TwoColumnLeftEntryStaysInColumn() {
-    WCHAR text[1024];
+    wchar_t text[1024];
     Rect coords[1024];
     int n = 0;
     // Left column entry at x=72 (line right edge ≈ 72+29*6=246).
@@ -208,7 +208,7 @@ static void TwoColumnLeftEntryStaysInColumn() {
 // column. DetectEntryBox must report that continuation via continuationOut
 // without swallowing the following entry ("[64]") in the new column.
 static void ColumnWrapContinuationDetected() {
-    WCHAR text[1024];
+    wchar_t text[1024];
     Rect coords[1024];
     int n = 0;
     // Left column's last entry: single line near the page bottom (kPageH=792).
@@ -236,7 +236,7 @@ static void ColumnWrapContinuationDetected() {
 // entry) that only reaches a bracket many lines down. DetectEntryBox must not
 // mistake that long unrelated block for a short wrapped tail.
 static void ColumnWrapContinuationRejectsUnrelatedBodyText() {
-    WCHAR text[1024];
+    wchar_t text[1024];
     Rect coords[1024];
     int n = 0;
     AddText(text, coords, n, 1024, L"[47] Zhang X Wang Y Wang J Title A", 72, 750);
@@ -258,7 +258,7 @@ static void ColumnWrapContinuationRejectsUnrelatedBodyText() {
 // detected as a heading and routed to the full-width landscape view rather
 // than fitted like a bibliography entry.
 static void AccentedAllCapsHeadingDetected() {
-    WCHAR text[1024];
+    wchar_t text[1024];
     Rect coords[1024];
     int n = 0;
     AddText(text, coords, n, 1024, L"SECCIÓN 2 RESULTADOS", 72, 200);
@@ -278,7 +278,7 @@ static void AccentedAllCapsHeadingDetected() {
 // (4) Equation label "(14)" at right column edge near destY: DetectEquationBox
 // returns a tight, full-width strip near the label.
 static void EquationLabelDetected() {
-    WCHAR text[512];
+    wchar_t text[512];
     Rect coords[512];
     int n = 0;
     // Equation row at y=300, label "(14)" at x≈540 (right of mediabox.dx*0.5).
@@ -302,7 +302,7 @@ static void EquationLabelDetected() {
 // its line (line-trailing), so only the left-half rule can reject it — this
 // pins that rule specifically.
 static void BodyTextParenRejected() {
-    WCHAR text[512];
+    wchar_t text[512];
     Rect coords[512];
     int n = 0;
     AddText(text, coords, n, 512, L"some body text on another line.", 72, 280);
@@ -315,7 +315,7 @@ static void BodyTextParenRejected() {
 // (6) "(N)" with more text further right on the same line: DetectEquationBox
 // returns empty (label must be line-trailing).
 static void NonTrailingParenRejected() {
-    WCHAR text[512];
+    wchar_t text[512];
     Rect coords[512];
     int n = 0;
     // Label "(14)" at x=540 followed by text at x=560 (further right).
@@ -331,7 +331,7 @@ static void NonTrailingParenRejected() {
 // must reject it (else hovering a reference would render the whole reference row
 // as if it were an equation strip). A 2-3 digit label is still detected.
 static void BibYearParenNotEquationLabel() {
-    WCHAR text[512];
+    wchar_t text[512];
     Rect coords[512];
     int n = 0;
     // Reference line ending in "(2013)" at the right column (right half).
@@ -350,7 +350,7 @@ static void BibYearParenNotEquationLabel() {
 static void EmptyInputsHandled() {
     RectF box1 = DetectEquationBox(WStr{}, nullptr, Mediabox(), 0.f, 100.f);
     utassert(IsEmpty(box1));
-    WCHAR text[1] = {0};
+    wchar_t text[1] = {0};
     Rect coords[1]{};
     RectF box2 = DetectEquationBox(WStr(text, 0), coords, Mediabox(), 0.f, 100.f);
     utassert(IsEmpty(box2));
@@ -363,7 +363,7 @@ static void EmptyInputsHandled() {
 // French caption above the destination triggers the upward figure-body
 // extension (region top moves above destY).
 static void FrenchCaptionDetected() {
-    WCHAR text[512];
+    wchar_t text[512];
     Rect coords[512];
     int n = 0;
     // Caption line "Tableau 2: Données" at y=300 — this is the destY.
@@ -383,7 +383,7 @@ static void FrenchCaptionDetected() {
 static void ItalianPortugueseCaptionDetected() {
     WStr captions[] = {L"Tabella 2: Dati", L"Tabela 2: Dados"};
     for (WStr caption : captions) {
-        WCHAR text[512];
+        wchar_t text[512];
         Rect coords[512];
         int n = 0;
         AddText(text, coords, n, 512, caption, 72, 300);
@@ -400,7 +400,7 @@ static void ItalianPortugueseCaptionDetected() {
 // mistaken for a "Section N" heading (the dictionary match requires a
 // trailing word boundary): the entry box stays fitted, not landscape.
 static void PluralHeadingWordNotMatched() {
-    WCHAR text[1024];
+    wchar_t text[1024];
     Rect coords[1024];
     int n = 0;
     AddText(text, coords, n, 1024, L"Sections of papers, J. Smith.", 72, 200);
@@ -416,7 +416,7 @@ static void PluralHeadingWordNotMatched() {
 // (11) Caption-extension picks the topmost caption below the region, not the
 // first one in glyph-array order (PDFs draw text in arbitrary order).
 static void CaptionExtensionPicksTopmost() {
-    WCHAR text[1024];
+    wchar_t text[1024];
     Rect coords[1024];
     int n = 0;
     for (int i = 0; i < 3; i++) {
@@ -436,7 +436,7 @@ static void CaptionExtensionPicksTopmost() {
 // (9) LandscapeBox: returned region spans the full mediabox width, starts at
 // destY-margin, height is positive and bounded.
 static void LandscapeBoxBasicShape() {
-    WCHAR text[256];
+    wchar_t text[256];
     Rect coords[256];
     int n = 0;
     for (int i = 0; i < 5; i++) {
@@ -454,7 +454,7 @@ static void LandscapeBoxBasicShape() {
 // (10) Plain-text citation "(Smith et al., 2020)": cursor on "Smith" yields
 // surname "Smith" and year 2020.
 static void PlainTextCitationDetected() {
-    WCHAR text[256];
+    wchar_t text[256];
     Rect coords[256];
     int n = 0;
     AddText(text, coords, n, 256, L"as shown in (Smith et al., 2020) earlier", 72, 200);
@@ -470,7 +470,7 @@ static void PlainTextCitationDetected() {
 
 // (11) No 4-digit year near the cursor: detection fails, no allocation.
 static void PlainTextCitationNoYear() {
-    WCHAR text[256];
+    wchar_t text[256];
     Rect coords[256];
     int n = 0;
     AddText(text, coords, n, 256, L"plain body text without any citation", 72, 200);
@@ -485,7 +485,7 @@ static void PlainTextCitationNoYear() {
 // containing the year anchors at the line's first glyph; a surname that is
 // not on the page returns false.
 static void SurnameFoundOnBibPage() {
-    WCHAR text[512];
+    wchar_t text[512];
     Rect coords[512];
     int n = 0;
     AddText(text, coords, n, 512, L"References", 72, 100);
@@ -503,7 +503,7 @@ static void SurnameFoundOnBibPage() {
 // (13) Numeric "[N]" citation: cursor inside the brackets yields the number;
 // a list "[1, 2]" picks the token nearest the cursor; plain text fails.
 static void NumericCitationDetected() {
-    WCHAR text[256];
+    wchar_t text[256];
     Rect coords[256];
     int n = 0;
     AddText(text, coords, n, 256, L"see [1] for details", 72, 200);
@@ -530,7 +530,7 @@ static void NumericCitationDetected() {
 
 // (13b) Two "[1]" markers on one line get distinct srcRect x spans.
 static void NumericCitationSrcRectDistinctOnLine() {
-    WCHAR text[256];
+    wchar_t text[256];
     Rect coords[256];
     int n = 0;
     AddText(text, coords, n, 256, L"see [1] and again [1] end", 72, 200);
@@ -552,7 +552,7 @@ static void NumericCitationSrcRectDistinctOnLine() {
 // the en-dash must not break bracket detection, and hovering an endpoint
 // resolves to that endpoint's number.
 static void NumericCitationRangeEnDash() {
-    WCHAR text[256];
+    wchar_t text[256];
     Rect coords[256];
     int n = 0;
     // "deploy [2, 9–14]." — en-dash split from "14" so the \x2013 escape does
@@ -579,7 +579,7 @@ static void NumericCitationRangeEnDash() {
 // below (> the 16pt single-line tolerance) so this exercises the multi-line
 // walk, not the within-line tolerance.
 static void NumericCitationLineBreakList() {
-    WCHAR text[256];
+    wchar_t text[256];
     Rect coords[256];
     int n = 0;
     AddText(text, coords, n, 256, L"in AECO [8, 17,", 72, 200); // '[' at idx 8 (x=120)
@@ -607,7 +607,7 @@ static void NumericCitationLineBreakList() {
 // walks by reading order (not x), so hovering "43" on line 2 must still find
 // the '[' on line 1 and resolve to 43.
 static void NumericCitationWrapEndOfLine() {
-    WCHAR text[256];
+    wchar_t text[256];
     Rect coords[256];
     int n = 0;
     // Line 1 is a full column line ending in "[42," (the citation wrapped at
@@ -650,7 +650,7 @@ static void NumericCitationWrapEndOfLine() {
 // real PDF: the stream neighbour of "43]" sat 196pt up, not at "[42,"). The
 // detector must reconstruct local reading order spatially and still resolve.
 static void NumericCitationWrapOutOfOrder() {
-    WCHAR text[512];
+    wchar_t text[512];
     Rect coords[512];
     int n = 0;
     // line 1 (y=200): "...) [42," — the '[' sits near the right end.
@@ -680,7 +680,7 @@ static void NumericCitationWrapOutOfOrder() {
 // right-column text at the same y. Column-limited segment reconstruction must
 // keep the right column out and still bridge "[42,"(line1) → "43]"(line2).
 static void NumericCitationWrapTwoColumn() {
-    WCHAR text[512];
+    wchar_t text[512];
     Rect coords[512];
     int n = 0;
     // Left column (x=72, ends ~x=270). Line 1 ends "[42,", line 2 starts "43]".
@@ -706,7 +706,7 @@ static void NumericCitationWrapTwoColumn() {
 
 // (10b) Two author-year citations on one line get distinct srcRect x spans.
 static void PlainTextCitationSrcRectDistinctOnLine() {
-    WCHAR text[256];
+    wchar_t text[256];
     Rect coords[256];
     int n = 0;
     AddText(text, coords, n, 256, L"per (Smith, 2020) and (Jones, 2021) here", 72, 200);
@@ -734,7 +734,7 @@ static void PlainTextCitationSrcRectDistinctOnLine() {
 // (14) Numeric reference list lookup: a line starting with "[num]" at the left
 // column anchors at its first glyph; a number not present returns false.
 static void NumericReferenceFoundOnBibPage() {
-    WCHAR text[512];
+    wchar_t text[512];
     Rect coords[512];
     int n = 0;
     AddText(text, coords, n, 512, L"References", 72, 100);
@@ -758,7 +758,7 @@ static void NumericReferenceFoundOnBibPage() {
 // threshold. The detected box must still span the full body width (the body
 // is bridged), not collapse to the label width and clip the entry.
 static void HangingIndentNarrowLabelFullWidth() {
-    WCHAR text[1024];
+    wchar_t text[1024];
     Rect coords[1024];
     int n = 0;
     // Narrow label "[TA05]" ends at x=72+6*6=108; body starts at x=130 — a
@@ -782,7 +782,7 @@ static void HangingIndentNarrowLabelFullWidth() {
 // the body bridge must reach the body without jumping the (much wider) column
 // gutter into the right column.
 static void TwoColumnHangingIndentStaysInColumn() {
-    WCHAR text[1024];
+    wchar_t text[1024];
     Rect coords[1024];
     int n = 0;
     // Left column: narrow label at x=72 (ends ~108), body at x=130 (22pt
@@ -808,7 +808,7 @@ static void TwoColumnHangingIndentStaysInColumn() {
 // page-number footer far below: the trailing-gap trim ends the box at the
 // entry's last line, not at the footer.
 static void LastEntryTrailingFooterTrimmed() {
-    WCHAR text[1024];
+    wchar_t text[1024];
     Rect coords[1024];
     int n = 0;
     AddText(text, coords, n, 1024, L"[Zim25]", 72, 600);
@@ -844,7 +844,7 @@ static void NormalizeGlyphLinesFlattensLine() {
 // that period hijacks the entry-start search (narrow strip / wrong entry);
 // after NormalizeGlyphLines the detector locks onto the real "[Buc+23]" entry.
 static void VariableGlyphTopsEntryNotHijacked() {
-    WCHAR text[1024];
+    wchar_t text[1024];
     Rect coords[1024];
     int n = 0;
     // Previous entry's trailing line "1622292." at baseline 313: digits top
@@ -900,7 +900,7 @@ static void VariableGlyphTopsEntryNotHijacked() {
 // line in the Y-window (right column), and the labelsep bridge then jumped the
 // narrow gutter, widening the box across both columns.
 static void TwoColumnNumericLeftEntryNotHijacked() {
-    WCHAR text[1024];
+    wchar_t text[1024];
     Rect coords[1024];
     int n = 0;
     // Left column (x=72). The "[2]" entry spans one full line (~ends x=198).
@@ -932,7 +932,7 @@ static void TwoColumnNumericLeftEntryNotHijacked() {
 // — hovering "[4]"/"[5]" then did nothing because their entries sit in the
 // right column of the references page.
 static void TwoColumnNumericReferenceFound() {
-    WCHAR text[1024];
+    wchar_t text[1024];
     Rect coords[1024];
     int n = 0;
     // Left column refs at x=72, right column refs at x=320 (a wide gutter from
@@ -965,7 +965,7 @@ static void TwoColumnNumericReferenceFound() {
 // gutter into the neighbouring column. The gutter-aware column scan handles
 // both (the gutter is empty on every row; the wide line keeps its column full).
 static void TwoColumnWideSecondLineStaysInColumn() {
-    WCHAR text[1024];
+    wchar_t text[1024];
     Rect coords[1024];
     int n = 0;
     // Left column entry at x=72: short first line (~ends x=168), long 2nd line
@@ -987,7 +987,7 @@ static void TwoColumnWideSecondLineStaysInColumn() {
 // (oversized glyphs, one per baseline) is removed, while body text and a
 // horizontal heading of same-baseline tall glyphs are kept.
 static void StripWatermarkRemovesDiagonalStamp() {
-    WCHAR text[1024];
+    wchar_t text[1024];
     Rect coords[1024];
     int n = 0;
     // Body: 3 lines of normal (dy=12) glyphs.
@@ -1001,7 +1001,7 @@ static void StripWatermarkRemovesDiagonalStamp() {
         coords[n] = Rect{190 + (i * 14), 180 + (i * 6), 20, 40};
         n++;
     }
-    WCHAR outText[1024];
+    wchar_t outText[1024];
     Rect outCoords[1024];
     int kept = StripWatermarkGlyphs(WStr(text, n), coords, outText, outCoords);
     // All body glyphs survive; all 10 watermark glyphs are dropped.
@@ -1032,7 +1032,7 @@ static void StripWatermarkRemovesDiagonalStamp() {
 // "ref spans two columns" bug: the watermark filled the gutter in the column
 // scan, columnRightX ran past it, and the box swept into the right column.
 static void TwoColumnWatermarkStaysInColumn() {
-    WCHAR text[1024];
+    wchar_t text[1024];
     Rect coords[1024];
     int n = 0;
     // Left column entry at x=72 (label+body share line 1, ends ~x=246), 2nd
@@ -1050,7 +1050,7 @@ static void TwoColumnWatermarkStaysInColumn() {
         n++;
     }
     // Caller pipeline: strip the watermark, then detect on the survivors.
-    WCHAR cleanText[1024];
+    wchar_t cleanText[1024];
     Rect cleanCoords[1024];
     int cleanLen = StripWatermarkGlyphs(WStr(text, n), coords, cleanText, cleanCoords);
     RectF box = DetectEntryBox(WStr(cleanText, cleanLen), cleanCoords, Mediabox(), 72.f, 200.f);

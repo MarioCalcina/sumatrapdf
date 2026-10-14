@@ -10,7 +10,7 @@ struct MainWindow;
 struct WindowTab;
 struct ReadingAutoScrollBar;
 
-constexpr UINT_PTR kReadingAutoScrollTimerID = 16;
+constexpr uintptr_t kReadingAutoScrollTimerID = 16;
 
 void ReadingAutoScrollToggle(MainWindow*);
 void ReadingAutoScrollStop(MainWindow*);
@@ -25,7 +25,6 @@ bool ReadingAutoScrollIsOn(MainWindow*);
 void ReadingAutoScrollHideBar(MainWindow*);
 void ReadingAutoScrollSyncToTab(WindowTab*);
 void ReadingAutoScrollForgetTab(WindowTab*);
-void ReadingAutoScrollRelayout(HWND hwndCanvas);
 void ReadingAutoScrollDestroy(MainWindow*);
 gpui::El* ReadingAutoScrollBarBuild(MainWindow*, gpui::Ctx*);
 TempStr ReadingAutoScrollBarStateTemp(int* exitCodeOut);

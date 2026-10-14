@@ -19,15 +19,13 @@ void GetPropsText(DocController* ctrl, str::Builder& out);
 // implemented by each app
 void AppendDateProp(str::Builder& out, Str key, Str val, bool isPdfDate);
 
-// the properties window the fonts are for: an HWND in orig, the main window in ng
+// the properties window the fonts are for
 struct GetFontsResult {
-    HWND hwnd = nullptr;
     MainWindow* win = nullptr;
     str::Builder fontsText;
 };
 
 struct GetFontsData {
-    HWND hwnd = nullptr;
     MainWindow* win = nullptr;
     EngineBase* engine = nullptr;
 };

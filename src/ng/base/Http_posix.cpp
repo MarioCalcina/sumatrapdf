@@ -10,8 +10,8 @@
 
 // libcurl; the portable half of the API is in Http.cpp.
 
-static constexpr DWORD kHttpErrorSuccess = 0;
-static constexpr DWORD kHttpErrorFailure = 1;
+static constexpr u32 kHttpErrorSuccess = 0;
+static constexpr u32 kHttpErrorFailure = 1;
 
 static constexpr long kHttpTimeoutSecs = 30;
 
@@ -76,10 +76,10 @@ static bool PerformRequest(CURL* curl, HttpRsp* rspOut) {
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, AppendResponse);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &rspOut->data);
     CURLcode code = curl_easy_perform(curl);
-    rspOut->error = (DWORD)code;
+    rspOut->error = (u32)code;
     long status = 0;
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &status);
-    rspOut->httpStatusCode = (DWORD)status;
+    rspOut->httpStatusCode = (u32)status;
     return code == CURLE_OK;
 }
 

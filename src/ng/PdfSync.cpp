@@ -27,15 +27,15 @@ struct PdfsyncFileIndex {
 };
 
 struct PdfsyncLine {
-    UINT record = 0; // index for mapping line(s) to point(s)
+    uint record = 0; // index for mapping line(s) to point(s)
     int file = 0;    // index into srcfiles
-    UINT line = 0;
-    UINT column = 0;
+    uint line = 0;
+    uint column = 0;
 };
 
 struct PdfsyncPoint {
-    UINT record; // index for mapping point(s) to line(s)
-    UINT page, x, y;
+    uint record; // index for mapping point(s) to line(s)
+    uint page, x, y;
 };
 
 // Synchronizer based on .pdfsync file generated with the pdfsync tex package
@@ -49,7 +49,7 @@ struct Pdfsync : Synchronizer {
     int SourceToDoc(Str srcfilename, int line, int col, int* page, Vec<Rect>& rects) override;
 
     int RebuildIndexIfNeeded();
-    UINT SourceToRecord(Str srcfilename, int line, int col, Vec<int>& records);
+    uint SourceToRecord(Str srcfilename, int line, int col, Vec<int>& records);
 
     EngineBase* engine;              // needed for converting between coordinate systems
     StrVec srcfiles;                 // source file names
@@ -197,7 +197,7 @@ int Pdfsync::RebuildIndexIfNeeded() {
     jobName = PrependDirTemp(jobName);
 
     Str version = ReadSyncLine(rest);
-    UINT versionNumber = 0;
+    uint versionNumber = 0;
     if (str::IsNull(version) || str::IsNull(str::Parse(version, "version %u", &versionNumber)) || versionNumber != 1) {
         return PDFSYNCERR_SYNCFILE_CANNOT_BE_OPENED;
     }
@@ -241,7 +241,7 @@ int Pdfsync::RebuildIndexIfNeeded() {
                 if (0 == page || page > maxPageNo) {
                     break;
                 }
-                PdfsyncPoint pspoint{.page = (UINT)page};
+                PdfsyncPoint pspoint{.page = (uint)page};
                 if (!str::IsNull(str::Parse(line, "p%?* %u %u %u", &pspoint.record, &pspoint.x, &pspoint.y))) {
                     VecAppend(points, pspoint);
                 }
@@ -319,19 +319,19 @@ int Pdfsync::DocToSource(int pageNo, Point pt, Str& filename, int* line, int* co
     pt.y = mbox.dy - pt.y;
 
     // distance to the closest pdf location (in the range <kPdfsyncEpsilonSquare)
-    UINT closest_xydist = UINT_MAX;
-    UINT selected_record = UINT_MAX;
+    uint closest_xydist = UINT_MAX;
+    uint selected_record = UINT_MAX;
     // Without a nearby point, use the closest vertical match.
-    UINT closest_ydist = UINT_MAX;        // vertical distance between the hit point and the vertically-closest record
-    UINT closest_xdist = UINT_MAX;        // horizontal distance between the hit point and the vertically-closest record
-    UINT closest_ydist_record = UINT_MAX; // vertically-closest record
+    uint closest_ydist = UINT_MAX;        // vertical distance between the hit point and the vertically-closest record
+    uint closest_xdist = UINT_MAX;        // horizontal distance between the hit point and the vertically-closest record
+    uint closest_ydist_record = UINT_MAX; // vertically-closest record
 
     // read all the sections of 'p' declarations for this pdf sheet
     for (int i = sheetIndex[pageNo]; i < len(points) && points[i].page == (uint)pageNo; i++) {
         // check whether it is closer than the closest point found so far
-        UINT dx = abs(pt.x - (int)(points[i].x / kSyncToPdfCoordinateDiv));
-        UINT dy = abs(pt.y - (int)(points[i].y / kSyncToPdfCoordinateDiv));
-        UINT dist = (dx * dx) + (dy * dy);
+        uint dx = abs(pt.x - (int)(points[i].x / kSyncToPdfCoordinateDiv));
+        uint dy = abs(pt.y - (int)(points[i].y / kSyncToPdfCoordinateDiv));
+        uint dist = (dx * dx) + (dy * dy);
         if (dist < kPdfsyncEpsilonSquare && dist < closest_xydist) {
             selected_record = points[i].record;
             closest_xydist = dist;
@@ -372,7 +372,7 @@ int Pdfsync::DocToSource(int pageNo, Point pt, Str& filename, int* line, int* co
 
 // Collect consecutive records for the requested line, or the nearest line within kEpsilonLine.
 // Column is ignored.
-UINT Pdfsync::SourceToRecord(Str srcfilename, int line, int /*col*/, Vec<int>& records) {
+uint Pdfsync::SourceToRecord(Str srcfilename, int line, int /*col*/, Vec<int>& records) {
     if (len(srcfilename) == 0) {
         return PDFSYNCERR_INVALID_ARGUMENT;
     }
@@ -401,7 +401,7 @@ UINT Pdfsync::SourceToRecord(Str srcfilename, int line, int /*col*/, Vec<int>& r
 
     // look for sections belonging to the specified file
     // starting with the first section that is declared within the scope of the file.
-    UINT min_distance = kEpsilonLine; // distance to the closest record
+    uint min_distance = kEpsilonLine; // distance to the closest record
     int lineIx = -1;                  // closest record-line index
 
     for (int isec = fileIndex[isrc].start; isec < fileIndex[isrc].end; isec++) {
@@ -410,7 +410,7 @@ UINT Pdfsync::SourceToRecord(Str srcfilename, int line, int /*col*/, Vec<int>& r
             continue;
         }
 
-        UINT d = abs((int)lines[isec].line - line);
+        uint d = abs((int)lines[isec].line - line);
         if (d < min_distance) {
             min_distance = d;
             lineIx = isec;
@@ -438,7 +438,7 @@ int Pdfsync::SourceToDoc(Str srcfilename, int line, int col, int* page, Vec<Rect
     }
 
     Vec<int> found_records;
-    UINT ret = SourceToRecord(srcfilename, line, col, found_records);
+    uint ret = SourceToRecord(srcfilename, line, col, found_records);
     if (ret != PDFSYNCERR_SUCCESS || len(found_records) == 0) {
         return (int)ret;
     }
@@ -786,7 +786,7 @@ int SyncTex::SourceToDoc(Str srcfilename, int line, int col, int* page, Vec<Rect
             if (firstpage <= 0 || firstpage > engine->PageCount()) {
                 continue;
             }
-            *page = (int)(UINT)firstpage;
+            *page = (int)(uint)firstpage;
         }
         if (synctex_node_page(node) != firstpage) {
             continue;

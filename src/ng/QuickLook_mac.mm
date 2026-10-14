@@ -14,7 +14,6 @@
 
 // AppKit's MacTypes and the `defer:` parameter collide with ours
 #include "base/MacTypesHide.h"
-#define BOOL MacObjcBool
 #pragma push_macro("defer")
 #undef defer
 #import <AppKit/AppKit.h>
@@ -23,7 +22,6 @@
 #import <QuickLookUI/QuickLookUI.h>
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 #pragma pop_macro("defer")
-#undef BOOL
 #include "base/MacTypesShow.h"
 
 #include "base/File.h"
@@ -187,7 +185,7 @@ static NSError* CantReadError() {
     CGSize size = CGSizeMake(dx * fit, dy * fit);
     id img = CFBridgingRelease(page);
     QLThumbnailReply* reply = [QLThumbnailReply replyWithContextSize:size
-                                                        drawingBlock:^MacObjcBool(CGContextRef ctx) {
+                                                        drawingBlock:^BOOL(CGContextRef ctx) {
                                                           CGContextDrawImage(
                                                               ctx, CGRectMake(0, 0, size.width, size.height),
                                                               (__bridge CGImageRef)img);

@@ -67,7 +67,7 @@ void GetSystemTimeAsFileTime(FILETIME* ft) {
     *ft = FileTimeFromU64(ticks);
 }
 
-UINT GetACP() {
+uint GetACP() {
     return CP_UTF8;
 }
 

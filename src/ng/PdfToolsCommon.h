@@ -35,8 +35,6 @@ bool ExtractTextViaEngine(MainWindow* win, Str destPath, Str pages);
 struct SaveSelImgWork {
     Pixmap* px = nullptr;
     Str destPath;
-    // orig drops its notification by canvas
-    HWND hwndCanvas = nullptr;
     MainWindow* win = nullptr;
     bool ok = false;
 };

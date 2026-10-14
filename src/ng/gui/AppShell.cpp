@@ -1436,10 +1436,10 @@ static BrowserView* UpdateBrowserViews(MainWindow* win, bool overlayUp) {
             continue;
         }
         if (cm) {
-            cm->SetParentWindow(win, nullptr);
+            cm->SetParentWindow(win);
             curr = cm->docView;
         } else {
-            mm->SetParentWindow(win, nullptr);
+            mm->SetParentWindow(win);
             curr = mm->docView;
         }
     }

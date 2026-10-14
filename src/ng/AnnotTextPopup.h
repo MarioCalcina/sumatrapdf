@@ -15,6 +15,5 @@ void HideAnnotationTextPopup(MainWindow*);
 void HideAnnotationTextPopupFor(MainWindow*, Annotation*);
 bool IsAnnotationTextPopupShown(MainWindow*);
 bool IsAnnotationTextPopupShownFor(MainWindow*, Annotation*);
-void RepositionAnnotationTextPopup(MainWindow*);
 void DeleteAnnotationTextPopup(MainWindow*);
 gpui::El* AnnotTextPopupBuild(MainWindow*, gpui::Ctx*);

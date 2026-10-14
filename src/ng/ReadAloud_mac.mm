@@ -3,12 +3,9 @@
 
 #include "base/Base.h"
 
-// ng: objc's BOOL is bool (or signed char); ours is int. Rename theirs for
-// the import. Point / Rect / Size are handled by MacTypesHide.h.
+// Point / Rect / Size collide with ours: MacTypesHide.h renames them for the import
 #include "base/MacTypesHide.h"
-#define BOOL MacObjcBool
 #import <AVFoundation/AVFoundation.h>
-#undef BOOL
 #include "base/MacTypesShow.h"
 
 #include "base/UITask.h"

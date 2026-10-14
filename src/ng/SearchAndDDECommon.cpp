@@ -636,7 +636,7 @@ static bool ParseDdeQuoted(Str cmd, int off, TempStr* out, int* endOff) {
     return false;
 }
 
-Str HandleSearchCmd(HWND hwnd, Str cmd, bool* ack) {
+Str HandleSearchCmd(Str cmd, bool* ack) {
     // Manual parse so search terms may contain " via "" escapes; str::Parse
     // stops at the first " and cannot express that.
     Str kPrefix = StrL("[Search(\"");
@@ -664,7 +664,7 @@ Str HandleSearchCmd(HWND hwnd, Str cmd, bool* ack) {
     if (len(term) == 0) {
         return next;
     }
-    MainWindow* win = FindDdeTargetWindow(hwnd, pdfFile, true);
+    MainWindow* win = FindDdeTargetWindow(pdfFile, true);
     if (!win) {
         return next;
     }
@@ -682,7 +682,7 @@ Str HandleSearchCmd(HWND hwnd, Str cmd, bool* ack) {
     return next;
 }
 
-Str HandleGotoPageWordCmd(HWND hwnd, Str cmd, bool* ack) {
+Str HandleGotoPageWordCmd(Str cmd, bool* ack) {
     TempStr pdfFile;
     TempStr term;
     int page = 0;
@@ -690,7 +690,7 @@ Str HandleGotoPageWordCmd(HWND hwnd, Str cmd, bool* ack) {
     if (str::IsNull(next)) {
         return {};
     }
-    MainWindow* win = FindDdeTargetWindow(hwnd, pdfFile, true);
+    MainWindow* win = FindDdeTargetWindow(pdfFile, true);
     if (!win) {
         return next;
     }
@@ -722,14 +722,14 @@ Str HandleGotoPageWordCmd(HWND hwnd, Str cmd, bool* ack) {
     return next;
 }
 
-Str HandleGotoCmd(HWND hwnd, Str cmd, bool* ack) {
+Str HandleGotoCmd(Str cmd, bool* ack) {
     TempStr pdfFile, destName;
     Str next = str::Parse(cmd, R"([GotoNamedDest("%s",%? "%s")])", &pdfFile, &destName);
     if (str::IsNull(next)) {
         return {};
     }
 
-    MainWindow* win = FindDdeTargetWindow(hwnd, pdfFile, true);
+    MainWindow* win = FindDdeTargetWindow(pdfFile, true);
     if (!win) {
         return next;
     }
@@ -746,7 +746,7 @@ Str HandleGotoCmd(HWND hwnd, Str cmd, bool* ack) {
     return next;
 }
 
-Str HandlePageCmd(HWND hwnd, Str cmd, bool* ack) {
+Str HandlePageCmd(Str cmd, bool* ack) {
     TempStr pdfFile;
     uint page = 0;
     Str next = str::Parse(cmd, "[GotoPage(\"%S\",%u)]", &pdfFile, &page);
@@ -754,7 +754,7 @@ Str HandlePageCmd(HWND hwnd, Str cmd, bool* ack) {
         return {};
     }
 
-    MainWindow* win = FindDdeTargetWindow(hwnd, pdfFile, true);
+    MainWindow* win = FindDdeTargetWindow(pdfFile, true);
     if (!win) {
         return next;
     }
@@ -775,7 +775,7 @@ Str HandlePageCmd(HWND hwnd, Str cmd, bool* ack) {
     return next;
 }
 
-Str HandleSetViewCmd(HWND hwnd, Str cmd, bool* ack) {
+Str HandleSetViewCmd(Str cmd, bool* ack) {
     TempStr filePath, viewMode;
     float zoom = kInvalidZoom;
     Point scroll(-1, -1);
@@ -788,7 +788,7 @@ Str HandleSetViewCmd(HWND hwnd, Str cmd, bool* ack) {
         return {};
     }
 
-    MainWindow* win = FindDdeTargetWindow(hwnd, filePath, true);
+    MainWindow* win = FindDdeTargetWindow(filePath, true);
     if (!win) {
         return next;
     }
@@ -823,7 +823,7 @@ Str HandleSetViewCmd(HWND hwnd, Str cmd, bool* ack) {
     return next;
 }
 
-Str HandleFullScreenCmd(HWND hwnd, Str cmd, bool* ack) {
+Str HandleFullScreenCmd(Str cmd, bool* ack) {
     TempStr filePath;
     bool presentation = true;
     Str next = str::Parse(cmd, R"([Presentation("%s")])", &filePath);
@@ -835,7 +835,7 @@ Str HandleFullScreenCmd(HWND hwnd, Str cmd, bool* ack) {
         return {};
     }
 
-    MainWindow* win = FindDdeTargetWindow(hwnd, filePath, true);
+    MainWindow* win = FindDdeTargetWindow(filePath, true);
     if (!win || !win->IsDocLoaded()) {
         return next;
     }
@@ -1231,7 +1231,7 @@ void ShowMatchCount(MainWindow* win) {
 
 Str HandleSyncCmd(Str cmd, bool* ack) {
     TempStr pdfFile, srcFile;
-    BOOL line = 0, col = 0, newWindow = 0, setFocus = 0;
+    int line = 0, col = 0, newWindow = 0, setFocus = 0;
     Str next = str::Parse(cmd, R"([ForwardSearch("%s",%? "%s",%u,%u)])", &pdfFile, &srcFile, &line, &col);
     if (str::IsNull(next)) {
         next = str::Parse(cmd, R"([ForwardSearch("%s",%? "%s",%u,%u,%u,%u)])", &pdfFile, &srcFile, &line, &col,
@@ -2243,10 +2243,10 @@ void ShowLinkDestHighlight(MainWindow* win, int pageNo, RectF dest) {
     ScheduleRepaint(win, 0);
 }
 
-// Prefer the MainWindow that owns hwnd when it already has pdfFile open
-// (any tab); otherwise fall back to the global FindMainWindowByFile.
-MainWindow* FindDdeTargetWindow(HWND hwnd, Str pdfFile, bool focusTab) {
-    MainWindow* prefer = WindowFromHwnd(hwnd);
+// Prefer the last active window when it already has pdfFile open (any tab);
+// otherwise fall back to the global FindMainWindowByFile.
+MainWindow* FindDdeTargetWindow(Str pdfFile, bool focusTab) {
+    MainWindow* prefer = LastActiveWindow();
     if (prefer) {
         WindowTab* tab = FindTabByFilePath(pdfFile, prefer);
         if (tab) {
@@ -2259,7 +2259,7 @@ MainWindow* FindDdeTargetWindow(HWND hwnd, Str pdfFile, bool focusTab) {
     return FindMainWindowByFile(pdfFile, focusTab);
 }
 
-Str HandleCmdCommand(HWND hwnd, Str cmd, bool* ack) {
+Str HandleCmdCommand(Str cmd, bool* ack) {
     TempStr cmdContent;
     Str next = str::Parse(cmd, "[%s]", &cmdContent);
     if (str::IsNull(next)) {
@@ -2281,9 +2281,9 @@ Str HandleCmdCommand(HWND hwnd, Str cmd, bool* ack) {
     if (cmdId < 0) {
         return {};
     }
-    MainWindow* win = WindowFromHwnd(hwnd);
+    MainWindow* win = LastActiveWindow();
     if (!win) {
-        logf("HandleCmdCommand: not executing DDE because MainWindow for hwnd 0x%p not found\n", hwnd);
+        log(StrL("HandleCmdCommand: not executing DDE because there is no window\n"));
         return {};
     }
 
@@ -2334,7 +2334,7 @@ void FindTextOnThread(MainWindow* win, TextSearch::Direction direction, bool sho
     FindTextOnThread(win, direction, s, wasModified, showProgress);
 }
 
-bool HandleExecuteCmds(HWND hwnd, Str cmd) {
+bool HandleExecuteCmds(Str cmd) {
     DdeExecuteBegin();
 
     bool didHandle = false;
@@ -2346,25 +2346,25 @@ bool HandleExecuteCmds(HWND hwnd, Str cmd) {
             nextCmd = HandleOpenCmd(cmd, &didHandle);
         }
         if (str::IsNull(nextCmd)) {
-            nextCmd = HandleGotoCmd(hwnd, cmd, &didHandle);
+            nextCmd = HandleGotoCmd(cmd, &didHandle);
         }
         if (str::IsNull(nextCmd)) {
-            nextCmd = HandlePageCmd(hwnd, cmd, &didHandle);
+            nextCmd = HandlePageCmd(cmd, &didHandle);
         }
         if (str::IsNull(nextCmd)) {
-            nextCmd = HandleSetViewCmd(hwnd, cmd, &didHandle);
+            nextCmd = HandleSetViewCmd(cmd, &didHandle);
         }
         if (str::IsNull(nextCmd)) {
-            nextCmd = HandleFullScreenCmd(hwnd, cmd, &didHandle);
+            nextCmd = HandleFullScreenCmd(cmd, &didHandle);
         }
         if (str::IsNull(nextCmd)) {
-            nextCmd = HandleSearchCmd(hwnd, cmd, &didHandle);
+            nextCmd = HandleSearchCmd(cmd, &didHandle);
         }
         if (str::IsNull(nextCmd)) {
-            nextCmd = HandleGotoPageWordCmd(hwnd, cmd, &didHandle);
+            nextCmd = HandleGotoPageWordCmd(cmd, &didHandle);
         }
         if (str::IsNull(nextCmd)) {
-            nextCmd = HandleCmdCommand(hwnd, cmd, &didHandle);
+            nextCmd = HandleCmdCommand(cmd, &didHandle);
         }
         if (str::IsNull(nextCmd)) {
             nextCmd = HandleNewWindowCmd(cmd, &didHandle);

@@ -697,7 +697,7 @@ static void PdfCleanStringInPlace(WStr& ws) {
         return;
     }
     for (int i = 0; i < ws.len; i++) {
-        WCHAR c = ws.s[i];
+        wchar_t c = ws.s[i];
         if (c < 0x20) {
             ws.s[i] = ' ';
         } else if (c == 0xfffd) {
@@ -870,7 +870,7 @@ static void FzStreamFingerprint(fz_context* ctx, fz_stream* stm, u8 digest[16]) 
     }
     fz_catch(ctx) {
         fz_warn(ctx, "couldn't read stream data, using a nullptr fingerprint instead");
-        ZeroMemory(digest, 16);
+        memset(digest, 0, 16);
         fz_report_error(ctx);
         return;
     }
@@ -1029,7 +1029,7 @@ static void AddCharUtf8(fz_stext_line* /*line*/, fz_stext_char* c, str::Builder&
     }
 
     bool isWhitespace = rune > 0 && rune <= 0x7f && str::IsWs((char)rune);
-    bool isNonPrintable = rune <= 32 || (rune <= 0xffff && wstr::IsNonCharacter((WCHAR)rune));
+    bool isNonPrintable = rune <= 32 || (rune <= 0xffff && wstr::IsNonCharacter((wchar_t)rune));
     // Invalid scalars (surrogates / out of range) must not go through fz_runetochar:
     // that produces illegal UTF-8 that Utf8CodepointCount splits into multiple units.
     if (!IsUnicodeScalar(rune) || (isNonPrintable && !isWhitespace)) {
@@ -4822,7 +4822,7 @@ static NO_INLINE IPageDestination* DestFromAttachment(EngineMupdf* engine, fz_ou
     return dest;
 }
 
-static bool IsAlnumW(WCHAR c) {
+static bool IsAlnumW(wchar_t c) {
     return iswalnum((wint_t)c) != 0;
 }
 

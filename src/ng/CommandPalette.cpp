@@ -1638,7 +1638,7 @@ bool CommandPaletteHandleCommand(MainWindow* win, int cmdId) {
 
 // Tests replace the query with WM_SETTEXT on the frame. The box is a gpui
 // input, so the message has to land here.
-bool CommandPaletteSetText(MainWindow* win, const WCHAR* text) {
+bool CommandPaletteSetText(MainWindow* win, const wchar_t* text) {
     CommandPaletteWnd* wnd = gCommandPaletteWnd;
     if (!wnd || !wnd->visible || wnd->win != win || !wnd->editQuery || !text) {
         return false;

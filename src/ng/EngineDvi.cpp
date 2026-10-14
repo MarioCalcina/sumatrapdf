@@ -293,10 +293,10 @@ static bool TakeLine(Str& rest, Str& line) {
     return true;
 }
 
-static bool ParseU32Pair(Str s, DWORD& hi, DWORD& lo) {
+static bool ParseU32Pair(Str s, u32& hi, u32& lo) {
     const char* p = s.s;
     const char* end = s.s + s.len;
-    auto readOne = [&](DWORD& out) -> bool {
+    auto readOne = [&](u32& out) -> bool {
         if (p >= end || *p < '0' || *p > '9') {
             return false;
         }
@@ -308,7 +308,7 @@ static bool ParseU32Pair(Str s, DWORD& hi, DWORD& lo) {
             }
             p++;
         }
-        out = (DWORD)v;
+        out = (u32)v;
         return true;
     };
     if (!readOne(hi)) {
@@ -348,8 +348,8 @@ static bool ParseDviMeta(Str data, FILETIME& mtime, Str& pdfName, Str& src) {
     if (!TakeLine(rest, line)) {
         return false;
     }
-    DWORD hi = 0;
-    DWORD lo = 0;
+    u32 hi = 0;
+    u32 lo = 0;
     if (!ParseU32Pair(line, hi, lo)) {
         return false;
     }

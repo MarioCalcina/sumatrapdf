@@ -8,12 +8,10 @@
 
 // AppKit's MacTypes and the `defer:` parameter collide with ours
 #include "base/MacTypesHide.h"
-#define BOOL MacObjcBool
 #pragma push_macro("defer")
 #undef defer
 #import <AppKit/AppKit.h>
 #pragma pop_macro("defer")
-#undef BOOL
 #include "base/MacTypesShow.h"
 
 #include "base/File.h"

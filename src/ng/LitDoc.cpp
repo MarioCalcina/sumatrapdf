@@ -576,7 +576,7 @@ static bool LitParseSectionNames(LitFile* lit) {
         if (((i64)nChars * 2) + 2 > (i64)len(raw) - pos) {
             return false;
         }
-        WStr ws((const WCHAR*)(raw.s + pos), nChars);
+        WStr ws((const wchar_t*)(raw.s + pos), nChars);
         lit->sectionNames.Append(ToUtf8Temp(ws));
         pos += (nChars * 2) + 2;
     }

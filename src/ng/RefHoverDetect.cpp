@@ -15,11 +15,11 @@ bool ShouldSearchNextPage(RectF mediabox, float destY) {
     return mediabox.dy > 0.f && destY >= mediabox.dy * kLatePageStartRatio;
 }
 
-bool IsGlyphSpace(WCHAR c) {
+bool IsGlyphSpace(wchar_t c) {
     return c == L' ' || c == L'\t' || c == L'\n' || c == L'\r';
 }
 
-static bool IsAsciiAlnum(WCHAR c) {
+static bool IsAsciiAlnum(wchar_t c) {
     return (c >= L'a' && c <= L'z') || (c >= L'A' && c <= L'Z') || (c >= L'0' && c <= L'9');
 }
 
@@ -77,7 +77,7 @@ static bool MatchWordAt(WStr text, int idx, WStr w, LabelKind kind) {
         // require a trailing word boundary so that e.g. "Sections of ..."
         // doesn't match "section" or "Tableaux ..." match "tableau"
         if (idx + n < text.len) {
-            WCHAR next = text.s[idx + n];
+            wchar_t next = text.s[idx + n];
             if ((next >= L'a' && next <= L'z') || (next >= L'A' && next <= L'Z')) {
                 return false;
             }
@@ -173,7 +173,7 @@ void NormalizeGlyphLines(const Rect* coords, Rect* out, int glyphCount) {
 
 // Remove oversized glyphs on sparse baselines before NormalizeGlyphLines.
 // Output arrays need glyphCount slots; returns the number kept.
-int StripWatermarkGlyphs(WStr text, const Rect* coords, WCHAR* outText, Rect* outCoords) {
+int StripWatermarkGlyphs(WStr text, const Rect* coords, wchar_t* outText, Rect* outCoords) {
     int n = text.len;
     if (n <= 0 || !coords || !outText || !outCoords) {
         return 0;
@@ -218,7 +218,7 @@ int StripWatermarkGlyphs(WStr text, const Rect* coords, WCHAR* outText, Rect* ou
 
     int outLen = 0;
     for (int i = 0; i < n; i++) {
-        WCHAR c = text.s[i];
+        wchar_t c = text.s[i];
         bool isSpace = IsGlyphSpace(c);
         if (canStrip && !isSpace && coords[i].dy > hgtThresh) {
             // Sparse-row test: count non-space glyphs sharing this glyph's
@@ -1012,7 +1012,7 @@ RectF DetectEntryBox(WStr text, const Rect* coords, RectF mediabox, float destX,
     bool descListSibling = false;
 
     for (int i = startIdx + 1; i < text.len; i++) {
-        WCHAR c = text.s[i];
+        wchar_t c = text.s[i];
         if (IsGlyphSpace(c)) {
             continue;
         }
@@ -1061,7 +1061,7 @@ RectF DetectEntryBox(WStr text, const Rect* coords, RectF mediabox, float destX,
             break;
         }
         // (e) Cap entries without a hanging indent at six lines to avoid swallowing the next entry.
-        WCHAR entryFirstC = text.s[startIdx];
+        wchar_t entryFirstC = text.s[startIdx];
         bool markedEntry = (entryFirstC == L'[' || entryFirstC == L'(' || (entryFirstC >= L'0' && entryFirstC <= L'9'));
         if (!markedEntry && isNewLine && indentX < 0) {
             int linesSinceStart = (lineHeight > 0) ? (r.y - firstLineY + lineHeight - 1) / lineHeight : 0;
@@ -1139,7 +1139,7 @@ RectF DetectEntryBox(WStr text, const Rect* coords, RectF mediabox, float destX,
         return LandscapeBox(mediabox, destX, destY, text, coords);
     }
     // Numbers and heading labels distinguish sections or captions from author-year entries.
-    WCHAR firstC = text.s[startIdx];
+    wchar_t firstC = text.s[startIdx];
     bool digitStart = (firstC >= L'0' && firstC <= L'9');
     bool labelStart = MatchesLabelWords(text, startIdx, gCaptionWords, LabelKind::Heading) ||
                       MatchesLabelWords(text, startIdx, gHeadingWords, LabelKind::Heading);
@@ -1151,7 +1151,7 @@ RectF DetectEntryBox(WStr text, const Rect* coords, RectF mediabox, float destX,
         int codeChars = 0;
         int totalChars = 0;
         for (int i = startIdx; i < endIdx; i++) {
-            WCHAR c = text.s[i];
+            wchar_t c = text.s[i];
             if (IsGlyphSpace(c)) {
                 continue;
             }

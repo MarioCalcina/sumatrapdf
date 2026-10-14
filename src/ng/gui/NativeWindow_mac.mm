@@ -5,14 +5,12 @@
 
 // AppKit's MacTypes and the `defer:` parameter collide with ours
 #include "base/MacTypesHide.h"
-#define BOOL MacObjcBool
 #pragma push_macro("defer")
 #undef defer
 #import <AppKit/AppKit.h>
 #import <CoreServices/CoreServices.h>
 #import <PDFKit/PDFKit.h>
 #pragma pop_macro("defer")
-#undef BOOL
 #include "base/MacTypesShow.h"
 
 #include "base/UITask.h"
@@ -206,7 +204,7 @@ static NSString* AppName(NSURL* app) {
 @end
 
 @implementation SumatraFileMenus
-- (MacObjcBool)menuHasKeyEquivalent:(NSMenu*)menu
+- (BOOL)menuHasKeyEquivalent:(NSMenu*)menu
                            forEvent:(NSEvent*)event
                              target:(__autoreleasing id*)target
                              action:(SEL*)action {
@@ -587,7 +585,7 @@ void AppShellWatchMacEvents() {
 @end
 
 @implementation SumatraPrintJob
-- (void)printOperationDidRun:(NSPrintOperation*)op success:(MacObjcBool)success contextInfo:(void*)ctx {
+- (void)printOperationDidRun:(NSPrintOperation*)op success:(BOOL)success contextInfo:(void*)ctx {
     (void)op;
     (void)success;
     if (deletePath) {

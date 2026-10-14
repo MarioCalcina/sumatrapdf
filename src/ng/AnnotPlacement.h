@@ -10,7 +10,7 @@ struct DisplayModel;
 struct AnnotCreateArgs;
 enum class AnnotationType;
 
-constexpr WORD kAnnotationPlacementCommandCode = 0x5341;
+constexpr u16 kAnnotationPlacementCommandCode = 0x5341;
 
 bool CommandUsesPlacementMode(int cmdId);
 AnnotPlacementKind PlacementKindFromCommand(int cmdId);
@@ -29,7 +29,6 @@ bool CancelAnnotationPlacement(MainWindow*);
 bool FinishAnnotationPlacement(MainWindow*);
 bool FinishPolyLineAnnotationPlacement(MainWindow*);
 bool FinishInkAnnotationPlacement(MainWindow*);
-bool CloseAnnotationPlacementHint(MainWindow*);
 
 bool AnnotationPlacementOnLeftDown(MainWindow*, Point, WPARAM);
 bool AnnotationPlacementOnLeftDown(MainWindow*, Point, bool isShift, bool isCtrl);
@@ -45,10 +44,8 @@ bool AnnotationPlacementOnKeyDown(MainWindow*, int vkey);
 bool AnnotationPlacementEraseAt(MainWindow*, Point);
 void AnnotationPlacementOnSelectionStop(MainWindow*);
 
-void PaintAnnotationPlacement(MainWindow*, HDC, DisplayModel*);
 void PaintAnnotationPlacement(MainWindow*, gpui::PaintCtx*, DisplayModel*);
 bool AnnotationPlacementFillCreate(MainWindow*, AnnotationType, Point&, int&, PointF&, PointF&, AnnotCreateArgs&);
 SizeF FreeTextPlacementPageSize(const AnnotCreateArgs&);
 
-void DeleteAnnotationPlacementCursors();
 TempStr AnnotationPlacementStateTemp(MainWindow*);

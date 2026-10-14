@@ -46,7 +46,7 @@ struct BrowserViewCallback {
 };
 
 // takes ownership of nothing; `cb` outlives the view (the model owns it)
-BrowserView* BrowserViewCreate(MainWindow* win, HWND hwndParent, BrowserViewCallback* cb, Str virtualHost);
+BrowserView* BrowserViewCreate(MainWindow* win, BrowserViewCallback* cb, Str virtualHost);
 void BrowserViewDelete(BrowserView*);
 MainWindow* BrowserViewWindow(BrowserView*);
 // for a view in a window of its own whose main window closed

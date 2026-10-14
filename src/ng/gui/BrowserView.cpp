@@ -338,7 +338,7 @@ static void OnIpcMessage(void* ctx, gp::Str, gp::Str body) {
 
 // --- lifetime ---------------------------------------------------------------
 
-BrowserView* BrowserViewCreate(MainWindow* win, HWND, BrowserViewCallback* cb, Str virtualHost) {
+BrowserView* BrowserViewCreate(MainWindow* win, BrowserViewCallback* cb, Str virtualHost) {
     if (!win || !cb) {
         return nullptr;
     }

@@ -15,7 +15,6 @@ inline int MulDiv(int a, int b, int c) {
     return (int)(n / c);
 }
 
-int DpiGetForHwnd(HWND);
 int DpiGet();
 int DpiScaleByDpi(int dpi, int n);
 int DpiScale(int x);

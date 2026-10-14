@@ -4,8 +4,8 @@
 struct HttpRsp {
     Str url;
     str::Builder data;
-    DWORD error = (DWORD)-1;
-    DWORD httpStatusCode = (DWORD)-1;
+    u32 error = (u32)-1;
+    u32 httpStatusCode = (u32)-1;
 
     HttpRsp() = default;
     ~HttpRsp();

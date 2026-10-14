@@ -175,7 +175,7 @@ bool RefHoverWheelScroll(RefHoverState* s, EngineBase* engine, int wheelDelta);
 
 //--- layout detection (RefHoverDetect.cpp)
 
-bool IsGlyphSpace(WCHAR c);
+bool IsGlyphSpace(wchar_t c);
 
 // Flatten per-glyph ink boxes to uniform top-aligned line rows. mupdf reports
 // tight per-glyph boxes whose tops vary within a line; the detectors below key
@@ -185,7 +185,7 @@ bool IsGlyphSpace(WCHAR c);
 // unchanged (each line already has a single top).
 void NormalizeGlyphLines(const Rect* coords, Rect* out, int glyphCount);
 
-int StripWatermarkGlyphs(WStr text, const Rect* coords, WCHAR* outText, Rect* outCoords);
+int StripWatermarkGlyphs(WStr text, const Rect* coords, wchar_t* outText, Rect* outCoords);
 
 RectF LandscapeBox(RectF mediabox, float destX, float destY, WStr text, const Rect* coords);
 

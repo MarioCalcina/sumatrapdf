@@ -138,9 +138,6 @@ bool TextSelectExtendFromVk(int key, TextSelectUnit& unit, int& delta);
 void NotifyUrlSelectionTruncated(WindowTab* tab);
 void ReopenLastClosedFile(MainWindow* win);
 
-bool SendOpenFileToExistingInstance(HWND targetHwnd, Str fullPath, u32 newWindow);
-bool SendOpenFilesToExistingInstance(HWND targetHwnd, StrVec& paths, u32 newWindow);
-
 // implemented by each app
 void UndoRedoUnavailable(MainWindow* win, bool redo);
 void ApplyWindowPosFlag(const Flags& i);
@@ -158,11 +155,6 @@ void CancelDrag(MainWindow* win);
 Annotation* MakeAnnotationsFromSelection(WindowTab* tab, AnnotCreateArgs* args);
 void RemoveDeletedFilesFromHistory(MainWindow* win);
 void ApplyRedactionsInTab(WindowTab* tab);
-
-void SendMyselfDDE(Str cmdA, HWND targetHwnd);
-bool IsSimpleOpenCase(const Flags& i, bool isFirstWin);
-void OpenUsingDDE(HWND targetHwnd, Str path, Flags& i, bool isFirstWin);
-bool SetupPluginMode(Flags& i);
 
 void OnFrameKeyB(MainWindow* win, bool isShift);
 EngineBase* CreateEngineForThumbnail(Str path);

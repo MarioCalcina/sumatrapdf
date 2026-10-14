@@ -1567,8 +1567,8 @@ TempStr RotatedTextMouseDragResultTemp(Str word, int* exitCodeOut) {
     return ToStrTemp(out);
 }
 
-bool FreeTextInPlaceSetText(MainWindow* win, const WCHAR* text);
-bool CommandPaletteSetText(MainWindow* win, const WCHAR* text);
+bool FreeTextInPlaceSetText(MainWindow* win, const wchar_t* text);
+bool CommandPaletteSetText(MainWindow* win, const wchar_t* text);
 bool FreeTextInPlaceCommitOnChar(MainWindow* win, int ch);
 
 static void ExecuteControlRequest(ControlRequest* req) {

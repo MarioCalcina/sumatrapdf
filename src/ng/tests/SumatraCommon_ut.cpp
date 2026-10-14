@@ -68,7 +68,7 @@ void hexstrTest() {
     FILETIME ft1{123, 456}, ft2;
     s = str::MemToHexTemp(Str((const char*)&ft1, sizeofi(ft1)));
     str::HexToMem(s, Str((char*)&ft2, sizeofi(ft2)));
-    DWORD diff = FileTimeDiffInSecs(ft1, ft2);
+    u32 diff = FileTimeDiffInSecs(ft1, ft2);
     utassert(0 == diff);
     utassert(FileTimeEq(ft1, ft2));
 

@@ -137,7 +137,7 @@ bool DetectCitationInPageText(WStr text, const Rect* coords, int textLen, Point 
 
     // Collapse whitespace and line breaks so extraction artifacts such as
     // "et  al ." still match.
-    WCHAR chunkScratch[512]{};
+    wchar_t chunkScratch[512]{};
     wstr::Builder chunk;
     wstr::BuilderUseExternalBuffer(chunk, WStr(chunkScratch, dimofi(chunkScratch)));
     Vec<int> chunkGlyphs;
@@ -149,7 +149,7 @@ bool DetectCitationInPageText(WStr text, const Rect* coords, int textLen, Point 
         if (r.y < yMin || r.y > yMax) {
             continue;
         }
-        WCHAR c = text.s[i];
+        wchar_t c = text.s[i];
         bool isLineBreak = (prevY != INT_MIN && r.y > prevY + 2);
         bool isSpace = isLineBreak || IsGlyphSpace(c);
         if (i == cursorIdx) {
@@ -258,7 +258,7 @@ bool DetectCitationInPageText(WStr text, const Rect* coords, int textLen, Point 
     // e.g. "van der Berg" or "Oude Vrielink".
     int surnameEnd = p + 1; // exclusive
     while (p >= 0) {
-        WCHAR c = s.s[p];
+        wchar_t c = s.s[p];
         if (iswalpha(c) || c == L'-' || c == L'\'') {
             p--;
         } else if (c == L' ') {
@@ -331,11 +331,11 @@ bool FindSurnameInPageText(WStr text, const Rect* coords, int textLen, WStr surn
     }
 
     // Year as a wide string for searching.
-    WCHAR yearStr[6];
-    yearStr[0] = (WCHAR)(L'0' + ((year / 1000) % 10));
-    yearStr[1] = (WCHAR)(L'0' + ((year / 100) % 10));
-    yearStr[2] = (WCHAR)(L'0' + ((year / 10) % 10));
-    yearStr[3] = (WCHAR)(L'0' + (year % 10));
+    wchar_t yearStr[6];
+    yearStr[0] = (wchar_t)(L'0' + ((year / 1000) % 10));
+    yearStr[1] = (wchar_t)(L'0' + ((year / 100) % 10));
+    yearStr[2] = (wchar_t)(L'0' + ((year / 10) % 10));
+    yearStr[3] = (wchar_t)(L'0' + (year % 10));
     yearStr[4] = 0;
 
     int prevY = INT_MIN;
@@ -424,7 +424,7 @@ bool DetectNumericCitationInPageText(WStr text, const Rect* coords, int textLen,
         lineTol = 14;
     }
     // Accept typographic dashes and minus signs in ranges such as "9–14".
-    auto isListChar = [](WCHAR c) {
+    auto isListChar = [](wchar_t c) {
         return iswdigit(c) || c == L' ' || c == L'\t' || c == L',' || c == L'-' || c == L'\x2012' || c == L'\x2013' ||
                c == L'\x2014' || c == L'\x2212';
     };
@@ -525,7 +525,7 @@ bool DetectNumericCitationInPageText(WStr text, const Rect* coords, int textLen,
     // citation-list chars only (a letter ends the walk, bounding it).
     int openPos = -1;
     for (int k = cursorPos; k >= 0; k--) {
-        WCHAR c = text.s[seq[k]];
+        wchar_t c = text.s[seq[k]];
         if (c == L'[') {
             openPos = k;
             break;
@@ -542,7 +542,7 @@ bool DetectNumericCitationInPageText(WStr text, const Rect* coords, int textLen,
     }
     int closePos = -1;
     for (int k = openPos + 1; k < m; k++) {
-        WCHAR c = text.s[seq[k]];
+        wchar_t c = text.s[seq[k]];
         if (c == L']') {
             closePos = k;
             break;

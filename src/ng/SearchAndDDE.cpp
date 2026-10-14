@@ -425,11 +425,6 @@ TempStr FindStateResultTemp(MainWindow* win) {
 
 // ─── DDE command grammar (orig's). Window messages stay Windows-only. ───
 
-MainWindow* WindowFromHwnd(HWND hwnd) {
-    (void)hwnd;
-    return len(gWindows) > 0 ? gWindows[0] : nullptr;
-}
-
 // ng: orig tracks the window the user last worked in with gLastActiveFrameHwnd;
 // here the foreground window answers the same question
 MainWindow* LastActiveWindow() {
@@ -626,8 +621,5 @@ void DdeExecuteBegin() {}
 
 // [Open] / [GotoPageWord] / the rest of the DDE execute grammar.
 bool ExecuteDdeCmds(Str cmd) {
-    MainWindow* win = len(gWindows) > 0 ? gWindows[0] : nullptr;
-    HWND hwnd = nullptr;
-    (void)win;
-    return HandleExecuteCmds(hwnd, cmd);
+    return HandleExecuteCmds(cmd);
 }

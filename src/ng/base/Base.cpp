@@ -1228,7 +1228,7 @@ static S DupT(Arena* a, S s) {
 static int LowerChar(char c) {
     return tolower((u8)c);
 }
-static int LowerChar(WCHAR c) {
+static int LowerChar(wchar_t c) {
     return WCharToLower(c);
 }
 
@@ -3022,7 +3022,7 @@ C BuilderT<C>::LastChar() const {
 }
 
 template struct BuilderT<char>;
-template struct BuilderT<WCHAR>;
+template struct BuilderT<wchar_t>;
 
 bool str::Contains(const str::Builder& b, Str sub) {
     return str::Contains(ToStr(b), sub);
@@ -3030,15 +3030,15 @@ bool str::Contains(const str::Builder& b, Str sub) {
 
 namespace wstr {
 
-bool IsWs(WCHAR c) {
+bool IsWs(wchar_t c) {
     return iswspace(c);
 }
 
-bool IsDigit(WCHAR c) {
+bool IsDigit(wchar_t c) {
     return ('0' <= c) && (c <= '9');
 }
 
-bool IsNonCharacter(WCHAR c) {
+bool IsNonCharacter(wchar_t c) {
     return c >= 0xFFFE || (c & ~1) == 0xDFFE || (0xFDD0 <= c && c <= 0xFDEF);
 }
 
@@ -3051,10 +3051,10 @@ WStr CastStrToWStr(Str s) {
     if (len(s) == 0) {
         return {};
     }
-    WCHAR* w = nullptr;
-    static_assert(sizeof(char*) == sizeof(WCHAR*), "pointer sizes must match");
+    wchar_t* w = nullptr;
+    static_assert(sizeof(char*) == sizeof(wchar_t*), "pointer sizes must match");
     memcpy((void*)&w, (const void*)&s.s, sizeof(w));
-    return WStr(w, s.len / sizeofi(WCHAR));
+    return WStr(w, s.len / sizeofi(wchar_t));
 }
 
 } // namespace str
@@ -3086,13 +3086,13 @@ bool EqNI(WStr s1, WStr s2, int n) {
     if (s1.len < n || s2.len < n) {
         return false;
     }
-    WCHAR* a = AllocArrayTemp<WCHAR>(n);
-    WCHAR* b = AllocArrayTemp<WCHAR>(n);
+    wchar_t* a = AllocArrayTemp<wchar_t>(n);
+    wchar_t* b = AllocArrayTemp<wchar_t>(n);
     if (!a || !b) {
         return false;
     }
-    memcpy(a, s1.s, (size_t)n * sizeof(WCHAR));
-    memcpy(b, s2.s, (size_t)n * sizeof(WCHAR));
+    memcpy(a, s1.s, (size_t)n * sizeof(wchar_t));
+    memcpy(b, s2.s, (size_t)n * sizeof(wchar_t));
     WStr wa(a, n);
     WStr wb(b, n);
     FoldCaseWInPlace(wa);
@@ -3891,7 +3891,7 @@ static int Utf8BytesForCodepoint(int c) {
 
 static int WStrCodepointAt(WStr s, int& idx) {
     int c = s.s[idx++];
-    if constexpr (sizeof(WCHAR) == 2) {
+    if constexpr (sizeof(wchar_t) == 2) {
         if (c >= 0xd800 && c <= 0xdbff && idx < s.len) {
             int lo = s.s[idx];
             if (lo >= 0xdc00 && lo <= 0xdfff) {
@@ -3937,22 +3937,22 @@ WStr ToWStrTemp(Str s) {
     int wideLen = 0;
     for (int byteIdx = 0; byteIdx < s.len;) {
         int c = Utf8CodepointNext(s, byteIdx);
-        wideLen += c >= 0x10000 && sizeof(WCHAR) == 2 ? 2 : 1;
+        wideLen += c >= 0x10000 && sizeof(wchar_t) == 2 ? 2 : 1;
     }
     wchar_t* wide = (wchar_t*)AllocTemp((wideLen + 1) * sizeof(wchar_t));
     int dst = 0;
     for (int byteIdx = 0; byteIdx < s.len;) {
         int c = Utf8CodepointNext(s, byteIdx);
-        if constexpr (sizeof(WCHAR) == 2) {
+        if constexpr (sizeof(wchar_t) == 2) {
             if (c >= 0x10000) {
                 c -= 0x10000;
-                wide[dst++] = (WCHAR)(0xd800 + (c >> 10));
-                wide[dst++] = (WCHAR)(0xdc00 + (c & 0x3ff));
+                wide[dst++] = (wchar_t)(0xd800 + (c >> 10));
+                wide[dst++] = (wchar_t)(0xdc00 + (c & 0x3ff));
             } else {
-                wide[dst++] = (WCHAR)c;
+                wide[dst++] = (wchar_t)c;
             }
         } else {
-            wide[dst++] = (WCHAR)c;
+            wide[dst++] = (wchar_t)c;
         }
     }
     wide[wideLen] = 0;
@@ -4799,8 +4799,8 @@ Str ParseArgs(Str str, const char* fmt, const ParseArg* args, int nArgs) {
 
 // format a number with a given thousand separator e.g. it turns 1234 into "1,234"
 // Caller needs to free() the result.
-TempStr FormatNumWithThousandSepTemp(i64 num, LCID locale) {
-    TempStr thousandSep = locale == LOCALE_INVARIANT ? StrL(",") : LocaleThousandSepTemp();
+TempStr FormatNumWithThousandSepTemp(i64 num, NumberLocale locale) {
+    TempStr thousandSep = locale == NumberLocale::Invariant ? StrL(",") : LocaleThousandSepTemp();
     TempStr buf = str::FormatTemp("%d", num);
 
     // i64 with thousand seps is well under 48 bytes (e.g. "9,223,372,036,854,775,807").
@@ -4821,11 +4821,11 @@ TempStr FormatNumWithThousandSepTemp(i64 num, LCID locale) {
 
 // Format a floating point number with at most two decimal after the point
 // Caller needs to free the result.
-TempStr FormatFloatWithThousandSepTemp(double number, LCID locale, bool stripTrailingZero) {
+TempStr FormatFloatWithThousandSepTemp(double number, NumberLocale locale, bool stripTrailingZero) {
     i64 num = (i64)llround(number * 100);
 
     TempStr tmp = FormatNumWithThousandSepTemp(num / 100, locale);
-    Str decimal = locale == LOCALE_INVARIANT ? StrL(".") : LocaleDecimalSepTemp();
+    Str decimal = locale == NumberLocale::Invariant ? StrL(".") : LocaleDecimalSepTemp();
     // add between one and two decimals after the point
     TempStr buf = str::FormatTemp("%s%s%02d", tmp, Str(decimal), num % 100);
     if (stripTrailingZero && str::EndsWith(buf, StrL("0"))) {
@@ -4861,7 +4861,7 @@ TempStr FormatSizeShortTemp(i64 size, Str const* sizeUnits) {
     s /= kDivisors[i];
     unit = sizeUnits[i];
 
-    TempStr sizestr = str::FormatFloatWithThousandSepTemp(s, LOCALE_USER_DEFAULT, false);
+    TempStr sizestr = str::FormatFloatWithThousandSepTemp(s, NumberLocale::User, false);
     if (len(unit) == 0) {
         return sizestr;
     }
@@ -5836,7 +5836,7 @@ TempStr UnknownToUtf8Temp(Str s) {
         int n = ws.len;
         u8* bytes = (u8*)tmpW.s;
         for (int i = 0; i < n; i++) {
-            int idx = i * sizeofi(WCHAR);
+            int idx = i * sizeofi(wchar_t);
             std::swap(bytes[idx], bytes[idx + 1]);
         }
         return ToUtf8Temp(WStr(tmpW.s, n));

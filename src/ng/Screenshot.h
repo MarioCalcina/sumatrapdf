@@ -8,11 +8,9 @@ struct El;
 
 struct MainWindow;
 
-void InitScreenshotHost();
 void TakeScreenshots(MainWindow* win);
 bool CopySelectionAsImage(MainWindow* win);
 TempStr GetScreenshotSaveDirTemp();
-void ShowSetScreenshotHotkeyDialog(HWND hwndOwner);
 void ShowSetScreenshotHotkeyDialog(MainWindow* win);
 void CloseSetScreenshotHotkeyDialog();
 bool IsSetScreenshotHotkeyDialogVisible();

@@ -316,7 +316,7 @@ int ReadN(Str path, u8* buf, size_t toRead) {
         return -1;
     }
     AutoCall closeFile(fclose, fp);
-    ZeroMemory(buf, toRead);
+    memset(buf, 0, toRead);
     size_t nRead = fread((void*)buf, 1, toRead, fp);
     if (nRead == 0 && ferror(fp)) {
         return -1;

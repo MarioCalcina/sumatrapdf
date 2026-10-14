@@ -71,7 +71,6 @@ enum class AIChatUpdateType {
 
 // context for parsing a provider's stdout stream on the reader thread
 struct AIChatStreamCtx {
-    HWND hwndFrame = nullptr;
     MainWindow* win = nullptr;
     int providerId = 0;
     Str sessionId; // owned; the session the output belongs to
@@ -170,7 +169,6 @@ TempStr AIChatExtractUserTextTemp(Str line);
 Str AIChatSessionDescription(Str sessionPath);
 void AIChatLoadSessionHistory(MainWindow* win, Str sessionPath);
 
-MainWindow* AIChatFindMainWindowByFrame(HWND hwndFrame);
 TempStr AIChatHomeDirTemp();
 
 void AIChatFreeSessions(Vec<AIChatSessionInfo>& sessions);
@@ -216,7 +214,6 @@ Str AIChatResolveModel(const StrVec& models, Str model, Str defaultModel);
 TempStr AIChatModelDisplayNameTemp(Str model, Str defaultDisplay);
 
 TempStr AIChatFormatChatHtmlTemp(Str virtualHost, Str bgColor);
-bool AIChatGetMarkedJsResource(void* ctx, Str path, WebViewResourceResult* res);
 
 void AIChatCloseProcess(void** processHandle, bool terminateIfRunning);
 bool AIChatLaunchProcessWithStdoutPipe(Str cmdLine, Str cwd, AIChatProcessLaunchResult* out);
@@ -231,8 +228,6 @@ void AIChatTerminateProcess(void* hProcess);
 
 TempStr AIChatGenerateSessionIdTemp();
 TempStr AIChatFormatSessionIdTemp(const u8* bytes);
-int AIChatLabelMaxTextDx(int labelDx);
-TempStr AIChatFitPanelTitleTemp(PlatformFont* font, Str prefix, Str docName, int maxDx);
 
 AIChatBackend AIChatGetTabPanelOpen(WindowTab* tab);
 void AIChatSetTabPanelOpen(WindowTab* tab, AIChatBackend backend);

@@ -23,11 +23,11 @@ static RectF DetectRegion(EngineBase* engine, int pageNo, RectF mediabox, float 
     int textLen = 0;
     Str textUtf8 = engine->GetTextForPage(pageNo, &textLen, &coords);
     TempWStr text = RefHoverPageTextToWStrTemp(textUtf8);
-    WCHAR* cleanText = nullptr;
+    wchar_t* cleanText = nullptr;
     Rect* cleanCoords = nullptr;
     Rect* normCoords = coords;
     if (coords && len(text) > 0) {
-        cleanText = AllocArrayTemp<WCHAR>(textLen);
+        cleanText = AllocArrayTemp<wchar_t>(textLen);
         cleanCoords = AllocArrayTemp<Rect>(textLen);
         int cleanLen = StripWatermarkGlyphs(text, coords, cleanText, cleanCoords);
         text = WStr(cleanText, cleanLen);

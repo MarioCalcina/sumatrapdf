@@ -16,11 +16,11 @@
 
 TempWStr RefHoverPageTextToWStrTemp(Str text) {
     int nCodepoints = Utf8CodepointCount(text);
-    WCHAR* dst = AllocArrayTemp<WCHAR>(nCodepoints + 1);
+    wchar_t* dst = AllocArrayTemp<wchar_t>(nCodepoints + 1);
     int byteIdx = 0;
     for (int i = 0; i < nCodepoints; i++) {
         int rune = Utf8CodepointNext(text, byteIdx);
-        dst[i] = rune > 0xffff ? L'?' : (WCHAR)rune;
+        dst[i] = rune > 0xffff ? L'?' : (wchar_t)rune;
     }
     dst[nCodepoints] = 0;
     return WStr(dst, nCodepoints);
@@ -225,7 +225,7 @@ float RefHoverResolveDestYFromSourceText(EngineBase* engine, int srcPage, RectF 
     int srcR = (int)(srcRect.x + srcRect.dx) + 2;
     int srcB = (int)(srcRect.y + srcRect.dy) + 2;
 
-    WCHAR rawText[512];
+    wchar_t rawText[512];
     int rawLen = 0;
     for (int i = 0; i < srcLen && rawLen < 511; i++) {
         Rect r = srcCoords[i];
@@ -238,10 +238,10 @@ float RefHoverResolveDestYFromSourceText(EngineBase* engine, int srcPage, RectF 
         rawText[rawLen++] = srcText.s[i];
     }
 
-    auto isAlnum = [](WCHAR c) {
+    auto isAlnum = [](wchar_t c) {
         return (c >= L'a' && c <= L'z') || (c >= L'A' && c <= L'Z') || (c >= L'0' && c <= L'9');
     };
-    auto lowerAscii = [](WCHAR c) { return c >= L'A' && c <= L'Z' ? (WCHAR)(c + L'a' - L'A') : c; };
+    auto lowerAscii = [](wchar_t c) { return c >= L'A' && c <= L'Z' ? (wchar_t)(c + L'a' - L'A') : c; };
 
     struct Cand {
         int start;

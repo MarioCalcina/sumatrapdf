@@ -226,7 +226,7 @@ struct BrowserDocController : DocController {
     void OnFindAllResult(Str payload);
     void DownloadData(Str url, Str data);
     void OnLButtonDown();
-    bool SetParentWindow(MainWindow* win, HWND hwndParent);
+    bool SetParentWindow(MainWindow* win);
     void RemoveParentWindow();
     void CloseBrowser();
 

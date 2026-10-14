@@ -555,7 +555,6 @@ void GetPropsText(DocController* ctrl, str::Builder& out) {
 void GetFontsThread(GetFontsData* data) {
     TempStr val = data->engine->GetPropertyTemp(DocProp::FontList);
     auto* result = new GetFontsResult;
-    result->hwnd = data->hwnd;
     result->win = data->win;
     if (val) {
         result->fontsText.Append(StrL("\n"));

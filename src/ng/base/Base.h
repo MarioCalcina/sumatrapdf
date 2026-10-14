@@ -59,66 +59,6 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-using BYTE = uint8_t;
-// rpcndr.h spells it this way on Windows and ported code uses both
-using byte = uint8_t;
-using WORD = uint16_t;
-using DWORD = uint32_t;
-using DWORD64 = uint64_t;
-using UINT = unsigned int;
-using UINT_PTR = uintptr_t;
-using LONG = int32_t;
-using BOOL = int;
-using WCHAR = wchar_t;
-using WPARAM = uintptr_t;
-using LPARAM = intptr_t;
-using LRESULT = intptr_t;
-using LCID = uint32_t;
-
-struct HWND__;
-using HWND = HWND__*;
-struct HDC__;
-using HDC = HDC__*;
-struct HFONT__;
-using HFONT = HFONT__*;
-struct HIMAGELIST__;
-using HIMAGELIST = HIMAGELIST__*;
-struct HTREEITEM__;
-using HTREEITEM = HTREEITEM__*;
-struct HBITMAP__;
-using HBITMAP = HBITMAP__*;
-struct HBRUSH__;
-using HBRUSH = HBRUSH__*;
-using LPWSTR = WCHAR*;
-
-struct EXCEPTION_POINTERS;
-struct MINIDUMP_EXCEPTION_INFORMATION;
-
-// Same 100 ns ticks since 1601 representation as Win32, so settings and
-// metadata stay portable.
-struct FILETIME {
-    DWORD dwLowDateTime;
-    DWORD dwHighDateTime;
-};
-
-void GetSystemTimeAsFileTime(FILETIME* ft);
-
-// ng: the process code page. Always CP_UTF8 off Windows, which is also the
-// only code page the conversions in Base.cpp support there.
-UINT GetACP();
-
-constexpr UINT CP_ACP = 0;
-constexpr UINT CP_UTF8 = 65001;
-constexpr LCID LOCALE_USER_DEFAULT = 0x0400;
-constexpr LCID LOCALE_INVARIANT = 0x007f;
-#define __TEXT(s) L##s
-#define TEXT(s) __TEXT(s)
-constexpr int MAX_PATH = 4096;
-constexpr int URLZONE_INVALID = -1;
-constexpr int URLZONE_INTERNET = 3;
-
-#define ZeroMemory(Destination, Length) memset((Destination), 0, (Length))
-
 using i8 = int8_t;
 using u8 = uint8_t;
 using i16 = int16_t;
@@ -129,6 +69,33 @@ using i64 = int64_t;
 using u64 = uint64_t;
 using uint = unsigned int;
 
+// the message-dispatch types the input code was written with
+using WPARAM = uintptr_t;
+using LPARAM = intptr_t;
+using LRESULT = intptr_t;
+
+// Same 100 ns ticks since 1601 representation as Win32, so settings and
+// metadata stay portable.
+struct FILETIME {
+    u32 dwLowDateTime;
+    u32 dwHighDateTime;
+};
+
+void GetSystemTimeAsFileTime(FILETIME* ft);
+
+// the process code page: always CP_UTF8, the only one the conversions in
+// Base.cpp support
+uint GetACP();
+
+constexpr uint CP_ACP = 0;
+constexpr uint CP_UTF8 = 65001;
+
+// how FormatNumWithThousandSepTemp() and friends separate digits
+enum class NumberLocale {
+    User,      // the macOS region's separators
+    Invariant, // "1,234.5"
+};
+
 constexpr u64 kFileTimeTicksPerSec = 10000000ULL;
 constexpr u64 kFileTimeUnixEpoch = 116444736000000000ULL;
 
@@ -137,7 +104,7 @@ inline u64 FileTimeToU64(const FILETIME& ft) {
 }
 
 inline FILETIME FileTimeFromU64(u64 value) {
-    return {(DWORD)value, (DWORD)(value >> 32)};
+    return {(u32)value, (u32)(value >> 32)};
 }
 
 using AtomicBool = volatile int;
@@ -147,8 +114,6 @@ using AtomicPtr = void* volatile;
 
 bool AtomicBoolGet(AtomicBool* p);
 void AtomicBoolSet(AtomicBool* p, bool v);
-// sets and returns the previous value, so that exactly one racing thread sees false
-bool AtomicBoolSwap(AtomicBool* p, bool v);
 int AtomicIntGet(AtomicInt* p);
 void AtomicIntSet(AtomicInt* p, int v);
 int AtomicIntInc(AtomicInt* p);
@@ -326,7 +291,7 @@ FORCEINLINE T* AllocStruct() {
 
 template <typename T>
 inline void ZeroStruct(T* s) {
-    ZeroMemory((void*)s, sizeof(T));
+    memset((void*)s, 0, sizeof(T));
 }
 
 namespace bit {
@@ -1789,9 +1754,9 @@ bool StartsWithI(WStr str, WStr prefix);
 bool EndsWith(WStr txt, WStr end);
 int NormalizeWSInPlace(WStr str);
 int RemoveCharsInPlace(WStr str, WStr toRemove);
-bool IsWs(WCHAR c);
-bool IsDigit(WCHAR c);
-bool IsNonCharacter(WCHAR c);
+bool IsWs(wchar_t c);
+bool IsDigit(wchar_t c);
+bool IsNonCharacter(wchar_t c);
 
 } // namespace wstr
 
@@ -1848,7 +1813,7 @@ struct StrOf<char> {
     using type = Str;
 };
 template <>
-struct StrOf<WCHAR> {
+struct StrOf<wchar_t> {
     using type = WStr;
 };
 
@@ -1886,7 +1851,7 @@ bool Contains(const Builder& b, Str sub);
 } // namespace str
 
 namespace wstr {
-using Builder = BuilderT<WCHAR>;
+using Builder = BuilderT<wchar_t>;
 void BuilderUseExternalBuffer(Builder& b, WStr buf);
 } // namespace wstr
 
@@ -2082,8 +2047,9 @@ Str Parse(Str str, const char* fmt, TArgs*... args) {
     return ParseArgs(str, fmt, argv, (int)sizeof...(TArgs));
 }
 
-TempStr FormatFloatWithThousandSepTemp(double number, LCID locale = LOCALE_USER_DEFAULT, bool stripTrailingZero = true);
-TempStr FormatNumWithThousandSepTemp(i64 num, LCID locale = LOCALE_USER_DEFAULT);
+TempStr FormatFloatWithThousandSepTemp(double number, NumberLocale locale = NumberLocale::User,
+                                       bool stripTrailingZero = true);
+TempStr FormatNumWithThousandSepTemp(i64 num, NumberLocale locale = NumberLocale::User);
 TempStr FormatSizeShortTemp(i64 size);
 TempStr FormatSizeShortTemp(i64 size, Str const* sizeUnits);
 TempStr FormatFileSizeTemp(i64);

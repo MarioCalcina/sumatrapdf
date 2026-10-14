@@ -275,8 +275,7 @@ void StopAIChat(MainWindow* win) {
 }
 
 struct AIChatUpdateData {
-    // the window the update is for: orig finds it by frame, ng holds it
-    HWND hwndFrame = nullptr;
+    // the window the update is for
     MainWindow* win = nullptr;
     int providerId = 0;
     Str text;
@@ -338,7 +337,7 @@ static void ApplyAIChatUpdate(MainWindow* win, AIChatProvider* p, AIChatUpdateDa
 }
 
 static void OnAIChatUpdate(AIChatUpdateData* data) {
-    MainWindow* win = AIChatUpdateWindow(data->hwndFrame, data->win);
+    MainWindow* win = data->win;
     int pid = data->providerId;
     AIChatProvider* p = GetAIChatProvider(pid);
     if (!IsMainWindowValidAndNotClosing(win) || !AIChatPanelShown(win) || !p) {
@@ -366,7 +365,6 @@ void AIChatPostUpdate(AIChatStreamCtx* ctx, AIChatUpdateType type, Str text) {
         return;
     }
     auto* data = new AIChatUpdateData();
-    data->hwndFrame = ctx->hwndFrame;
     data->win = ctx->win;
     data->providerId = ctx->providerId;
     data->sessionId = ctx->sessionId ? str::Dup(ctx->sessionId) : Str{};

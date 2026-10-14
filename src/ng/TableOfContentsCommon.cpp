@@ -237,13 +237,13 @@ bool TocItemIsMultiHighlight(MainWindow* win, TocItem* item) {
     return TocMatchingItemsContains(win->tocMatchingItems, item);
 }
 
-static bool inRange(WCHAR c, WCHAR low, WCHAR hi) {
+static bool inRange(wchar_t c, wchar_t low, wchar_t hi) {
     return (low <= c) && (c <= hi);
 }
 
 // copied from mupdf/fitz/dev_text.c
 // clang-format off
-static bool isLeftToRightChar(WCHAR c) {
+static bool isLeftToRightChar(wchar_t c) {
     return (
         inRange(c, 0x0041, 0x005A) ||
         inRange(c, 0x0061, 0x007A) ||
@@ -251,7 +251,7 @@ static bool isLeftToRightChar(WCHAR c) {
     );
 }
 
-static bool isRightToLeftChar(WCHAR c) {
+static bool isRightToLeftChar(wchar_t c) {
     return (
         inRange(c, 0x0590, 0x05FF) ||
         inRange(c, 0x0600, 0x06FF) ||
@@ -274,7 +274,7 @@ next:
     if (node->title) {
         TempWStr ws = ToWStrTemp(node->title);
         for (int i = 0; i < ws.len; i++) {
-            WCHAR c = ws.s[i];
+            wchar_t c = ws.s[i];
             if (isLeftToRightChar(c)) {
                 l2r++;
             } else if (isRightToLeftChar(c)) {

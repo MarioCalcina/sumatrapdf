@@ -433,7 +433,7 @@ static void OnVisitWebsiteAnswer(int res) {
 // Shown only for a user-initiated update check that couldn't download/parse the
 // update info. Tells the user and points them at the download page so they can
 // update manually (e.g. if TLS validation or the network failed).
-static void NotifyUpdateCheckFailed(MainWindow* win, DWORD err) {
+static void NotifyUpdateCheckFailed(MainWindow* win, u32 err) {
     logf("NotifyUpdateCheckFailed: err=%#x\n", (unsigned)err);
     TempStr msg = fmt(Tr("Couldn't download update information (error %#x).").s, err);
     TempStr content = fmt("%s\n\n%s\n\n%s", Tr("Couldn't check for updates"), msg,
@@ -441,7 +441,7 @@ static void NotifyUpdateCheckFailed(MainWindow* win, DWORD err) {
     MsgBox(win, content, Tr("SumatraPDF Update"), MbYesNo | MbIconWarning, MkFunc1Void(OnVisitWebsiteAnswer));
 }
 
-static DWORD MaybeStartUpdateDownload(MainWindow* win, HttpRsp* rsp, UpdateCheck updateCheckType) {
+static u32 MaybeStartUpdateDownload(MainWindow* win, HttpRsp* rsp, UpdateCheck updateCheckType) {
     Str url = rsp->url;
 
     if (rsp->error != 0) {
@@ -450,7 +450,7 @@ static DWORD MaybeStartUpdateDownload(MainWindow* win, HttpRsp* rsp, UpdateCheck
     }
     if (rsp->httpStatusCode != 200) {
         logf("MaybeStartUpdateDownload: http get of '%s' failed with code %d\n", url, (int)rsp->httpStatusCode);
-        return (DWORD)rsp->httpStatusCode;
+        return (u32)rsp->httpStatusCode;
     }
 
     bool isValidURL = false;
@@ -519,8 +519,8 @@ struct UpdateCheckAsyncData {
 static bool UpdateHttpGet(Str uri, HttpRsp* rsp) {
     gp::HttpRsp gr;
     bool ok = gp::HttpGet(ToGpui(uri), &gr);
-    rsp->httpStatusCode = (DWORD)gr.status;
-    rsp->error = ok ? 0 : (DWORD)-1;
+    rsp->httpStatusCode = (u32)gr.status;
+    rsp->error = ok ? 0 : (u32)-1;
     if (ok && gr.body.len > 0) {
         rsp->data.Append(Str((char*)gr.body.els, gr.body.len));
     }
@@ -543,7 +543,7 @@ static void UpdateCheckFinish(UpdateCheckAsyncData* data) {
     if (!win || !rsp) {
         return;
     }
-    DWORD err = MaybeStartUpdateDownload(win, rsp, updateCheckType);
+    u32 err = MaybeStartUpdateDownload(win, rsp, updateCheckType);
     if ((err != 0) && (updateCheckType == UpdateCheck::UserInitiated)) {
         RemoveNotificationsForGroup(win, kNotifUpdateCheckInProgress);
         // a manual check that couldn't fetch update info: tell the user and point

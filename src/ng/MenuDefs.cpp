@@ -92,7 +92,7 @@ MenuDef menuDefFile[] = {
     },
     {
         TrN("&Open"),
-        (UINT_PTR)menuDefFileOpen,
+        (uintptr_t)menuDefFileOpen,
     },
     {
         TrN("&Close"),
@@ -488,7 +488,7 @@ MenuDef menuDefSettings[] = {
     },
     {
         TrN("&Theme"),
-        (UINT_PTR)menuDefThemes,
+        (uintptr_t)menuDefThemes,
     },
     {
         {},
@@ -536,7 +536,7 @@ MenuDef menuDefFavorites[] = {
     },
     {
         TrN("Tab Groups"),
-        (UINT_PTR)menuDefTabGroups,
+        (uintptr_t)menuDefTabGroups,
     },
     {
         {},
@@ -707,11 +707,11 @@ MenuDef menuDefMainSelection[] = {
     },
     {
         TrN("&Translate with"),
-        (UINT_PTR)menuDefTranslateWith,
+        (uintptr_t)menuDefTranslateWith,
     },
     {
         TrN("S&earch with"),
-        (UINT_PTR)menuDefSearchWith,
+        (uintptr_t)menuDefSearchWith,
     },
     {
         TrN("Select C&urrent Page"),
@@ -769,43 +769,43 @@ MenuDef menuDefContextReadAloud[] = {
 MenuDef menuDefMenubar[] = {
     {
         TrN("&File"),
-        (UINT_PTR)menuDefFile,
+        (uintptr_t)menuDefFile,
     },
     {
         TrN("&View"),
-        (UINT_PTR)menuDefView,
+        (uintptr_t)menuDefView,
     },
     {
         TrN("&Go To"),
-        (UINT_PTR)menuDefGoTo,
+        (uintptr_t)menuDefGoTo,
     },
     {
         TrN("&Zoom"),
-        (UINT_PTR)menuDefZoom,
+        (uintptr_t)menuDefZoom,
     },
     {
         TrN("S&election"),
-        (UINT_PTR)menuDefMainSelection,
+        (uintptr_t)menuDefMainSelection,
     },
     {
         TrN("Read Aloud"),
-        (UINT_PTR)menuDefReadAloud,
+        (uintptr_t)menuDefReadAloud,
     },
     {
         TrN("F&avorites"),
-        (UINT_PTR)menuDefFavorites,
+        (uintptr_t)menuDefFavorites,
     },
     {
         TrN("&Settings"),
-        (UINT_PTR)menuDefSettings,
+        (uintptr_t)menuDefSettings,
     },
     {
         TrN("&Help"),
-        (UINT_PTR)menuDefHelp,
+        (uintptr_t)menuDefHelp,
     },
     {
         StrL("Debug"),
-        (UINT_PTR)menuDefDebug,
+        (uintptr_t)menuDefDebug,
     },
     {
         {},
@@ -849,11 +849,11 @@ MenuDef menuDefCreateAnnotFromSelection[] = {
 MenuDef menuDefContextAnnotations[] = {
     {
         TrN("Create From Selection"),
-        (UINT_PTR)menuDefCreateAnnotFromSelection,
+        (uintptr_t)menuDefCreateAnnotFromSelection,
     },
     {
         TrN("Create &Under Cursor"),
-        (UINT_PTR)menuDefCreateAnnotUnderCursor,
+        (uintptr_t)menuDefCreateAnnotUnderCursor,
     },
     {
         StrL(kMenuSeparator),

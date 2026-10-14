@@ -311,7 +311,7 @@ void BrowserDocController::OnLButtonDown() {
     }
 }
 
-bool BrowserDocController::SetParentWindow(MainWindow* win, HWND hwndParent) {
+bool BrowserDocController::SetParentWindow(MainWindow* win) {
     if (docView) {
         if (BrowserViewWindow(docView) == win) {
             BrowserViewSetVisible(docView, true);
@@ -324,7 +324,7 @@ bool BrowserDocController::SetParentWindow(MainWindow* win, HWND hwndParent) {
     }
 
     browserCb = CreateBrowserCallback();
-    docView = BrowserViewCreate(win, hwndParent, browserCb, BrowserVirtualHost());
+    docView = BrowserViewCreate(win, browserCb, BrowserVirtualHost());
     if (!docView) {
         delete browserCb;
         browserCb = nullptr;

@@ -72,4 +72,3 @@ static const Str gPopularLanguages[] = {
     StrL("Slovak"),
 };
 
-Str PrimaryLangIdToEnglishName(WORD primary);

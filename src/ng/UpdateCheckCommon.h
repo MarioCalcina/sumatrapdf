@@ -11,8 +11,7 @@ bool IsTrustedUpdateDlUrl(Str dlURL);
 void BuildUpdateURL(str::Builder& url, Str baseURL, UpdateCheck updateCheckType);
 
 struct UpdateInfo {
-    // the window that asked: orig keeps its frame, ng the window
-    HWND hwndParent = nullptr;
+    // the window that asked
     MainWindow* win = nullptr;
     Str latestVer;
     Str builtOn; // optional "yyyy-mm-dd" from the update-check file

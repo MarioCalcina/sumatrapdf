@@ -5,11 +5,9 @@
 
 #include "base/Base.h"
 
-// Foundation's MacTypes collide with ours, and so does objc's BOOL
+// Foundation's MacTypes collide with ours
 #include "base/MacTypesHide.h"
-#define BOOL MacObjcBool
 #import <Foundation/Foundation.h>
-#undef BOOL
 #include "base/MacTypesShow.h"
 
 // The languages of System Settings > Language & Region, most preferred first:

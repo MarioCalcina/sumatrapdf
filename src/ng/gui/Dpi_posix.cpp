@@ -6,10 +6,6 @@
 
 int dpiX = 96;
 
-int DpiGetForHwnd(HWND) {
-    return DpiGet();
-}
-
 int DpiGet() {
     return dpiX > 0 ? dpiX : 96;
 }

@@ -33,17 +33,17 @@ void AppendPageRectsToScreen(DisplayModel* dm, const Rect& clipRc, const FindMat
                              Vec<Rect>& out);
 void AppendTextSelScreenRects(DisplayModel* dm, const Rect& clipRc, Vec<TextSel>* sel, Vec<Rect>& out);
 bool LinkDestHighlightRect(DisplayModel* dm, int pageNo, RectF dest, Rect* out);
-Str HandleSearchCmd(HWND hwnd, Str cmd, bool* ack);
-Str HandleGotoPageWordCmd(HWND hwnd, Str cmd, bool* ack);
-Str HandleGotoCmd(HWND hwnd, Str cmd, bool* ack);
-Str HandlePageCmd(HWND hwnd, Str cmd, bool* ack);
-Str HandleSetViewCmd(HWND hwnd, Str cmd, bool* ack);
-Str HandleFullScreenCmd(HWND hwnd, Str cmd, bool* ack);
+Str HandleSearchCmd(Str cmd, bool* ack);
+Str HandleGotoPageWordCmd(Str cmd, bool* ack);
+Str HandleGotoCmd(Str cmd, bool* ack);
+Str HandlePageCmd(Str cmd, bool* ack);
+Str HandleSetViewCmd(Str cmd, bool* ack);
+Str HandleFullScreenCmd(Str cmd, bool* ack);
 Str HandleNewWindowCmd(Str cmd, bool* ack);
 
 // implemented by each app
 struct FindEndTaskData;
-MainWindow* FindDdeTargetWindow(HWND hwnd, Str pdfFile, bool focusTab);
+MainWindow* FindDdeTargetWindow(Str pdfFile, bool focusTab);
 void ShowSearchResult(MainWindow* win, Vec<TextSel>* result, bool goToPage);
 void BrowserFindStartSearch(MainWindow* win, DocController* md);
 void BrowserFindUpdateStatus(MainWindow* win, DocController* md, int pageCur, int pageTotal);
@@ -82,19 +82,7 @@ extern FindMatchPaintCache gFindMatchPaintCache;
 void RebuildFindMatchPaintCache(MainWindow* win, DisplayModel* dm, int firstPage, int lastPage);
 
 // implemented by each app
-bool HandleExecuteCmds(HWND hwnd, Str cmd);
-
-struct OpenManyCopyDataAsync {
-    StrVec paths;
-    HWND hwnd;
-    u32 newWindow;
-};
-
-// Payload for async Open command carried in kCopyDataOpen WM_COPYDATA
-struct OpenCopyDataAsync {
-    Str path; // heap-allocated, freed by OpenCopyDataAsyncRun
-    u32 newWindow;
-};
+bool HandleExecuteCmds(Str cmd);
 
 // streaming partial results to the floating results list while the scan runs:
 // first batch after kFindResultsFirstBatch matches, then a batch only when
@@ -122,9 +110,7 @@ void FindResultsInstalled(MainWindow* win, bool gotSnippets);
 void FindCountShown(MainWindow* win);
 void FindStatusChanged(MainWindow* win);
 void HideFwdSearchMarkAfter(MainWindow* win, int delayMs);
-MainWindow* WindowFromHwnd(HWND hwnd);
 MainWindow* LastActiveWindow();
-Str HandleAppRequestCmd(Str cmd, bool* ack, str::Builder& res);
 void DdeExecuteBegin();
 
 struct UpdateFindStatusData {
@@ -140,7 +126,7 @@ struct FindThreadData;
 void CountThread(CountThreadData* d);
 void FindThread(FindThreadData* ftd);
 
-Str HandleCmdCommand(HWND hwnd, Str cmd, bool* ack);
+Str HandleCmdCommand(Str cmd, bool* ack);
 Str HandleOpenCmd(Str cmd, bool* ack);
 void FindDebounceStop(MainWindow* win);
 void BrowserFindStatusShown(MainWindow* win);
