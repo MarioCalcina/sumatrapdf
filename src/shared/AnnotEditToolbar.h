@@ -16,7 +16,6 @@ struct StrVec;
 // the compact property row under the selected annotation ("Edit PDF" mode)
 void UpdateAnnotEditToolbar(MainWindow*);
 void HideAnnotEditToolbar(MainWindow*);
-void RefreshAnnotEditToolbar(MainWindow*);
 void DeleteAnnotEditToolbar(MainWindow*);
 void SetAnnotEditToolbarClickPos(Annotation*, PointF pagePt);
 gpui::El* AnnotEditToolbarBuild(MainWindow*, gpui::Ctx*);
@@ -39,7 +38,6 @@ gpui::El* FreeTextInPlaceEditBuild(MainWindow*, gpui::Ctx*);
 // ng: `mousePos` is the cursor on the canvas; orig asks GetCursorPos
 void UpdateAnnotationHoverOverlay(MainWindow*, Point mousePos);
 void HideAnnotationHoverOverlay(MainWindow*);
-void RefreshAnnotationHoverOverlay(MainWindow*);
 void DeleteAnnotationHoverOverlay(MainWindow*);
 bool IsAnnotationHoverOverlayVisible(MainWindow*);
 TempStr AnnotationHoverOverlayStateTemp(MainWindow*);
@@ -51,12 +49,10 @@ void RefreshAnnotationLists(WindowTab*);
 void NotifyAnnotationsChanged(WindowTab*);
 void StartLoadingAnnotationsForUi(WindowTab*);
 void DetachAnnotationFromUI(Annotation*);
-void InvalidateEditAnnotationsOnEngineChange(WindowTab*);
 void RefreshEditAnnotationsAfterEngineChange(WindowTab*);
 void CloseAnnotationUiForTab(WindowTab*);
 
 SeqStrings AnnotationIconNames(Annotation*);
-SeqStrings AnnotEditorLineEndingStyles();
 // "Highlight" / "Highlight  the quick brown fox" - what the annotation list and
 // the command palette show for one annotation
 TempStr AnnotationListRowTextTemp(Annotation*);

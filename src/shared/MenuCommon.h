@@ -17,7 +17,6 @@ struct ZoomMenuId {
     float zoom;
 };
 extern const ZoomMenuId gZoomMenuIds[];
-extern const int gZoomMenuIdsCount;
 int CmdIdFromVirtualZoom(float virtualZoom);
 float ZoomMenuItemToZoom(int menuItemId);
 

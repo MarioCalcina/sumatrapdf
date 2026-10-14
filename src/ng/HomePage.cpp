@@ -77,17 +77,6 @@ static void EnsureTipsParsed() {
     PickRandomTipOrPromo();
 }
 
-void FreeHomePageTips() {
-    if (gTipsParsed) {
-        gTipLines.Reset();
-        gPromoLines.Reset();
-        gTipsParsed = false;
-    }
-    str::Free(promoFromServer);
-    promoFromServer = {};
-    HomePageInvalidateLayoutCache();
-}
-
 void PickAnotherRandomPromotion() {
     PickAnotherRandomTip();
 }
@@ -291,14 +280,6 @@ static HomePageUI* Ui(MainWindow* win) {
     return win->homePage;
 }
 
-int HomeSearchFontPx(MainWindow* win) {
-    HomePageUI* h = win ? win->homePage : nullptr;
-    if (!h || !h->search) {
-        return 0;
-    }
-    return AppShellDpiPx(win, kHomeSearchFontPx);
-}
-
 void HomePageDelete(MainWindow* win) {
     HomePageUI* h = win->homePage;
     if (!h) {
@@ -361,15 +342,6 @@ void HomePageInvalidateLayoutCache() {
         h->entryCount = 0;
         h->filesLaidOut = false;
     }
-}
-
-void HomePageDestroyChrome(MainWindow* win) {
-    HomePageInvalidateLayoutCache();
-    HomePageUI* h = Ui(win);
-    delete h->search;
-    h->search = nullptr;
-    str::Free(h->searchQuery);
-    h->searchQuery = {};
 }
 
 // reads the cache file once, for its size at layout and its pixels at paint.
@@ -793,28 +765,6 @@ static int HomeTotalContentDy(HomePageUI* h) {
 static float HomeClampScrollY(HomePageUI* h, float y) {
     float maxY = std::max(0.f, (float)HomeTotalContentDy(h) - h->entriesView.h);
     return std::max(0.f, std::min(y, maxY));
-}
-
-// a third of a row per notch. WM_MOUSEWHEEL on the frame uses the same step:
-// the test harness posts the wheel with the cursor parked off the window.
-void HomePageOnMouseWheel(MainWindow* win, int delta) {
-    if (!win || !win->IsCurrentTabAbout() || delta == 0) {
-        return;
-    }
-    HomePageUI* h = Ui(win);
-    int thumbsRowDy = HomePageIsListView() ? kHomeListRowDy : ThumbnailFrameSize().dy + kThumbsSpaceBetweenY;
-    int scrollBy = thumbsRowDy / 3;
-    if (delta > 0) {
-        scrollBy = -scrollBy;
-    }
-    float newScrollY = HomeClampScrollY(h, h->scrollY + (float)scrollBy);
-    if (newScrollY == h->scrollY) {
-        return;
-    }
-    h->scrollToEnd = false;
-    h->scrollY = newScrollY;
-    OverlayScrollbarsNotifyScroll(win);
-    AppShellInvalidate(win);
 }
 
 // orig's HomePageOnMouseWheel: a third of a row per notch
@@ -2065,10 +2015,6 @@ TempStr HomeSelectionForWindowTemp(int* exitCodeOut, int winIdx) {
                          RectCsvTemp(outlineFull), path, HomePageIsListView() ? 1 : 0,
                          RectCsvTemp(BoundsRect(h->listIconBounds)), RectCsvTemp(BoundsRect(h->entriesView)),
                          RectCsvTemp(lastCaption), gSelectedIsPromo ? 1 : 0, gSelectedTipIdx, RectCsvTemp(tipRect)));
-}
-
-TempStr HomeSelectionResultTemp(int* exitCodeOut) {
-    return HomeSelectionForWindowTemp(exitCodeOut, 0);
 }
 
 // What the list view drew for each row. NOTREADY until the size column has

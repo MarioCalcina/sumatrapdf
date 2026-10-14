@@ -204,16 +204,6 @@ NotificationWnd* ShowWarningNotification(MainWindow* win, Str msg, int timeoutMs
     return ShowNotification(args);
 }
 
-NotificationWnd* ShowPlainNotification(MainWindow* win, Str msg, int timeoutMs) {
-    NotificationCreateArgs args;
-    args.win = win;
-    args.msg = msg;
-    args.timeoutMs = timeoutMs;
-    args.groupId = kNotifAdHoc;
-    args.plainText = true;
-    return ShowNotification(args);
-}
-
 NotificationWnd* ShowPlainWarningNotification(MainWindow* win, Str msg, int timeoutMs) {
     NotificationCreateArgs args;
     args.win = win;
@@ -236,16 +226,6 @@ void NotificationUpdateMessage(NotificationWnd* wnd, Str msg, int timeoutInMS) {
         TipSpansFree(*wnd->spans);
         TipSpansParse(*wnd->spans, msg);
     }
-}
-
-bool UpdateNotificationProgress(NotificationWnd* wnd, Str msg, int perc) {
-    if (VecFind(gNotifications, wnd) < 0) {
-        return false;
-    }
-    ReportIf(perc < 0 || perc > 100);
-    wnd->progressPerc = limitValue(perc, 0, 100);
-    NotificationUpdateMessage(wnd, msg);
-    return true;
 }
 
 TempStr NotificationGetMessageTemp(NotificationWnd* wnd) {

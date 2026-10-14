@@ -45,30 +45,6 @@ static AIChatLogger gCodexBuildLogger = {&gCodexBuildLogMutex, StrL("gpt-5.5-log
 static bool gTriedCodexModels = false;
 static StrVec gCodexModels;
 
-// the line that answers the model-list request (id 2) with its models
-static bool ParseCodexModelsResponse(Str output, StrVec& models) {
-    Str rest = output;
-    Str line;
-    while (str::NextLine(rest, line, rest)) {
-        bool isModelListResponse = false;
-        StrVec lineModels;
-        json::Reader r(line);
-        for (json::Value& v : r) {
-            if (json::PathMatch(v.path, StrL("/id")) && v.type == json::Type::Number && str::Eq(v.value, StrL("2"))) {
-                isModelListResponse = true;
-            } else if (json::PathMatch(v.path, StrL("/result"), StrL("/data"), StrL("*"), StrL("/model")) &&
-                       v.type == json::Type::String) {
-                AIChatAppendModelUnique(lineModels, v.value);
-            }
-        }
-        if (r.Ok() && isModelListResponse && len(lineModels) > 0) {
-            models = lineModels;
-            return true;
-        }
-    }
-    return false;
-}
-
 static bool QueryCodexModels(Str, StrVec&) {
     return false;
 }

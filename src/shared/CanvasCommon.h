@@ -17,4 +17,3 @@ extern bool gShowImages;
 extern bool gShowFitContentArea;
 Color ColorForPdfPageBox(PdfPageBoxKind kind);
 Point PdfPageBoxLabelPos(const Rect& r, PdfPageBoxKind kind);
-bool IsFullPageImage(DisplayModel* dm, IPageElement* el, int pageNo);

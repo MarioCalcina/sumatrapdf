@@ -113,17 +113,6 @@ const CommandInfo gCommands[] = {
     {CmdZoomFitWidthAndContinuous, "CmdZoomFitWidthAndContinuous\0", StrL("Zoom: Fit Width And Continuous")},
     {CmdZoomFitPageAndSinglePage, "CmdZoomFitPageAndSinglePage\0", StrL("Zoom: Fit Page and Single Page")},
     {CmdContributeTranslation, "CmdContributeTranslation\0", StrL("Contribute Translation")},
-    {CmdOpenWithExplorer, "CmdOpenWithExplorer\0", StrL("Open Directory In Explorer")},
-    {CmdOpenWithDirectoryOpus, "CmdOpenWithDirectoryOpus\0", StrL("Open Directory In Directory Opus")},
-    {CmdOpenWithTotalCommander, "CmdOpenWithTotalCommander\0", StrL("Open Directory In Total Commander")},
-    {CmdOpenWithDoubleCommander, "CmdOpenWithDoubleCommander\0", StrL("Open Directory In Double Commander")},
-    {CmdOpenWithAcrobat, "CmdOpenWithAcrobat\0", StrL("Open in Adobe Acrobat")},
-    {CmdOpenWithFoxit, "CmdOpenWithFoxit\0", StrL("Open in Foxit Reader")},
-    {CmdOpenWithFoxitPhantom, "CmdOpenWithFoxitPhantom\0", StrL("Open in Foxit PhantomPDF")},
-    {CmdOpenWithPdfXchange, "CmdOpenWithPdfXchange\0", StrL("Open in PDF-XChange")},
-    {CmdOpenWithXpsViewer, "CmdOpenWithXpsViewer\0", StrL("Open in Microsoft XPS Viewer")},
-    {CmdOpenWithHtmlHelp, "CmdOpenWithHtmlHelp\0", StrL("Open in Microsoft HTML Help")},
-    {CmdOpenWithPdfDjvuBookmarker, "CmdOpenWithPdfDjvuBookmarker\0", StrL("Open With Pdf&Djvu Bookmarker")},
     {CmdOpenSelectedDocument, "CmdOpenSelectedDocument\0", StrL("Open Selected Document")},
     {CmdPinSelectedDocument, "CmdPinSelectedDocument\0", StrL("Pin Selected Document")},
     {CmdForgetSelectedDocument, "CmdForgetSelectedDocument\0", StrL("Remove Selected Document From History")},
@@ -138,7 +127,6 @@ const CommandInfo gCommands[] = {
     {CmdChangeLanguage, "CmdChangeLanguage\0", StrL("Change Language...")},
     {CmdCheckUpdate, "CmdCheckUpdate\0", StrL("Check For Updates")},
     {CmdInstallPrereleaseUpdate, "CmdInstallPrereleaseUpdate\0", StrL("Install Pre-release Update")},
-    {CmdTogglePdfPreviewLogging, "CmdTogglePdfPreviewLogging\0", StrL("Toggle PDF Preview Logging")},
     {CmdHelpOpenManual, "CmdHelpOpenManual\0", StrL("Help: Manual")},
     {CmdHelpOpenManualOnWebsite, "CmdHelpOpenManualOnWebsite\0", StrL("Help: Manual On Website")},
     {CmdHelpOpenKeyboardShortcuts, "CmdHelpOpenKeyboardShortcuts\0", StrL("Help: Keyboard Shortcuts")},
@@ -203,8 +191,6 @@ const CommandInfo gCommands[] = {
     {CmdDebugTogglePredictiveRender, "CmdDebugTogglePredictiveRender\0", StrL("Debug: Toggle Predictive Rendering")},
     {CmdDebugToggleRtl, "CmdDebugToggleRtl\0", StrL("Debug: Toggle RTL")},
     {CmdListPrinters, "CmdListPrinters\0", StrL("List Printers...")},
-    {CmdToggleWindowsPreviewer, "CmdToggleWindowsPreviewer\0", StrL("Toggle Windows Previewer")},
-    {CmdToggleWindowsSearchFilter, "CmdToggleWindowsSearchFilter\0", StrL("Toggle Windows Search Filter")},
     {CmdScreenshot, "CmdScreenshot\0", StrL("Take Screenshot...")},
     {CmdCropImage, "CmdCropImage\0", StrL("Crop Image...")},
     {CmdResizeImage, "CmdResizeImage\0", StrL("Resize Image...")},
@@ -270,13 +256,11 @@ const CommandInfo gCommands[] = {
     {CmdShowGeneratedHTML, "CmdShowGeneratedHTML\0", StrL("Show Generated HTML")},
     {CmdDeleteCachedFiles, "CmdDeleteCachedFiles\0", StrL("Delete Cached Files")},
     {CmdToggleKeyboardLinkFollowing, "CmdToggleKeyboardLinkFollowing\0", StrL("Follow Link With Keyboard")},
-    {CmdDebugToggleDpiOverride, "CmdDebugToggleDpiOverride\0", StrL("Debug: Toggle DPI Override")},
     {CmdToggleImages, "CmdToggleImages\0", StrL("Toggle Show Images")},
     {CmdSelectTextViaKeyboard, "CmdSelectTextViaKeyboard\0", StrL("Select Text With Keyboard")},
     {CmdOpenFileWithOSFilePicker, "CmdOpenFileWithOSFilePicker\0", StrL("Open File With macOS File Picker...")},
     {CmdToggleFilePicker, "CmdToggleFilePicker\0", StrL("SumatraPDF File Picker")},
     {CmdToggleBoolSetting, "CmdToggleBoolSetting\0", StrL("Toggle Boolean Setting")},
-    {CmdFixDefaultApp, "CmdFixDefaultApp\0", StrL("Fix Default App For Extension")},
     {CmdAIChatWithAntiGravity, "CmdAIChatWithAntiGravity\0", StrL("Antigravity chat...")},
     {CmdTranslateSelectionWithAntiGravity, "CmdTranslateSelectionWithAntiGravity\0", StrL("Translate Selection with Antigravity...")},
     {CmdConvertToPDF, "CmdConvertToPDF\0", StrL("Convert To PDF...")},
@@ -416,9 +400,6 @@ static const ArgSpec argSpecs[] = {
 
     // default string is the setting name, e.g. [CmdToggleBoolSetting Fullscreen.ShowMenubar]
     {CmdToggleBoolSetting, kCmdArgName, CommandArg::Type::String}, // default
-
-    // extension including leading dot, e.g. [CmdFixDefaultApp .pdf]
-    {CmdFixDefaultApp, kCmdArgExt, CommandArg::Type::String}, // default
 
     // a recent file in the File menu, e.g. [CmdFileHistory C:\dir\file.pdf]
     {CmdFileHistory, kCmdArgFilePath, CommandArg::Type::String}, // default

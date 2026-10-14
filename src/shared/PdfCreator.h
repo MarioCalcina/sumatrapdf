@@ -24,7 +24,6 @@ class PdfCreator {
 
     static void SetProducerName(Str name);
 
-    static bool RenderToFile(Str pdfFileName, EngineBase* engine, int dpi = 150);
     // Called only when raw page bytes cannot be embedded as-is (MuPDF /
     // PDF cannot re-wrap the format). Return owned Str (caller frees) with
     // embeddable image data (e.g. optimized PNG), or empty to skip to render.

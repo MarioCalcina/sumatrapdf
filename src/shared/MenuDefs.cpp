@@ -136,47 +136,7 @@ MenuDef menuDefFile[] = {
         StrL(kMenuSeparator),
         0,
     },
-    //[ ACCESSKEY_ALTERNATIVE // PDF/XPS/CHM specific items are dynamically removed in RebuildFileMenu
-    {
-        TrN("Open Directory in &Explorer"),
-        CmdOpenWithExplorer,
-    },
-    {
-        TrN("Open Directory in Director&y Opus"),
-        CmdOpenWithDirectoryOpus,
-    },
-    {
-        TrN("Open Directory in &Total Commander"),
-        CmdOpenWithTotalCommander,
-    },
-    {
-        TrN("Open Directory in &Double Commander"),
-        CmdOpenWithDoubleCommander,
-    },
-    {
-        TrN("Open in &Adobe Reader"),
-        CmdOpenWithAcrobat,
-    },
-    {
-        TrN("Open in &Foxit Reader"),
-        CmdOpenWithFoxit,
-    },
-    {
-        TrN("Open &in PDF-XChange"),
-        CmdOpenWithPdfXchange,
-    },
-    //| ACCESSKEY_ALTERNATIVE
-    {
-        TrN("Open in &Microsoft XPS-Viewer"),
-        CmdOpenWithXpsViewer,
-    },
-    //| ACCESSKEY_ALTERNATIVE
-    {
-        TrN("Open in Microsoft &HTML Help"),
-        CmdOpenWithHtmlHelp,
-    },
-    //] ACCESSKEY_ALTERNATIVE
-    // further entries are added if specified in gSettings.vecCommandLine
+    // the ExternalViewers from the settings go here (Menu.cpp)
     {
         TrN("Send &by E-mail..."),
         CmdSendByEmail,

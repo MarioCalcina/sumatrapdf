@@ -10,7 +10,6 @@ License: GPLv3 */
 #include "AppSettings.h"
 #include "FileHistory.h"
 
-void DeleteThumbnailForFile(Str path);
 void HomePageInvalidateLayoutCache();
 
 // maximum number of files to remember in total
@@ -228,31 +227,7 @@ Str PopRecentlyClosedDocument() {
     return {};
 }
 
-// --- thumbnail cache delete
-
-// Delete cached thumbnails for file-history entries marked missing (issue #4286).
-// The old "delete any thumb not in the frequent list" logic was disabled after
-// a StrVec rewrite: missing files in GetFrequencyOrder and Remove() behavior
-// made it too aggressive. Only purge thumbs for states we already know are gone.
-void CleanUpThumbnailCache() {
-    if (!gStates) {
-        return;
-    }
-    for (FileState* fs : *gStates) {
-        // Pinned missing entries still appear on the home page.
-        if (!fs || !fs->isMissing || len(fs->filePath) == 0 || fs->isPinned) {
-            continue;
-        }
-        logf("CleanUpThumbnailCache: deleting thumb for missing '%s'\n", fs->filePath);
-        DeleteThumbnailForFile(fs->filePath);
-        FreePixmap(fs->thumbnail);
-        fs->thumbnail = nullptr;
-    }
-}
-
 // --- file existence check
-
-extern void MaybeRedrawHomePage();
 
 // document path is either a file or a directory
 // (when browsing images inside directory).
@@ -269,74 +244,4 @@ bool DocumentPathExists(Str path) {
     // container document exists
     TempStr realPath = str::DupTemp(Str(path.s, (int)(pos.s - path.s)));
     return file::Exists(realPath);
-}
-
-struct CheckFilesExistData {
-    StrVec toCheck;
-    StrVec missing;
-};
-
-static void HideMissingFiles(CheckFilesExistData* d) {
-    for (Str path : d->missing) {
-        FileHistoryDemote(path, true);
-    }
-    // update the Frequently Read page in case it's been displayed already
-    MaybeRedrawHomePage();
-    delete d;
-}
-
-static void CheckFilesExistAsync(CheckFilesExistData* d) {
-    StrVec& toCheck = d->toCheck;
-    // filters all file paths on network drives, removable drives and
-    // all paths which still exist from the list (remaining paths will
-    // be marked as inexistent in the file history)
-    int n = len(toCheck);
-    for (int i = 0; i < n; i++) {
-        Str path = toCheck[i];
-        if (len(path) == 0) {
-            continue;
-        }
-        // files on network / removable drives can be temporarily missing
-        if (!path::IsOnFixedDrive(path)) {
-            continue;
-        }
-        if (DocumentPathExists(path)) {
-            continue;
-        }
-        d->missing.Append(path);
-        logf("FileExistenceChecker: missing '%s' at %d\n", path, i + 1);
-    }
-
-    Func0 fn = MkFunc0<CheckFilesExistData>(HideMissingFiles, d);
-    uitask::Post(fn, "HideMissingFiles");
-}
-
-static void GetFilePathsToCheck(StrVec& toCheck) {
-    FileState* fs;
-    for (int i = 0; i < 2 * kFileHistoryMaxRecent && (fs = FileHistoryGet(i)) != nullptr; i++) {
-        if (!fs->isMissing) {
-            toCheck.Append(fs->filePath);
-        }
-    }
-    // add missing paths from the list of most frequently opened documents
-    Vec<FileState*> frequencyList;
-    FileHistoryGetFrequencyOrder(frequencyList);
-    int iMax = std::min(2 * kFileHistoryMaxFrequent, len(frequencyList));
-    for (int i = 0; i < iMax; i++) {
-        fs = frequencyList[i];
-        AppendIfNotExists(&toCheck, fs->filePath);
-    }
-}
-
-void RemoveNonExistentFilesAsync() {
-    auto* d = new CheckFilesExistData();
-    GetFilePathsToCheck(d->toCheck);
-    if (len(d->toCheck) == 0) {
-        // nothing to check, so no CheckFilesExistAsync to hand ownership to
-        delete d;
-        return;
-    }
-    logf("RemoveNonExistentFilesAsync: starting CheckFilesExistAsync to check %d files\n", len(d->toCheck));
-    Func0 fn = MkFunc0<CheckFilesExistData>(CheckFilesExistAsync, d);
-    RunAsync(fn, StrL("CheckFilesExistAsync"));
 }

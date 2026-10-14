@@ -116,9 +116,9 @@ void parseCommandsTest() {
 
     {
         // names match case-insensitively, so a re-cased name keeps old shortcuts working
-        utassert(GetCommandIdByName(StrL("CmdOpenWithFoxit")) == CmdOpenWithFoxit);
-        utassert(GetCommandIdByName(StrL("CmdOpenWithFoxIt")) == CmdOpenWithFoxit);
-        utassert(GetCommandIdByName(StrL("cmdopenwithfoxitphantom")) == CmdOpenWithFoxitPhantom);
+        utassert(GetCommandIdByName(StrL("CmdOpenFile")) == CmdOpenFile);
+        utassert(GetCommandIdByName(StrL("CmdOpenfile")) == CmdOpenFile);
+        utassert(GetCommandIdByName(StrL("cmdcopyselection")) == CmdCopySelection);
     }
     {
         auto* cmd = CreateCommandFromDefinition(StrL(" CmdCreateAnnotHighlight   #00ff00 openEdit copytoclipboard"));
@@ -212,12 +212,3 @@ void DocPropertiesTest() {
     utassert(PropFromName(StrL("bogusPropName")) == DocProp::None);
 }
 
-void ParseFileArgsTest() {
-    FileArgs* fa = ParseFileArgs(StrL("C:\\foo.pdf?page=4"));
-    utassert(fa && str::Eq(fa->cleanPath, StrL("C:\\foo.pdf")) && fa->pageNumber == 4);
-    delete fa;
-    utassert(!ParseFileArgs(StrL("C:\\foo.pdf")));
-    utassert(!ParseFileArgs(StrL("\\\\?\\C:\\foo.pdf")));
-    // a garbled drive letter: no file before the '?'
-    utassert(!ParseFileArgs(StrL("?:\\foo.pdf")));
-}

@@ -422,23 +422,7 @@ static void ReadAloudOnQueuedStarted(WindowTab* tab) {
 }
 
 // Promote a prefetched chunk and start the next prefetch.
-// a voice engine thread crashed and was ended: stop reading, forget that voice
-static void ReadAloudOnEngineCrash() {
-    if (!TtsTakeEngineCrash()) {
-        return;
-    }
-    WindowTab* tab = GetReadAloudSourceTab();
-    ReadAloudPlaybackStop();
-    ReadAloudSaveVoicePref({});
-    ReadAloudFreeVoiceCache();
-    TtsSetVoiceById(StrL(""));
-    if (tab && tab->win) {
-        ReadAloudShowNotif(tab, Tr("Read aloud voice crashed and was turned off"));
-    }
-}
-
 void ReadAloudAfterTtsEvents() {
-    ReadAloudOnEngineCrash();
     WindowTab* tab = GetReadAloudSourceTab();
     if (!tab) {
         return;
@@ -795,12 +779,6 @@ int ReadAloudClosestSpeedIdx() {
 // dir is +1 (next speed) or -1 (previous speed), wraps around
 void ReadAloudSetSpeedIdx(int idx) {
     ReadAloudSetSpeed(ReadAloudSpeedAt(idx));
-}
-
-void ReadAloudPlaybackCycleSpeed(int dir) {
-    int n = dimofi(kReadAloudSpeeds);
-    int idx = (ReadAloudClosestSpeedIdx() + dir + n) % n;
-    ReadAloudSetSpeed(kReadAloudSpeeds[idx]);
 }
 
 void ReadAloudPlaybackStop() {

@@ -125,54 +125,6 @@ void DeleteOldSelectionInfo(MainWindow* win, bool alsoTextSel) {
     }
 }
 
-// a chapter layout shifted dm's flat pageNo underneath tab->selectionOnPage;
-// remap each entry via dm->RemapPageNo() instead of dropping the whole
-// selection, and drop only the entries that no longer map to a page
-void RemapSelOnRenumber(MainWindow* win, DisplayModel* dm) {
-    WindowTab* tab = win ? win->CurrentTab() : nullptr;
-    if (!tab || !tab->selectionOnPage || !dm) {
-        return;
-    }
-    for (int i = len(*tab->selectionOnPage) - 1; i >= 0; i--) {
-        SelectionOnPage& sel = (*tab->selectionOnPage)[i];
-        int newPageNo = dm->RemapPageNo(sel.pageNo);
-        if (newPageNo < 1) {
-            VecRemoveAt(*tab->selectionOnPage, i);
-            continue;
-        }
-        sel.pageNo = newPageNo;
-    }
-    if (len(*tab->selectionOnPage) == 0) {
-        delete tab->selectionOnPage;
-        tab->selectionOnPage = nullptr;
-        win->showSelection = false;
-    }
-}
-
-// Remap selection pages after a chapter layout. Drop selections whose pages disappeared.
-void RemapTextSelection(DisplayModel* dm) {
-    if (!dm || !dm->textSelection) {
-        return;
-    }
-    TextSelection* ts = dm->textSelection;
-    Vec<TextSel>& result = ts->result;
-    for (TextSel& part : result) {
-        int newPageNo = dm->RemapPageNo(part.pageNo);
-        if (newPageNo < 1) {
-            ts->Reset();
-            return;
-        }
-        part.pageNo = newPageNo;
-    }
-    ts->startPage = dm->RemapPageNo(ts->startPage);
-    ts->endPage = dm->RemapPageNo(ts->endPage);
-    ts->wordStartPage = dm->RemapPageNo(ts->wordStartPage);
-    ts->wordEndPage = dm->RemapPageNo(ts->wordEndPage);
-    if (len(result) > 0 && (ts->startPage < 1 || ts->endPage < 1)) {
-        ts->Reset();
-    }
-}
-
 // Rectangular (Ctrl+drag) selection: move/resize after it exists.
 bool IsRectangularSelection(MainWindow* win) {
     if (!win || !win->showSelection) {

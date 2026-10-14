@@ -17,10 +17,6 @@ Kind kindEnginePostScript = "enginePostScript";
 
 // Ghostscript discovery and process launching use Win32 APIs.
 
-TempStr GetGhostscriptPathTemp() {
-    return {};
-}
-
 EngineBase* CreateEnginePsFromFile(Str) {
     return nullptr;
 }

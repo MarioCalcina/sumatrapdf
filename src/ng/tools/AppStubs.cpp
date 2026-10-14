@@ -118,7 +118,6 @@ bool ShowTransparencyGrid() {
 // Print.cpp / TextViewWnd.cpp (step 14 / step 11)
 void GetPrintersInfo(str::Builder&) {}
 
-void ShowTextInWindowDialog(Str, Str) {}
 void ShowTextInWindow(MainWindow*, Str, Str) {}
 void SetTextViewWindowText(Str) {}
 bool IsTextViewWindowTitle(Str) {
@@ -184,22 +183,6 @@ void CanvasFreeTileImage(BitmapCacheEntry*) {}
 // command policy asks it whether a viewer is there (step 10b)
 struct WindowTab;
 struct CustomCommand;
-
-bool IsOpenWithKnownExternalViewerCmd(int) {
-    return false;
-}
-
-bool IsOpenWithKnownExternalViewerCmd(CustomCommand*) {
-    return false;
-}
-
-bool HasKnownExternalViewerForCmd(int) {
-    return false;
-}
-
-bool CanViewWithKnownExternalViewer(WindowTab*, int) {
-    return false;
-}
 
 bool PathMatchFilter(Str, Str) {
     return false;

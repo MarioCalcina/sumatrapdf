@@ -96,7 +96,6 @@ export enum ControlCommand {
   TestReadingAutoScroll = 97,
   TestReadingBar = 98,
   TestSeedTextSelection = 99,
-  TestTtsEngineCrash = 100,
   StartPerfLog = 101,
   StopPerfLog = 102,
   WaitSessionRestored = 103,

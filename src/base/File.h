@@ -6,8 +6,6 @@ void WriteStdoutLn(Str data);
 
 #define kPathSep "/"
 constexpr char kPathSepChar = '/';
-constexpr const WCHAR* kPathSepWStr = L"/";
-constexpr WCHAR kPathSepWChar = L'/';
 
 namespace path {
 
@@ -18,24 +16,16 @@ TempStr GetBaseNameTemp(Str path);
 TempStr GetPathNoExtTemp(Str path);
 
 TempStr GetDirTemp(Str path);
-TempWStr GetDirTemp(WStr path);
-
-TempStr GetNonVirtualTemp(Str virtualPath);
 
 Str Join(Arena* a, Str dir, Str name);
 Str Join(Str dir, Str name);
-WStr Join(WStr dir, WStr name, WStr name2 = WStr());
 TempStr JoinTemp(Str dir, Str name, Str name2 = Str());
-TempWStr JoinTemp(WStr dir, WStr name, WStr name2 = WStr());
 
 bool IsDirectory(Str path);
-
-DWORD GetCachedAttributes(Str path);
 
 TempStr NormalizeTemp(Str path);
 TempStr ToOSTemp(Str path);
 
-TempStr ShortPathTemp(Str path);
 bool IsSame(Str path1, Str path2);
 bool HasVariableDriveLetter(Str path);
 bool IsOnFixedDrive(Str path);
@@ -44,9 +34,7 @@ bool IsOnAvailableDrive(Str path);
 bool IsCloudPlaceholder(Str path);
 TempStr StorageInfoTemp(Str path);
 bool IsEphemeralHostFile(Str path);
-bool SupportsChangeNotifications(Str path);
 bool IsAbsolute(Str path);
-bool IsDriveRoot(Str path);
 bool IsInDir(Str path, Str dir);
 
 bool IsWslUnc(Str path);
@@ -79,7 +67,6 @@ constexpr FileHandle kInvalidFileHandle = -1;
 bool Exists(Str path);
 
 FILE* OpenFILE(Str path);
-FileHandle OpenReadOnly(Str path);
 
 // handle-based i/o, for files kept open across many reads / appends
 FileHandle OpenReadWrite(Str path, bool createIfMissing);
@@ -113,14 +100,8 @@ FILETIME GetModificationTime(Str path);
 
 bool SetModificationTime(Str path, FILETIME lastMod);
 
-DWORD GetAttributes(Str path);
-bool SetAttributes(Str path, DWORD attrs);
-
-bool StartsWithN(Str path, Str s);
 bool StartsWith(Str path, Str s);
 
-int GetZoneIdentifier(Str path);
-bool SetZoneIdentifier(Str path, int zoneId = URLZONE_INTERNET);
 bool DeleteZoneIdentifier(Str path);
 
 // Progress reported by Copy(). bytesTotal == 0 means "total not known".
@@ -139,16 +120,13 @@ bool Copy(Str dst, Str src, bool dontOverwrite);
 bool Copy(Str dst, Str src, bool dontOverwrite, const CopyProgressCb& cbProgress);
 bool Rename(Str newPath, Str oldPath);
 bool RenameReplace(Str newPath, Str oldPath);
-bool OverwriteAtomicRetry(Str dst, Str src, int retryCount, int retrySleepMs);
 
 bool SetAccessTime(Str path, FILETIME accessTime);
-FILETIME GetAccessTime(Str path);
 
 } // namespace file
 
 namespace dir {
 
-bool Exists(WStr dir);
 bool Exists(Str dir);
 
 bool Create(Str dir);
@@ -159,12 +137,6 @@ bool Empty(Str dir);
 bool HasWriteAccess(Str dir);
 
 } // namespace dir
-
-bool FileSystemEntryExists(Str s);
-Str FindFirstValidParentDir(Str path);
-Str PathGetDirTemp(Str path);
-Str PathGetNameTemp(Str path);
-Str SmartResolveDirectory(Str dir);
 
 bool FileTimeEq(const FILETIME& a, const FILETIME& b);
 int FileTimeDiffInSecs(const FILETIME& ft1, const FILETIME& ft2);

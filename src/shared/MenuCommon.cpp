@@ -136,8 +136,6 @@ const ZoomMenuId gZoomMenuIds[] = {
 };
 // clang-format on
 
-const int gZoomMenuIdsCount = dimofi(gZoomMenuIds);
-
 int CmdIdFromVirtualZoom(float virtualZoom) {
     for (auto&& it : gZoomMenuIds) {
         if (virtualZoom == it.zoom) {

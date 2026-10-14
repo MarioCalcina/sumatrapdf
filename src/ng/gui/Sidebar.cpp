@@ -223,22 +223,6 @@ void SidebarApplyDpi(MainWindow* win) {
     }
 }
 
-int SidebarIconDy(MainWindow* win) {
-    if (!win) {
-        return 0;
-    }
-    SidebarApplyDpi(win);
-    return win->sidebar->viewIconPx;
-}
-
-int SidebarFilterFont(MainWindow* win) {
-    if (!win) {
-        return 0;
-    }
-    SidebarApplyDpi(win);
-    return win->sidebar->filterFontPx;
-}
-
 static gp::App* WinApp(MainWindow* win) {
     return win && win->gpuiWin ? win->gpuiWin->app : nullptr;
 }

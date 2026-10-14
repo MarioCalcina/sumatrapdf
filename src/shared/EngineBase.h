@@ -701,7 +701,6 @@ struct PdfViewerPrintPrefs {
     bool printScalingNone = false; // true when /PrintScaling is /None
 };
 
-bool GetPdfViewerPrintPrefs(EngineBase* engine, PdfViewerPrintPrefs& prefs);
 bool SaveFileOrData(Str srcFilePath, Str data, Str dstFilePath);
 
 template <typename T>

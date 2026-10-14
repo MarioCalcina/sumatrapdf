@@ -325,25 +325,6 @@ FileArgs::~FileArgs() {
     str::Free(search);
 }
 
-// given file path `foo.pdf?page=4;dest=foo` etc., extract `?page=4;dest=foo`
-// args into FileArgs
-// returns nullptr if there are not args
-FileArgs* ParseFileArgs(Str path) {
-    Str before, after;
-    if (!str::CutCharLast(path, '?', &before, &after)) {
-        return nullptr;
-    }
-    // don't mutilate long paths starting with "\\?\" or a garbled drive path
-    if (before.len == 2 || before.len == 0) {
-        return nullptr;
-    }
-    FileArgs* res = new FileArgs();
-    res->origPath = str::Dup(path);
-    res->cleanPath = str::Dup(before);
-    ParseAdobeFlags(*res, after);
-    return res;
-}
-
 // Spaces separate tokens ("1, 3, odd"). Spaces inside a token stay
 // ("bin=Tray 1", "docname=Test Job").
 static void TrimPrintSettingSpaces(Str& s) {

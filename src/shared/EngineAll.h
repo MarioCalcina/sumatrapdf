@@ -5,7 +5,6 @@ enum class FileType : u8;
 struct Annotation;
 enum class AnnotationType;
 struct PasswordUI;
-struct FileArgs;
 struct AnnotCreateArgs;
 struct PropValue;
 struct djvu_text_zone;
@@ -19,11 +18,8 @@ extern bool gMemoryMapLargeFiles;
 EngineBase* CreateEngineEpubFromFile(Str fileName);
 EngineBase* CreateEngineEpubFromData(Str data);
 EngineBase* CreateEngineFb2FromFile(Str fileName);
-EngineBase* CreateEngineFb2FromData(Str data);
 EngineBase* CreateEngineMobiFromFile(Str fileName);
-EngineBase* CreateEngineMobiFromData(Str data);
 Str ExtractPdfFromPrintReplicaFile(Str path);
-Str ExtractPdfFromPrintReplicaData(Str data);
 EngineBase* CreateEnginePdbFromFile(Str fileName);
 EngineBase* CreateEngineChmFromFile(Str fileName);
 EngineBase* CreateEngineHtmlFromFile(Str fileName);
@@ -57,7 +53,6 @@ inline Str EbookFontNameFromSetting(Str name) {
     }
     return name;
 }
-void EngineEbookCleanup();
 
 // the ebook font this reflowable document asked for and we couldn't load, so
 // the text came out in the default font; null if that didn't happen (#4600)
@@ -98,7 +93,6 @@ Str EngineImagesGetImageData(EngineBase*, int pageNo);
 using ShowErrorCb = Func1<Str>;
 
 bool IsEngineMupdfSupportedFileType(FileType);
-int EngineMupdfCount();
 EngineBase* CreateEngineMupdfFromFile(Str path, FileType kind, int displayDPI, PasswordUI* pwdUI = nullptr);
 EngineBase* CreateEngineMupdfFromData(Str data, Str nameHint, PasswordUI* pwdUI);
 Str LoadEmbeddedPDFFile(Str path);
@@ -106,7 +100,6 @@ TempStr ParseEmbeddedStreamNumber(Str path, int* streamNoOut);
 Annotation* EngineMupdfCreateAnnotation(EngineBase*, int pageNo, PointF pos, AnnotCreateArgs* args);
 void EngineMupdfGetAnnotations(EngineBase*, Vec<Annotation*>&);
 void EngineMupdfGetLoadedAnnotations(EngineBase*, Vec<Annotation*>&);
-bool EngineMupdfTryGetLoadedAnnotations(EngineBase*, Vec<Annotation*>&);
 bool EngineMupdfAnnotsLoadDone(EngineBase*);
 void EngineMupdfStartLoadAllAnnotations(EngineBase*, const Vec<int>& firstPages, const Func0& onProgress);
 void EngineMupdfLoadAnnotsForPage(EngineBase*, int pageNo);
@@ -220,7 +213,6 @@ Pixmap* EngineMupdfPageImagePixmap(EngineBase*, IPageElement*);
 bool IsEnginePsAvailable();
 bool IsEnginePsSupportedFileType(FileType);
 EngineBase* CreateEnginePsFromFile(Str fileName);
-TempStr GetGhostscriptPathTemp();
 
 bool IsEngineDviAvailable();
 bool IsEngineDviSupportedFileType(FileType);
@@ -230,10 +222,8 @@ void DeleteStaleDviCache();
 bool IsSupportedFileType(FileType kind, bool enableEngineEbooks);
 
 EngineBase* CreateEngineFromFile(Str filePath, PasswordUI* pwdUI, bool enableChmEngine);
-EngineBase* CreateEngineFromData(Str data, Str nameHint, PasswordUI* pwdUI);
 
 bool IsOpenCachePath(Str path);
-TempStr MaybeCopyEphemeralHostFile(Str path);
 
 bool EngineSupportsAnnotations(EngineBase*);
 bool EngineGetAnnotations(EngineBase*, Vec<Annotation*>&);

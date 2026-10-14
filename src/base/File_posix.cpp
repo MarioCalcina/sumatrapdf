@@ -69,20 +69,6 @@ bool IsDirectory(Str path) {
     return StatPath(path, st) && S_ISDIR(st.st_mode);
 }
 
-// No cache on non-Windows — same as an uncached attribute query.
-// Like GetFileAttributesW: returns attributes or INVALID_FILE_ATTRIBUTES.
-// On Windows, network-drive path results are cached for 1 hour (shared with
-// GetCachedAttributesEx). Offline non-fixed drives (mapped/UNC/removable) are
-// also remembered for ~4 minutes so later queries fail fast.
-// Non-Windows: no cache (same as an uncached attribute query).
-DWORD GetCachedAttributes(Str path) {
-    struct stat st;
-    if (!StatPath(path, st)) {
-        return (DWORD)-1; // INVALID_FILE_ATTRIBUTES
-    }
-    return (DWORD)st.st_mode;
-}
-
 TempStr NormalizeTemp(Str path) {
     char resolved[PATH_MAX];
     if (realpath(CStrTemp(path), resolved)) {
@@ -96,10 +82,6 @@ TempStr NormalizeTemp(Str path) {
         return str::DupTemp(path);
     }
     return path::JoinTemp(Str(cwd), path);
-}
-
-TempStr ShortPathTemp(Str path) {
-    return NormalizeTemp(path);
 }
 
 bool IsSame(Str path1, Str path2) {
@@ -178,17 +160,8 @@ bool IsOnAvailableDrive(Str path) {
     return dir::Exists(dir);
 }
 
-bool SupportsChangeNotifications(Str path) {
-    (void)path;
-    return false;
-}
-
 bool IsAbsolute(Str path) {
     return path && IsSep(path.s[0]);
-}
-
-TempStr GetNonVirtualTemp(Str virtualPath) {
-    return virtualPath;
 }
 
 } // namespace path
@@ -235,10 +208,6 @@ FILE* OpenFILE(Str path) {
         return nullptr;
     }
     return fopen(CStrTemp(path), "rb");
-}
-
-FileHandle OpenReadOnly(Str path) {
-    return open(CStrTemp(path), O_RDONLY);
 }
 
 // Opens path for reading and writing, creating it when createIfMissing.
@@ -454,14 +423,6 @@ bool Copy(Str dst, Str src, bool dontOverwrite, const CopyProgressCb& cbProgress
     }
 }
 
-FILETIME GetAccessTime(Str path) {
-    struct stat st;
-    if (!StatPath(path, st)) {
-        return {};
-    }
-    return FileTimeFromTimespec(StatAccessTime(st));
-}
-
 bool SetAccessTime(Str path, FILETIME accessTime) {
     struct stat st;
     if (!StatPath(path, st)) {
@@ -492,26 +453,6 @@ bool SetModificationTime(Str path, FILETIME lastMod) {
     return utimensat(AT_FDCWD, CStrTemp(path), ts, 0) == 0;
 }
 
-DWORD GetAttributes(Str path) {
-    struct stat st;
-    if (!StatPath(path, st)) {
-        return (DWORD)-1;
-    }
-    return (DWORD)st.st_mode;
-}
-
-bool SetAttributes(Str path, DWORD attrs) {
-    return chmod(CStrTemp(path), (mode_t)(attrs & 07777)) == 0;
-}
-
-int GetZoneIdentifier(Str /*path*/) {
-    return URLZONE_INVALID;
-}
-
-bool SetZoneIdentifier(Str /*path*/, int /*zoneId*/) {
-    return true;
-}
-
 bool DeleteZoneIdentifier(Str /*path*/) {
     return true;
 }
@@ -528,41 +469,6 @@ bool RenameReplace(Str newPath, Str oldPath) {
     return Rename(newPath, oldPath);
 }
 
-bool OverwriteAtomicRetry(Str dst, Str src, int retryCount, int retrySleepMs) {
-    if (len(dst) == 0 || len(src) == 0) {
-        return false;
-    }
-
-    TempStr dstDir = path::GetDirTemp(dst);
-    TempStr dstName = path::GetBaseNameTemp(dst);
-    TempStr tempTemplate = fmt("%s/.%s.tmp.XXXXXX", dstDir, dstName);
-    char* tempPathZ = CStrTemp(tempTemplate);
-    int tempFd = mkstemp(tempPathZ);
-    if (tempFd < 0) {
-        return false;
-    }
-    close(tempFd);
-
-    TempStr tempPath = Str(tempPathZ);
-    if (!Copy(tempPath, src, false)) {
-        Delete(tempPath);
-        return false;
-    }
-
-    retryCount = std::max(retryCount, 1);
-    for (int i = 0; i < retryCount; i++) {
-        if (rename(CStrTemp(tempPath), CStrTemp(dst)) == 0) {
-            return true;
-        }
-        if (i + 1 < retryCount && retrySleepMs > 0) {
-            usleep((useconds_t)retrySleepMs * 1000);
-        }
-    }
-
-    Delete(tempPath);
-    return false;
-}
-
 } // namespace file
 
 int FileTimeDiffInSecs(const FILETIME& ft1, const FILETIME& ft2) {
@@ -571,11 +477,6 @@ int FileTimeDiffInSecs(const FILETIME& ft1, const FILETIME& ft2) {
 }
 
 namespace dir {
-
-bool Exists(WStr dir) {
-    TempStr dirUtf8 = ToUtf8Temp(dir);
-    return Exists(dirUtf8);
-}
 
 bool Exists(Str dir) {
     struct stat st;
@@ -682,22 +583,3 @@ bool HasWriteAccess(Str dir) {
 
 } // namespace dir
 
-TempStr GetHomeDirTemp() {
-    const char* home = getenv("HOME");
-    if (!home || !home[0]) {
-        return {};
-    }
-    return str::DupTemp(Str(home));
-}
-
-TempStr ExpandEnvVarTemp(Str varName) {
-    const char* val = getenv(CStrTemp(varName));
-    if (!val) {
-        return {};
-    }
-    return str::DupTemp(Str(val));
-}
-
-TempStr ToAbsolutePathTemp(Str path) {
-    return path::NormalizeTemp(path);
-}

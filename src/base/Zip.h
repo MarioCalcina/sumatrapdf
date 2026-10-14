@@ -3,9 +3,7 @@
 
 class ZipCreator {
     str::Builder centraldir;
-    str::Builder zipData;
     str::Builder* zipOut;
-    Str zipFilePath;
     size_t bytesWritten;
     size_t fileCount;
 
@@ -13,19 +11,12 @@ class ZipCreator {
 
   public:
     bool AddFileData(Str name, Str data, u32 dosdate = 0);
-    explicit ZipCreator(Str zipFilePath);
     explicit ZipCreator(str::Builder& zipOut);
-    ~ZipCreator();
 
     ZipCreator(ZipCreator const&) = delete;
     ZipCreator& operator=(ZipCreator const&) = delete;
 
-    bool AddFile(Str filePath, Str nameInZip = {});
-    bool AddFileFromDir(Str filePath, Str dir);
-    bool AddDir(Str dirPath, bool recursive = false);
     bool Finish();
 };
-
-Str ZipDirToData(Str dirPath, bool recursive = false);
 
 Str Ungzip(const Str&, int maxSize);

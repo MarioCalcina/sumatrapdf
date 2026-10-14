@@ -531,36 +531,6 @@ bool ImageDecodedPixmapWouldBeHuge(Str d) {
     return w * h * 4 > kMaxDecodedPixmapBytes;
 }
 
-// Decode formats where MuPDF is preferred to the platform codec.
-Pixmap* PixmapFromDataFz(Str d) {
-    const u8* data = (const u8*)d.s;
-    size_t n = (size_t)d.len;
-    if (n > INT_MAX || n < 12) {
-        return nullptr;
-    }
-
-    fz_context* ctx = fz_new_context_windows();
-    if (!ctx) {
-        return nullptr;
-    }
-
-    Pixmap* result = nullptr;
-    Str icc;
-    bool jpegOrJp2 = str::StartsWith(d, StrL("\xFF\xD8")) || MemEq(data, "\0\0\0\x0CjP  \x0D\x0A\x87\x0A", 12);
-    // WebP with an ICCP chunk: mupdf applies the profile. Plain WebP stays on
-    // the faster libwebp path in ImageReader_win / webp::PixmapFromData.
-    bool webpIcc = FindWebpChunk(d, "ICCP", icc);
-    FileType kind = GuessFileTypeFromData(d);
-    bool useFz = kind == FileType::Tiff || kind == FileType::Gif;
-    if (jpegOrJp2 || webpIcc || useFz) {
-        result = PixmapFromImageData(ctx, data, n);
-    }
-
-    fz_drop_context_windows(ctx);
-
-    return result;
-}
-
 static Pixmap* PixmapFromDataFzAny(Str d) {
     if (len(d) <= 0 || len(d) > INT_MAX) {
         return nullptr;
@@ -571,30 +541,6 @@ static Pixmap* PixmapFromDataFzAny(Str d) {
     }
     Pixmap* result = PixmapFromImageData(ctx, (const u8*)d.s, (size_t)len(d));
     fz_drop_context_windows(ctx);
-    return result;
-}
-
-// adapted from http://cpansearch.perl.org/src/RJRAY/Image-Size-3.230/lib/Image/Size.pm
-// Cheap size probe (header parse, else full decode). Returns empty Size on failure.
-Size ImageSizeFromData(Str d) {
-    Size result;
-    FileTypeInfo fti = GuessFileInfoFromData(d);
-    if (fti.hasImageSize) {
-        result = Size(fti.imageDx, fti.imageDy);
-    } else if (fti.imageSizes) {
-        // multi-image file (animated GIF, multi-page TIFF, ...): the first image
-        result = fti.imageSizes[0];
-    }
-    FreeFileTypeInfo(&fti);
-    if (!result.IsEmpty()) {
-        return result;
-    }
-    // try expensive way of getting the info by decoding the image
-    Pixmap* px = PixmapFromData(d);
-    if (px) {
-        result = Size(px->width, px->height);
-        FreePixmap(px);
-    }
     return result;
 }
 
@@ -865,6 +811,3 @@ Vec<Pixmap*> PixmapsFromData(Str bmpData) {
     return res;
 }
 
-RenderedBitmap* LoadRenderedBitmap(Str) {
-    return nullptr;
-}

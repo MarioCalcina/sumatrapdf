@@ -987,10 +987,6 @@ EngineBase* CreateEngineFb2FromFile(Str fileName) {
     return EngineFb2::CreateFromFile(fileName);
 }
 
-EngineBase* CreateEngineFb2FromData(Str data) {
-    return EngineFb2::CreateFromData(data);
-}
-
 /* EngineBase for handling Mobi documents */
 
 #include "MobiDoc.h"
@@ -1339,10 +1335,6 @@ EngineBase* EngineMobi::CreateFromData(Str data) {
 
 EngineBase* CreateEngineMobiFromFile(Str fileName) {
     return EngineMobi::CreateFromFile(fileName);
-}
-
-EngineBase* CreateEngineMobiFromData(Str data) {
-    return EngineMobi::CreateFromData(data);
 }
 
 /* EngineBase for handling PalmDOC documents (and extensions such as TealDoc) */
@@ -1844,7 +1836,3 @@ EngineBase* CreateEngineHtmlFromFile(Str fileName) {
     return EngineHtml::CreateFromFile(fileName);
 }
 
-void EngineEbookCleanup() {
-    gDefaultFontName = {};
-    gDefaultChmFontName = {};
-}

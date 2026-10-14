@@ -272,7 +272,6 @@ class EngineMupdf : public EngineBase {
     bool Load(Str filePath, PasswordUI* pwdUI = nullptr);
     bool LoadFromStream(fz_stream* stm, Str nameHint, PasswordUI* pwdUI = nullptr);
     bool FinishLoading();
-    RenderedBitmap* GetPageImage(int pageNo, RectF rect, int imageIdx);
 
     FzPageInfo* GetFzPageInfoCanFail(int pageNo);
     FzPageInfo* GetFzPageInfoFast(int pageNo);

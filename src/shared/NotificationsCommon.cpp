@@ -18,17 +18,6 @@
 // The progress notifications of lazy and per-chapter e-book layout, which
 // orig and ng show the same way.
 
-// returns 0% - 100%
-int CalcPerc(int current, int total) {
-    ReportIf(total <= 0 || current < 0);
-    ReportIf(total < current);
-    if (total <= 0) {
-        total = 1;
-    }
-    int perc = limitValue(100 * current / total, 0, 100);
-    return perc;
-}
-
 // the window half of orig's NotifyMediaBoxRelayout (DisplayModel.cpp)
 void ShowLazyLayoutNotif(DisplayModel* dm, Str msg) {
     for (MainWindow* win : gWindows) {
@@ -91,10 +80,6 @@ void InstallLayoutNotifHooks() {
 // A test that reads pixels has to wait them out (which is most of the runtime
 // of e.g. tests/issue-1195.ts), so -dbg-control can switch them off.
 bool gNotificationsEnabled = true;
-
-bool AreNotificationsEnabled() {
-    return gNotificationsEnabled;
-}
 
 // notification groups both apps use
 Kind kNotifZoomOrView = "zoomOrView";

@@ -804,36 +804,6 @@ Next:
     TickTimer(st);
 }
 
-// note: used from CrashHandler, shouldn't allocate memory
-static void GetLogInfo(str::Builder& b, StressTest* st) {
-    b.Append(fmt(", stress test rendered %d files in ", st->nFilesProcessed));
-    b.Append(FormatTimeTemp(SecsSinceTime(st->stressStartTime)));
-    b.Append(fmt(", currPage: %d", st->currPageNo));
-}
-
-// note: used from CrashHandler.cpp, should not allocate memory
-void GetStressTestInfo(str::Builder& b) {
-    // only add paths to files encountered during an explicit stress test
-    // (for privacy reasons, users should be able to decide themselves
-    // whether they want to share what files they had opened during a crash)
-    if (!IsStressTesting()) {
-        return;
-    }
-
-    for (int i = 0; i < len(gWindows); i++) {
-        MainWindow* w = gWindows[i];
-        if (!w || !w->CurrentTab() || len(w->CurrentTab()->filePath) == 0) {
-            continue;
-        }
-
-        b.Append(StrL("File: "));
-        Str filePath = w->CurrentTab()->filePath;
-        b.Append(filePath);
-        GetLogInfo(b, w->stressTest);
-        b.Append(StrL("\n"));
-    }
-}
-
 static void PositionStressWindows(MainWindow**, int) {}
 
 void StartStressTest(Flags* i, MainWindow* win) {

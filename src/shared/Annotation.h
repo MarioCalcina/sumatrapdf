@@ -59,8 +59,6 @@ extern "C" struct pdf_annot;
 
 SeqStrings AnnotationTextIcons();
 
-// untranslated type names, in AnnotationType order; for syntax the user types
-SeqStrings AnnotationTypeNames();
 AnnotationType AnnotationTypeFromName(Str);
 
 // The annotation a cut is waiting to delete once its copy is pasted (see
@@ -227,7 +225,6 @@ bool CutAnnotation(Annotation*);
 Annotation* TakeCutAnnotation();
 bool EngineOwnsAnnotation(EngineBase*, Annotation*);
 bool HasCopiedAnnotation();
-void FreeAnnotationClipboard();
 Annotation* PasteCopiedAnnotation(EngineBase*, int pageNo, PointF topLeft);
 
 AnnotationType CmdIdToAnnotationType(int cmdId);

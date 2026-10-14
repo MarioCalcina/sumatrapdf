@@ -1187,11 +1187,6 @@ Str ExtractPdfFromPrintReplicaFile(Str path) {
     return ExtractPdfFromPrintReplica(pdb);
 }
 
-Str ExtractPdfFromPrintReplicaData(Str data) {
-    AutoDelete pdb(PdbReader::CreateFromData(str::Dup(data)));
-    return ExtractPdfFromPrintReplica(pdb);
-}
-
 #if IS_DEBUG
 bool MobiDoc_UnitTestHeader() {
     const struct {

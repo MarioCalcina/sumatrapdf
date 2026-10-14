@@ -22,10 +22,6 @@ void CalcSHA2Digest(Str data, u8 digest[32]) {
     CC_SHA256(data.s, (CC_LONG)data.len, digest);
 }
 
-bool VerifySHA1Signature(Str /*data*/, Str /*hexSignature*/, Str /*pubkey*/) {
-    return false;
-}
-
 // Extracts the embedded content from a signed PKCS#7 / .p7m wrapper.
 Str ExtractP7m(Str d) {
     if (len(d) == 0) {
@@ -57,11 +53,6 @@ Str ExtractP7m(Str d) {
         CFRelease(decoder);
     }
     return out;
-}
-
-// Authenticode / PE signature helpers (Windows only; stubs return false/null on POSIX)
-bool IsPEFileSigned(Str /*filePath*/) {
-    return false;
 }
 
 TempStr GetExecutableSignerTemp(Str /*exePath*/) {

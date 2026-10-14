@@ -23,7 +23,6 @@
 #include "SumatraConfig.h"
 #include "Print.h"
 #include "Theme.h"
-#include "EutlTrust.h"
 #include "DocumentProperties.h"
 #include "DocumentPropertiesCommon.h"
 

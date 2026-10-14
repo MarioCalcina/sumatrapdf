@@ -27,8 +27,6 @@ struct FileArgs {
     ~FileArgs();
 };
 
-FileArgs* ParseFileArgs(Str path);
-
 struct Flags {
     Str printerName;
     Str printSettings;

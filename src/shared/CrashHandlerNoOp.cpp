@@ -6,4 +6,4 @@
 // stubs for what SumatraPDF.cpp provides, for the tools that don't link it
 void CrashHandlerSetSettings(Str) {}
 
-void _uploadDebugReport(Str /*condStr*/, Str /*fileLine*/, bool /*isCrash*/) {}
+void _writeDebugReport(Str /*condStr*/, Str /*fileLine*/, bool /*isCrash*/) {}

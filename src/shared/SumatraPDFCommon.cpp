@@ -326,14 +326,6 @@ int ToolbarModeFromPrefs() {
     return idx;
 }
 
-bool ToolbarModeIsOverlay() {
-    return ToolbarModeFromPrefs() == kToolbarOverlay;
-}
-
-bool ToolbarModeIsHidden() {
-    return ToolbarModeFromPrefs() == kToolbarHide;
-}
-
 void SetToolbarMode(int mode) {
     Str name = SeqStrByIndex(gToolbarModeNames, mode);
     if (len(name) == 0) {

@@ -209,7 +209,7 @@ fz_error_cb *fz_error_callback(fz_context *ctx, void **user)
  * until process exit; read from CrashHandler via fz_last_uncaught_error(). */
 static char g_fz_last_uncaught[256];
 
-/* Exported from libsumatrapdf.dll via libsumatrapdf.def (GetProcAddress). */
+/* Read by the crash report (src/shared/SumatraCrashCommon.cpp). */
 const char *fz_last_uncaught_error(void)
 {
 	return g_fz_last_uncaught[0] ? g_fz_last_uncaught : NULL;

@@ -188,13 +188,6 @@ EngineBase* DisplayModel::GetEngine() const {
     return engine;
 }
 
-Kind DisplayModel::GetEngineType() const {
-    if (!engine) {
-        return nullptr;
-    }
-    return engine->kind;
-}
-
 static SizeF SizeAfterDisplayRotation(SizeF size, int rotation);
 
 /* current rotation selected by user */
@@ -239,14 +232,6 @@ Rect DisplayModel::GetViewPort() const {
     return viewPort;
 }
 
-bool DisplayModel::IsHScrollbarVisible() const {
-    return viewPort.dx < totalViewPortSize.dx;
-}
-
-bool DisplayModel::IsVScrollbarVisible() const {
-    return viewPort.dy < totalViewPortSize.dy;
-}
-
 bool DisplayModel::NeedHScroll() const {
     return viewPort.dx < canvasSize.dx;
 }
@@ -255,23 +240,11 @@ bool DisplayModel::NeedVScroll() const {
     return viewPort.dy < canvasSize.dy;
 }
 
-bool DisplayModel::CanScrollRight() const {
-    return viewPort.x + viewPort.dx < canvasSize.dx;
-}
-
-bool DisplayModel::CanScrollLeft() const {
-    return viewPort.x > 0;
-}
-
 bool DisplayModel::CanScrollDown() const {
     if (viewPort.dy >= canvasSize.dy) {
         return false;
     }
     return viewPort.y + viewPort.dy < canvasSize.dy;
-}
-
-bool DisplayModel::CanScrollUp() const {
-    return viewPort.y > 0;
 }
 
 Size DisplayModel::GetCanvasSize() const {
@@ -454,21 +427,6 @@ void EnsureFullLayout(DisplayModel* dm) {
     dm->SyncWithEngineLayout();
 }
 
-// maps a pre-resync pageNo to its post-resync pageNo, or kInvalidPageNo if
-// that page is gone; only meaningful during SyncWithEngineLayout()'s
-// PagesRenumbered callback
-int DisplayModel::RemapPageNo(int oldPageNo) {
-    if (oldPageNo < 1 || oldPageNo > len(remapOldLocs) || !engine) {
-        return kInvalidPageNo;
-    }
-    Location loc = remapOldLocs[oldPageNo - 1];
-    if (!loc.IsValid()) {
-        return kInvalidPageNo;
-    }
-    int pageNo = engine->PageNoFromLocation(loc);
-    return pageNo >= 1 ? pageNo : kInvalidPageNo;
-}
-
 // Return a laid-out page without forcing a placeholder chapter to lay out.
 int DisplayModel::FindPageNoByLoc(Location loc) const {
     if (!loc.IsValid() || !pagesInfo) {
@@ -615,10 +573,6 @@ void DisplayModel::RenderFinished(PageRenderRequest* req) {
         cb->RequestPredictiveRendering(this, req->predictiveOriginPageNo, req->predictiveRequests,
                                        req->nPredictiveRequests);
     }
-}
-
-bool DisplayModel::InPresentation() const {
-    return inPresentation;
 }
 
 void DisplayModel::GetDisplayState(FileState* fs) {
@@ -964,14 +918,6 @@ void DisplayModel::SetUiDpi(int dpi) {
     pageSpacing.dx += scale(4);
     pageSpacing.dy += scale(4);
 #endif
-}
-
-// The window gave the model up but a render in flight delays its delete. Its
-// callback dies with the window, so UI tasks posted for the model (chapter
-// layout progress, render finished, ...) must stop running on it.
-void DisplayModel::Retire() {
-    VecRemove(gLiveDisplayModels, this);
-    pauseRendering = true;
 }
 
 DisplayModel::~DisplayModel() {
@@ -3564,20 +3510,6 @@ void DisplayModel::Navigate(int dir) {
         SetZoomVirtual(target.zoom, nullptr);
     }
     SetScrollState(target);
-}
-
-void DisplayModel::CopyNavHistory(DisplayModel& orig) {
-    navHistory = orig.navHistory;
-    navHistoryIdx = orig.navHistoryIdx;
-    // remove navigation history entries for all no longer valid pages
-    for (int i = len(navHistory); i > 0; i--) {
-        if (!ValidPageNo(navHistory[i - 1].page)) {
-            VecRemoveAt(navHistory, i - 1);
-            if (i - 1 < navHistoryIdx) {
-                navHistoryIdx--;
-            }
-        }
-    }
 }
 
 bool DisplayModel::ShouldCacheRendering(int /*pageNo*/) const {

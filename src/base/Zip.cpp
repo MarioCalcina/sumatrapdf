@@ -4,8 +4,6 @@
 #include "base/Base.h"
 
 #include "base/ByteReaderWriter.h"
-#include "base/DirScan.h"
-#include "base/File.h"
 
 extern "C" {
 #include <zlib.h>
@@ -14,18 +12,9 @@ extern "C" {
 
 /***** ZipCreator *****/
 
-ZipCreator::ZipCreator(Str zipFilePath) : bytesWritten(0), fileCount(0) {
-    this->zipFilePath = str::Dup(zipFilePath);
-    zipOut = &zipData;
-}
-
 ZipCreator::ZipCreator(str::Builder& zipOut) : bytesWritten(0), fileCount(0) {
     zipOut.Reset();
     this->zipOut = &zipOut;
-}
-
-ZipCreator::~ZipCreator() {
-    str::Free(zipFilePath);
 }
 
 bool ZipCreator::WriteData(const void* data, size_t size) {
@@ -62,25 +51,6 @@ static u32 zip_compress(void* dst, u32 dstlen, const void* src, u32 srclen) {
         return 0;
     }
     return newdstlen;
-}
-
-static u32 FileTimeToDosDateTime(FILETIME ft) {
-    u64 ticks = FileTimeToU64(ft);
-    if (ticks < kFileTimeUnixEpoch) {
-        return 0;
-    }
-    time_t seconds = (time_t)((ticks - kFileTimeUnixEpoch) / kFileTimeTicksPerSec);
-    struct tm local{};
-    if (!localtime_r(&seconds, &local)) {
-        return 0;
-    }
-    int year = local.tm_year + 1900;
-    if (year < 1980 || year > 2107) {
-        return 0;
-    }
-    u16 dosDate = (u16)(((year - 1980) << 9) | ((local.tm_mon + 1) << 5) | local.tm_mday);
-    u16 dosTime = (u16)((local.tm_hour << 11) | (local.tm_min << 5) | (local.tm_sec / 2));
-    return ((u32)dosDate << 16) | dosTime;
 }
 
 bool ZipCreator::AddFileData(Str name, Str data, u32 dosdate) {
@@ -155,58 +125,6 @@ bool ZipCreator::AddFileData(Str name, Str data, u32 dosdate) {
     return ok;
 }
 
-// add a given file under (optional) nameInZip
-bool ZipCreator::AddFile(Str path, Str nameInZip) {
-    AutoArenaSavepoint tempScope;
-    Str fileData = file::ReadFile(path);
-    if (len(fileData) == 0) {
-        return false;
-    }
-
-    u32 dosdatetime = 0;
-    FILETIME ft = file::GetModificationTime(path);
-    if (ft.dwLowDateTime || ft.dwHighDateTime) {
-        dosdatetime = FileTimeToDosDateTime(ft);
-    }
-
-    if (len(nameInZip) == 0) {
-        nameInZip = path::IsAbsolute(path) ? path::GetBaseNameTemp(path) : path;
-    }
-
-    TempStr name = str::DupTemp(nameInZip);
-    str::TransCharsInPlace(name, StrL("\\"), StrL("/"));
-
-    bool res = AddFileData(name, fileData, dosdatetime);
-    str::Free(fileData);
-    return res;
-}
-
-// we use the filePath relative to dir as the zip name
-bool ZipCreator::AddFileFromDir(Str filePath, Str dir) {
-    Str nameInZip = filePath;
-    if (len(dir) == 0 || !str::TrimPrefix(nameInZip, dir)) {
-        return false;
-    }
-    if (!path::IsSep(nameInZip.s[0])) {
-        return false;
-    }
-    nameInZip = Str(nameInZip.s + 1, nameInZip.len - 1);
-    return AddFile(filePath, nameInZip);
-}
-
-bool ZipCreator::AddDir(Str dir, bool recursive) {
-    DirIter di{dir};
-    di.recurse = recursive;
-    bool ok;
-    for (DirIterEntry* de : di) {
-        ok = this->AddFileFromDir(de->filePath, dir);
-        if (!ok) {
-            return false;
-        }
-    }
-    return true;
-}
-
 bool ZipCreator::Finish() {
     ReportIf(bytesWritten >= UINT32_MAX);
     ReportIf(fileCount >= UINT16_MAX);
@@ -228,27 +146,7 @@ bool ZipCreator::Finish() {
 
     bool ok = WriteData(ToStr(centraldir).s, len(centraldir));
     ok = ok && WriteData(ToStr(eocd.d).s, kDirSize);
-    if (ok && zipFilePath) {
-        ok = file::WriteFile(zipFilePath, ToStr(*zipOut));
-    }
     return ok;
-}
-
-Str ZipDirToData(Str dirPath, bool recursive) {
-    if (!dir::Exists(dirPath)) {
-        return {};
-    }
-
-    str::Builder zipData;
-    ZipCreator zc(zipData);
-    if (!zc.AddDir(dirPath, recursive)) {
-        return {};
-    }
-    if (!zc.Finish()) {
-        return {};
-    }
-
-    return zipData.TakeStr();
 }
 
 // adapted from https://www.cocoanetics.com/2012/02/decompressing-files-into-memory/

@@ -40,19 +40,6 @@
 
 static Kind kNotifUpdateCheckInProgress = "notifUpdateCheckInProgress";
 
-// base/Win.h is Windows-only; these are what the update query needs from it
-bool IsProcess64() {
-    return sizeof(void*) == 8;
-}
-
-bool IsArmBuild() {
-#if defined(__aarch64__) || defined(__arm__)
-    return true;
-#else
-    return false;
-#endif
-}
-
 // clang-format off
 // tried in order; later entries are backups if earlier HTTP gets fail.
 // Upstream would offer a build without this fork's changes: the fork's mac-app
@@ -433,10 +420,6 @@ void DownloadAndInstallPendingUpdate(MainWindow* win) {
 }
 
 static bool ShouldDownloadUpdate(UpdateInfo* updateInfo) {
-    if (gIsStoreBuild) {
-        // I assume store will take care of updates
-        return false;
-    }
     Str latestVer = updateInfo->latestVer;
     return CompareProgramVersion(latestVer, currentVersion) > 0;
 }
@@ -521,34 +504,6 @@ static DWORD MaybeStartUpdateDownload(MainWindow* win, HttpRsp* rsp, UpdateCheck
     RemoveNotificationsForGroup(win, kNotifUpdateCheckInProgress);
     NotifyUserOfUpdate(updateInfo);
     return 0;
-}
-
-// "mac-15.6.1"
-static TempStr OsNameTemp() {
-    char ver[32]{};
-    size_t n = sizeof(ver) - 1;
-    if (sysctlbyname("kern.osproductversion", ver, &n, nullptr, 0) != 0 || !ver[0]) {
-        return StrL("mac");
-    }
-    return fmt("mac-%s", Str(ver));
-}
-
-// Shared by update check and minidump upload: v, os, 64bit, arm, lang, store, simd.
-void AppendClientInfoQuery(str::Builder& url) {
-    url.Append(StrL("?v="));
-    url.Append(currentVersion);
-    url.Append(StrL("&os="));
-    url.Append(OsNameTemp());
-    url.Append(StrL("&64bit="));
-    url.Append(Str(IsProcess64() ? "yes" : "no"));
-    url.Append(StrL("&arm="));
-    url.Append(Str(IsArmBuild() ? "yes" : "no"));
-    Str lang = trans::GetCurrentLangCode();
-    url.Append(StrL("&lang="));
-    url.Append(lang);
-    if (gIsStoreBuild) {
-        url.Append(StrL("&store"));
-    }
 }
 
 struct UpdateCheckAsyncData {

@@ -9,7 +9,6 @@ enum class UpdateCheck {
 };
 
 void StartAsyncUpdateCheck(MainWindow* win, UpdateCheck updateCheckType);
-void AppendClientInfoQuery(str::Builder& url);
 bool HasPendingPreReleaseUpdate();
 void DownloadAndInstallPendingUpdate(MainWindow* win);
 bool InstallUpdateFromDmg(MainWindow* win, Str dmgPath);

@@ -11,5 +11,3 @@ void OnCrashBegin();
 
 void AppendUncaughtMupdfError(Arena* a, str::Builder& b);
 
-// implemented by each app
-const char* LookupUncaughtMupdfError();

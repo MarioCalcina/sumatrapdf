@@ -674,20 +674,6 @@ static void SetPanelProvider(MainWindow* win, int providerId) {
 
 // --- Theme ---
 
-// the chat colors are baked into the page html, so a theme change throws the
-// webview away; the chat log is replayed into the new one once it has loaded
-void UpdateAIChatTheme(MainWindow* win) {
-    AIChatPanel* p = PanelOf(win);
-    if (!p || !p->view) {
-        return;
-    }
-    DeleteAIChatWebView(p);
-    if (win->uiState.aiChatVisible) {
-        EnsureWebViewReady(win);
-    }
-    AppShellInvalidate(win);
-}
-
 // --- Public API ---
 
 void CreateAIChatPanel(MainWindow* win) {

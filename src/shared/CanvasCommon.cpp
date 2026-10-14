@@ -345,25 +345,3 @@ Point PdfPageBoxLabelPos(const Rect& r, PdfPageBoxKind kind) {
     return r.TL();
 }
 
-// a full-page image (e.g. a scanned page) shouldn't start an image drag-out:
-// there click-and-drag is expected to pan the page (issue #5754). detect it by
-// comparing the image's area to the page's.
-bool IsFullPageImage(DisplayModel* dm, IPageElement* el, int pageNo) {
-    // in image documents every page is a full-page image and dragging
-    // it out to another app is the expected behavior
-    Kind k = dm->GetEngine()->kind;
-    if (k == kindEngineImage || k == kindEngineImageDir || k == kindEngineComicBooks) {
-        return false;
-    }
-    if (!dm->ValidPageNo(pageNo)) {
-        return false;
-    }
-    RectF pageRc = dm->GetEngine()->PageMediabox(pageNo);
-    float pageArea = pageRc.dx * pageRc.dy;
-    if (pageArea <= 0) {
-        return false;
-    }
-    RectF imgRc = el->GetRect();
-    float imgArea = imgRc.dx * imgRc.dy;
-    return imgArea >= 0.8f * pageArea;
-}

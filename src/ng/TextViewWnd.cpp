@@ -121,6 +121,3 @@ void ShowTextInWindow(MainWindow* win, Str title, Str text) {
     logf("ShowTextInWindow: '%s', %d bytes\n", title, len(text));
 }
 
-void ShowTextInWindowDialog(Str title, Str text) {
-    ShowTextInWindow(nullptr, title, text);
-}

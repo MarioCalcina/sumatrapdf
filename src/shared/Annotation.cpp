@@ -45,10 +45,6 @@ static SeqStrings gAnnotationTypeNames =
     "Screen\0PrinterMark\0TrapNet\0Watermark\0ThreeD\0Projection\0";
 // clang-format on
 
-SeqStrings AnnotationTypeNames() {
-    return gAnnotationTypeNames;
-}
-
 // Matches case- and space-insensitively, so "free text" and "freetext" both
 // name AnnotationType::FreeText. Unknown if there is no such type.
 AnnotationType AnnotationTypeFromName(Str name) {
@@ -2212,11 +2208,6 @@ static Pixmap* GetStampImage(Annotation* annot) {
 
 bool HasCopiedAnnotation() {
     return gAnnotClipboard.valid;
-}
-
-// gAnnotClipboard owns strings, Vecs and a stamp bitmap; free them at exit
-void FreeAnnotationClipboard() {
-    ClearAnnotationClipboard();
 }
 
 // The annotation's /Rect. GetBounds() is pdf_bound_annot(), which is expanded

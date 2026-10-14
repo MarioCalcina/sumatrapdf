@@ -235,10 +235,6 @@ void BrowserDocController::PrintCurrentPage(bool showUI) const {
     BrowserViewPrint(docView, showUI);
 }
 
-void BrowserDocController::FindInCurrentPage() const {
-    BrowserViewFindInPageUI(docView);
-}
-
 bool BrowserDocController::CanFindInPage() const {
     return BrowserViewCanFindInPage(docView);
 }
@@ -274,16 +270,6 @@ void BrowserDocController::SelectAll() const {
 
 void BrowserDocController::CopySelection() const {
     BrowserViewCopySelection(docView);
-}
-
-LRESULT BrowserDocController::PassUIMsg(UINT msg, WPARAM wp, LPARAM lp) const {
-    if (!docView || sendingBrowserMsg) {
-        return 0;
-    }
-    sendingBrowserMsg = true;
-    LRESULT res = BrowserViewPassUIMsg(docView, msg, wp, lp);
-    sendingBrowserMsg = false;
-    return res;
 }
 
 void BrowserDocController::FinishPendingFind() {
@@ -362,18 +348,6 @@ void BrowserDocController::RemoveParentWindow() {
     BrowserViewSetVisible(docView, false);
 }
 
-void BrowserDocController::DestroyParentWindow() {
-    if (!docView && !browserCb) {
-        return;
-    }
-    SaveHtmlScrollPos();
-    restoreHtmlScrollPos = true;
-    BrowserViewDelete(docView);
-    docView = nullptr;
-    delete browserCb;
-    browserCb = nullptr;
-}
-
 void BrowserDocController::CloseBrowser() {
     docAccess.Lock();
     BrowserViewDelete(docView);
@@ -402,19 +376,6 @@ Str BrowserDocController::CacheData(Str url, Str data) {
 void BrowserDocController::ClearDataCache() {
     DeleteVecMembers(dataCache);
     VecReset(dataCache);
-}
-
-void BrowserDocController::UpdateTheme() {
-    {
-        ScopedMutex scope(&docAccess);
-        ClearDataCache();
-    }
-    if (!docView || len(currentPageUrl) == 0) {
-        return;
-    }
-    SaveHtmlScrollPos();
-    restoreHtmlScrollPos = true;
-    DisplayPage(currentPageUrl);
 }
 
 void BrowserDocController::SaveHtmlScrollPos() {
@@ -452,13 +413,6 @@ void BrowserDocController::SaveHtmlScrollPosForUrl(Str url, PointF pos) {
     }
     htmlScrollUrls.Append(plainUrl);
     VecAppend(htmlScrollPositions, pos);
-}
-
-bool BrowserDocController::GetSavedHtmlScrollPosForPage(int pageNo, PointF* pos) const {
-    if (!pos || !ValidPageNo(pageNo)) {
-        return false;
-    }
-    return GetSavedHtmlScrollPosForUrl(ScrollUrlForPageTemp(pageNo), pos);
 }
 
 bool BrowserDocController::GetSavedHtmlScrollPosForUrl(Str url, PointF* pos) const {

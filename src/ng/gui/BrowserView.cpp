@@ -395,12 +395,6 @@ void BrowserViewSetVisible(BrowserView* bv, bool visible) {
     }
 }
 
-bool BrowserViewIsVisible(BrowserView* bv) {
-    return bv && bv->visible;
-}
-
-void BrowserViewRefreshSurface(BrowserView*) {}
-
 // --- navigation -------------------------------------------------------------
 
 // WKWebView only delivers a scheme we registered. The app still speaks
@@ -528,12 +522,6 @@ void BrowserViewPrint(BrowserView* bv, bool) {
     Eval(bv, StrL("window.print()"));
 }
 
-void BrowserViewFindInPageUI(BrowserView* bv) {
-    // ng: wry exposes no ShowFindUI; the application's own find bar drives
-    // BrowserViewFindStart() instead
-    BrowserViewFindStart(bv, {}, false, false, 0, -1);
-}
-
 // --- in-page find -----------------------------------------------------------
 
 bool BrowserViewCanFindInPage(BrowserView* bv) {
@@ -597,18 +585,6 @@ void BrowserViewFindClear(BrowserView* bv) {
         return;
     }
     Eval(bv, StrL("window.__sumatraFind && __sumatraFind.clear();"));
-}
-
-// one arrow key, in CSS pixels. A page key uses the window height instead.
-constexpr int kBrowserArrowStep = 40;
-
-// Chromium ignores WM_MOUSEWHEEL on the host window, and an arrow key sent to
-// the frame never reaches the page. Both scroll from here.
-LRESULT BrowserViewPassUIMsg(BrowserView* bv, UINT msg, WPARAM wp, LPARAM) {
-    (void)bv;
-    (void)msg;
-    (void)wp;
-    return 0;
 }
 
 // --- the element ------------------------------------------------------------

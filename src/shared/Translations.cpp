@@ -22,7 +22,6 @@ static StrVec* gTranslationCache = nullptr;
 
 static TempStr UnescapeTemp(Str sOrig) {
     TempStr s = str::DupTemp(sOrig);
-    char* unescaped = s.s;
     char* dst = s.s;
     char* src = s.s;
     char c, c2;

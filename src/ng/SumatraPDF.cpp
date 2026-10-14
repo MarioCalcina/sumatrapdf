@@ -849,15 +849,6 @@ static void RememberSessionPassword(Str path, Str password, bool remember) {
     sp->remember = remember;
 }
 
-void FreeSessionPasswords() {
-    for (SessionPassword* sp : gSessionPasswords) {
-        str::Free(sp->path);
-        str::Free(sp->password);
-        delete sp;
-    }
-    VecReset(gSessionPasswords);
-}
-
 Str SumatraPasswordUI::GetPassword(Str filePath, u8* fileDigest, u8 decryptionKeyOut[32], bool* saveKey) {
     FileState* fileFromHistory = FileHistoryFindByPath(filePath);
     if (fileFromHistory && fileFromHistory->decryptionKey && fileDigest && decryptionKeyOut) {
@@ -1260,31 +1251,6 @@ bool DismissNotificationsOnEsc(MainWindow* win) {
         return true;
     }
     return RemoveNotificationsForGroup(win, kNotifZoomOrView);
-}
-
-// Keys and wheels the browser page handles itself. Anything else stays with
-// the frame (accelerators, find, and so on).
-static bool BrowserNavMsg(UINT msg, WPARAM wp) {
-    (void)msg;
-    (void)wp;
-    return false;
-}
-
-// A wheel or an arrow key over CHM or markdown arrives at the frame. The page
-// scrolls from script; the host window does not.
-bool ForwardBrowserMsg(MainWindow* win, UINT msg, WPARAM wp, LPARAM lp) {
-    if (!win || !BrowserNavMsg(msg, wp)) {
-        return false;
-    }
-    BrowserDocController* doc = win->AsChm();
-    if (!doc) {
-        doc = win->AsMarkdown();
-    }
-    if (!doc) {
-        return false;
-    }
-    doc->PassUIMsg(msg, wp, lp);
-    return true;
 }
 
 // A failed open still gets a tab: the canvas shows the error, and the file
@@ -4366,11 +4332,6 @@ void ExecuteCmd(MainWindow* win, int cmdId) {
         }
         return;
     }
-    // one of the viewers we detect ourselves (Explorer, Acrobat, ...)
-    if (!win->IsCurrentTabAbout() && IsOpenWithKnownExternalViewerCmd(cmdId)) {
-        ViewWithKnownExternalViewer(tab, cmdId);
-        return;
-    }
     // an ExternalViewers entry from the settings file
     if (cmdId == CmdViewWithExternalViewer) {
         Str cmdLine = GetCommandStringArg(cmd, kCmdArgCommandLine, {});
@@ -5656,9 +5617,6 @@ void ExecuteCmd(MainWindow* win, int cmdId) {
         // ng: orig flips WS_EX_LAYOUTRTL on every window, which gpui has no
         // equivalent for. What asks IsUIRtl() (text runs, the toolbar and the
         // sidebar order) flips; the rest of the layout does not
-        case CmdDebugToggleDpiOverride:
-            break;
-
         case CmdDebugToggleRtl:
             gForceRtl = !gForceRtl;
             for (MainWindow* w : gWindows) {
@@ -6159,7 +6117,7 @@ int GpuiMain(int argc, char** argv) {
     }
     gAppStartTime = TimeGet();
     AppShellDisableAutoTermination();
-    uitask::Initialize(uitask::Dispatch::Queue);
+    uitask::Initialize();
 
     gFlags = new Flags();
     ParseCommandLine(*gFlags, argc, argv);
@@ -6185,7 +6143,7 @@ int GpuiMain(int argc, char** argv) {
 
     InitializePolicies(gFlags->restrictedUse);
     // must follow InitializePolicies(): it asks whether we may use the network
-    InstallSumatraCrashHandler(gFlags->forTesting);
+    InstallSumatraCrashHandler();
     gCrashOnOpen = gFlags->crashOnOpen;
     LoadSettings();
 #if IS_DEBUG
@@ -6277,7 +6235,6 @@ int GpuiMain(int argc, char** argv) {
 
     // LoadSettings() already built the accelerator table (orig's WinMain does
     // not build it either); building it twice trips ReportIf(gAccels)
-    DetectExternalViewers();
     FileWatcherInit();
     RunAsync(MkFunc0Void(DeleteStaleDviCache), StrL("DeleteStaleDviCache"));
     gRenderCache = new RenderCache();
@@ -6398,7 +6355,6 @@ int GpuiMain(int argc, char** argv) {
     delete gRenderCache;
     gRenderCache = nullptr;
     FileWatcherWaitForShutdown();
-    FreeExternalViewers();
     FreeAcceleratorTables();
     CleanUpSettings();
     trans::Destroy();

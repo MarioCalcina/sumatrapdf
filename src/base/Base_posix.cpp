@@ -29,10 +29,6 @@ void AtomicIntSet(AtomicInt* p, int v) {
     __atomic_store_n(p, v, __ATOMIC_SEQ_CST);
 }
 
-int AtomicIntAdd(AtomicInt* p, int v) {
-    return __atomic_add_fetch(p, v, __ATOMIC_SEQ_CST);
-}
-
 int AtomicIntInc(AtomicInt* p) {
     return __atomic_add_fetch(p, 1, __ATOMIC_SEQ_CST);
 }

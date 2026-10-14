@@ -499,35 +499,6 @@ bool IsCurrentThemeDefault() {
     return gCurrThemeIndex == 0;
 }
 
-// Windows high contrast mode. The user picked a system-wide palette because
-// they need it to read the screen, so an app is expected to use those colors
-// instead of its own. We only do that for the default theme: choosing any
-// other theme is an explicit decision about colors and it wins (issue #2124).
-static bool gIsHighContrast = false;
-
-// true when the UI colors have to come from the system palette instead of the
-// theme. Every color accessor tests this, so it's computed once by
-// RecalcUseHighContrast() instead of on every call. Page rendering deliberately
-// does not consult it: recoloring the document is not part of high contrast
-// mode and inverting images was the original complaint in #2124.
-static bool gUseHighContrast = false;
-
-static void DetectHighContrastMode() {
-    // ng: no system-wide high contrast palette off Windows
-    gIsHighContrast = false;
-}
-
-// call whenever the OS high contrast setting or the current theme changes
-static void RecalcUseHighContrast() {
-    gUseHighContrast = gIsHighContrast && HasCurrentTheme() && IsCurrentThemeDefault();
-}
-
-// exported so the few places that hardcode a color for the default theme (a
-// white page box on the toolbar, say) can defer to the palette instead
-bool ThemeUsesHighContrastColors() {
-    return gUseHighContrast;
-}
-
 void FreeThemes() {
     delete gThemes; // no need to free members, they are owned by gParsedThemes
     gThemes = nullptr;
@@ -537,7 +508,6 @@ void FreeThemes() {
 
 void CreateThemeCommands() {
     FreeThemes();
-    DetectHighContrastMode();
 
     gThemes = new Vec<Theme*>();
     gParsedThemes = ParseThemes(themesTxt);
@@ -555,7 +525,6 @@ void CreateThemeCommands() {
     }
     gCurrentTheme = (*gThemes)[gCurrThemeIndex];
     gThemeLight = (*gThemes)[0];
-    RecalcUseHighContrast();
 
     CustomCommand* cmd;
     for (int i = 0; i < gThemeCount; i++) {
@@ -581,11 +550,6 @@ static bool gThemeFollowsSystem = false;
 // toggle and the System theme know what to switch to
 static void RememberLastLightDarkTheme() {
     if (!gSettings || !gCurrentTheme) {
-        return;
-    }
-    if (gUseHighContrast) {
-        // the theme's own colors are not in use, so they say nothing about
-        // whether the user's light or dark preference is this theme
         return;
     }
     if (IsLightColor(ThemeWindowBackgroundColor())) {
@@ -620,7 +584,6 @@ void SetThemeByIndex(int themeIdx) {
     gCurrThemeIndex = themeIdx;
     gCurrSetThemeCmdId = gFirstSetThemeCmdId + themeIdx;
     gCurrentTheme = (*gThemes)[gCurrThemeIndex];
-    RecalcUseHighContrast(); // it depends on which theme is current
     str::ReplaceWithCopy(&gSettings->theme, gCurrentTheme->name);
     RememberLastLightDarkTheme();
     ThemeStartPlatformColors();
@@ -786,23 +749,6 @@ void UpdateThemeAfterSystemColorChange() {
     SetTheme(StrL("System")); // no-op unless the resolved theme changed
 }
 
-// call on WM_SETTINGCHANGE: the user can turn high contrast on and off at any
-// time (Alt+Shift+PrtScr), which swaps the whole palette out from under us
-void UpdateThemeAfterHighContrastChange() {
-    bool wasUsingHighContrast = gUseHighContrast;
-    DetectHighContrastMode();
-    RecalcUseHighContrast();
-    if (wasUsingHighContrast == gUseHighContrast) {
-        // also the common case of toggling it while a custom theme is current,
-        // which changes nothing we draw
-        return;
-    }
-    logf("UpdateThemeAfterHighContrastChange: using high contrast colors: %d\n", (int)gUseHighContrast);
-    ThemeStartPlatformColors();
-    SumatraUpdateTheme();
-    ThemeFinishPlatformColors();
-}
-
 // call after loading settings
 void SetCurrentThemeFromSettings() {
     SetTheme(gSettings->theme);
@@ -837,9 +783,7 @@ Color ThemeDocumentColors(Color& bg) {
     Color text = ThemeWindowTextColor();
     bg = ThemeMainWindowBackgroundColor();
 
-    // the system palette is exact: tinting it away from COLOR_WINDOW is the
-    // kind of "close enough" color high contrast mode exists to avoid
-    if (gCurrThemeIndex < 3 && !gUseHighContrast) {
+    if (gCurrThemeIndex < 3) {
         bg = AccentColor(bg, 8);
     }
     return text;
@@ -896,12 +840,6 @@ static Color ThemePageRenderColorsNoInvert(Color& bg) {
         return text;
     }
 
-    if (gUseHighContrast) {
-        // High contrast mode is about the app's own UI. Recoloring the document
-        // is not part of it - that's what made images come out inverted for no
-        // reason (#2124) - so the page keeps its black-on-white default.
-        return text;
-    }
 
     // Defaults: page colors follow the window theme (light theme → dark text on
     // light paper; dark theme → light text on dark paper).
@@ -924,13 +862,10 @@ Color ThemePageRenderColors(Color& bg) {
 }
 
 Color ThemeControlBackgroundColor() {
-    return gUseHighContrast ? SysWindowBgColor() : GetThemeCol(gCurrentTheme->controlBackgroundColor, kColRed);
+    return GetThemeCol(gCurrentTheme->controlBackgroundColor, kColRed);
 }
 
 Color ThemeMainWindowBackgroundColor() {
-    if (gUseHighContrast) {
-        return SysWindowBgColor();
-    }
     Color bgColor = GetThemeCol(gCurrentTheme->backgroundColor, kColRed);
     if (gCurrThemeIndex == 0) {
         // Special behavior for light theme.
@@ -943,11 +878,11 @@ Color ThemeMainWindowBackgroundColor() {
 }
 
 Color ThemeWindowBackgroundColor() {
-    return gUseHighContrast ? SysWindowBgColor() : GetThemeCol(gCurrentTheme->backgroundColor, kColRed);
+    return GetThemeCol(gCurrentTheme->backgroundColor, kColRed);
 }
 
 Color ThemeWindowTextColor() {
-    return gUseHighContrast ? SysWindowTextColor() : GetThemeCol(gCurrentTheme->textColor, kColRed);
+    return GetThemeCol(gCurrentTheme->textColor, kColRed);
 }
 
 static Color BlendTextAndBgHalfway() {
@@ -961,15 +896,10 @@ static Color BlendTextAndBgHalfway() {
 }
 
 Color ThemeWindowTextDisabledColor() {
-    return gUseHighContrast ? SysDisabledTextColor()
-                            : GetThemeCol(gCurrentTheme->disabledTextColor, BlendTextAndBgHalfway());
+    return GetThemeCol(gCurrentTheme->disabledTextColor, BlendTextAndBgHalfway());
 }
 
 Color ThemeWindowDarkerTextColor() {
-    if (gUseHighContrast) {
-        // high contrast has no muted text: muting it is the opposite of the point
-        return SysWindowTextColor();
-    }
     // fallback: slightly muted primary text (not as flat as disabled)
     Color fallback = AccentColor(ThemeWindowTextColor(), 40);
     return GetThemeCol(gCurrentTheme->darkerTextColor, fallback);
@@ -980,60 +910,34 @@ Color ThemeWindowControlBackgroundColor() {
 }
 
 Color ThemeActiveTabBackgroundColor() {
-    return gUseHighContrast ? SysWindowBgColor()
-                            : GetThemeCol(gCurrentTheme->activeTabBackgroundColor, ThemeWindowControlBackgroundColor());
+    return GetThemeCol(gCurrentTheme->activeTabBackgroundColor, ThemeWindowControlBackgroundColor());
 }
 
 Color ThemeInactiveTabBackgroundColor() {
-    if (gUseHighContrast) {
-        return SysWindowBgColor();
-    }
     Color fallback = AccentColor(ThemeWindowControlBackgroundColor(), 25);
     return GetThemeCol(gCurrentTheme->inactiveTabBackgroundColor, fallback);
 }
 
 Color ThemeWindowLinkColor() {
-    return gUseHighContrast ? SysLinkColor() : GetThemeCol(gCurrentTheme->linkColor, kColRed);
+    return GetThemeCol(gCurrentTheme->linkColor, kColRed);
 }
 
 Color ThemeHotBackgroundColor() {
-    if (gUseHighContrast) {
-        return SysHighlightBgColor();
-    }
     Color fallback = AccentColor(ThemeWindowControlBackgroundColor(), 20);
     return GetThemeCol(gCurrentTheme->hotBackgroundColor, fallback);
 }
 
 Color ThemeEdgeColor() {
-    if (gUseHighContrast) {
-        // borders have to stay visible, so they take the text color
-        return SysWindowTextColor();
-    }
     Color fallback = AccentColor(ThemeWindowControlBackgroundColor(), 40);
     return GetThemeCol(gCurrentTheme->edgeColor, fallback);
 }
 
 Color ThemeHotEdgeColor() {
-    if (gUseHighContrast) {
-        return SysHighlightBgColor();
-    }
     Color fallback = AccentColor(ThemeEdgeColor(), 30);
     return GetThemeCol(gCurrentTheme->hotEdgeColor, fallback);
 }
 
-Color ThemeDisabledEdgeColor() {
-    if (gUseHighContrast) {
-        return SysDisabledTextColor();
-    }
-    Color fallback = AccentColor(ThemeWindowControlBackgroundColor(), 15);
-    return GetThemeCol(gCurrentTheme->disabledEdgeColor, fallback);
-}
-
 Color ThemeErrorBackgroundColor() {
-    if (gUseHighContrast) {
-        // no error color in the system palette; the text carries the message
-        return SysWindowBgColor();
-    }
     // soft red tint of control background when unset
     Color fallback = RgbToColor(0x5c1a1a);
     if (IsLightColor(ThemeWindowControlBackgroundColor())) {
@@ -1043,9 +947,6 @@ Color ThemeErrorBackgroundColor() {
 }
 
 Color ThemeNotificationsBackgroundColor() {
-    if (gUseHighContrast) {
-        return SysWindowBgColor();
-    }
     Color fallback = AdjustLightness2(ThemeWindowBackgroundColor(), 10);
     return GetThemeCol(gCurrentTheme->notificationBackgroundColor, fallback);
 }
@@ -1059,9 +960,6 @@ Color ThemeNotificationsTextColor() {
 // dark amber. Deriving it from the theme's own accent (as we used to) produced
 // saturated, unrelated hues -- Dracula's warnings came out bright purple.
 Color ThemeNotificationsHighlightColor() {
-    if (gUseHighContrast) {
-        return SysHighlightBgColor();
-    }
     Color fallback;
     if (IsLightColor(ThemeNotificationsBackgroundColor())) {
         fallback = RgbToColor(0xFFEE70); // yellowish
@@ -1072,9 +970,6 @@ Color ThemeNotificationsHighlightColor() {
 }
 
 Color ThemeNotificationsHighlightTextColor() {
-    if (gUseHighContrast) {
-        return SysHighlightTextColor();
-    }
     Color fallback;
     if (IsLightColor(ThemeNotificationsBackgroundColor())) {
         fallback = RgbToColor(0x8d0801); // reddish
@@ -1103,26 +998,13 @@ bool ThemeColorizeControls() {
     return !IsMenuFontSizeDefault();
 }
 
-// ng: no system palette off Windows. These are the Windows light-mode defaults;
-// step 12 takes them from gpui's theme tokens.
-Color SysWindowBgColor() {
-    return kColWhite;
-}
-
-Color SysWindowTextColor() {
-    return kColBlack;
-}
-
+// macOS light-mode defaults
 Color SysControlTextColor() {
     return kColBlack;
 }
 
 Color SysDisabledTextColor() {
     return MkGray(0x6d);
-}
-
-Color SysLinkColor() {
-    return MkRgb(0, 0x66, 0xcc);
 }
 
 Color SysHighlightBgColor() {

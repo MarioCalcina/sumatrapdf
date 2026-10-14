@@ -855,26 +855,6 @@ Str HandleNewWindowCmd(Str cmd, bool* ack) {
     return cmd;
 }
 
-// returns the full path of every open document, one per line (issue #5060)
-Str HandleGetOpenFilesCmd(Str cmd, bool* ack, str::Builder& res) {
-    Str next = str::Parse(cmd, "[GetOpenFiles()]");
-    if (str::IsNull(next)) {
-        next = str::Parse(cmd, "[GetOpenFiles]");
-    }
-    if (str::IsNull(next)) {
-        return {};
-    }
-    *ack = true;
-    for (MainWindow* win : gWindows) {
-        for (WindowTab* tab : win->Tabs()) {
-            if (len(tab->filePath) > 0) {
-                res.Append(fmt("%s\n", tab->filePath));
-            }
-        }
-    }
-    return next;
-}
-
 // start a new find in the browser-hosted (chm / markdown) webview for the find
 // bar's text: highlight the current page and sweep all pages for the match
 // list. Results arrive asynchronously via BrowserFindResultReceived() /
@@ -2277,56 +2257,6 @@ MainWindow* FindDdeTargetWindow(HWND hwnd, Str pdfFile, bool focusTab) {
         }
     }
     return FindMainWindowByFile(pdfFile, focusTab);
-}
-
-Str HandleGetFileStateCmd(Str cmd, bool* ack, str::Builder& res) {
-    TempStr filePath;
-    Str next = str::Parse(cmd, "[GetFileState(\"%s\")]", &filePath);
-    if (str::IsNull(next)) {
-        next = str::Parse(cmd, "[GetFileState()]");
-    }
-    if (str::IsNull(next)) {
-        next = str::Parse(cmd, "[GetFileState]");
-    }
-    if (str::IsNull(next)) {
-        return {};
-    }
-
-    // we recognized the command, so from here on we always produce a response
-    *ack = true;
-
-    MainWindow* win = nullptr;
-    if (len(filePath) > 0) {
-        win = FindMainWindowByFile(filePath, true);
-    } else {
-        // no path given: report the currently active document
-        win = LastActiveWindow();
-    }
-    if (!win) {
-        res.Append(StrL("error: no opened file"));
-        return next;
-    }
-    if (!win->IsDocLoaded()) {
-        ReloadDocument(win, false);
-        if (!win->IsDocLoaded()) {
-            res.Append(StrL("error: file not loaded"));
-            return next;
-        }
-    }
-
-    DocController* ctrl = win->ctrl;
-    Str docPath = ctrl->GetFilePath();
-    // zoom uses the same convention as SetView: a percentage, or -1 = fit page,
-    // -2 = fit width, -3 = fit content, -6 = fit height
-    float zoom = ctrl->GetZoomVirtual();
-    Str view = DisplayModeToString(ctrl->GetDisplayMode());
-    res.Append(fmt("path: %s\n", docPath));
-    res.Append(fmt("page: %d\n", ctrl->CurrentPageNo()));
-    res.Append(fmt("pageCount: %d\n", ctrl->PageCount()));
-    res.Append(fmt("zoom: %g\n", zoom));
-    res.Append(fmt("view: %s\n", view));
-    res.Append(fmt("sumver: %s\n", currentVersion));
-    return next;
 }
 
 Str HandleCmdCommand(HWND hwnd, Str cmd, bool* ack) {

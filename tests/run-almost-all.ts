@@ -171,7 +171,6 @@ import { testit as issue6305 } from "./issue-6305.ts";
 import { testit as epubThemeRestyle } from "./epub-theme-restyle.ts";
 import { testit as showChaptersInEbooks } from "./show-chapters-in-ebooks.ts";
 import { testit as embeddedImageAttachment } from "./embedded-image-attachment.ts";
-import { testit as ttsEngineCrashRecovery } from "./tts-engine-crash-recovery.ts";
 import { testit as readAloudCloseDuringSpeak } from "./read-aloud-close-during-speak.ts";
 import { testit as readAloudRestyleStalePage } from "./read-aloud-restyle-stale-page.ts";
 import { testit as readAloudLazyChapters } from "./read-aloud-lazy-chapters.ts";
@@ -480,7 +479,6 @@ export const tests: NamedTest[] = [
   ["issue-6135", issue6135],
   ["issue-4276", issue4276],
   ["embedded-image-attachment", embeddedImageAttachment],
-  ["tts-engine-crash-recovery", ttsEngineCrashRecovery],
   ["read-aloud-close-during-speak", readAloudCloseDuringSpeak],
   ["read-aloud-restyle-stale-page", readAloudRestyleStalePage],
   ["read-aloud-lazy-chapters", readAloudLazyChapters],

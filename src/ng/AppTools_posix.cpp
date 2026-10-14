@@ -34,11 +34,6 @@ bool IsRunningInPortableMode() {
     return sCacheIsPortable != 0;
 }
 
-void DeleteAppTools() {
-    // gAppDataDir is allocated from gPermArena (freed wholesale on exit)
-    gAppDataDir = {};
-}
-
 void SetAppDataDir(Str dir) {
     dir = path::NormalizeTemp(dir);
     bool ok = dir::CreateAll(dir);
@@ -98,11 +93,6 @@ bool IsDllBuild() {
     return false;
 }
 
-bool IsInstallerOrUninstallerExe() {
-    TempStr exeName = path::GetBaseNameTemp(GetSelfExePathTemp());
-    return str::ContainsI(exeName, StrL("uninstall")) || str::ContainsI(exeName, StrL("install"));
-}
-
 static char gAppSha1[41]{};
 
 Str Sha1OfAppExe() {
@@ -121,21 +111,6 @@ Str Sha1OfAppExe() {
         snprintf(gAppSha1 + i * 2, 3, "%02x", sha1[i]);
     }
     return Str(gAppSha1);
-}
-
-TempStr GetWebViewDataDirTemp() {
-    TempStr dir = path::JoinTemp(GetAppDataDirTemp(), StrL("SumatraPDF-data"));
-    char id[7] = "000000";
-    Str sha1 = Sha1OfAppExe();
-    if (sha1) {
-        str::BufSet(Str(id, dimof(id)), sha1);
-    }
-    dir = path::JoinTemp(dir, Str(id));
-    return path::JoinTemp(dir, fmt("webview-%d", CurrentProcessId()));
-}
-
-bool AdjustVariableDriveLetter(Str&) {
-    return false;
 }
 
 static bool HasDownloadMetadata(Str path) {

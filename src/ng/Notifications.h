@@ -102,16 +102,12 @@ void SetNotifWindow(NotificationCreateArgs&, MainWindow*);
 NotificationWnd* ShowNotification(const NotificationCreateArgs& args);
 NotificationWnd* ShowTemporaryNotification(MainWindow* win, Str msg, int timeoutMs = kNotifDefaultTimeOut);
 NotificationWnd* ShowWarningNotification(MainWindow* win, Str msg, int timeoutMs);
-// same, for a message that isn't fully app-authored: shown verbatim, no markup
-NotificationWnd* ShowPlainNotification(MainWindow* win, Str msg, int timeoutMs = kNotifDefaultTimeOut);
 NotificationWnd* ShowPlainWarningNotification(MainWindow* win, Str msg, int timeoutMs);
 
 void NotificationUpdateMessage(NotificationWnd* wnd, Str msg, int timeoutInMS = 0);
-bool UpdateNotificationProgress(NotificationWnd* wnd, Str msg, int perc);
 TempStr NotificationGetMessageTemp(NotificationWnd* wnd);
 void RemoveNotification(NotificationWnd*);
 void CloseNotification(NotificationWnd*, NotifCloseReason reason = NotifCloseReason::Program);
-bool AreNotificationsEnabled();
 void SetNotificationsEnabled(bool);
 bool RemoveNotificationsForGroup(MainWindow*, Kind);
 void RemoveNotificationsForWindow(MainWindow*);
@@ -129,4 +125,3 @@ void ShowMaybeDelayedNotifications(MainWindow* win);
 // the notifications the shell should draw for this window, in creation order
 const Vec<NotificationWnd*>& GetNotifications();
 
-int CalcPerc(int current, int total);

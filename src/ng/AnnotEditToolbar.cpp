@@ -290,14 +290,6 @@ void UpdateAnnotEditToolbar(MainWindow* win) {
     AppShellInvalidate(win);
 }
 
-void RefreshAnnotEditToolbar(MainWindow* win) {
-    AnnotEditToolbar* tb = win ? win->annotEditToolbar : nullptr;
-    if (!tb || !tb->annot) {
-        return;
-    }
-    UpdateAnnotEditToolbar(win);
-}
-
 void DeleteAnnotEditToolbar(MainWindow* win) {
     AnnotEditToolbar* tb = win ? win->annotEditToolbar : nullptr;
     if (!tb) {
@@ -2250,15 +2242,6 @@ void UpdateAnnotationHoverOverlay(MainWindow* win, Point mousePos) {
         overlay->visible = true;
         AppShellInvalidate(win);
     }
-}
-
-void RefreshAnnotationHoverOverlay(MainWindow* win) {
-    AnnotationHoverOverlay* overlay = win ? win->annotationHoverOverlay : nullptr;
-    if (!overlay || !overlay->visible || !AnnotationIsLive(overlay->annot)) {
-        return;
-    }
-    BuildAnnotationHoverOverlay(overlay, overlay->annot);
-    AppShellInvalidate(win);
 }
 
 void DeleteAnnotationHoverOverlay(MainWindow* win) {

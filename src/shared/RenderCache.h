@@ -202,11 +202,8 @@ struct RenderCache {
     ~RenderCache();
 
     void RequestRendering(DisplayModel* dm, int pageNo);
-    void Render(DisplayModel* dm, int pageNo, int rotation, float zoom, RectF pageRect,
-                const Func1<PageRenderRequest*>& callback);
     void CancelRenderingBlocking(DisplayModel* dm);
     void AbortRendering(DisplayModel* dm);
-    bool IsRenderingFor(DisplayModel* dm);
     bool IsBusyFor(DisplayModel* dm);
     // one line on what the render threads and the cache are doing, for the
     // -dbg-control render-idle snapshot
@@ -247,11 +244,9 @@ struct RenderCache {
     bool DropCacheEntryIfNotUsed(BitmapCacheEntry* entry);
     bool IsCached(BitmapCacheEntry* entry);
     void FreePage(DisplayModel* dm, int pageNo, TilePosition* tile = nullptr);
-    void FreeNotVisible();
 
     int PaintTile(gpui::PaintCtx* ctx, Rect bounds, DisplayModel* dm, int pageNo, TilePosition tile, Rect tileOnScreen,
                   bool renderMissing, bool* renderOutOfDateCue, bool* renderedReplacement);
-    void LogCacheSize();
     i64 CacheBytes(int& nEntriesOut);
 
     void RecordFinishedRequest(PageRenderRequest* req);

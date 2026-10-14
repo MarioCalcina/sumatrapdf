@@ -517,8 +517,6 @@ MenuModel* BuildMenuFromDef(MenuDef* menuDef, BuildMenuCtx* ctx) {
     MenuModel* menu = new MenuModel();
     bool isDebugMenu = menuDef == menuDefDebug;
     int i = 0;
-    bool addExternalViewersNext = false;
-
     if (menuDef == menuDefThemes) {
         AppendThemesToMenu(menu);
     }
@@ -531,14 +529,10 @@ MenuModel* BuildMenuFromDef(MenuDef* menuDef, BuildMenuCtx* ctx) {
         i++;
 
         int cmdId = (int)md.idOrSubmenu;
-        // orig appends the user's external viewers after CmdOpenWithHtmlHelp
-        if (addExternalViewersNext && ctx) {
+        // the user's external viewers go before Send by E-mail
+        if (menuDef == menuDefFile && cmdId == CmdSendByEmail && ctx) {
             WindowTab* evTab = ctx->tab;
             AppendExternalViewersToMenu(menu, evTab ? evTab->filePath : Str{});
-            addExternalViewersNext = false;
-        }
-        if (cmdId == CmdOpenWithHtmlHelp) {
-            addExternalViewersNext = true;
         }
         // custom selection handlers go before the built-in translate / search submenus
         if (md.idOrSubmenu == (UINT_PTR)menuDefTranslateWith) {

@@ -44,10 +44,6 @@ Str TtsGetVoiceId();
 void TtsSetSpeed(float speed);
 float TtsGetSpeed();
 
-bool TtsOnEngineCrash(void* faultAddr);
-bool TtsTakeEngineCrash();
-bool TtsEngineCrashed();
-bool TtsTestEngineCrash();
 void TtsTestPumpOnNextSpeak();
 bool ApplyReadAloudVoiceFromSettings();
 void ReadAloudFreeVoiceCache();
@@ -72,9 +68,6 @@ struct ReadAloudHighlightMap {
 };
 
 void ReadAloudHighlightFree(ReadAloudHighlightMap* map);
-
-bool ReadAloudHighlightBuildFromPage(EngineBase* engine, int pageNo, ReadAloudHighlightMap* map,
-                                     str::Builder& cleanedOut);
 
 bool ReadAloudHighlightBuildFromTextSelection(TextSelection* ts, ReadAloudHighlightMap* map, str::Builder& cleanedOut);
 
@@ -120,7 +113,6 @@ void ReadAloudPlaybackBarTick(MainWindow* win);
 
 void ReadAloudPlaybackPauseOrResume();
 void ReadAloudPlaybackStop();
-void ReadAloudPlaybackCycleSpeed(int dir);
 void ReadAloudPlaybackBarDestroy(MainWindow* win);
 TempStr ReadAloudPlaybackBarStateTemp(int* exitCodeOut);
 TempStr ReadAloudPlaybackBarTestTemp(Str action, int* exitCodeOut);

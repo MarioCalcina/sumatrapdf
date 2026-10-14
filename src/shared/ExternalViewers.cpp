@@ -23,190 +23,6 @@
 #include "gui/MacServices.h"
 #include "ExternalViewers.h"
 
-struct ExternalViewerInfo {
-    Str name; // shown to the user
-    int cmdId;
-    Str exts; // valid extensions
-    Str exePartialPath;
-    Str launchArgs;
-    Kind engineKind;
-    // set by DetectExternalViewers()
-    Str exeFullPath; // if found, full path to the executable (heap-owned)
-};
-
-// kindEngineChm
-
-static int gExternalViewersCount = 0;
-
-// clang-format off
-static ExternalViewerInfo gExternalViewers[] = {
-    {
-        StrL("Explorer"),
-        CmdOpenWithExplorer,
-        StrL("*"),
-        StrL("explorer.exe"),
-        StrL(R"(/select,"%1")"),
-        {},
-        Str{},
-    },
-    {
-        StrL("Directory Opus"),
-        CmdOpenWithDirectoryOpus,
-        StrL("*"),
-        StrL(R"(GPSoftware\Directory Opus\dopus.exe)"),
-        StrL(R"("%d")"),
-        {},
-        Str{},
-    },
-    {
-        StrL("Total Commander"),
-        CmdOpenWithTotalCommander,
-        StrL("*"),
-        StrL(R"(totalcmd\TOTALCMD64.EXE)"),
-        StrL(R"("%d")"),
-        {},
-        Str{},
-    },
-    {
-        StrL("Double Commander"),
-        CmdOpenWithDoubleCommander,
-        StrL("*"),
-        StrL(R"(Double Commander\doublecmd.exe)"),
-        StrL(R"(--no-splash --client "%d")"),
-        {},
-        Str{},
-    },
-    {
-        StrL("Acrobat Reader"),
-        CmdOpenWithAcrobat,
-        StrL(".pdf"),
-        StrL(R"(Adobe\Acrobat Reader DC\Reader\AcroRd32.exe)"),
-        // Command line format for version 6 and later:
-        //   /A "page=%d&zoom=%.1f,%d,%d&..." <filename>
-        // see http://www.adobe.com/devnet/acrobat/pdfs/pdf_open_parameters.pdf#page=5
-        // zoom=%z,%x,%y : percentage zoom and upper-left view (user-space coords)
-        StrL(R"(/A "page=%p&zoom=%z,%x,%y" "%1")"),
-        kindEngineMupdf,
-        Str{}
-    },
-    {
-        StrL("Acrobat Reader"),
-        CmdOpenWithAcrobat,
-        StrL(".pdf"),
-        StrL(R"(Adobe\Acrobat DC\Acrobat\Acrobat.exe)"),
-        // Command line format for version 6 and later:
-        //   /A "page=%d&zoom=%.1f,%d,%d&..." <filename>
-        // see http://www.adobe.com/devnet/acrobat/pdfs/pdf_open_parameters.pdf#page=5
-        StrL(R"(/A "page=%p&zoom=%z,%x,%y" "%1")"),
-        kindEngineMupdf,
-        Str{}
-    },
-    {
-        StrL("Foxit Reader"),
-        CmdOpenWithFoxit,
-        StrL(".pdf"),
-        StrL(R"(Foxit Software\Foxit Reader\FoxitReader.exe)"),
-        // Foxit: filename [-n page] [-z zoom]
-        StrL(R"("%1" /A page=%p -z %z)"),
-        kindEngineMupdf,
-        Str{}
-    },
-    {
-        StrL("Foxit PhantomPDF"),
-        CmdOpenWithFoxitPhantom,
-        StrL(".pdf"),
-        StrL(R"(Foxit Software\Foxit PhantomPDF\FoxitPhantomPDF.exe)"),
-        StrL(R"("%1" /A page=%p -z %z)"),
-        kindEngineMupdf,
-        Str{}
-    },
-    {
-        StrL("PDF-XChange Editor"),
-        CmdOpenWithPdfXchange,
-        StrL(".pdf"),
-        StrL(R"(Tracker Software\PDF Editor\PDFXEdit.exe)"),
-        // PDFXChange cmd-line format:
-        // [/A "param=value [&param2=value ..."] [PDF filename]
-        StrL(R"(/A "page=%p&zoom=%z" "%1")"),
-        kindEngineMupdf,
-        Str{}
-    },
-    {
-        StrL("Pdf & Djvu Bookmarker"),
-        CmdOpenWithPdfDjvuBookmarker,
-        StrL(".pdf;.djvu"),
-        StrL(R"(Pdf & Djvu Bookmarker\PdfDjvuBookmarker.exe)"),
-        Str{},
-        {},
-        Str{}
-    },
-    {
-        StrL("XPS Viewer"),
-        CmdOpenWithXpsViewer,
-        StrL(".xps;.oxps"),
-        StrL("xpsrchvw.exe"),
-        Str{},
-        kindEngineMupdf,
-        Str{}
-    },
-    {
-        StrL("HTML Help"),
-        CmdOpenWithHtmlHelp,
-        StrL(".chm"),
-        StrL("hh.exe"),
-        Str{},
-        kindEngineChm,
-        Str{}
-    }
-};
-// clang-format on
-
-// clang-format off
-const int gOpenWithKnownExternalViewerCmds[] = {
-    CmdOpenWithExplorer,
-    CmdOpenWithDirectoryOpus,
-    CmdOpenWithTotalCommander,
-    CmdOpenWithDoubleCommander,
-    CmdOpenWithAcrobat,
-    CmdOpenWithFoxit,
-    CmdOpenWithFoxitPhantom,
-    CmdOpenWithPdfXchange,
-    CmdOpenWithXpsViewer,
-    CmdOpenWithHtmlHelp,
-    CmdOpenWithPdfDjvuBookmarker,
-    0,
-};
-// clang-format on
-
-bool IsOpenWithKnownExternalViewerCmd(int cmdId) {
-    for (int i = 0; gOpenWithKnownExternalViewerCmds[i]; i++) {
-        if (gOpenWithKnownExternalViewerCmds[i] == cmdId) {
-            return true;
-        }
-    }
-    return false;
-}
-
-// a Shortcuts / toolbar entry is a clone with its own id, so it's the command
-// it stands for that decides
-bool IsOpenWithKnownExternalViewerCmd(CustomCommand* cmd) {
-    return cmd && IsOpenWithKnownExternalViewerCmd(cmd->origId);
-}
-
-static ExternalViewerInfo* FindKnownExternalViewerInfoByCmdId(int cmdId) {
-    for (ExternalViewerInfo& ev : gExternalViewers) {
-        if (ev.cmdId == cmdId) {
-            return &ev;
-        }
-    }
-    return nullptr;
-}
-
-bool HasKnownExternalViewerForCmd(int cmdId) {
-    ExternalViewerInfo* info = FindKnownExternalViewerInfoByCmdId(cmdId);
-    return info && info->exeFullPath;
-}
-
 static bool CanViewExternally(WindowTab* tab) {
     if (!CanAccessDisk()) {
         return false;
@@ -219,48 +35,8 @@ static bool CanViewExternally(WindowTab* tab) {
     return file::Exists(tab->filePath);
 }
 
-void FreeExternalViewers() {
-    for (ExternalViewerInfo& info : gExternalViewers) {
-        str::Free(info.exeFullPath);
-        info.exeFullPath = {};
-    }
-}
-
-void DetectExternalViewers() {
-    (void)gExternalViewersCount;
-}
-
 static bool filterMatchesEverything(Str ext) {
     return str::IsEmptyOrWhiteSpace(ext) || str::EqIS(ext, StrL("*"));
-}
-
-bool CanViewWithKnownExternalViewer(WindowTab* tab, int cmdId) {
-    if (!tab || !CanViewExternally(tab)) {
-        return false;
-    }
-    ExternalViewerInfo* ev = FindKnownExternalViewerInfoByCmdId(cmdId);
-    if (!ev || len(ev->exeFullPath) == 0) {
-        return false;
-    }
-    // must match file extension
-
-    if (!filterMatchesEverything(ev->exts)) {
-        TempStr ext = path::GetExtTemp(tab->filePath);
-        if (!str::ContainsI(ev->exts, ext)) {
-            return false;
-        }
-    }
-    Kind engineKind = tab->GetEngineType();
-    if (engineKind != nullptr) {
-        if (ev->engineKind != nullptr) {
-            if (ev->engineKind != engineKind) {
-                logf("CanViewWithKnownExternalViewer cmd: %d, ev->engineKind '%s' != engineKind '%s'\n", cmdId,
-                     Str(ev->engineKind), Str(engineKind));
-                return false;
-            }
-        }
-    }
-    return true;
 }
 
 bool CouldBePDFDoc(WindowTab* tab) {
@@ -367,32 +143,6 @@ static TempStr FormatParamTemp(Str arg, WindowTab* tab) {
     return ToStrTemp(out);
 }
 
-static TempStr GetDocumentPathQuoted(WindowTab* tab) {
-    auto path = tab->filePath;
-    return str::JoinTemp(StrL("\""), path, StrL("\""));
-}
-
-bool ViewWithKnownExternalViewer(WindowTab* tab, int cmdId) {
-    bool canView = CanViewWithKnownExternalViewer(tab, cmdId);
-    if (!canView) {
-        logf("ViewWithKnownExternalViewer cmd: %d\n", cmdId);
-        // with command palette can send un-enforcable command so not ReportIf
-        ReportDebugIf(!canView);
-        return false;
-    }
-    ExternalViewerInfo* ev = FindKnownExternalViewerInfoByCmdId(cmdId);
-    if (len(ev->exeFullPath) == 0) {
-        return false;
-    }
-    TempStr args;
-    if (ev->launchArgs) {
-        args = FormatParamTemp(ev->launchArgs, tab);
-    } else {
-        args = GetDocumentPathQuoted(tab);
-    }
-    return LaunchFileShell(ev->exeFullPath, args);
-}
-
 bool PathMatchFilter(Str path, Str filter) {
     if (filterMatchesEverything(filter)) {
         return true;
@@ -440,9 +190,7 @@ bool RunWithExe(WindowTab* tab, Str cmdLine, Str filter) {
     // the %1/%p/%d/%% substitution on the rest WITHOUT re-tokenizing and
     // re-quoting it, so the user's own quoting is preserved (issue #5695).
     // Re-quoting moved/mangled quotes and broke e.g. cmd.exe command lines.
-    // This matches how the known external viewers are launched (FormatParamTemp
-    // on the raw args). The user is responsible for quoting arguments that
-    // contain spaces, e.g. "%1".
+    // The user is responsible for quoting arguments that contain spaces, e.g. "%1".
     Str rest;
     TempStr exePath = ExtractExePathTemp(cmdLine, &rest);
     if (len(exePath) == 0) {

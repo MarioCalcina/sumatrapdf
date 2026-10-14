@@ -452,22 +452,6 @@ void RenderCache::FreeForDisplayModel(DisplayModel* dm) {
     }
 }
 
-void RenderCache::FreeNotVisible() {
-    ScopedRecursiveMutex scope(&cacheAccess);
-    // must go from end because freeing changes the cache
-    for (int i = cacheCount - 1; i >= 0; i--) {
-        BitmapCacheEntry* entry = cache[i];
-        // all invisible pages resp. page tiles
-        bool shouldFree = !entry->dm->PageVisibleNearby(entry->pageNo);
-        if (!shouldFree && entry->tile.res > 1) {
-            shouldFree = !IsTileVisible(entry->dm, entry->pageNo, entry->tile, 2.0);
-        }
-        if (shouldFree) {
-            DropCacheEntryIfNotUsed(entry);
-        }
-    }
-}
-
 // keep the cached bitmaps for visible pages to avoid flickering during a reload.
 // mark invisible pages as out-of-date to prevent inconsistencies
 void RenderCache::KeepForDisplayModel(DisplayModel* oldDm, DisplayModel* newDm) {
@@ -802,20 +786,6 @@ void RenderCache::RequestPredictiveRendering(DisplayModel* dm, int originPageNo,
     RequestRendering(dm, pages[i], tile, true, &chain);
 }
 
-void RenderCache::Render(DisplayModel* dm, int pageNo, int rotation, float zoom, RectF pageRect,
-                         const Func1<PageRenderRequest*>& callback) {
-    bool ok = Render(dm, pageNo, rotation, zoom, nullptr, &pageRect, callback);
-    if (!ok) {
-        // create a dummy request to notify callback of failure
-        PageRenderRequest req;
-        req.dm = dm;
-        req.pageNo = pageNo;
-        req.bmp = nullptr;
-        req.errorCode = 1;
-        callback.Call(&req);
-    }
-}
-
 bool RenderCache::Render(DisplayModel* dm, int pageNo, int rotation, float zoom, TilePosition* tile, RectF* pageRect,
                          const Func1<PageRenderRequest*>& renderFinishedCb, const PredictiveChain* chain) {
     rcLogf("RenderCache::Render: pageNo %d\n", pageNo);
@@ -992,27 +962,6 @@ void RenderCache::CancelRenderingBlocking(DisplayModel* dm) {
         /* TODO: busy loop is not good, but I don't have a better idea */
         SleepInMs(50);
     }
-}
-
-// Like CancelRenderingBlocking() but returns immediately instead of waiting for an
-// in-flight render to notice the abort. mupdf only checks the abort cookie
-// between display-list ops, so a single big image decode makes that wait run
-// into the hundreds of ms -- on the UI thread it's a visible freeze.
-//
-// Only for callers that are NOT destroying dm: the render thread keeps using
-// dm and its engine until the current page is done. Anything that frees the
-// model must still use CancelRenderingBlocking() (DisplayModel's destructor does).
-// true if a render thread is currently working on a page of dm. Only a snapshot:
-// no new requests can appear for a dm that's being torn down (its tab is gone
-// and pauseRendering is set), so a false answer stays false.
-bool RenderCache::IsRenderingFor(DisplayModel* dm) {
-    ScopedRecursiveMutex scope(&requestAccess);
-    for (int i = 0; i < nRenderThreads; i++) {
-        if (curReqs[i] && curReqs[i]->dm == dm) {
-            return true;
-        }
-    }
-    return false;
 }
 
 // What the render threads and the cache are doing right now, in one line. A
@@ -1493,12 +1442,6 @@ i64 RenderCache::CacheBytes(int& nEntriesOut) {
     }
     nEntriesOut = cacheCount;
     return size;
-}
-
-void RenderCache::LogCacheSize() {
-    int count = 0;
-    i64 size = CacheBytes(count);
-    rcLogf("RenderCache::LogCacheSize: %d entries, %lld bytes\n", count, (long long)size);
 }
 
 // --------- render queue debug window (CmdDebugToggleRenderInfo) ---------

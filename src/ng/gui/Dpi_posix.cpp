@@ -4,40 +4,14 @@
 #include "base/Base.h"
 #include "gui/Dpi.h"
 
-int gDpiOverride = 0;
 int dpiX = 96;
-int dpiY = 96;
 
-int DpiGetForHwnd(HWND hwnd) {
-    // see the note in Dpi.h: the override doesn't apply to the desktop
-    if (gDpiOverride > 0 && hwnd) {
-        return (96 * gDpiOverride) / 100;
-    }
-    return DpiGet();
-}
-
-int DpiGetForPoint(int, int) {
+int DpiGetForHwnd(HWND) {
     return DpiGet();
 }
 
 int DpiGet() {
     return dpiX > 0 ? dpiX : 96;
-}
-
-void DpiSet(int x, int y) {
-    if (x <= 0) {
-        x = 96;
-    }
-    if (y <= 0) {
-        y = x;
-    }
-    dpiX = x;
-    dpiY = y;
-}
-
-void DpiSetFromHwnd(HWND hwnd) {
-    int d = DpiGetForHwnd(hwnd);
-    DpiSet(d, d);
 }
 
 int DpiScaleByDpi(int dpi, int n) {
@@ -49,11 +23,6 @@ int DpiScaleByDpi(int dpi, int n) {
 
 int DpiScale(int x) {
     return DpiScaleByDpi(DpiGet(), x);
-}
-
-void DpiScale(int& x, int& y) {
-    x = DpiScaleByDpi(dpiX > 0 ? dpiX : 96, x);
-    y = DpiScaleByDpi(dpiY > 0 ? dpiY : 96, y);
 }
 
 int DpiGetSystemMetrics(int index, int dpi) {

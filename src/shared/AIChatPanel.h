@@ -26,7 +26,6 @@ void ShutdownAIChatForMainWindow(MainWindow* win);
 
 void OnAIChatToggle(MainWindow* win, int providerId);
 void OnAIChatTabChanged(MainWindow* win);
-void UpdateAIChatTheme(MainWindow* win);
 void UpdateAIChatDpi(MainWindow* win, int dpi);
 void RelayoutAIChatPanel(MainWindow* win);
 

@@ -72,22 +72,6 @@ bool IsSep(char c) {
     return c == kPathSepChar;
 }
 
-static bool IsSep(WCHAR c) {
-    return c == kPathSepWChar;
-}
-
-bool IsDriveRoot(Str path) {
-    if (!path.s) {
-        return false;
-    }
-    while (path.len > 3 && IsSep(path.s[path.len - 1])) {
-        path.len--;
-    }
-    return path.len == 3 && path.s[1] == ':' && IsSep(path.s[2]);
-}
-
-// the Str / WStr path helpers share these bodies
-
 template <typename S>
 static S BaseNameT(S path) {
     int start = path.len;
@@ -138,10 +122,6 @@ TempStr JoinTemp(Str dir, Str name, Str name2) {
     return JoinTempT(dir, name, name2, StrL(kPathSep));
 }
 
-TempWStr JoinTemp(WStr dir, WStr name, WStr name2) {
-    return JoinTempT(dir, name, name2, WStr(kPathSepWStr, 1));
-}
-
 Str Join(Arena* a, Str dir, Str name) {
     return str::Dup(a, JoinTemp(dir, name));
 }
@@ -150,17 +130,9 @@ Str Join(Str dir, Str name) {
     return Join(nullptr, dir, name);
 }
 
-WStr Join(WStr dir, WStr name, WStr name2) {
-    return wstr::Dup(JoinTemp(dir, name, name2));
-}
-
 TempStr GetDirTemp(Str path) {
     TempStr res = DirTempT(path);
     return res.s ? res : str::DupTemp(StrL("."));
-}
-
-TempWStr GetDirTemp(WStr path) {
-    return DirTempT(path);
 }
 
 static int GetExtPos(Str path) {
@@ -338,10 +310,6 @@ bool StartsWith(Str path, Str s) {
     return MemEq(buf, s.s, s.len);
 }
 
-bool StartsWithN(Str path, Str s) {
-    return StartsWith(path, s);
-}
-
 int ReadN(Str path, u8* buf, size_t toRead) {
     FILE* fp = OpenFILE(path);
     if (!fp) {
@@ -414,161 +382,3 @@ bool CreateForFile(Str path, int* errOut) {
 
 } // namespace dir
 
-TempStr GetHomeDirTemp();
-TempStr ExpandEnvVarTemp(Str varName);
-TempStr ToAbsolutePathTemp(Str path);
-
-bool FileSystemEntryExists(Str s) {
-    return path::GetType(s) != path::Type::None;
-}
-
-Str FindFirstValidParentDir(Str path) {
-    Str current = path;
-    while (len(current) > 0) {
-        if (dir::Exists(current)) {
-            return current;
-        }
-        Str parent = PathGetDirTemp(current);
-        if (parent.len >= current.len) {
-            break;
-        }
-        current = parent;
-    }
-    return current;
-}
-
-Str PathGetDirTemp(Str path) {
-    if (len(path) == 0) {
-        return {};
-    }
-    while (path.len > 1 && path::IsSep(path.s[path.len - 1])) {
-        path.len--;
-    }
-    int idx = -1;
-    for (int i = 0; i < path.len; i++) {
-        if (path::IsSep(path.s[i])) {
-            idx = i;
-        }
-    }
-    if (idx < 0) {
-        return {};
-    }
-    int n = idx;
-    if (idx == 0) {
-        n = 1;
-    } else if (idx == 2 && path.s[1] == ':') {
-        n = 3;
-    }
-    return str::DupTemp(Str(path.s, n));
-}
-
-Str PathGetNameTemp(Str path) {
-    if (len(path) == 0) {
-        return {};
-    }
-    while (path.len > 1 && path::IsSep(path.s[path.len - 1])) {
-        path.len--;
-    }
-    int idx = -1;
-    for (int i = 0; i < path.len; i++) {
-        if (path::IsSep(path.s[i])) {
-            idx = i;
-        }
-    }
-    if (idx < 0) {
-        return str::DupTemp(path);
-    }
-    return str::DupTemp(Str(path.s + idx + 1, path.len - idx - 1));
-}
-
-Str SmartResolveDirectory(Str dir) {
-    if (len(dir) == 0) {
-        return dir;
-    }
-
-    auto* ta = GetTempArena();
-    char* normalized = (char*)Alloc(ta, dir.len + 1);
-    for (int i = 0; i < dir.len; i++) {
-        normalized[i] = path::IsSep(dir.s[i]) ? kPathSepChar : dir.s[i];
-    }
-    normalized[dir.len] = 0;
-    Str result = Str(normalized, dir.len);
-
-    if (dir::Exists(result)) {
-        return ToAbsolutePathTemp(result);
-    }
-
-    if (len(result) > 0 && result.s[0] == '~') {
-        Str home = GetHomeDirTemp();
-        if (len(home) > 0) {
-            int newLen = home.len + result.len - 1;
-            char* expanded = (char*)Alloc(ta, newLen + 1);
-            int pos = 0;
-            for (int i = 0; i < home.len; i++) {
-                expanded[pos++] = home.s[i];
-            }
-            for (int i = 1; i < result.len; i++) {
-                expanded[pos++] = result.s[i];
-            }
-            expanded[pos] = 0;
-            result = Str(expanded, pos);
-            if (dir::Exists(result)) {
-                return ToAbsolutePathTemp(result);
-            }
-        }
-    }
-
-    char* expanded = (char*)Alloc(ta, MAX_PATH);
-    int outPos = 0;
-    int i = 0;
-    while (i < result.len && outPos < MAX_PATH - 1) {
-        if (result.s[i] == '$' && i + 1 < result.len) {
-            int varStart = i + 1;
-            int varEnd = varStart;
-            while (varEnd < result.len) {
-                char c = result.s[varEnd];
-                if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_') {
-                    varEnd++;
-                } else {
-                    break;
-                }
-            }
-            if (varEnd > varStart) {
-                Str varName = Str(result.s + varStart, varEnd - varStart);
-                Str value = ExpandEnvVarTemp(varName);
-                if (len(value) > 0) {
-                    for (int j = 0; j < value.len && outPos < MAX_PATH - 1; j++) {
-                        expanded[outPos++] = value.s[j];
-                    }
-                    i = varEnd;
-                    continue;
-                }
-            }
-            expanded[outPos++] = result.s[i++];
-        } else if (result.s[i] == '%') {
-            int varStart = i + 1;
-            int varEnd = varStart;
-            while (varEnd < result.len && result.s[varEnd] != '%') {
-                varEnd++;
-            }
-            if (varEnd < result.len && varEnd > varStart) {
-                Str varName = Str(result.s + varStart, varEnd - varStart);
-                Str value = ExpandEnvVarTemp(varName);
-                if (len(value) > 0) {
-                    for (int j = 0; j < value.len && outPos < MAX_PATH - 1; j++) {
-                        expanded[outPos++] = value.s[j];
-                    }
-                    i = varEnd + 1;
-                    continue;
-                }
-            }
-            expanded[outPos++] = result.s[i++];
-        } else {
-            expanded[outPos++] = result.s[i++];
-        }
-    }
-    expanded[outPos] = 0;
-    result = Str(expanded, outPos);
-
-    return ToAbsolutePathTemp(result);
-}

@@ -46,6 +46,3 @@ PlatformTextRender* CreatePlatformTextRender();
 struct CGContext;
 PlatformTextRender* CreateCoreTextRender(struct CGContext* context);
 
-// frees what measuring text allocated along the way. Only worth calling at
-// shutdown; measuring after it just allocates again
-void PlatformFontDestroy();

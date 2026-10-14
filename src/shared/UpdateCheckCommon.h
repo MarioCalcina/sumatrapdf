@@ -10,10 +10,6 @@ static const Str kExpectedDlHost = StrL("https://github.com/MarioCalcina/sumatra
 bool IsTrustedUpdateDlUrl(Str dlURL);
 void BuildUpdateURL(str::Builder& url, Str baseURL, UpdateCheck updateCheckType);
 
-// implemented by ng: base/Win.h has them on Windows
-bool IsProcess64();
-bool IsArmBuild();
-
 struct UpdateInfo {
     // the window that asked: orig keeps its frame, ng the window
     HWND hwndParent = nullptr;

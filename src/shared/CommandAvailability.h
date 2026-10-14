@@ -83,8 +83,6 @@ struct AppCommandCtx {
     bool antiGravityInstalled = false;
     bool autoScrollOn = false;
     bool readingBarOn = false;
-    bool shellIntegrationInstalled = false;
-    bool debugDpiOverrideAvailable = false;
 };
 
 using BuildMenuCtx = AppCommandCtx;

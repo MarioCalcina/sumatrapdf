@@ -129,12 +129,6 @@ int ToolbarModeForWindow(MainWindow* win) {
     return ToolbarModeFromPrefs();
 }
 
-// the find UI is now a floating Chrome-style bar (see FindBar.cpp). When the
-// toolbar moves/resizes we keep the bar centered over the search icon.
-void UpdateToolbarFindText(MainWindow* win) {
-    FindBarReposition(win);
-}
-
 static TempStr ShortcutToolbarToolTipTemp(Shortcut* shortcut) {
     if (!str::IsEmptyOrWhiteSpace(shortcut->name)) {
         return shortcut->name;

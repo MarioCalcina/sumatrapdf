@@ -36,15 +36,7 @@
 
 void AppShellEnableFileDrop(MainWindow*) {}
 
-void AppShellApplyNativeCursor(MainWindow*) {}
-
 void AppShellFrameChanged(MainWindow*) {}
-
-void AppShellOpenSystemMenu(MainWindow*, Rect) {}
-
-Pixmap* AppShellAppIconPixmap(MainWindow*) {
-    return nullptr;
-}
 
 void AppShellForgetNativeHwnd(MainWindow*) {}
 

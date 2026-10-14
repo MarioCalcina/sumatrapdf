@@ -75,65 +75,6 @@ u32 BitReader::Peek(int nBits) {
 
 // --- ByteReader
 
-// Unpacks a structure from the data according to the given format
-// e.g. the format "32b2w6d" unpacks 32 Bytes, 2 16-bit Words and 6 32-bit Dwords
-bool ByteReader::Unpack(void* strct, int size, Str format, int off, bool isBE) const {
-    if (::len(format) == 0) {
-        return false;
-    }
-    int repeat = 0;
-    int idx = 0;
-    for (int i = 0; i < format.len; i++) {
-        char c = format.s[i];
-        if (isdigit((u8)c)) {
-            repeat = ParseInt(Str(format.s + i, format.len - i));
-            for (i++; i < format.len && isdigit((u8)format.s[i]); i++) {
-                ;
-            }
-            if (i >= format.len) {
-                break;
-            }
-            c = format.s[i];
-        }
-        switch (c) {
-            case 'b':
-                if (off + idx + 1 > len || idx + 1 > size) {
-                    return false;
-                }
-                *(u8*)((u8*)strct + idx) = UInt8(off + idx);
-                idx += 1;
-                break;
-            case 'w':
-                if (off + idx + 2 > len || idx + 2 > size) {
-                    return false;
-                }
-                *(u16*)((u8*)strct + idx) = UInt16(off + idx, isBE);
-                idx += 2;
-                break;
-            case 'd':
-                if (off + idx + 4 > len || idx + 4 > size) {
-                    return false;
-                }
-                *(u32*)((u8*)strct + idx) = UInt32(off + idx, isBE);
-                idx += 4;
-                break;
-            case 'q':
-                if (off + idx + 8 > len || idx + 8 > size) {
-                    return false;
-                }
-                *(u64*)((u8*)strct + idx) = UInt64(off + idx, isBE);
-                idx += 8;
-                break;
-            default:
-                return false;
-        }
-        if (--repeat > 0) {
-            i--;
-        }
-    }
-    return idx == size;
-}
-
 ByteReader::ByteReader(Str data) : d((const u8*)data.s), len(data.len) {}
 
 ByteReader::ByteReader(const u8* data, int n) : d(data), len(n) {}
@@ -201,10 +142,6 @@ u64 ByteReader::UInt64BE(int off) const {
     return 0;
 }
 
-u64 ByteReader::UInt64(int off, bool isBE) const {
-    return isBE ? UInt64BE(off) : UInt64LE(off);
-}
-
 u8 ByteReader::UInt8() {
     if (!ok || off >= len) {
         ok = false;
@@ -232,34 +169,8 @@ SEQUENTIAL_READ(UInt16LE, u16, 2)
 SEQUENTIAL_READ(UInt16BE, u16, 2)
 SEQUENTIAL_READ(UInt32LE, u32, 4)
 SEQUENTIAL_READ(UInt32BE, u32, 4)
-SEQUENTIAL_READ(UInt64LE, u64, 8)
-SEQUENTIAL_READ(UInt64BE, u64, 8)
 
 #undef SEQUENTIAL_READ
-
-i16 ByteReader::Int16LE() {
-    return (i16)UInt16LE();
-}
-
-i16 ByteReader::Int16BE() {
-    return (i16)UInt16BE();
-}
-
-i32 ByteReader::Int32LE() {
-    return (i32)UInt32LE();
-}
-
-i32 ByteReader::Int32BE() {
-    return (i32)UInt32BE();
-}
-
-i64 ByteReader::Int64LE() {
-    return (i64)UInt64LE();
-}
-
-i64 ByteReader::Int64BE() {
-    return (i64)UInt64BE();
-}
 
 void ByteReader::Bytes(void* dst, int n) {
     if (!ok || n < 0 || off > len - n) {
@@ -294,27 +205,6 @@ bool ByteReader::IsOk() const {
     return ok;
 }
 
-const u8* ByteReader::Find(int off, u8 byte) const {
-    if (off >= len) {
-        return nullptr;
-    }
-    return (const u8*)memchr(d + off, byte, (size_t)(len - off));
-}
-
-bool ByteReader::UnpackLE(void* strct, int size, Str format, int off) const {
-    return Unpack(strct, size, format, false, off);
-}
-
-bool ByteReader::UnpackBE(void* strct, int size, Str format, int off) const {
-    return Unpack(strct, size, format, true, off);
-}
-
-// Unpacks a structure from the data according to the given format
-// e.g. the format "32b2w6d" unpacks 32 Bytes, 2 16-bit Words and 6 32-bit Dwords
-bool ByteReader::Unpack(void* strct, int size, Str format, bool isBE, int off) const {
-    return Unpack(strct, size, format, off, isBE);
-}
-
 u16 UInt16BE(const u8* d) {
     return d[1] | (d[0] << 8);
 }
@@ -325,10 +215,6 @@ u16 UInt16LE(const u8* d) {
 
 u32 UInt32BE(const u8* d) {
     return d[3] | (d[2] << 8) | (d[1] << 16) | (d[0] << 24);
-}
-
-u32 UInt32LE(const u8* d) {
-    return d[0] | (d[1] << 8) | (d[2] << 16) | (d[3] << 24);
 }
 
 // --- ByteWriter
@@ -370,18 +256,6 @@ void ByteWriter::Write32(u32 val) {
     }
     Write8x2(b4, b3);
     Write8x2(b2, b1);
-}
-
-void ByteWriter::Write64(u64 val) {
-    u32 v1 = val & 0xFFFFFFFF;
-    u32 v2 = (val >> 32) & 0xFFFFFFFF;
-    if (isLE) {
-        Write32(v1);
-        Write32(v2);
-        return;
-    }
-    Write32(v2);
-    Write32(v1);
 }
 
 int ByteWriter::Size() const {

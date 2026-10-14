@@ -187,7 +187,6 @@ struct MainWindow {
 
     bool IsCurrentTabAbout() const;
     bool IsDocLoaded() const;
-    bool HasDocsLoaded() const;
 
     DisplayModel* AsFixed() const;
     ChmModel* AsChm() const;
@@ -556,7 +555,6 @@ struct MainWindow {
 
 bool HasOpenedDocuments(MainWindow*);
 MainWindow* FindMainWindowByTab(WindowTab*);
-MainWindow* FindMainWindowByGpuiWindow(gpui::Window*);
 WindowTab* FindTabByFilePath(Str path, MainWindow* limitWin = nullptr);
 bool IsMainWindowValid(MainWindow*);
 bool IsMainWindowValidAndNotClosing(MainWindow*);

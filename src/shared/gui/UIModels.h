@@ -29,19 +29,6 @@ enum class CursorId {
     No,
 };
 
-struct ListBoxModel {
-    virtual ~ListBoxModel() = default;
-    virtual int ItemsCount() = 0;
-    virtual Str Item(int) = 0;
-};
-
-struct ListBoxModelStrings : ListBoxModel {
-    StrVec strings;
-
-    int ItemsCount() override;
-    Str Item(int) override;
-};
-
 // TreeItem represents an item in a TreeView control
 typedef uintptr_t TreeItem;
 

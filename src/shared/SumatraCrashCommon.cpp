@@ -14,6 +14,8 @@
 #include "SumatraPDF.h"
 #include "SumatraCrashCommon.h"
 
+extern "C" const char* fz_last_uncaught_error(void);
+
 #include "SumatraLog.h"
 
 // What a crash report says about the app, the same in orig and ng.
@@ -63,7 +65,7 @@ void OnCrashBegin() {
 }
 
 void AppendUncaughtMupdfError(Arena* a, str::Builder& b) {
-    const char* msg = LookupUncaughtMupdfError();
+    const char* msg = fz_last_uncaught_error();
     if (!msg || !msg[0]) {
         return;
     }

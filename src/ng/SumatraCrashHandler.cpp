@@ -1,15 +1,11 @@
 /* Copyright 2026 the SumatraPDF project authors (see AUTHORS file).
    License: GPLv3 */
 
-// ng: orig keeps this in SumatraPDF.cpp; it is everything application-specific
-// that base/CrashHandler.cpp asks for - where the minidump goes, where it is
-// POSTed, and the text of the report. Split out because SumatraPDF.cpp is big
-// enough, and because the POSIX half (a signal handler that logs a backtrace)
-// lives next to it in base/CrashHandler_posix.cpp.
+// Everything application-specific that base/CrashHandler_posix.cpp asks for:
+// where the report goes and the app's part of its text.
 
 #include "base/Base.h"
 #include "base/File.h"
-#include "base/Crypto.h"
 #include "base/CrashHandler.h"
 #include "base/SettingsUtil.h"
 
@@ -19,31 +15,13 @@
 #include "Version.h"
 #include "SumatraConfig.h"
 #include "SumatraPDF.h"
-#include "UpdateCheck.h"
-#include "ChapterTable.h"
-#include "ReadAloud.h"
+
 #include "SumatraCrashHandler.h"
 #include "SumatraCrashCommon.h"
 
 #include "SumatraLog.h"
 
-#if IS_DEBUG
-#define kCrashServer "http://127.0.0.1:9321"
-#else
-#define kCrashServer "https://www.sumatrapdfreader.org"
-#endif
-
-// Windows POSTs a minidump, macOS a text report; each has its own store on
-// the server. Empty: nothing to upload to.
-// this macOS fork has no crash server: reports stay in crashinfo/, they must
-// not reach upstream's server, which did not make the build
-#define kCrashSubmitUrl ""
-
-// where InstallCrashHandler() writes the .dmp, in the crash arena
-static Str gCrashDumpPath;
-
-// ng: orig has GetSumatraBuildSpecificDirTemp(); here the crash info goes next
-// to the screenshots, under the application data directory
+// the crash info goes next to the screenshots, under the application data directory
 TempStr GetCrashInfoDirTemp() {
     TempStr dir = GetAppDataDirTemp();
     if (len(dir) == 0) {
@@ -52,17 +30,9 @@ TempStr GetCrashInfoDirTemp() {
     return path::JoinTemp(dir, StrL("crashinfo"));
 }
 
-// Message from MuPDF's uncaught-throw abort (error.c). Looked up at crash time
-// so we do not need a hard link for every tool that builds CrashHandlerNoOp.
-const char* LookupUncaughtMupdfError() {
-    return nullptr;
-}
-
 static void GetProgramInfo(str::Builder& b) {
     TempStr exePath = GetSelfExePathTemp();
     b.Append(fmt("Exe: %s %s\n", exePath, GetFileSizeAsStrTemp(exePath)));
-    TempStr signer = GetExecutableSignerTemp(exePath);
-    b.Append(fmt("Signer: %s\n", signer ? signer : StrL("(not signed)")));
     b.Append(fmt("BuiltOn: %s\n", BuiltOnDate()));
     Str instType = IsRunningInPortableMode() ? StrL("portable") : StrL("installed");
     b.Append(fmt("ExeType: %s\n", instType));
@@ -78,24 +48,11 @@ static void GetProgramInfo(str::Builder& b) {
     b.Append(StrL("\n"));
 
     if (gitCommidId) {
-        b.Append(fmt("Git: %s (https://github.com/sumatrapdfreader/sumatrapdf/commit/%s)\n", gitCommidId, gitCommidId));
+        b.Append(fmt("Git: %s\n", gitCommidId));
     }
 }
 
-// ng: orig shows a win32 MsgBox and, on Cancel, the crash-report page. The
-// port's MsgBox is a gpui dialog that needs a live window and a running frame
-// loop, neither of which a crashed process has, so this is the raw win32 one
-static void ShowCrashHandlerMessage() {
-    log(StrL("ShowCrashHandlerMessage\n"));
-    if (!CanAccessDisk()) {
-        log(StrL("ShowCrashHandlerMessage: skipping because !CanAccessDisk()\n"));
-        return;
-    }
-}
-
-// The .dmp we write alongside this already has the stacks, the modules and the
-// exception record, in a form a debugger can actually use, so the text is for
-// what it can't hold: what we are, what tripped, and the log and settings.
+// What we are, what tripped, and the log and settings; the stacks follow.
 // Runs on the crashing thread, so everything is allocated from a.
 static Str GetCrashComment(Arena* a, Str condStr, Str fileLine, bool isCrash) {
     str::Builder b(a);
@@ -133,64 +90,18 @@ static void CaptureSettings() {
     str::Free(prefsData);
 }
 
-// the client info is the same as for the update check and doesn't change while
-// we run, so build the url now rather than at crash time
-static TempStr BuildSubmitUrlTemp() {
-    if (sizeof(kCrashSubmitUrl) == 1) {
-        return {};
-    }
-    str::Builder url(GetTempArena());
-    url.Append(StrL(kCrashSubmitUrl));
-    AppendClientInfoQuery(url);
-    return ToStr(url);
-}
-
-#define kOfficialSigner "Krzysztof Kowalczyk"
-
-// crashes from third-party builds (forks, distro rebuilds) aren't ours to fix
-static bool IsOfficialBuild() {
-    // the mac build is ad-hoc signed, so there is no signer to tell builds apart
-    return true;
-}
-
-void InstallSumatraCrashHandler(bool localOnly) {
+void InstallSumatraCrashHandler() {
     if (gIsAsanBuild) {
         return;
     }
-    // a crash report we could never send is not worth the machinery, so this
-    // must run after InitializePolicies()
-    if (!HasPermission(Perm::InternetAccess)) {
-        log(StrL("InstallSumatraCrashHandler: skipping, no Perm::InternetAccess\n"));
-        return;
-    }
-
-    TempStr crashInfoDir = GetCrashInfoDirTemp();
 
     CrashHandlerConfig cfg{};
-    cfg.crashDumpPath = path::JoinTemp(crashInfoDir, StrL("sumatrapdfcrash.dmp"));
-    cfg.submitUrl = BuildSubmitUrlTemp();
-    cfg.fullDumpEnvVar = StrL("SUMATRAPDF_FULLDUMP");
-    cfg.localOnly = localOnly;
+    cfg.reportPath = path::JoinTemp(GetCrashInfoDirTemp(), StrL("sumatrapdfcrash.txt"));
     cfg.forTesting = gForTesting;
-    cfg.uploadCrashes = !gIsAsanBuild;
-    // a debug report carries too much info to send from a release build
-    cfg.uploadDebugReports = gIsPreReleaseBuild;
-    if (!gIsDebugBuild && !IsOfficialBuild()) {
-        log(StrL("InstallSumatraCrashHandler: not signed by us, not uploading\n"));
-        cfg.uploadCrashes = false;
-        cfg.uploadDebugReports = false;
-    }
     cfg.getCrashComment = GetCrashComment;
     cfg.onCrashBegin = OnCrashBegin;
-    cfg.showCrashMessage = ShowCrashHandlerMessage;
-    // a SAPI voice engine that faults on its own thread ends only that thread
-    cfg.canEndCrashedThread = TtsOnEngineCrash;
 
     InstallCrashHandler(cfg);
-    Arena* a = CrashHandlerArena();
-    if (a) {
-        gCrashDumpPath = str::Dup(a, cfg.crashDumpPath);
-    }
-    logf("InstallSumatraCrashHandler: dump '%s', localOnly=%d\n", cfg.crashDumpPath, (int)localOnly);
+    logf("InstallSumatraCrashHandler: report '%s'\n", cfg.reportPath);
     CaptureSettings();
 }

@@ -19,17 +19,6 @@ void GetPropsText(DocController* ctrl, str::Builder& out);
 // implemented by each app
 void AppendDateProp(str::Builder& out, Str key, Str val, bool isPdfDate);
 
-struct EutlUpdateJob {
-    // who asked: orig keeps the dialog's window, ng the main window
-    HWND hwnd = nullptr;
-    MainWindow* win = nullptr;
-    bool ok = false;
-    Str msg;
-};
-void EutlUpdateThread(EutlUpdateJob* job);
-// implemented by each app
-void OnEutlUpdateDone(EutlUpdateJob* job);
-
 // the properties window the fonts are for: an HWND in orig, the main window in ng
 struct GetFontsResult {
     HWND hwnd = nullptr;

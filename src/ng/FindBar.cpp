@@ -519,22 +519,6 @@ void FindBarApplyDpi(MainWindow* win) {
     bar->ui->barDy = row + (2 * pad) + 2;
 }
 
-int FindBarFontHeight(MainWindow* win) {
-    if (!IsFindBarVisible(win)) {
-        return 0;
-    }
-    FindBarApplyDpi(win);
-    return win->findBar->ui->editFontPx;
-}
-
-int FindBarWindowHeight(MainWindow* win) {
-    if (!IsFindBarVisible(win)) {
-        return 0;
-    }
-    FindBarApplyDpi(win);
-    return win->findBar->ui->barDy;
-}
-
 static gp::El* BarButton(FindBar* bar, gp::Ctx* cx, Str id, gp::IconName icon, Str label, Str tooltip, int cmdId,
                          bool selected, int rowPx, const char* svg = nullptr) {
     gpc::Button* b = gpc::Button::New(cx, GpuiDup(cx->a, id))

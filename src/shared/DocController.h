@@ -218,10 +218,8 @@ struct BrowserDocController : DocController {
     void FindClear() override;
 
     void PrintCurrentPage(bool showUI) const;
-    void FindInCurrentPage() const;
     void SelectAll() const;
     void CopySelection() const;
-    LRESULT PassUIMsg(UINT msg, WPARAM wp, LPARAM lp) const;
     void FinishDocumentLoad(int pageNo);
     void FinishPendingFind();
     void OnFindResult(int gen, int current, int total);
@@ -230,14 +228,11 @@ struct BrowserDocController : DocController {
     void OnLButtonDown();
     bool SetParentWindow(MainWindow* win, HWND hwndParent);
     void RemoveParentWindow();
-    void DestroyParentWindow();
     void CloseBrowser();
-    void UpdateTheme();
 
     void SaveHtmlScrollPos();
     void SaveHtmlScrollPosForPage(int pageNo);
     void SaveHtmlScrollPosForUrl(Str url, PointF pos);
-    bool GetSavedHtmlScrollPosForPage(int pageNo, PointF* pos) const;
     bool GetSavedHtmlScrollPosForUrl(Str url, PointF* pos) const;
     void RestoreHtmlScrollPos();
     Str GetCachedData(Str url) const;
@@ -275,7 +270,6 @@ struct BrowserDocController : DocController {
     virtual TempStr NormalizeScrollUrlTemp(Str url) const = 0;
     virtual TempStr ScrollUrlForPageTemp(int pageNo) const = 0;
     Vec<CacheEntry*> dataCache;
-    mutable bool sendingBrowserMsg = false;
 };
 
 inline bool IsBrowserDocController(DocController* ctrl) {

@@ -1185,7 +1185,6 @@ static gp::El* AnnotFilterContentEl(MainWindow* win, gp::Ctx* cx, bool ownWindow
     const gp::Theme& th = gp::ThemeNow(cx->app);
     Color colBg = ThemeWindowControlBackgroundColor();
     Color colText = ThemeWindowTextColor();
-    Color muted = EnsureContrast(ThemeWindowTextDisabledColor(), colBg);
     WindowTab* tab = FilterTab(f);
     bool dirty = tab && tab->AsFixed() && EngineHasUnsavedAnnotations(tab->AsFixed()->GetEngine());
     float pad = (float)DpiScale(kFloatWinPadding);

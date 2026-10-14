@@ -415,20 +415,6 @@ void FindWindowApplyDpi(MainWindow* win) {
     w->ui->editFontPx = AppShellDpiPx(win, kFindEditFontPx);
 }
 
-int FindWindowFontHeight(MainWindow* win) {
-    if (!IsFindWindowVisible(win)) {
-        return 0;
-    }
-    FindWindowWnd* w = Wnd(win);
-    if (!w || !w->ui) {
-        return 0;
-    }
-    if (w->ui->editFontPx <= 0) {
-        FindWindowApplyDpi(win);
-    }
-    return w->ui->editFontPx;
-}
-
 // The page label is a sibling of the clipped snippet, so a match highlight
 // cannot paint into that column (orig sampled the right edge of a narrow row).
 TempStr FindResultPageColumnClipResultTemp(int* exitCodeOut) {

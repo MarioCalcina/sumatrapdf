@@ -492,11 +492,3 @@ Str Archive::ReadUnrarEntry(FileInfo*, int, bool* permanent) {
 bool Archive::OpenUnrarFallback(Str, bool, const ArchiveExtractProgressCb&) {
     return false;
 }
-
-FILETIME Archive::FileInfo::GetWinFileTime() const {
-    if (fileTime < 0) {
-        return {(DWORD)-1, (DWORD)-1};
-    }
-    u64 ticks = kFileTimeUnixEpoch + (u64)fileTime * kFileTimeTicksPerSec;
-    return FileTimeFromU64(ticks);
-}

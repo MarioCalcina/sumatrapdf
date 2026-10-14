@@ -329,8 +329,6 @@ bool ToolWindowIsActive(ToolWindow* tw) {
     return IsLive(tw) && tw->gw && ToolWinNativeIsActive(tw->gw);
 }
 
-void ToolWindowDragMove(ToolWindow*) {}
-
 bool ToolWindowIsVisible(ToolWindow* tw) {
     return IsLive(tw) && !tw->hidden;
 }

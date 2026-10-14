@@ -89,7 +89,6 @@ FileEBookUI* CopyFileEBookUI(const FileEBookUI*);
 void DeleteFileEBookUI(FileEBookUI*);
 
 Favorite* NewFavorite(Str pageNo, Str name = {}, Str pageLabel = {});
-Favorite* NewFavorite(int pageNo, Str name = {}, Str pageLabel = {});
 void DeleteFavorite(Favorite* fav);
 
 Settings* NewSettings(Str);
@@ -120,7 +119,6 @@ inline Color GetParsedColor(ParsedColor& parsed, Color def) {
 }
 
 void SetFileStatePath(FileState* fs, Str path);
-void SetFileStatePath(FileState* fs, WStr path);
 
 Themes* ParseThemes(Str);
 void FreeParsedThemes(Themes*);

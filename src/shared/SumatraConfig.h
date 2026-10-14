@@ -8,7 +8,6 @@
 extern bool gIsDebugBuild;
 extern bool gIsAsanBuild;
 extern bool gIsPreReleaseBuild;
-extern bool gIsStoreBuild;
 extern bool gDisableDocumentRestrictions;
 // set by -for-testing cmd-line flag, used for ad-hoc testing by humans
 // or agents. Always starts a new instance, doesn't restore a session and
@@ -20,4 +19,3 @@ extern Str gitCommidId;
 
 constexpr const char* kExeName = "SumatraPDF.exe";
 
-int GetAppIconID();

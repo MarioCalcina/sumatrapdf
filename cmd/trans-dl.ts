@@ -44,7 +44,7 @@ import { commands, commandAltDescs } from "./gen-commands";
 // strings that should not be sent for translation
 // (e.g. command names whose display text is set dynamically)
 // ("..." is from a comment in src/base/Base.cpp)
-const translationBlacklist: string[] = ["Toggle Windows Previewer", "Toggle Windows Search Filter", "..."];
+const translationBlacklist: string[] = ["..."];
 
 const DEFAULT_SERVER = "https://www.apptranslator.org";
 const LOCAL_SERVER = "http://127.0.0.1:9311";

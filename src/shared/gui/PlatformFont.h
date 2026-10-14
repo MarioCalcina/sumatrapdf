@@ -38,9 +38,6 @@ struct PlatformFont {
 };
 
 PlatformFont* GetPlatformFont(Str name, float sizePt, PlatformFontStyle style);
-// the bold variant of a font (the font itself if it is already bold). Like all
-// PlatformFonts it is interned and lives for the whole run
-PlatformFont* GetBoldPlatformFont(PlatformFont*);
 // fills in the platform font object; implemented per platform. Returns false if
 // no font could be created at all
 bool PlatformFontCreateNative(PlatformFont*);
@@ -52,4 +49,3 @@ int PlatformFontLineHeight(PlatformFont*);
 PlatformFont* GetDefaultGuiFont(bool bold = false, bool italic = false);
 PlatformFont* GetUserGuiFont(Str fontName, int size);
 PlatformFont* GetUserGuiFontEx(Str fontName, int size, bool bold, bool italic);
-PlatformFont* GetScaledPlatformFont(PlatformFont*, int percent);

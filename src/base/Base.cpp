@@ -6,8 +6,6 @@
 #include <errno.h>
 #include <iconv.h>
 
-Kind kindNone = "none";
-
 // if > 1 we won't crash when memory allocation fails
 AtomicInt gAllowAllocFailure = 0;
 
@@ -144,10 +142,6 @@ u32 MurmurHash2(const void* key, int n) {
 
 u32 MurmurHash2(Str s) {
     return MurmurHash2(s.s, s.len);
-}
-
-u32 MurmurHash2(WStr s) {
-    return MurmurHash2(s.s, s.len * sizeofi(wchar_t));
 }
 
 Func0 MkFunc0Void(funcVoidPtr fn) {
@@ -501,11 +495,6 @@ void SleepInMs(int ms) {
 
 AtomicInt gDangerousThreadCount = 0;
 
-bool AreDangerousThreadsPending() {
-    auto count = AtomicIntGet(&gDangerousThreadCount);
-    return count != 0;
-}
-
 //--- Arena.cpp ----------------------------------------------------------------
 
 u64 gArenaDefaultReserveSize = 64ull * 1024ull * 1024ull;
@@ -545,29 +534,6 @@ void ArenaReleaseMemory(void* base, u64 size);
 
 static void ArenaRelease(Arena* arena) {
     ArenaReleaseMemory(arena, arena->reserved);
-}
-
-static void* ArenaGetAvailableSpaceLocked(Arena* arena, int* bufSizeOut) {
-    if (!bufSizeOut) {
-        return nullptr;
-    }
-
-    Arena* current = arena ? arena->current : nullptr;
-    if (!current) {
-        *bufSizeOut = 0;
-        return nullptr;
-    }
-
-    u64 pos = ArenaAlignPow2(current->pos, 8);
-    if (pos >= current->committed) {
-        *bufSizeOut = 0;
-        return nullptr;
-    }
-
-    u64 available = current->committed - pos;
-    available = std::min<u64>(available, 0x7fffffff);
-    *bufSizeOut = (int)available;
-    return (char*)current + pos;
 }
 
 static void* ArenaPushLocked(Arena* arena, u64 size, u64 align, bool zero) {
@@ -798,16 +764,6 @@ void Arena::PopTo(u64 pos) {
     ArenaPopToLocked(this, pos);
 }
 
-void Arena::Pop(u64 amt) {
-    if (!this) {
-        return;
-    }
-    ScopedMutex cs(&lock);
-    u64 posOld = current->basePos + current->pos;
-    u64 posNew = (amt < posOld) ? (posOld - amt) : 0;
-    ArenaPopToLocked(this, posNew);
-}
-
 ArenaSavepoint GetArenaSavepoint(Arena* arena) {
     ArenaSavepoint temp = {arena, arena ? arena->Pos() : 0};
     return temp;
@@ -891,46 +847,6 @@ void Arena::Reset() {
     ArenaPopToLocked(this, 0);
     nAllocsSinceReset = 0;
     peakBytesSinceReset = 0;
-}
-
-void* Arena::GetAvailableSpace(int* bufSizeOut) {
-    if (!this) {
-        if (bufSizeOut) {
-            *bufSizeOut = 0;
-        }
-        return nullptr;
-    }
-
-    lock.Lock();
-    void* mem = ArenaGetAvailableSpaceLocked(this, bufSizeOut);
-    lock.Unlock();
-    return mem;
-}
-
-void* Arena::CommitReserved(void* mem, int size) {
-    if (size <= 0) {
-        return nullptr;
-    }
-
-    lock.Lock();
-
-    int availSize = 0;
-    void* availMem = ArenaGetAvailableSpaceLocked(this, &availSize);
-    if (mem == availMem && size <= availSize) {
-        void* committed = ArenaPushLocked(this, (u64)size, 8, false);
-        lock.Unlock();
-        return committed;
-    }
-
-    void* dst = ArenaPushLocked(this, (u64)size, 8, false);
-    lock.Unlock();
-    if (!dst) {
-        return nullptr;
-    }
-    if (mem) {
-        memcpy(dst, mem, (size_t)size);
-    }
-    return dst;
 }
 
 // size_t overloads that match the legacy Allocator::* static helper API
@@ -1048,11 +964,6 @@ Arena* GetPermArena() {
         gPermArena = ArenaNew();
     }
     return gPermArena;
-}
-
-void DestroyPermArena() {
-    ArenaDelete(gPermArena);
-    gPermArena = nullptr;
 }
 
 void* AllocTemp(int size, u64 align) {
@@ -1480,39 +1391,17 @@ namespace wstr {
 void Free(WStr s) {
     free(s.s);
 }
-void FreePtr(WStr* s) {
-    free(s->s);
-    *s = {};
-}
 WStr Dup(Arena* a, WStr s) {
     return DupT(a, s);
 }
 WStr Dup(WStr s) {
     return DupT(nullptr, s);
 }
-int Cmp(WStr a, WStr b) {
-    return CmpT(a, b, false);
-}
 int CmpI(WStr a, WStr b) {
     return CmpT(a, b, true);
 }
 bool EndsWith(WStr txt, WStr end) {
     return EndsWithT(txt, end, wstr::Eq);
-}
-bool EndsWithI(WStr txt, WStr end) {
-    return EndsWithT(txt, end, wstr::EqI);
-}
-int IndexOfChar(WStr s, WCHAR c) {
-    return IndexOfCharT(s, c);
-}
-bool ContainsChar(WStr s, WCHAR c) {
-    return IndexOfCharT(s, c) >= 0;
-}
-WStr SliceFromChar(WStr s, WCHAR c) {
-    return SliceFromCharT(s, c);
-}
-void TransCharsInPlace(WStr& s, WStr oldChars, WStr newChars) {
-    TransCharsInPlaceT(s, oldChars, newChars);
 }
 int RemoveCharsInPlace(WStr s, WStr toRemove) {
     return RemoveCharsInPlaceT(s, toRemove);
@@ -1523,15 +1412,8 @@ int NormalizeWSInPlace(WStr s) {
 
 } // namespace wstr
 
-#define _strdup strdup
-#define _stricmp strcasecmp
-#define _strnicmp strncasecmp
-
-// StrArena: u32 handle from ArenaPtrCompress. Arena layout is unsigned LEB128
-// length, length bytes of payload, trailing 0 for C APIs. 0 is the null handle.
-
-// Unicode lowercase for one BMP code unit. ASCII is a fast path; Windows uses
-// CharLowerW, other platforms a Latin/Cyrillic/Greek table then towlower.
+// Unicode lowercase for one BMP code unit. ASCII is a fast path, then a
+// Latin/Cyrillic/Greek table, then towlower.
 wchar_t WCharToLower(wchar_t c) {
     if (c >= L'A' && c <= L'Z') {
         return c + 32;
@@ -1741,18 +1623,6 @@ StrNode* AllocStrNode(Arena* a, Str s) {
     return node;
 }
 
-// first node whose string equals s (case-sensitive), null if none
-StrNode* FindStrNode(StrNode* root, Str s) {
-    StrNode* curr = root;
-    while (curr) {
-        if (str::Eq(curr->s, s)) {
-            return curr;
-        }
-        curr = curr->next;
-    }
-    return nullptr;
-}
-
 // Malloc path (a==null): free each node. Arena path: no per-node free.
 // Frees the list with free() when a==null (malloc path). Arena path is a no-op.
 void FreeStrNode(Arena* a, StrNode* head) {
@@ -1822,7 +1692,7 @@ bool EqI(Str s1, Str s2) {
     if (s1.len != s2.len) {
         return false;
     }
-    return len(s1) == 0 || (s1.s && s2.s && 0 == _strnicmp(s1.s, s2.s, (size_t)s1.len));
+    return len(s1) == 0 || (s1.s && s2.s && 0 == strncasecmp(s1.s, s2.s, (size_t)s1.len));
 }
 
 // compares two strings ignoring case and whitespace
@@ -2097,20 +1967,6 @@ namespace wstr {
 
 /* Concatenate 2 strings. Any string can be nullptr.
    Caller needs to free() memory. */
-WStr Join(Arena* a, WStr s1, WStr s2, WStr s3) {
-    int s1Len = s1.len, s2Len = s2.len, s3Len = s3.len;
-    int n = s1Len + s2Len + s3Len + 1;
-    WCHAR* res = (WCHAR*)Alloc(a, n * sizeofi(WCHAR));
-    memcpy(res, s1.s, (size_t)s1Len * sizeof(WCHAR));
-    memcpy(res + s1Len, s2.s, (size_t)s2Len * sizeof(WCHAR));
-    memcpy(res + s1Len + s2Len, s3.s, (size_t)s3Len * sizeof(WCHAR));
-    res[s1Len + s2Len + s3Len] = '\0';
-    return WStr(res);
-}
-
-WStr Join(WStr s1, WStr s2, WStr s3) {
-    return Join(nullptr, s1, s2, s3);
-}
 
 } // namespace wstr
 namespace str {
@@ -2218,11 +2074,6 @@ bool Cut(Str s, Str sep, Str* before, Str* after) {
 // like Cut() but splits on the first occurrence of a single char
 bool CutChar(Str s, char c, Str* before, Str* after) {
     return Cut(s, Str(&c, 1), before, after);
-}
-
-// like CutChar() but splits on the last occurrence of a single char
-bool CutCharLast(Str s, char c, Str* before, Str* after) {
-    return CutAtIdx(s, LastIndexOfChar(s, c), 1, before, after);
 }
 
 // Extracts the next line from s (up to a CR, LF or CRLF terminator) into line
@@ -3294,18 +3145,6 @@ bool StartsWithI(WStr str, WStr prefix) {
     return EqNI(str, prefix, prefix.len);
 }
 
-WStr FindFrom(WStr str, WStr find) {
-    if (len(str) == 0 || len(find) == 0 || find.len > str.len) {
-        return {};
-    }
-    for (int i = 0; i <= str.len - find.len; i++) {
-        if (0 == wcsncmp(str.s + i, find.s, (size_t)find.len)) {
-            return WStr(str.s + i, str.len - i);
-        }
-    }
-    return {};
-}
-
 } // namespace wstr
 namespace str {
 
@@ -3317,41 +3156,6 @@ Str ToUpperInPlace(Str s) {
 }
 
 } // namespace str
-namespace wstr {
-
-WStr ToLowerInPlace(WStr s) {
-    for (int i = 0; i < s.len; i++) {
-        s.s[i] = towlower(s.s[i]);
-    }
-    return s;
-}
-
-// free() the result via str::Free(s) or str::FreePtr(&s)
-WStr Replace(WStr s, WStr toReplace, WStr replaceWith) {
-    if (len(s) == 0 || len(toReplace) == 0 || len(replaceWith) == 0) {
-        return {};
-    }
-
-    wstr::Builder result;
-    result.Reserve(s.len);
-    int findLen = toReplace.len;
-    int start = 0;
-    while (start < s.len) {
-        WStr rest(s.s + start, s.len - start);
-        WStr match = wstr::FindFrom(rest, toReplace);
-        if (len(match) == 0) {
-            result.Append(WStr(s.s + start, s.len - start));
-            break;
-        }
-        int matchOff = (int)(match.s - s.s);
-        result.Append(WStr(s.s + start, matchOff - start));
-        result.Append(replaceWith);
-        start = matchOff + findLen;
-    }
-    return result.TakeStr();
-}
-
-} // namespace wstr
 namespace str {
 
 // Bounded null-terminated copy into a fixed buffer (replaces lstrcpyn / strcpy_s /
@@ -3378,34 +3182,7 @@ int BufSet(Str dst, Str src) {
 }
 
 } // namespace str
-namespace wstr {
-
-// WCHAR overload of BufSet — replaces lstrcpynW / wcscpy_s / wcsncpy_s / StringCchCopyW.
-int BufSet(WStr dst, WStr src) {
-    int cchDst = dst.len;
-    if (0 == cchDst || !dst.s) {
-        ReportIf(true);
-        return 0;
-    }
-    if (len(src) == 0) {
-        *dst.s = 0;
-        return 0;
-    }
-
-    int toCopy = std::min(cchDst - 1, src.len);
-
-    memset(dst.s, 0, cchDst * sizeof(WCHAR));
-    memcpy(dst.s, src.s, toCopy * sizeof(WCHAR));
-    return toCopy;
-}
-
-} // namespace wstr
 namespace str {
-
-// UTF-8 Str → fixed WCHAR buffer (converts then BufSet).
-int BufSet(WCHAR* dst, int dstCchSize, Str src) {
-    return wstr::BufSet(WStr(dst, dstCchSize), ToWStrTemp(src));
-}
 
 // append as much of s at the end of dst (which must be properly null-terminated)
 // as will fit.
@@ -3564,43 +3341,6 @@ int CompareProgramVersion(Str ver1, Str ver2) {
     return 0;
 }
 
-// shorten a string to maxLen characters, adding ellipsis in the middle
-// ascii version that doesn't handle UTF-8
-// IsTextRtl is optimized version of checking if a string is rtl
-// we look at max first 40 chars and
-static bool IsRtlCodepoint(wchar_t c) {
-    return (c >= 0x0590 && c <= 0x08ff) || (c >= 0xfb1d && c <= 0xfdff) || (c >= 0xfe70 && c <= 0xfeff) ||
-           (c >= 0x10800 && c <= 0x10fff) || (c >= 0x1e800 && c <= 0x1edff);
-}
-
-static bool IsLtrCodepoint(wchar_t c) {
-    return (c >= L'A' && c <= L'Z') || (c >= L'a' && c <= L'z') || (c >= 0x00c0 && c <= 0x02af) ||
-           (c >= 0x0370 && c <= 0x052f) || (c >= 0x1e00 && c <= 0x1fff);
-}
-
-bool IsTextRtl(WStr s) {
-    if (len(s) == 0) {
-        return false;
-    }
-    int n = s.len > 40 ? 40 : s.len;
-    int nRtl = 0;
-    int nLtr = 0;
-    for (int i = 0; i < n; i++) {
-        wchar_t c = s.s[i];
-        if (IsRtlCodepoint(c)) {
-            nRtl++;
-        } else if (IsLtrCodepoint(c)) {
-            nLtr++;
-        }
-    }
-    return nRtl > nLtr;
-}
-
-bool IsTextRtl(Str s) {
-    TempWStr ws = ToWStrTemp(s);
-    return IsTextRtl(ws);
-}
-
 // ---- temp-arena variants of the str:: functions above ----
 
 namespace str {
@@ -3622,10 +3362,6 @@ TempStr JoinTemp(Str s1, Str s2, Str s3, Str s4) {
 
 TempStr JoinTemp(Str s1, Str s2, Str s3, Str s4, Str s5) {
     return Join(GetTempArena(), s1, s2, s3, s4, s5);
-}
-
-TempWStr JoinTemp(WStr s1, WStr s2, WStr s3) {
-    return wstr::Join(GetTempArena(), s1, s2, s3);
 }
 
 TempStr ReplaceTemp(Str s, Str toReplace, Str replaceWith) {
@@ -3692,16 +3428,6 @@ TempStr ReplaceNoCaseTemp(Str s, Str toReplace, Str replaceWith) {
 // (some C/win32 APIs take non-const), avoiding casts at the call site.
 char* CStrTemp(Str s) {
     return str::DupTemp(s).s;
-}
-
-WCHAR* CWStrTemp(WStr s) {
-    return str::DupTemp(s).s;
-}
-
-WCHAR* CWStrTemp(WStr s, int& cch) {
-    WStr ws = str::DupTemp(s);
-    cch = ws.len;
-    return ws.s;
 }
 
 // str::Builder/wstr::Builder always keep their data NUL-terminated; ToStr()
@@ -4231,18 +3957,6 @@ WStr ToWStrTemp(Str s) {
     }
     wide[wideLen] = 0;
     return WStr(wide, wideLen);
-}
-
-// Converts a UTF-8 Str to a NUL-terminated WCHAR* temp. Use when the wide
-// result is only needed as a C/win32 string pointer.
-WCHAR* CWStrTemp(Str s) {
-    return ToWStrTemp(s).s;
-}
-
-WCHAR* CWStrTemp(Str s, int& cch) {
-    WStr ws = ToWStrTemp(s);
-    cch = ws.len;
-    return ws.s;
 }
 
 //--- StrFormatParse.cpp ----------------------------------------------------------------
@@ -5596,13 +5310,6 @@ Str StrVec::Append(Str s) {
     return res.s;
 }
 
-Str StrVec::AppendNonEmpty(Str s) {
-    if (len(s) == 0) {
-        return {};
-    }
-    return Append(s);
-}
-
 // returns index of inserted string, -1 if not inserted
 int AppendIfNotExists(StrVec* v, Str s) {
     if (v->Contains(s)) {
@@ -6045,21 +5752,6 @@ static TempStr IconvTemp(Str src, uint codePageSrc, uint codePageDest) {
     return Str(out, (int)(outPtr - out));
 }
 
-WStr CodePageToWStr(uint codePage, Str s, Arena* a) {
-    if (str::IsNull(s)) return {};
-    TempStr utf8 = IconvTemp(s, codePage, CP_UTF8);
-    return wstr::Dup(a, ToWStrTemp(utf8));
-}
-
-WStr Utf8ToWStr(Str s, Arena* a) {
-    // subtle: if s.s is nullptr, we return empty. if empty string => we return empty string
-    if (str::IsNull(s)) {
-        return {};
-    }
-    TempWStr res = ToWStrTemp(s);
-    return wstr::Dup(a, res);
-}
-
 Str WStrToCodePage(uint codePage, WStr s, Arena* a) {
     // subtle: if s.s is nullptr, we return empty. if empty string => we return empty string
     if (wstr::IsNull(s)) {
@@ -6075,22 +5767,6 @@ Str WStrToCodePage(uint codePage, WStr s, Arena* a) {
 
 Str WStrToUtf8(WStr s, Arena* a) {
     return WStrToCodePage(CP_UTF8, s, a);
-}
-
-// caller needs to free() the result
-WStr StrCPToWStr(Str src, uint codePage) {
-    ReportIf(str::IsNull(src));
-    if (str::IsNull(src)) {
-        return {};
-    }
-
-    if (codePage == CP_ACP || codePage == CP_UTF8) {
-        TempWStr res = ToWStrTemp(src);
-        return wstr::Dup(nullptr, res);
-    }
-    TempStr utf8 = IconvTemp(src, codePage, CP_UTF8);
-    TempWStr res = ToWStrTemp(utf8);
-    return wstr::Dup(nullptr, res);
 }
 
 TempWStr StrCPToWStrTemp(Str src, uint codePage) {
@@ -6188,21 +5864,6 @@ TempStr AnsiToUtf8Temp(Str src) {
     return res;
 }
 
-Str AnsiToUtf8(Str src) {
-    TempWStr ws = StrCPToWStrTemp(src, CP_ACP);
-    Str res = ToUtf8(ws);
-    return res;
-}
-
-Str WStrToAnsi(WStr src) {
-    return WStrToCodePage(CP_ACP, src);
-}
-
-Str Utf8ToAnsi(Str s) {
-    TempWStr ws = ToWStrTemp(s);
-    return WStrToAnsi(ws);
-}
-
 } // namespace strconv
 
 // short names because frequently used
@@ -6210,10 +5871,6 @@ Str Utf8ToAnsi(Str s) {
 // TODO: eventually we want to migrate all strconv:: to them
 Str ToUtf8(WStr s, Arena* a) {
     return strconv::WStrToUtf8(s, a);
-}
-
-WStr ToWStr(Str s, Arena* a) {
-    return strconv::Utf8ToWStr(s, a);
 }
 
 //--- Color.cpp ----------------------------------------------------------------
@@ -6431,12 +6088,6 @@ bool IsLightColor(Color c) {
     return y > 127.5f; // mid 256
 }
 
-bool IsNearBlack(Color c) {
-    u8 r, g, b;
-    UnpackColor(c, r, g, b);
-    return r < 10 && g < 10 && b < 10;
-}
-
 // Darken a light color, lighten a dark one, so the result stands out from `col`
 // whatever the theme. `dark` defaults to `light` when 0.
 // shift a color away from itself by `light` units when it's light, `dark` when
@@ -6474,15 +6125,6 @@ Color EnsureContrast(Color fg, Color bg, int minDelta) {
     return AdjustLightness2(fg, sign * ((float)minDelta - ad));
 }
 
-DWORD PremultiplyPixel(Color c, u8 alpha) {
-    u8 r, g, b;
-    UnpackColor(c, r, g, b);
-    r = (u8)((r * alpha) / 255);
-    g = (u8)((g * alpha) / 255);
-    b = (u8)((b * alpha) / 255);
-    return (alpha << 24) | (r << 16) | (g << 8) | b;
-}
-
 /* In debug mode, VS 2010 instrumentations complains about GetRValue() etc.
 This adds equivalent functions that don't have this problem and ugly
 substitutions to make sure we don't use Get*Value() in the future */
@@ -6515,108 +6157,6 @@ bool str::BuilderReserve(Builder& b, int cap) {
 
 void wstr::BuilderUseExternalBuffer(Builder& b, WStr buf) {
     b.UseExternalBuffer(buf);
-}
-bool wstr::BuilderReserve(Builder& b, int cap) {
-    return b.Reserve(cap);
-}
-
-SizeF ToSizeFl(const Size s) {
-    return {(float)s.dx, (float)s.dy};
-}
-
-Size ToSize(const SizeF s) {
-    int dx = (int)floor(s.dx + 0.5);
-    int dy = (int)floor(s.dy + 0.5);
-    return {dx, dy};
-}
-
-static int StrArenaUlebSize(u32 n) {
-    int i = 1;
-    while (n >= 0x80) {
-        n >>= 7;
-        i++;
-    }
-    return i;
-}
-
-static int StrArenaUlebEncode(u8* dst, u32 n) {
-    int i = 0;
-    for (;;) {
-        u8 b = (u8)(n & 0x7f);
-        n >>= 7;
-        if (n) {
-            b |= 0x80;
-        }
-        dst[i++] = b;
-        if (!n) {
-            return i;
-        }
-    }
-}
-
-static bool StrArenaUlebDecode(const u8*& p, u32* out) {
-    u32 n = 0;
-    int shift = 0;
-    for (;;) {
-        u8 b = *p++;
-        n |= (u32)(b & 0x7f) << shift;
-        if (!(b & 0x80)) {
-            *out = n;
-            return true;
-        }
-        shift += 7;
-        if (shift >= 35) {
-            return false;
-        }
-    }
-}
-
-StrArena StrArenaAlloc(Arena* a, int size) {
-    if (!a || size < 0) {
-        return 0;
-    }
-    int vlen = StrArenaUlebSize((u32)size);
-    int total = vlen + size + 1;
-    u8* mem = (u8*)a->Push((u64)total, 1, false);
-    if (!mem) {
-        return 0;
-    }
-    StrArenaUlebEncode(mem, (u32)size);
-    mem[vlen + size] = 0;
-    return ArenaPtrCompress(a, mem);
-}
-
-StrArena StrArenaDupStr(Arena* a, Str s) {
-    if (!a) {
-        return 0;
-    }
-    int size = s.len;
-    size = std::max(size, 0);
-    StrArena sa = StrArenaAlloc(a, size);
-    if (!sa) {
-        return 0;
-    }
-    if (size > 0 && s.s) {
-        Str out = StrArenaToStr(a, sa);
-        memcpy(out.s, s.s, (size_t)size);
-    }
-    return sa;
-}
-
-Str StrArenaToStr(Arena* a, StrArena sa) {
-    if (!a || !sa) {
-        return {};
-    }
-    u8* mem = (u8*)ArenaPtrUncompress(a, sa);
-    if (!mem) {
-        return {};
-    }
-    const u8* p = mem;
-    u32 size = 0;
-    if (!StrArenaUlebDecode(p, &size)) {
-        return {};
-    }
-    return Str((char*)p, (int)size);
 }
 
 namespace str {

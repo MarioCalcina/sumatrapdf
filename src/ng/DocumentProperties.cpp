@@ -32,7 +32,6 @@
 #include "Translations.h"
 #include "SumatraConfig.h"
 #include "Theme.h"
-#include "EutlTrust.h"
 #include "Notifications.h"
 #include "Print.h"
 #include "gui/AppShell.h"

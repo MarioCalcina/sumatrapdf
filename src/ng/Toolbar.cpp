@@ -298,18 +298,6 @@ void ToolbarUpdateStateForWindow(MainWindow* win, bool) {
     AppShellInvalidate(win);
 }
 
-void UpdateToolbarButtonsToolTipsForWindow(MainWindow* win) {
-    AppShellInvalidate(win);
-}
-
-void SetToolbarButtonEnableState(MainWindow* win, int, bool) {
-    AppShellInvalidate(win);
-}
-
-void SetToolbarButtonCheckedState(MainWindow* win, int, bool) {
-    AppShellInvalidate(win);
-}
-
 void UpdateToolbarState(MainWindow* win) {
     AppShellInvalidate(win);
 }

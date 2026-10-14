@@ -9,7 +9,6 @@ namespace uitask {
 static ThreadId gMainUIThreadId = 0;
 static bool gInitialized = false;
 static bool gWasDestroyed = false;
-static Dispatch gDispatch = Dispatch::Queue;
 static void (*gWakeupFn)() = nullptr;
 
 struct TaskInfo {
@@ -76,10 +75,9 @@ static void ExecuteTask(TaskInfo* ti) {
     FreeTaskInfo(ti);
 }
 
-void Initialize(Dispatch dispatch) {
+void Initialize() {
     gMainUIThreadId = GetCurrentThreadId();
     gWasDestroyed = false;
-    (void)dispatch;
     ReportIf(gQueue);
     gQueue = new Vec<TaskInfo*>();
     gInitialized = true;
@@ -138,13 +136,4 @@ bool IsMainUIThread() {
     return GetCurrentThreadId() == gMainUIThreadId;
 }
 
-void PostOptimized(const Func0& f, Kind kind) {
-    if (IsMainUIThread()) {
-        // if we're already on ui thread, execute immediately
-        // faster and easier to debug
-        f.Call();
-        return;
-    }
-    Post(f, kind);
-}
 } // namespace uitask

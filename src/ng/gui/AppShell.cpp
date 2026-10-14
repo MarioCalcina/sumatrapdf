@@ -102,7 +102,6 @@ static gp::App* gApp = nullptr;
 struct ShellView {
     MainWindow* win = nullptr;
     // the caption's system menu button, as laid out on the last frame
-    gp::Bounds sysMenuBtn{};
     gp::Entity<gpc::AppMenuBarState> menuBarState;
     gp::Entity<gp::PopupMenuState> menuPopupState;
     int menuPopupIdx = -1;
@@ -126,7 +125,6 @@ struct ShellView {
     // the sidebar splitter is being dragged past where it may go
     bool splitterRefused = false;
     // the app icon moved far enough to drag the window, so the release is not a click
-    bool sysMenuDragged = false;
     // when the last tick ran (gp::TimeNow) and the sub-millisecond carry
     double lastTickTime = 0;
     double tickMsRest = 0;
@@ -135,9 +133,6 @@ struct ShellView {
     static void OnCmd(ShellView* self, gp::Ctx* cx, const gp::ActionEvent* ev);
     static void OnSidebarResize(ShellView* self, gp::Ctx* cx, const gp::DragMoveEvent* ev);
     static void OnSidebarResized(ShellView* self, gp::Ctx* cx, const gp::MouseUpEvent*);
-    static void OnSystemMenu(ShellView* self, gp::Ctx* cx, const gp::ClickEvent*);
-    static void OnSystemMenuDown(ShellView* self, gp::Ctx* cx, const gp::MouseDownEvent*);
-    static void OnSystemMenuDrag(ShellView* self, gp::Ctx* cx, const gp::DragMoveEvent* ev);
     static void OnTick(ShellView* self, gp::Ctx* cx, const gp::TickEvent* ev);
     static void OnMouseDown(ShellView* self, gp::Ctx* cx, const gp::MouseDownEvent* ev);
     static void OnKeyDown(ShellView* self, gp::Ctx* cx, const gp::KeyEvent* ev);
@@ -185,20 +180,6 @@ int AppShellDpiPx(MainWindow* win, int px) {
     return MulDiv(px, AppShellFrameDpi(win), 96);
 }
 
-// gpui paints at 96 DPI, so a frame DPI other than 96 has to change the
-// font and icon pixel sizes. Remember it, then rebuild.
-void AppShellOnDpiChanged(MainWindow* win, int dpi) {
-    if (!win || dpi <= 0) {
-        return;
-    }
-    DpiSet(dpi, dpi);
-    win->frameDpi = dpi;
-    SidebarApplyDpi(win);
-    FindWindowApplyDpi(win);
-    FindBarApplyDpi(win);
-    AppShellInvalidate(win);
-}
-
 // gpui keeps the last kFrameTraceCap frames per window; the cursor makes each
 // call report only what was drawn since the previous one
 // --- the caption (orig's tabsInTitlebar) -------------------------------------
@@ -210,16 +191,6 @@ constexpr int kCaptionTopPadding = 8;
 // orig's capTabsRow1: the tab strip is 2 px taller in the one-row caption
 constexpr int kCaptionTabBarDy = kTabBarDy + 2;
 constexpr int kTabsButtonGapX = 32;
-// size (DIP) of the min/max/restore/close caption glyphs
-constexpr int kCaptionGlyphDip = 10;
-
-enum CaptionButtons {
-    CB_MINIMIZE = 0,
-    CB_MAXIMIZE = 1,
-    CB_RESTORE = 2,
-    CB_CLOSE = 3,
-};
-
 // ng: gpui opens a window with or without its client-side title bar; where it
 // has one that the frame's resize borders, snapping and the maximize button's
 // snap layouts work with (Windows), the port draws orig's caption in it
@@ -300,92 +271,6 @@ bool AppShellCaptionRects(MainWindow* win, Rect* menuOut, Rect* tabsOut, int* dy
     return true;
 }
 
-// orig's DrawCaptionButton for the min / max / restore / close buttons: the
-// hot / pushed ground and a Windows 11 style glyph. `user` is the button.
-static void PaintCaptionButton(gp::PaintCtx* ctx, gp::El* e, void* user) {
-    int button = (int)(intptr_t)user;
-    gp::Bounds b = e->Bounds();
-    bool isClose = (button == CB_CLOSE);
-    int id = e->clickId;
-    bool isHot = ctx->hoverId == id;
-    bool isPushed = isHot && ctx->activeId == id;
-    bool isInactive = ctx->window && !ctx->window->active;
-    Color bgc = ThemeControlBackgroundColor();
-
-    if (isHot || isPushed) {
-        gp::Rgba bgCol;
-        if (isClose) {
-            bgCol = gp::Rgba{196, 43, 28, (uint8_t)(isPushed ? 200 : 255)};
-        } else {
-            bgCol = ToGpui(isPushed ? AccentColor(bgc, 40) : AccentColor(bgc, 20));
-        }
-        gp::CanvasFillRect(ctx, b.x, b.y, b.w, b.h, bgCol);
-    }
-
-    Color iconCol;
-    if (isInactive && !isHot) {
-        iconCol = MkRgb(153, 153, 153);
-    } else if (isClose && (isHot || isPushed)) {
-        iconCol = kColWhite;
-    } else {
-        iconCol = ThemeWindowTextColor();
-    }
-    gp::Rgba col = ToGpui(iconCol);
-
-    // ng: orig fills Segoe Fluent Icons outlines; these are the same shapes
-    // from lines
-    float sz = (float)kCaptionGlyphDip;
-    float x = (float)(int)(b.x + (b.w - sz) / 2);
-    float y = (float)(int)(b.y + (b.h - sz) / 2);
-    switch (button) {
-        case CB_MINIMIZE:
-            gp::CanvasFillRect(ctx, x, y + (float)(int)(sz / 2), sz, 1, col);
-            break;
-        case CB_MAXIMIZE:
-            gp::CanvasStrokeRound(ctx, x + 0.5f, y + 0.5f, sz - 1, sz - 1, 1, 1, col);
-            break;
-        case CB_RESTORE: {
-            // the window in front, and the top / right of the one behind it
-            float d = 2;
-            gp::CanvasStrokeRound(ctx, x + 0.5f, y + d + 0.5f, sz - d - 1, sz - d - 1, 1, 1, col);
-            gp::CanvasFillRect(ctx, x + d, y, sz - d - 1, 1, col);
-            gp::CanvasFillRect(ctx, x + sz - 1, y + 1, 1, sz - d - 1, col);
-            break;
-        }
-        case CB_CLOSE:
-            gp::CanvasLine(ctx, x, y, x + sz, y + sz, 1, col);
-            gp::CanvasLine(ctx, x + sz, y, x, y + sz, 1, col);
-            break;
-    }
-}
-
-static gp::El* CaptionButton(gp::Ctx* cx, int button, int clickId, int size) {
-    gp::El* b = gp::Div(cx->a)->W((float)size)->H((float)size)->Shrink0()->Click(clickId);
-    b->customPaint = &PaintCaptionButton;
-    b->customUser = (void*)(intptr_t)button;
-    return b;
-}
-
-// orig's CB_SYSTEM_MENU: the app icon; a click opens the window menu under it
-static gp::El* CaptionSystemMenuButton(ShellView* self, gp::Ctx* cx, int size) {
-    MainWindow* win = self->win;
-    gp::El* b = gp::Div(cx->a)
-                    ->FlexRow()
-                    ->W((float)size)
-                    ->H((float)size)
-                    ->Shrink0()
-                    ->ItemsCenter()
-                    ->JustifyCenter()
-                    ->BoundsOut(&self->sysMenuBtn)
-                    ->PathClick(GStrL("sumatra-sys-menu"))
-                    ->OnDrag(GStrL("sumatra-sys-menu"))
-                    ->OnMouseDown(gp::Listen(cx, &ShellView::OnSystemMenuDown))
-                    ->OnDragMove(gp::Listen(cx, &ShellView::OnSystemMenuDrag))
-                    ->OnClick(gp::Listen(cx, &ShellView::OnSystemMenu));
-    (void)win;
-    return b;
-}
-
 // orig's CreateCaptionLayout / SyncCaptionLayout:
 // single row: sys | menu | tabs | gap | min | max/restore | close
 // two row:     sys | menu bar | drag | min | max/restore | close
@@ -394,10 +279,7 @@ static gp::El* CaptionSystemMenuButton(ShellView* self, gp::Ctx* cx, int size) {
 static void BuildCaption(ShellView* self, gp::Ctx* cx, gp::El* root, bool twoRow) {
     MainWindow* win = self->win;
     const gp::Theme& th = gp::ThemeNow(cx->app);
-    bool maximized = win->isMaximized;
     int winBtn = CaptionWinBtnDy(win, twoRow);
-    // hamburger / app icon match the tab band; min/max/close span the pad too
-    int tabBtn = twoRow ? kMenuBarDy : kTabBarDy;
 
     gp::El* row1 = gp::Div(cx->a)
                        ->FlexRow()
@@ -500,14 +382,6 @@ static gp::MouseButton TestButton(int b) {
             return gp::MouseButton::Middle;
     }
     return gp::MouseButton::Left;
-}
-
-// A handled key tells gpui to drop the next character. Call this when that
-// key does not send a WM_CHAR, so the flag does not eat a later one.
-void AppShellClearEatChar(MainWindow* win) {
-    if (win && win->gpuiWin) {
-        win->gpuiWin->eatChar = false;
-    }
 }
 
 // A posted wheel while CHM or markdown is current. The web view is a native
@@ -639,25 +513,6 @@ TempStr AppShellTestInputGpui(gp::Window* gw, Str kind, int a, int b, int c, int
         gp::WindowDispatchInput(gw, &in);
     }
     return StrL("OK");
-}
-
-bool AppShellNativeCursorActive(MainWindow* win) {
-    gp::Window* gw = IsMainWindowValid(win) ? win->gpuiWin : nullptr;
-    if (!gw || win->nativeCursor == NativeCursor::None) {
-        return false;
-    }
-    return (int)gw->cursor == win->canvasCursor && gw->cursor == gp::CursorKind::OpenHand;
-}
-
-void AppShellAfterNativeDrag(MainWindow* win) {
-    gp::Window* gw = IsMainWindowValid(win) ? win->gpuiWin : nullptr;
-    if (!gw || !gw->mouseDown) {
-        return;
-    }
-    gp::PlatformInput in =
-        gp::InputMouseUp(gp::MouseButton::Left, gw->mouseX, gw->mouseY, {}, gp::WindowCurrentClickCount(gw));
-    gp::WindowDispatchInput(gw, &in);
-    AppShellInvalidate(win);
 }
 
 static bool NotifShownNow(MainWindow* win, NotificationWnd* n);
@@ -1018,10 +873,6 @@ TempStr AppShellPromptForPathTemp(MainWindow* win, Str title, Str filter, Str in
         return {};
     }
     return str::DupTemp(paths[0]);
-}
-
-TempStr AppShellPromptForFileTemp(MainWindow* win) {
-    return AppShellPromptForPathTemp(win, Tr("Open"), {});
 }
 
 // orig's OFN_ALLOWMULTISELECT open dialog
@@ -1873,8 +1724,8 @@ void ShellView::OnNotifLink(ShellView* self, gp::Ctx* cx, const gp::ClickEvent*,
         SumatraLaunchBrowser(target);
         return;
     }
-    // orig's ExecuteTipLink: Cmd targets may include arguments (e.g.
-    // "CmdFixDefaultApp .pdf"); those go through CreateCommandFromDefinition
+    // orig's ExecuteTipLink: Cmd targets may include arguments; those go
+    // through CreateCommandFromDefinition
     int cmdId = GetCommandIdByName(target);
     if (cmdId <= 0 && str::StartsWith(target, StrL("Cmd"))) {
         CustomCommand* cmd = CreateCommandFromDefinition(target);
@@ -2022,51 +1873,6 @@ void ShellView::OnSidebarResize(ShellView* self, gp::Ctx* cx, const gp::DragMove
     }
     win->sidebarDx = sidebarDx;
     gp::Notify(cx);
-}
-
-// The app icon in the caption, in window dips. Empty until it has been laid out.
-bool AppShellSysMenuRect(MainWindow* win, Rect* out) {
-    if (!out) {
-        return false;
-    }
-    *out = {};
-    if (!win || !win->shell || !win->gpuiWin) {
-        return false;
-    }
-    auto* view = (ShellView*)gp::EntityGet(win->gpuiWin->app, win->shell->view.id);
-    if (!view || view->sysMenuBtn.w < 1.f || view->sysMenuBtn.h < 1.f) {
-        return false;
-    }
-    gp::Bounds b = view->sysMenuBtn;
-    *out = Rect{(int)b.x, (int)b.y, (int)b.w, (int)b.h};
-    return true;
-}
-
-void ShellView::OnSystemMenuDown(ShellView* self, gp::Ctx*, const gp::MouseDownEvent*) {
-    self->sysMenuDragged = false;
-}
-
-// orig's caption: past the drag threshold the icon moves the window, and the
-// release is not a click. OnDrag is what stops gpui turning that release into one.
-void ShellView::OnSystemMenuDrag(ShellView* self, gp::Ctx*, const gp::DragMoveEvent* ev) {
-    MainWindow* win = self->win;
-    if (self->sysMenuDragged || !IsMainWindowValidAndNotClosing(win) || !win->gpuiWin) {
-        return;
-    }
-    int x0 = (int)win->gpuiWin->pressedX;
-    int y0 = (int)win->gpuiWin->pressedY;
-    if (!IsDragDistance(x0, (int)ev->event.x, y0, (int)ev->event.y)) {
-        return;
-    }
-    self->sysMenuDragged = true;
-}
-
-// orig's HandleCaptionClick(CB_SYSTEM_MENU)
-void ShellView::OnSystemMenu(ShellView* self, gp::Ctx*, const gp::ClickEvent*) {
-    if (self->sysMenuDragged || !IsMainWindowValidAndNotClosing(self->win)) {
-        return;
-    }
-    AppShellOpenSystemMenu(self->win, FromGpui(self->sysMenuBtn));
 }
 
 void ShellView::OnSidebarResized(ShellView* self, gp::Ctx* cx, const gp::MouseUpEvent*) {

@@ -46,10 +46,6 @@ bool LaunchFileIfExists(Str path) {
         logf("LaunchFileIfExists: !file::Exists('%s')\n", path);
         return false;
     }
-    if (gIsStoreBuild) {
-        path = path::GetNonVirtualTemp(path);
-        logf("LaunchFileIfExists: gIsStoreBuild, path='%s'\n", path);
-    }
     LaunchFileShell(path, {}, StrL("open"));
     return true;
 }

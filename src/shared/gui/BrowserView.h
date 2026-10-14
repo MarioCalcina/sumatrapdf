@@ -54,8 +54,6 @@ void BrowserViewSetWindow(BrowserView*, MainWindow*);
 
 // show / hide without destroying the browser (a tab switch)
 void BrowserViewSetVisible(BrowserView*, bool visible);
-bool BrowserViewIsVisible(BrowserView*);
-void BrowserViewRefreshSurface(BrowserView*);
 
 void BrowserViewNavigate(BrowserView*, Str url);
 void BrowserViewGoBack(BrowserView*);
@@ -76,15 +74,12 @@ void BrowserViewEval(BrowserView*, Str js);
 void BrowserViewSelectAll(BrowserView*);
 void BrowserViewCopySelection(BrowserView*);
 void BrowserViewPrint(BrowserView*, bool showUI = true);
-// the browser's own find bar (orig's FindInCurrentPage)
-void BrowserViewFindInPageUI(BrowserView*);
 
 bool BrowserViewCanFindInPage(BrowserView*);
 void BrowserViewFindStart(BrowserView*, Str term, bool matchCase, bool wholeWord, int gen, int gotoIdx);
 void BrowserViewFindAllPages(BrowserView*, const StrVec& pageUrls, Str term, bool matchCase, bool wholeWord, int gen);
 void BrowserViewFindGoto(BrowserView*, int idx);
 void BrowserViewFindClear(BrowserView*);
-LRESULT BrowserViewPassUIMsg(BrowserView*, UINT msg, WPARAM wp, LPARAM lp);
 
 bool BrowserViewCreateInProgress();
 

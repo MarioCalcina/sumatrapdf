@@ -26,14 +26,12 @@ gpui::El* AboutDialogBuild(MainWindow* win, gpui::Ctx* cx);
 // the Home tab's canvas: orig's start page, or orig's About page when the
 // start page is switched off (ShowStartPage = false)
 gpui::El* HomePageBuild(MainWindow* win, gpui::Ctx* cx);
-void HomePageDestroyChrome(MainWindow* win);
 void HomePageDelete(MainWindow* win);
 
 bool HomePageIsListView();
 void SetHomePageListView(bool listView);
 
 void SetPromoString(Str s);
-void FreeHomePageTips();
 void HomePageInvalidateLayoutCache();
 void PickAnotherRandomPromotion();
 
@@ -49,4 +47,3 @@ void HomePageContextMenuFromKey(MainWindow* win, gpui::Ctx* cx);
 void CopyAboutInfoToClipboard(MainWindow* win);
 
 TempStr HomeListRowsResultTemp(int* exitCodeOut);
-TempStr HomeSelectionResultTemp(int* exitCodeOut);

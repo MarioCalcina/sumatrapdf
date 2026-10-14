@@ -66,7 +66,6 @@
 #include "SelectTextKeyboard.h"
 #include "Notifications.h"
 #include "AIChatCommon.h"
-#include "EutlTrust.h"
 #include "PdfTools.h"
 #include "Tabs.h"
 #include "Toolbar.h"
@@ -720,7 +719,6 @@ enum class ControlCmd : u16 {
     TestReadingAutoScroll = 97,
     TestReadingBar = 98,
     TestSeedTextSelection = 99,
-    TestTtsEngineCrash = 100,
     TestTtsPumpOnSpeak = 107,
     TestRenderSelections = 108,
     TestToggleFormButton = 109,
@@ -1450,8 +1448,6 @@ TempStr WheelWhileClosingResultTemp(int* exitCodeOut) {
     }
     return finish(0, str::DupTemp(StrL("OK")));
 }
-
-int HomeSearchFontPx(MainWindow* win);
 
 // Mouse-drag text selection of rotated glyphs (issue #4839). Finds `word`,
 // presses the first glyph and drags to the last.
@@ -2439,12 +2435,6 @@ static void ExecuteControlRequest(ControlRequest* req) {
             // what a drop-down's box is reported in
             Rect content = ToolWinNativeContentRect(win->gpuiWin);
             out.Append(fmt("content origin=%d,%d\n", content.x, content.y));
-            Rect sysMenu;
-            if (AppShellSysMenuRect(win, &sysMenu)) {
-                // orig's caption tree: row 0, child 0 is the app icon. visibility 0 is Visible.
-                out.Append(fmt("layout path=%s kind=%s visibility=%d rect=%d,%d,%d,%d\n", StrL("caption/0/0"),
-                               StrL("captionBtn"), 0, sysMenu.x, sysMenu.y, sysMenu.dx, sysMenu.dy));
-            }
             Rect frame = win->frameRc;
             Rect canvas = win->canvasRc;
             int menuDy = (win->isMenuBarVisible && !AppShellNativeMenu()) ? kMenuBarDy : 0;
@@ -3030,20 +3020,6 @@ static void ExecuteControlRequest(ControlRequest* req) {
             break;
         }
 
-        case ControlCmd::TestTtsEngineCrash: {
-            Str action = StringArg(req, 0);
-            if (str::EqI(action, StrL("crash"))) {
-                str::ReplaceWithCopy(&gSettings->readAloudVoiceId, StrL("test-voice"));
-                if (!TtsTestEngineCrash()) {
-                    AppendTestResult(req, 1, StrL("FAIL could not start the crashing thread"));
-                    break;
-                }
-            }
-            TempStr state = fmt("crashed=%d voice='%s'", (int)TtsEngineCrashed(), gSettings->readAloudVoiceId);
-            AppendTestResult(req, 0, state);
-            break;
-        }
-
         case ControlCmd::TestTtsPumpOnSpeak: {
             TtsTestPumpOnNextSpeak();
             // mac sendMessage runs at once, so the close would be sent only
@@ -3280,15 +3256,6 @@ static bool HandleControlRequest(ControlConn h, bool* stop) {
         return false;
     }
     return true;
-}
-
-bool ProcessControlConnection(ControlConn h) {
-    for (;;) {
-        bool stop = false;
-        if (!HandleControlRequest(h, &stop)) {
-            return stop;
-        }
-    }
 }
 
 // ng: off Windows the channel is a unix domain socket: <name> is its path, or,

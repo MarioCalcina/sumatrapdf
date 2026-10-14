@@ -4,10 +4,9 @@ When fz_throw runs with no active fz_try, mupdf prints a line and calls exit().
 SumatraPDF's crash handler never runs, so the crash report carries no
 explanation of what actually failed.
 
-Stash the message in a static that CrashHandler reads back through
-fz_last_uncaught_error() (exported from libsumatrapdf.dll and looked up with
-GetProcAddress), then write through a null pointer so the unhandled-exception
-filter runs and produces a dump.
+Stash the message in a static that the crash report reads back through
+fz_last_uncaught_error(), then write through a null pointer so the crash
+handler runs and writes the report.
 ---
 diff --git a/include/mupdf/fitz/context.h b/include/mupdf/fitz/context.h
 index e2553b7..afb77ff 100644
@@ -39,7 +38,7 @@ index b2b7bbe..79f149c 100644
 + * until process exit; read from CrashHandler via fz_last_uncaught_error(). */
 +static char g_fz_last_uncaught[256];
 +
-+/* Exported from libsumatrapdf.dll via libsumatrapdf.def (GetProcAddress). */
++/* Read by the crash report (src/shared/SumatraCrashCommon.cpp). */
 +const char *fz_last_uncaught_error(void)
 +{
 +	return g_fz_last_uncaught[0] ? g_fz_last_uncaught : NULL;

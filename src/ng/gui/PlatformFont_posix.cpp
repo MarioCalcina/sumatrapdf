@@ -130,24 +130,3 @@ PlatformFont* GetUserGuiFontEx(Str fontName, int size, bool bold, bool italic) {
     return GetPlatformFont(fontName, (float)size * 72.0f / 96.0f, FontStyle(bold, italic));
 }
 
-PlatformFont* GetScaledPlatformFont(PlatformFont* font, int percent) {
-    if (!font || percent <= 0) {
-        return nullptr;
-    }
-    return GetPlatformFont(font->name, font->sizePt * (float)percent / 100.0f, font->style);
-}
-
-PlatformFont* GetBoldPlatformFont(PlatformFont* font) {
-    if (!font) {
-        return nullptr;
-    }
-    if (font->boldVariant) {
-        return font->boldVariant;
-    }
-    if ((int)font->style & (int)PlatformFontStyle::Bold) {
-        font->boldVariant = font;
-        return font;
-    }
-    font->boldVariant = GetPlatformFont(font->name, font->sizePt, font->style | PlatformFontStyle::Bold);
-    return font->boldVariant ? font->boldVariant : font;
-}

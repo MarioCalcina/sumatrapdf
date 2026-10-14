@@ -84,9 +84,3 @@ bool StrQueue::Access(const Func1<StrQueue*>& fn) {
     return true;
 }
 
-bool StrQueue::IsFinished() {
-    Lock();
-    auto res = isFinished;
-    Unlock();
-    return res;
-}

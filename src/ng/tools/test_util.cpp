@@ -57,6 +57,12 @@ extern bool MarkdownToc_UnitTestMermaid();
 #if IS_DEBUG
 extern bool PdfDarkModeImageStats_UnitTest();
 extern bool EbookDoc_UnitTestLoading();
+extern bool EbookDoc_UnitTestNormalizeURL();
+extern bool EngineMupdf_UnitTestEbookLineSpacingCss();
+extern bool EngineMupdf_UnitTestEbookFontFamilyCss();
+extern bool EngineMupdf_UnitTestEbookMarginCss();
+extern bool EngineMupdf_UnitTestMergeEBookUI();
+extern bool EngineMupdf_UnitTestPageLabels();
 bool GumboHtmlParser_UnitTest();
 bool DisplayMode_UnitTestZoom();
 extern bool Accelerators_UnitTestFolderNavIsSafe();
@@ -146,6 +152,12 @@ int main(int argc, char** argv) {
     utassert(PdfDarkModeImageStats_UnitTest());
     utassert(Accelerators_UnitTestFolderNavIsSafe());
     utassert(EbookDoc_UnitTestLoading());
+    utassert(EbookDoc_UnitTestNormalizeURL());
+    utassert(EngineMupdf_UnitTestEbookLineSpacingCss());
+    utassert(EngineMupdf_UnitTestEbookFontFamilyCss());
+    utassert(EngineMupdf_UnitTestEbookMarginCss());
+    utassert(EngineMupdf_UnitTestMergeEBookUI());
+    utassert(EngineMupdf_UnitTestPageLabels());
     utassert(GumboHtmlParser_UnitTest());
     utassert(DisplayMode_UnitTestZoom());
     utassert(NavFiles_UnitTestHidden());

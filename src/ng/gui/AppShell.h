@@ -49,7 +49,6 @@ void AppShellQuit();
 void AppShellActivateWindow(MainWindow* win);
 bool AppShellIsFrameFocused(MainWindow* win);
 void AppShellFocusFrame(MainWindow* win);
-void AppShellClearEatChar(MainWindow* win);
 // closes the gpui window of `win`; the MainWindow itself is deleted by the
 // caller (CloseWindow)
 void AppShellCloseWindow(MainWindow* win);
@@ -57,8 +56,6 @@ void AppShellDeleteWindow(MainWindow* win);
 // gpui has no "window closed" callback, so the shell's tick notices a window
 // the user closed with the title bar and runs CloseWindow for it
 void AppShellReapClosedWindows();
-// the open-file dialog; empty when cancelled
-TempStr AppShellPromptForFileTemp(MainWindow* win);
 // the same prompt with a title of its own (certificate, image, ...); filter is
 // orig's lpstrFilter with \1 for \0 ("PDF documents\1*.pdf\1")
 TempStr AppShellPromptForPathTemp(MainWindow* win, Str title, Str filter, Str initialPath = {});
@@ -81,7 +78,6 @@ void SetTabsInTitlebar(MainWindow* win, bool inTitleBar);
 // where the caption puts the menu bar and the tab strip, and how tall it is;
 // false when the frame has no caption of the port's (TestLayout)
 bool AppShellCaptionRects(MainWindow* win, Rect* menuOut, Rect* tabsOut, int* dyOut);
-bool AppShellSysMenuRect(MainWindow* win, Rect* out);
 // the border the frame keeps around its content while it has the caption
 int AppShellFrameBorder(MainWindow* win);
 // gpui's client-side title bar for the frame, without touching the flag
@@ -89,18 +85,6 @@ int AppShellFrameBorder(MainWindow* win);
 void AppShellSetClientTitleBar(MainWindow* win, bool on);
 // the frame's style changed: have Windows recompute the non-client area
 void AppShellFrameChanged(MainWindow* win);
-// orig's OpenSystemMenu: the window menu, under the rect (window dips)
-void AppShellOpenSystemMenu(MainWindow* win, Rect below);
-// the app's small icon; null where there is none to ask for (off Windows)
-struct Pixmap;
-Pixmap* AppShellAppIconPixmap(MainWindow* win);
-// Windows: the cursor of win->nativeCursor, when the pointer is on the canvas
-// (gpui's cursor is the canvas' stand-in kind); see gui/NativeCursors_win.cpp
-bool AppShellNativeCursorActive(MainWindow* win);
-void AppShellApplyNativeCursor(MainWindow* win);
-// DoDragDrop (gui/OleDragDrop_win.cpp) ate the button-up that ends the press
-// gpui saw begin: tell gpui the button is up
-void AppShellAfterNativeDrag(MainWindow* win);
 void AppShellForgetNativeHwnd(MainWindow* win);
 // ng: gpui has no fullscreen window state (see "gpui gaps"). On Windows this
 // is orig's EnterFullScreen / ExitFullScreen on the native frame
@@ -137,7 +121,6 @@ bool AppShellNormalWindowRect(MainWindow* win, Rect* out);
 int AppShellWindowDpi(MainWindow* win);
 int AppShellFrameDpi(MainWindow* win);
 int AppShellDpiPx(MainWindow* win, int px);
-void AppShellOnDpiChanged(MainWindow* win, int dpi);
 float AppShellRenderScale(gpui::Window* win);
 void AppShellDisableAutoTermination();
 void AppShellHandleOpenDocs();

@@ -38,7 +38,6 @@ void hexstrTest();
 void colorTest();
 void parseCommandsTest();
 void DocPropertiesTest();
-void ParseFileArgsTest();
 
 void CachedObjects_UnitTests();
 void CommandPaletteModel_UnitTests();

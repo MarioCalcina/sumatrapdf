@@ -56,7 +56,6 @@ static const i32 gNoDocWhitelist[] = {
     CmdDebugToggleRenderInfo,
     CmdDebugToggleCacheInfo,
     CmdDebugToggleRtl,
-    CmdDebugToggleDpiOverride,
     CmdChangeScrollbar,
     CmdToggleFullscreen,
     CmdToggleMenuBar,
@@ -70,8 +69,6 @@ static const i32 gNoDocWhitelist[] = {
     CmdTogglePageGrid,
     CmdConfigurePageGrid,
     CmdToggleHoverPreview,
-    CmdToggleWindowsPreviewer,
-    CmdToggleWindowsSearchFilter,
     CmdInvertColors,
     CmdToggleGrayscale,
     CmdFavoriteToggle,
@@ -322,7 +319,6 @@ static const i32 gCommandsDebugOnly[] = {
     CmdDebugCrashMe,
     CmdDebugShowNotif,
     CmdDebugStartStressTest,
-    CmdDebugToggleDpiOverride,
     0,
 };
 
@@ -351,9 +347,6 @@ bool CmdWorksWithoutDocument(int cmdId) {
 
 CommandVisibility GetCommandVisibility(int cmdId, const AppCommandCtx& ctx, CommandSurface surface) {
     if (cmdId <= CmdFirst) {
-        return CommandVisibility::Hide;
-    }
-    if (cmdId == CmdDebugToggleDpiOverride && !ctx.debugDpiOverrideAvailable) {
         return CommandVisibility::Hide;
     }
 
@@ -412,15 +405,6 @@ CommandVisibility GetCommandVisibility(int cmdId, const AppCommandCtx& ctx, Comm
             cmdId == CmdShowAnnotationText) {
             return CommandVisibility::Hide;
         }
-        if (cmdId == CmdFixDefaultApp) {
-            return CommandVisibility::Hide;
-        }
-        if (origCmdId == CmdFixDefaultApp) {
-            Str ext = GetCommandStringArg(cmd, kCmdArgExt, {});
-            if (len(ext) == 0) {
-                return CommandVisibility::Hide;
-            }
-        }
         if (cmdId == CmdInstallPrereleaseUpdate && !HasPendingPreReleaseUpdate()) {
             return CommandVisibility::Hide;
         }
@@ -450,11 +434,6 @@ CommandVisibility GetCommandVisibility(int cmdId, const AppCommandCtx& ctx, Comm
     if (cmdId == CmdNextTab || cmdId == CmdPrevTab || cmdId == CmdNextTabSmart || cmdId == CmdPrevTabSmart ||
         cmdId == CmdMoveTabLeft || cmdId == CmdMoveTabRight) {
         return ctx.nTabs >= 2 ? CommandVisibility::Show : CommandVisibility::Hide;
-    }
-    if ((cmdId == CmdToggleWindowsPreviewer || cmdId == CmdToggleWindowsSearchFilter ||
-         cmdId == CmdTogglePdfPreviewLogging) &&
-        !ctx.shellIntegrationInstalled) {
-        return CommandVisibility::Hide;
     }
 
     if (cmdId == CmdStopReadAloud) {
@@ -488,25 +467,7 @@ CommandVisibility GetCommandVisibility(int cmdId, const AppCommandCtx& ctx, Comm
         return CommandVisibility::Hide;
     }
 
-    // a Shortcuts / toolbar entry is a clone with its own id, so it's the
-    // command it stands for that decides
-    int knownEVCmdId = 0;
-    if (IsOpenWithKnownExternalViewerCmd(cmdId)) {
-        knownEVCmdId = cmdId;
-    } else if (IsOpenWithKnownExternalViewerCmd(cmd)) {
-        knownEVCmdId = origCmdId;
-    }
-
-    if (ctx.tab && knownEVCmdId) {
-        bool canView = CanViewWithKnownExternalViewer(ctx.tab, knownEVCmdId);
-        return canView ? CommandVisibility::Show : CommandVisibility::Hide;
-    }
-
-    if (origCmdId == CmdViewWithExternalViewer || knownEVCmdId) {
-        if (knownEVCmdId) {
-            bool canView = HasKnownExternalViewerForCmd(knownEVCmdId);
-            return canView ? CommandVisibility::Show : CommandVisibility::Hide;
-        }
+    if (origCmdId == CmdViewWithExternalViewer) {
         Str filter = GetCommandStringArg(cmd, kCmdArgFilter, {});
         // ctx.filePath can be null for an in-memory doc (loaded but no file on
         // disk); such a doc can't match an external-viewer file filter
@@ -705,10 +666,6 @@ CommandVisibility GetCommandVisibility(int cmdId, const AppCommandCtx& ctx, Comm
         return CommandVisibility::Disable;
     }
 
-    if ((cmdId == CmdCheckUpdate) && gIsStoreBuild) {
-        return CommandVisibility::Hide;
-    }
-
     if (!HasPermission(Perm::InternetAccess) && CmdIdInList(cmdId, removeIfNoInternetPerms)) {
         return CommandVisibility::Hide;
     }
@@ -730,9 +687,6 @@ CommandVisibility GetCommandVisibility(int cmdId, const AppCommandCtx& ctx, Comm
             return CommandVisibility::Hide;
         }
         if (CmdIdInList(cmdId, removeIfAnnotsNotSupported)) {
-            return CommandVisibility::Hide;
-        }
-        if (IsOpenWithKnownExternalViewerCmd(cmdId)) {
             return CommandVisibility::Hide;
         }
     }

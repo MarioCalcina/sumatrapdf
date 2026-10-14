@@ -46,7 +46,6 @@
 #include "Annotation.h"
 #include "Menu.h"
 #include "EngineAll.h"
-#include "EutlTrust.h"
 #include "CommandPalette.h"
 #include "PdfTools.h"
 #include "ReadAloud.h"
@@ -167,7 +166,6 @@ TempStr DocumentSignaturesResultTemp(int* exitCodeOut) {
     if (!engine) {
         return finish(StrL("NOTREADY no-fixed-document"), 2);
     }
-    EutlRegisterLookup();
     Props props;
     engine->GetProperties(props);
     Str sigs = GetPropValueTemp(props, DocProp::Signatures);

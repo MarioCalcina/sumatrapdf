@@ -5,28 +5,17 @@
 // (null is fine) and run on the crashing thread, so they must not allocate
 // from the process heap.
 struct CrashHandlerConfig {
-    Str crashDumpPath;
-    Str submitUrl;      // full url the .dmp is POSTed to, query included; empty disables upload
-    Str fullDumpEnvVar; // if set in the environment, write a full dump
-    bool localOnly;
+    Str reportPath;  // the text report
     bool forTesting; // terminate on a debug report so automated tests fail
-    bool uploadCrashes;
-    bool uploadDebugReports;
 
-    // Builds the whole text of a report: attached to the .dmp as its comment
-    // stream and, for a local-only report, written to stderr. condStr/fileLine
-    // describe the ReportIf() that fired and are empty for a crash. Everything
-    // it returns must be allocated from a, which is the crash arena.
+    // The app's part of a report. condStr/fileLine describe the ReportIf() that
+    // fired and are empty for a crash. Everything it returns must be allocated
+    // from a, which is the crash arena.
     Str (*getCrashComment)(Arena* a, Str condStr, Str fileLine, bool isCrash);
     void (*onCrashBegin)();
-    void (*showCrashMessage)();
-    // for a crash on a thread not started by our exe (or the thread pool): true if
-    // the code at faultAddr is such that ending only that thread is safe
-    bool (*canEndCrashedThread)(void* faultAddr);
 };
 
 void InstallCrashHandler(const CrashHandlerConfig& cfg);
-void UninstallCrashHandler();
 
 // pre-allocated, so that a crash doesn't have to touch the process heap
 Arena* CrashHandlerArena();

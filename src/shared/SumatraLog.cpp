@@ -6,8 +6,6 @@
 #include "base/FileWatcher.h"
 #include "SumatraLog.h"
 
-Str gLogAppName = StrL("SumatraPDF");
-
 Mutex gLogMutex;
 
 // we use a dedicated Arena so we can do logging during crash handling
@@ -151,26 +149,5 @@ bool WriteCurrentLogToFile(Str path) {
     return ok;
 }
 
-void DestroyLogging() {
-    gDestroyedLogging = true;
-    {
-        ScopedMutex lock(&gLogMutex);
-        delete gLogBuf;
-        gLogBuf = nullptr;
-        ArenaDelete(gLogAllocator);
-        gLogAllocator = nullptr;
-        str::FreePtr(&gLogFilePath);
-    }
-    FileWatcherSetSkipPath(Str());
-}
-
-// ng: gpui calls base::log(); src/gui/GpuiLog.cpp forwards to here, because a
-// file that includes gpui.h can't also include base/Base.h (name clashes)
-void SumatraLogBytes(const char* s, int n) {
-    log(Str((char*)s, n));
-}
-
 // --- parent process chain (startup diagnostics) --------------------------------
 
-// ng: needs Toolhelp + NtQueryInformationProcess; POSIX would read /proc
-void LogParentProcessChain() {}

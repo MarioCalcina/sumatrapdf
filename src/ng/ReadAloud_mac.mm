@@ -260,22 +260,6 @@ void TtsMacRelease() {
     gTtsVoiceId = {};
 }
 
-bool TtsOnEngineCrash(void*) {
-    return false;
-}
-
-bool TtsTakeEngineCrash() {
-    return false;
-}
-
-bool TtsEngineCrashed() {
-    return false;
-}
-
-bool TtsTestEngineCrash() {
-    return false;
-}
-
 void TtsTestPumpOnNextSpeak() {
     gTtsTestPumpOnSpeak = true;
 }

@@ -24,8 +24,6 @@ void SidebarResolveContents(MainWindow*);
 
 gpui::El* SidebarBuild(MainWindow*, gpui::Ctx*);
 void SidebarApplyDpi(MainWindow*);
-int SidebarIconDy(MainWindow*);
-int SidebarFilterFont(MainWindow*);
 // the same favorites pane, filling the canvas (the Favorites tab)
 gpui::El* SidebarBuildFavTab(MainWindow*, gpui::Ctx*);
 void SidebarDelete(MainWindow*);

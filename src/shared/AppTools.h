@@ -27,9 +27,6 @@ struct TextEditor {
 
 bool IsRunningInPortableMode();
 bool IsDllBuild();
-bool IsInstallerOrUninstallerExe();
-
-void DeleteAppTools();
 
 void SetAppDataDir(Str dir);
 TempStr GetAppDataDirTemp();
@@ -45,13 +42,10 @@ Rect GetDefaultWindowPos();
 void SaveCallstackLogs();
 
 Str Sha1OfAppExe();
-TempStr GetWebViewDataDirTemp();
 
 TempStr FormatFileSizeShortTransTemp(i64);
 TempStr FormatFileSizeTransTemp(i64);
 
 bool LaunchFileIfExists(Str path);
-
-bool AdjustVariableDriveLetter(Str& path);
 
 bool IsUntrustedFile(Str filePath, Str fileUrl = {});

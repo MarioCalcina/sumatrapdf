@@ -12,6 +12,4 @@ namespace tga {
 bool HasSignature(Str);
 Pixmap* PixmapFromData(Str);
 
-Str PixmapToTgaFormat(Pixmap* pixmap);
-
 } // namespace tga

@@ -51,7 +51,6 @@ void DocCanvasContextMenuFromKey(MainWindow* win, gpui::Ctx* cx);
 // orig's frame passes a WM_MOUSEWHEEL no child took to the canvas, so the
 // document scrolls with the wheel over the tab strip or the toolbar
 void DocCanvasWheelFromFrame(MainWindow* win, gpui::Ctx* cx, const gpui::ScrollWheelEvent* ev);
-void DocCanvasPostedWheel(MainWindow* win, int delta, bool isCtrl, bool isShift);
 void DocCanvasPinchZoom(MainWindow* win, float factor, float wx, float wy);
 void DocCanvasSwipePage(MainWindow* win, int dir);
 void DocCanvasMouseDown(MainWindow* win, int x, int y);

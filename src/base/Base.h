@@ -151,7 +151,6 @@ void AtomicBoolSet(AtomicBool* p, bool v);
 bool AtomicBoolSwap(AtomicBool* p, bool v);
 int AtomicIntGet(AtomicInt* p);
 void AtomicIntSet(AtomicInt* p, int v);
-int AtomicIntAdd(AtomicInt* p, int v);
 int AtomicIntInc(AtomicInt* p);
 int AtomicIntDec(AtomicInt* p);
 int AtomicRefCountAdd(AtomicRefCount* v);
@@ -279,7 +278,7 @@ inline void CrashMe() {
 // rare cases where we really want to know a given condition happens. Before
 // each release we should audit the uses of ReportAlwaysIf()
 
-extern void _uploadDebugReport(Str, Str, bool);
+extern void _writeDebugReport(Str, Str, bool);
 
 #define STRINGIZE_(x) #x
 #define STRINGIZE(x) STRINGIZE_(x)
@@ -289,7 +288,7 @@ extern void _uploadDebugReport(Str, Str, bool);
     __analysis_assume(!(cond));                                         \
     do {                                                                \
         if (cond) {                                                     \
-            _uploadDebugReport(StrL(condStr), StrL(fileLine), isCrash); \
+            _writeDebugReport(StrL(condStr), StrL(fileLine), isCrash); \
         }                                                               \
     } while (0)
 
@@ -442,7 +441,6 @@ bool MemEq(const void* s1, const void* s2, int n);
 int RoundToPowerOf2(int size);
 u32 MurmurHash2(const void* key, int n);
 u32 MurmurHash2(Str s);
-u32 MurmurHash2(WStr s);
 
 int RoundUp(int n, int rounding);
 void* RoundUp(void* d, int rounding);
@@ -563,8 +561,6 @@ inline bool isOfKindHelper(Kind k1, Kind k2) {
 
 #define IsOfKind(o, wantedKind) ((o) && isOfKindHelper((o)->kind, (wantedKind)))
 
-extern Kind kindNone; // unknown kind
-
 // from https://pastebin.com/3YvWQa5c
 // In my testing, in debug build defer { } creates somewhat bloated code
 // but in release it seems to be optimized to optimally small code
@@ -627,19 +623,6 @@ Func0 MkFunc0(void (*fn)(T*), T* d) {
     auto res = Func0{};
     res.fn = (void*)fn;
     res.userData = (uintptr_t)d;
-    return res;
-}
-
-template <typename T, void (T::*Method)()>
-static void MethodTrampoline(void* obj) {
-    (static_cast<T*>(obj)->*Method)();
-}
-
-template <typename T, void (T::*Method)()>
-Func0 MkMethod0(T* obj) {
-    auto res = Func0{};
-    res.fn = (void*)&MethodTrampoline<T, Method>;
-    res.userData = (uintptr_t)obj;
     return res;
 }
 
@@ -837,14 +820,12 @@ struct RectG {
     RectG() = default;
     RectG(T x, T y, T dx, T dy) : x(x), y(y), dx(dx), dy(dy) {}
     RectG(PointG<T> pt, SizeG<T> sz) : x(pt.x), y(pt.y), dx(sz.dx), dy(sz.dy) {}
-    RectG(PointG<T> min, PointG<T> max) : x(min.x), y(min.y), dx(max.x - min.x), dy(max.y - min.y) {}
 
     T Right() const { return x + dx; }
     T Bottom() const { return y + dy; }
     static RectG FromXY(T xs, T ys, T xe, T ye);
     static RectG FromXY(PointG<T> tl, PointG<T> br) { return FromXY(tl.x, tl.y, br.x, br.y); }
     RectG<int> Round() const;
-    bool IsZero() const { return x == 0 && y == 0 && dx == 0 && dy == 0; }
     bool IsEmpty() const { return dx == 0 || dy == 0; }
     bool Contains(T px, T py) const;
     bool Contains(PointG<T> pt) const { return Contains(pt.x, pt.y); }
@@ -860,25 +841,9 @@ struct RectG {
         y -= iy;
         dy += 2 * iy;
     }
-    void SubTB(T t, T b) {
-        y += t;
-        dy -= t + b;
-    }
-    void SubLR(T l, T r) {
-        x += l;
-        dx -= l + r;
-    }
     PointG<T> TL() const { return {x, y}; }
     PointG<T> BR() const { return {x + dx, y + dy}; }
     SizeG<T> Size() const { return {dx, dy}; }
-    void SetSize(const SizeG<T>& sz) {
-        dx = sz.dx;
-        dy = sz.dy;
-    }
-    void SetPos(const PointG<T>& p) {
-        x = p.x;
-        y = p.y;
-    }
     bool operator==(const RectG& o) const { return x == o.x && y == o.y && dx == o.dx && dy == o.dy; }
     bool operator!=(const RectG& o) const { return !(*this == o); }
 };
@@ -886,9 +851,6 @@ using Rect = RectG<int>;
 using RectF = RectG<float>;
 
 Point ToPoint(PointF p);
-
-SizeF ToSizeFl(Size s);
-Size ToSize(SizeF s);
 
 RectF ToRectF(const Rect& r);
 Rect ToRect(const RectF& r);
@@ -1000,7 +962,6 @@ bool WaitThread(ThreadHandle, int timeoutMs);
 bool SafeCloseThreadHandle(ThreadHandle*);
 
 extern AtomicInt gDangerousThreadCount;
-bool AreDangerousThreadsPending();
 
 using ScopedMutex = AutoUnlockMutex;
 using ScopedRecursiveMutex = AutoUnlockRecursiveMutex;
@@ -1068,9 +1029,6 @@ struct Arena {
     void* Push(u64 size, u64 align = 8, bool zero = true);
     u64 Pos();
     void PopTo(u64 pos);
-    void Pop(u64 amt);
-    void* GetAvailableSpace(int* bufSizeOut);
-    void* CommitReserved(void* mem, int size);
 
     Arena() = delete;  // use ArenaNew()
     ~Arena() = delete; // use ArenaDelete()
@@ -1123,7 +1081,6 @@ struct AutoArenaSavepoint {
 // lets us track how much such memory we use (logged on exit). Never Reset().
 extern Arena* gPermArena;
 Arena* GetPermArena();
-void DestroyPermArena();
 
 template <typename T>
 inline T* PushArrayNoZeroAligned(Arena* arena, u64 count, u64 align) {
@@ -1676,17 +1633,11 @@ bool VecPush(Arena* arena, T& v, E el) {
 
 // Singly-linked string node; AllocStrNode places the string bytes immediately
 // after the node in one allocation (s.s points into that block).
-using StrArena = u32;
-StrArena StrArenaAlloc(Arena* a, int size);
-StrArena StrArenaDupStr(Arena* a, Str s);
-Str StrArenaToStr(Arena* a, StrArena sa);
-
 struct StrNode {
     StrNode* next = nullptr;
     Str s;
 };
 StrNode* AllocStrNode(Arena* a, Str s);
-StrNode* FindStrNode(StrNode* root, Str s);
 void FreeStrNode(Arena* a, StrNode* head);
 
 // Head/tail list of StrNodes (first→…→last via next). Does not own/free nodes.
@@ -1733,7 +1684,6 @@ FORCEINLINE Str Join(Str s1, Str s2, Str s3, Str s4) {
 TempStr JoinTemp(Str s1, Str s2, Str s3 = {});
 TempStr JoinTemp(Str s1, Str s2, Str s3, Str s4);
 TempStr JoinTemp(Str s1, Str s2, Str s3, Str s4, Str s5);
-TempWStr JoinTemp(WStr s1, WStr s2, WStr s3 = {});
 
 bool Eq(Str s1, Str s2);
 bool EqI(Str s1, Str s2);
@@ -1772,7 +1722,6 @@ int IndexOfI(Str s, Str toFind);
 int IndexOfAfter(Str s, Str needle);
 bool Cut(Str s, Str sep, Str* before, Str* after);
 bool CutChar(Str s, char c, Str* before, Str* after);
-bool CutCharLast(Str s, char c, Str* before, Str* after);
 bool NextLine(Str s, Str& line, Str& rest);
 
 bool Contains(Str s, Str sub);
@@ -1814,8 +1763,6 @@ int TrimNonWs(Str& s);
 Str NextWord(Str& s);
 int TrimWsBoth(Str& s);
 
-int BufSet(WCHAR* dst, int dstCchSize, Str src);
-
 WStr CastStrToWStr(Str s);
 } // namespace str
 
@@ -1825,17 +1772,13 @@ void Free(WStr s);
 // catch passing a raw wchar_t* (e.g. the .s member): pass the WStr directly
 // instead. To free a raw owned pointer use ::free().
 void Free(const wchar_t*) = delete;
-void FreePtr(WStr* s);
 
 WStr Dup(Arena*, WStr str);
 WStr Dup(WStr s);
-WStr Join(WStr, WStr, WStr s3 = {});
-WStr Join(Arena*, WStr, WStr, WStr s3);
 bool Eq(WStr s1, WStr s2);
 bool EqI(WStr s1, WStr s2);
 bool EqN(WStr s1, WStr s2, int n);
 bool EqNI(WStr s1, WStr s2, int n);
-int Cmp(WStr a, WStr b);
 int CmpI(WStr a, WStr b);
 // inline so callers (and the static analyzer) can see the guard
 inline bool IsNull(const WStr& s) {
@@ -1844,20 +1787,11 @@ inline bool IsNull(const WStr& s) {
 bool StartsWith(WStr str, WStr prefix);
 bool StartsWithI(WStr str, WStr prefix);
 bool EndsWith(WStr txt, WStr end);
-bool EndsWithI(WStr txt, WStr end);
-WStr ToLowerInPlace(WStr s);
-int BufSet(WStr dst, WStr src);
 int NormalizeWSInPlace(WStr str);
 int RemoveCharsInPlace(WStr str, WStr toRemove);
-int IndexOfChar(WStr s, WCHAR c);
-bool ContainsChar(WStr s, WCHAR c);
-WStr SliceFromChar(WStr str, WCHAR c);
-WStr FindFrom(WStr str, WStr find);
 bool IsWs(WCHAR c);
 bool IsDigit(WCHAR c);
 bool IsNonCharacter(WCHAR c);
-void TransCharsInPlace(WStr& str, WStr oldChars, WStr newChars);
-WStr Replace(WStr s, WStr toReplace, WStr replaceWith);
 
 } // namespace wstr
 
@@ -1936,7 +1870,6 @@ struct BuilderT : Vec<C> {
     C RemoveAt(int idx, int count = 1);
     C RemoveLast();
     S TakeStr();
-    S TakeWStr() { return TakeStr(); }
     C LastChar() const;
     // Lend a buffer to start in, instead of the first allocation, the way
     // VecUseExternalBuffer() does. Must be empty with no storage yet. Appends
@@ -1955,7 +1888,6 @@ bool Contains(const Builder& b, Str sub);
 namespace wstr {
 using Builder = BuilderT<WCHAR>;
 void BuilderUseExternalBuffer(Builder& b, WStr buf);
-bool BuilderReserve(Builder& b, int cap);
 } // namespace wstr
 
 void SeqStrNumAppend(str::Builder* b, Str s, i64 num);
@@ -1965,13 +1897,8 @@ int ParseInt(Str s);
 i64 ParseInt64(Str s);
 bool IsValidProgramVersion(Str ver);
 int CompareProgramVersion(Str ver1, Str ver2);
-bool IsTextRtl(WStr s);
-bool IsTextRtl(Str s);
 
 char* CStrTemp(Str s);
-WCHAR* CWStrTemp(WStr s);
-
-WCHAR* CWStrTemp(WStr s, int& cch);
 
 Str ToStr(const str::Builder&);
 WStr ToWStr(const wstr::Builder&);
@@ -2013,8 +1940,6 @@ TempStr ShortenStringUtf8InTheMiddleTemp(Str s, int maxRunes);
 
 WStr ToWStrTemp(Str s);
 Str ToUtf8Temp(WStr wide);
-WCHAR* CWStrTemp(Str s);
-WCHAR* CWStrTemp(Str s, int& cch);
 
 //--- StrFormatParse.h ------------------------------------------------------------------
 
@@ -2206,7 +2131,6 @@ struct StrVec {
     Str operator[](int) const;
 
     Str Append(Str s);
-    Str AppendNonEmpty(Str s);
     Str SetAt(int idx, Str s);
     Str InsertAt(int, Str s);
     Str RemoveAt(int);
@@ -2280,30 +2204,21 @@ TempStr JoinTemp(StrVec* v, Str sep);
 //--- Strconv.h ------------------------------------------------------------------
 
 namespace strconv {
-WStr CodePageToWStr(uint codePage, Str s, Arena* a = nullptr);
-
-WStr Utf8ToWStr(Str s, Arena* a = nullptr);
 Str WStrToUtf8(WStr s, Arena* a = nullptr);
 
 Str WStrToCodePage(uint codePage, WStr s, Arena* a = nullptr);
 TempStr ToMultiByteTemp(Str src, uint codePageSrc, uint codePageDest);
-WStr StrCPToWStr(Str src, uint codePage);
 TempWStr StrCPToWStrTemp(Str src, uint codePage);
 TempStr StrToUtf8Temp(Str src, uint codePage);
 
 TempStr UnknownToUtf8Temp(Str s);
 
-Str WStrToAnsi(WStr src);
-Str Utf8ToAnsi(Str s);
-
 TempWStr AnsiToWStrTemp(Str src);
-Str AnsiToUtf8(Str src);
 TempStr AnsiToUtf8Temp(Str src);
 } // namespace strconv
 
 Str ToUtf8(Arena* arena, WStr wide);
 Str ToUtf8(WStr s, Arena* a = nullptr);
-WStr ToWStr(Str s, Arena* a = nullptr);
 
 template <typename T>
 class AutoFree {
@@ -2514,8 +2429,6 @@ float GetLightness(Color c);
 bool IsLightColor(Color c);
 Color AccentColor(Color col, int light, int dark = 0);
 Color EnsureContrast(Color fg, Color bg, int minDelta = 80);
-bool IsNearBlack(Color c);
-DWORD PremultiplyPixel(Color c, u8 alpha);
 
 // GDI+ only exists on Windows; portable code works with Color
 

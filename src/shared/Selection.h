@@ -31,8 +31,6 @@ struct SelectionOnPage {
 constexpr u8 kSelectionDefaultAlpha = 0x5f;
 
 void DeleteOldSelectionInfo(MainWindow* win, bool alsoTextSel = false);
-void RemapSelOnRenumber(MainWindow* win, DisplayModel* dm);
-void RemapTextSelection(DisplayModel* dm);
 void PaintTransparentRectangles(gpui::PaintCtx* ctx, Rect screenRc, Vec<Rect>& rects, Color selectionColor,
                                 u8 alpha = kSelectionDefaultAlpha, int pad = 2, bool drawBorder = false);
 void PaintSelection(MainWindow* win, gpui::PaintCtx* ctx);

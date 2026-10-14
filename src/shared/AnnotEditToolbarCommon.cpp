@@ -357,20 +357,11 @@ static TempStr GetKnownColorNameTemp(PdfColor c) {
     return {};
 }
 
-// Clear non-owning Annotation* before the old engine is destroyed.
-void InvalidateEditAnnotationsOnEngineChange(WindowTab* tab) {
-    CloseAnnotationUiForTab(tab);
-}
-
 void NotifyAnnotationsChanged(WindowTab* tab) {
     if (tab && tab->win) {
         UpdateAnnotFilterToolbar(tab->win);
     }
     CommandPaletteOnAnnotationsChanged();
-}
-
-SeqStrings AnnotEditorLineEndingStyles() {
-    return gLineEndingStyles;
 }
 
 SeqStrings AnnotationIconNames(Annotation* annot) {

@@ -11,8 +11,6 @@ void ToggleLightDarkTheme();
 Str ToggleLightDarkThemeTargetName();
 void SumatraUpdateTheme();
 void UpdateThemeAfterSystemColorChange();
-void UpdateThemeAfterHighContrastChange();
-bool ThemeUsesHighContrastColors();
 void CreateThemeCommands();
 
 Color ThemeDocumentColors(Color&);
@@ -22,13 +20,9 @@ Color ThemeControlBackgroundColor();
 Color ThemeWindowBackgroundColor();
 Color ThemeWindowTextColor();
 Color ThemeWindowTextDisabledColor();
-// the colors the OS draws its own UI in (Theme.cpp); the default theme and
-// high contrast mode defer to them
-Color SysWindowBgColor();
-Color SysWindowTextColor();
+// light-mode system colors, for the few places that want them
 Color SysControlTextColor();
 Color SysDisabledTextColor();
-Color SysLinkColor();
 Color SysHighlightBgColor();
 Color SysHighlightTextColor();
 Color ThemeWindowDarkerTextColor();
@@ -39,7 +33,6 @@ Color ThemeWindowLinkColor();
 Color ThemeHotBackgroundColor();
 Color ThemeEdgeColor();
 Color ThemeHotEdgeColor();
-Color ThemeDisabledEdgeColor();
 Color ThemeErrorBackgroundColor();
 Color ThemeNotificationsBackgroundColor();
 Color ThemeNotificationsTextColor();

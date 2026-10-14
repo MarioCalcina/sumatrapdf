@@ -779,8 +779,6 @@ void UnregisterSettingsForFileChanges() {
     gWatchedSettingsFile = nullptr;
 }
 
-constexpr int kMinFontSize = 9;
-
 TempStr ZoomLevelStr(float zoom) {
     if (zoom == kZoomFitPage) {
         return Tr("Fit Page");
@@ -1203,10 +1201,6 @@ Favorite* NewFavorite(Str pageNo, Str name, Str pageLabel) {
     return fav;
 }
 
-Favorite* NewFavorite(int pageNo, Str name, Str pageLabel) {
-    return NewFavorite(FormatStoredPagePosTemp(pageNo), name, pageLabel);
-}
-
 void DeleteFavorite(Favorite* fav) {
     FreeStruct(&gFavoriteInfo, fav);
 }
@@ -1360,10 +1354,6 @@ void SetFileStatePath(FileState* fs, Str path) {
         return;
     }
     str::ReplaceWithCopy(&fs->filePath, path);
-}
-
-void SetFileStatePath(FileState* fs, WStr path) {
-    SetFileStatePath(fs, ToUtf8Temp(path));
 }
 
 Themes* ParseThemes(Str data) {

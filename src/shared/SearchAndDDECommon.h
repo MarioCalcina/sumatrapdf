@@ -40,7 +40,6 @@ Str HandlePageCmd(HWND hwnd, Str cmd, bool* ack);
 Str HandleSetViewCmd(HWND hwnd, Str cmd, bool* ack);
 Str HandleFullScreenCmd(HWND hwnd, Str cmd, bool* ack);
 Str HandleNewWindowCmd(Str cmd, bool* ack);
-Str HandleGetOpenFilesCmd(Str cmd, bool* ack, str::Builder& res);
 
 // implemented by each app
 struct FindEndTaskData;
@@ -141,7 +140,6 @@ struct FindThreadData;
 void CountThread(CountThreadData* d);
 void FindThread(FindThreadData* ftd);
 
-Str HandleGetFileStateCmd(Str cmd, bool* ack, str::Builder& res);
 Str HandleCmdCommand(HWND hwnd, Str cmd, bool* ack);
 Str HandleOpenCmd(Str cmd, bool* ack);
 void FindDebounceStop(MainWindow* win);

@@ -384,7 +384,6 @@ static char ShiftedPunctGlyph(u8 key) {
 TempStr AppendAccelKeyToMenuStringTemp(TempStr menuStr, const KeyShortcut& sc) {
     Str lang = gShortcutLangCode ? gShortcutLangCode() : Str();
     bool isEng = len(lang) == 0 || str::Eq(lang, StrL("en"));
-    bool isGerman = str::Eq(lang, StrL("de"));
     bool isAscii = false;
 
     // "\tCtrl + Shift + Alt + F24" / localized variants fit in ~64 bytes.

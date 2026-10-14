@@ -127,8 +127,10 @@ struct ControllerCallbackHandler : DocControllerCallback {
     }
     void FocusFrame(bool) override {}
     void SaveDownload(Str, Str) override {}
-    void FindResultReceived(int, int, int) override {}
-    void FindAllResultReceived(Str) override {}
+    void FindResultReceived(int gen, int current, int total) override {
+        BrowserFindResultReceived(win, gen, current, total);
+    }
+    void FindAllResultReceived(Str payload) override { BrowserFindAllResultReceived(win, payload); }
     void TocChanged(DocController* ctrl) override;
     void PagesRenumbered(DisplayModel* dm) override {
         if (win->AsFixed() == dm) {
@@ -473,7 +475,6 @@ AppCommandCtx NewAppCommandCtx(MainWindow* win, Point cursorPos) {
     // the macOS menu bar is the system's: F9 has nothing to hide
     ctx.allowToggleMenuBar = !AppShellNativeMenu();
     ctx.hasOpenDocuments = HasOpenedDocuments(win);
-    ctx.debugDpiOverrideAvailable = true;
 
     if (ctx.tab) {
         ctx.autoScrollOn = ctx.tab->autoScroll.on;
@@ -563,19 +564,6 @@ AppCommandCtx NewAppCommandCtx(MainWindow* win, Point cursorPos) {
 
     PopulateTabCloseFlags(ctx);
     return ctx;
-}
-
-// ng: orig's FindMainWindowByHwnd; the gpui window is what identifies a window
-MainWindow* FindMainWindowByGpuiWindow(gpui::Window* gw) {
-    if (!gw) {
-        return nullptr;
-    }
-    for (MainWindow* win : gWindows) {
-        if (win->gpuiWin == gw) {
-            return win;
-        }
-    }
-    return nullptr;
 }
 
 WindowTab* FindTabByFilePath(Str path, MainWindow* limitWin) {

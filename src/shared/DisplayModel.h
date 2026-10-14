@@ -97,7 +97,6 @@ struct DisplayModel : DocController {
     DisplayModel& operator=(DisplayModel const&) = delete;
 
     ~DisplayModel() override;
-    void Retire();
 
     // meta data
     Str GetFilePath() const override;
@@ -158,7 +157,6 @@ struct DisplayModel : DocController {
     DisplayModel* AsFixed() override;
 
     EngineBase* GetEngine() const;
-    Kind GetEngineType() const;
 
     // controller-specific data (easier to save here than on MainWindow)
     Kind engineType = nullptr;
@@ -189,14 +187,9 @@ struct DisplayModel : DocController {
     bool ViewportReadyForRelayout() const;
 
     Rect GetViewPort() const;
-    bool IsHScrollbarVisible() const;
-    bool IsVScrollbarVisible() const;
     bool NeedHScroll() const;
     bool NeedVScroll() const;
-    bool CanScrollRight() const;
-    bool CanScrollLeft() const;
     bool CanScrollDown() const;
-    bool CanScrollUp() const;
     bool IsAtDocumentEnd() const;
     Size GetCanvasSize() const;
     int UnusedCanvasDx() const;
@@ -242,8 +235,6 @@ struct DisplayModel : DocController {
     };
     void SetScrollState(const ScrollState& state, RestorePan pan = RestorePan::Exact);
 
-    void CopyNavHistory(DisplayModel& orig);
-
     void SetInitialViewSettings(DisplayMode displayMode, int newStartPage, Size viewPort, int screenDPI);
     void SetUiDpi(int dpi);
     void SetDisplayR2L(bool r2l);
@@ -261,12 +252,8 @@ struct DisplayModel : DocController {
     bool ShouldCacheRendering(int pageNo) const;
     void RepaintDisplay();
     void SyncWithEngineLayout();
-    // valid only during the PagesRenumbered callback
-    int RemapPageNo(int oldPageNo);
     int FindPageNoByLoc(Location loc) const;
     bool PageVisibleNearbyLocked(int pageNo) const;
-
-    bool InPresentation() const;
 
     void BuildPagesInfo();
     float ZoomRealFromVirtualForPage(float zoomVirtual, int pageNo) const;
