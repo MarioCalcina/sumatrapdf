@@ -26,7 +26,11 @@
 #undef BOOL
 #include "base/MacTypesShow.h"
 
+#include "base/File.h"
+#include "base/GuessFileType.h"
 #include "base/Pixmap.h"
+#include "base/Timer.h"
+#include "base/UITask.h"
 
 #include "Settings.h"
 #include "DisplayMode.h"
