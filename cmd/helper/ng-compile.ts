@@ -435,6 +435,10 @@ const appexFrameworksRpath = "@executable_path/../../../../Frameworks";
 function linkCmd(tc: Toolchain, t: Target, f: BuildFlags, out: string, inputs: string[]): string[] {
   const ld = [...archFlags(f.arch)];
   if (t.kind === "dylib") ld.push("-dynamiclib", "-install_name", `@rpath/${t.name}`);
+  if (t.exports) {
+    ld.push("-Wl,-dead_strip");
+    for (const sym of t.exports) ld.push(`-Wl,-exported_symbol,${sym}`);
+  }
   if (t.kind === "appex") {
     // Foundation's NSExtensionMain runs the extension; its code is in a dylib
     ld.push("-e", "_NSExtensionMain", "-rpath", appexFrameworksRpath, "-framework", "Foundation");

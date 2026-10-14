@@ -193,7 +193,7 @@ jobs:
       # for files macOS can't show itself
       - name: Quick Look
         continue-on-error: true
-        timeout-minutes: 6
+        timeout-minutes: 10
         run: |
           t() { perl -e 'alarm shift; exec @ARGV' "$@"; }
           mkdir -p shots/ql ~/Desktop/qltest
@@ -208,21 +208,33 @@ jobs:
             pluginkit -m -v -A -i org.sumatrapdfreader.SumatraPDF.$e >> shots/ql/pluginkit.txt 2>&1 || true
           done
           cp docs/test/test.cbz docs/test/test.djvu tests/issue-2254.fb2 tests/issue-4315.azw3 ~/Desktop/qltest/
-          for f in ~/Desktop/qltest/*; do
-            t 60 qlmanage -t -s 512 -o shots/ql "$f" >> shots/ql/qlmanage.txt 2>&1 || echo "$f: exit $?" >> shots/ql/qlmanage.txt
-          done
-          ls -la shots/ql >> shots/ql/qlmanage.txt
+          # what the bundle carries
+          (cd /Applications/SumatraPDF.app && find Contents -type f -size +200k -exec ls -l {} \;) > shots/ql/sizes.txt
+          # thumbnails as Finder asks for them; a PDF's (macOS's own) for comparison
+          t 300 swift .github/scripts/ql-thumbs.swift shots/ql ~/Desktop/qltest/* docs/test/links.pdf \
+            > shots/ql/thumbs.txt 2>&1 || echo "exit $?" >> shots/ql/thumbs.txt
           # the space bar's preview
-          t 20 qlmanage -p ~/Desktop/qltest/test.cbz > /dev/null 2>&1 &
-          sleep 10
-          screencapture -x shots/ql/preview.png
-          pkill -f qlmanage || true
-          # Finder's icons
+          for f in test.cbz issue-2254.fb2; do
+            t 20 qlmanage -p ~/Desktop/qltest/$f > /dev/null 2>&1 &
+            sleep 10
+            screencapture -x shots/ql/preview-$f.png
+            pkill -f qlmanage || true
+            sleep 1
+          done
+          # Finder's icons, below the local network prompt the print step left up
           open ~/Desktop/qltest
           sleep 3
-          t 20 osascript -e 'tell application "Finder" to set current view of front window to icon view' || true
+          t 20 osascript -e 'tell application "Finder" to set current view of front window to icon view' \
+            -e 'tell application "Finder" to set icon size of icon view options of front window to 128' \
+            -e 'tell application "Finder" to set bounds of front window to {0, 370, 1000, 740}' || true
           sleep 8
           screencapture -x shots/ql/finder.png
+          # the extensions' own messages and crashes
+          log show --last 10m --style compact \
+            --predicate 'process BEGINSWITH "Sumatra" OR eventMessage CONTAINS[c] "sumatra"' \
+            2>&1 | tail -300 > shots/ql/log.txt || true
+          ls -la ~/Library/Logs/DiagnosticReports /Library/Logs/DiagnosticReports > shots/ql/crashes.txt 2>&1 || true
+          cp ~/Library/Logs/DiagnosticReports/Sumatra* shots/ql/ 2>/dev/null || true
       # Check for Updates' install, on a dmg already here: the app copies it in,
       # quits, and a script swaps the bundles and starts the new one
       - name: Install an update

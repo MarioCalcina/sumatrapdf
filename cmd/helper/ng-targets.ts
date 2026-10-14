@@ -50,6 +50,8 @@ export type Target = {
   bundled?: string[];
   /** frameworks linked besides the app's (ng-compile.ts macFrameworks) */
   frameworks?: string[];
+  /** a dylib's only exported symbols; the linker drops code they don't reach */
+  exports?: string[];
   /** native libraries needed only by the archive packer */
   systemDeps?: "archive";
   /** true: our code, -Wall -Werror; false: third-party, warnings relaxed */
@@ -1030,6 +1032,7 @@ export const targets: Target[] = [
     includes: ["src/ng", "ext/mupdf/include"],
     deps: ["app"],
     frameworks: ["QuickLookThumbnailing", "QuickLookUI"],
+    exports: ["_OBJC_CLASS_$_SumatraThumbnailProvider", "_OBJC_CLASS_$_SumatraPreviewProvider"],
     strict: true,
     exceptions: true,
   },
