@@ -2,7 +2,7 @@
    License: GPLv3 */
 
 #include "base/Base.h"
-#include "../ext/mupdf/source/pdf/annotation-icons.h"
+#include "../../ext/mupdf/source/pdf/annotation-icons.h"
 #include "base/File.h"
 #include "base/UITask.h"
 #include "gui/Dpi.h"

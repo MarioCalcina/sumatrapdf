@@ -327,7 +327,7 @@ export function macControlRequest(cmd: number, args: ControlArg[]): ControlArg[]
 function cmdName(id: number): string {
   if (!cmdNames) {
     cmdNames = new Map();
-    const src = readFileSync(join(import.meta.dir, "..", "src", "shared", "Commands.h"), "utf8");
+    const src = readFileSync(join(import.meta.dir, "..", "src", "ng", "Commands.h"), "utf8");
     const re = /\b(Cmd\w+)\s*=\s*(\d+)\b/g;
     let m: RegExpExecArray | null;
     while ((m = re.exec(src)) !== null) {

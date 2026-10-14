@@ -111,7 +111,7 @@ export async function packEmbedded(
 
 // `archFlags`: the architecture and deployment target of the build
 export async function embedLzsa(tc: Toolchain, archive: string, dir: string, archFlags: string[]): Promise<string> {
-  const source = join(root, "src/shared/EmbeddedLzsa.S");
+  const source = join(root, "src/ng/EmbeddedLzsa.S");
   const obj = join(dir, "embedded.o");
   const args = [tc.cc, ...archFlags, "-x", "assembler-with-cpp", `-DEMBEDDED_LZSA="${archive}"`, "-c", source, "-o", obj];
   const key = args.join("\n");

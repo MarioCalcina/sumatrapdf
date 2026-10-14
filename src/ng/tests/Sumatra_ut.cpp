@@ -31,7 +31,7 @@ void install_load_mac_font_funcs(fz_context* ctx);
 // must be last to over-write assert()
 #include "base/tests/UtAssert.h"
 
-// in src/shared/tests/SumatraCommon_ut.cpp
+// in src/ng/tests/SumatraCommon_ut.cpp
 void BenchRangeTest();
 void versioncheck_test();
 void hexstrTest();

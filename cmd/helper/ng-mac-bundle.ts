@@ -91,7 +91,7 @@ const appexEntitlements = `<?xml version="1.0" encoding="UTF-8"?>
 </plist>
 `;
 
-// the languages of src/shared/TranslationLangs.cpp as Apple language ids. Listed
+// the languages of src/ng/TranslationLangs.cpp as Apple language ids. Listed
 // in CFBundleLocalizations, they let AppKit's own UI (print and open panels, the
 // menu items it adds) follow the app's language instead of staying English.
 // es-419 gives Latin America its own AppKit Spanish.

@@ -21,7 +21,6 @@ import {
   outDir,
   outDirName,
   root,
-  stageShared,
   universalDir,
   writeDsym,
   type BuildFlags,
@@ -158,7 +157,6 @@ async function packArchive(tc: Toolchain, f: BuildFlags, noEmbedFonts: boolean):
   if (noEmbedFonts) console.log("not embedding built-in fonts");
   await genDocsForBuild();
   const packFlags: BuildFlags = { debug: false, asan: false, clean: false, verbose: f.verbose, arch: hostArch };
-  stageShared(outDir(packFlags));
   const packer = await buildTarget(tc, findTarget("MakeLZSA")!, packFlags, fail);
   await packEmbedded(packer, outDir(f), root, { manual: true, compress: true, fonts: !noEmbedFonts });
 }
@@ -166,7 +164,6 @@ async function packArchive(tc: Toolchain, f: BuildFlags, noEmbedFonts: boolean):
 async function buildAll(tc: Toolchain, targets: Target[], f: BuildFlags, noEmbedFonts: boolean): Promise<string[]> {
   console.log(`${tc.label} ${f.arch} -> out/${outDirName(f)} (${cpus().length} jobs), ver ${ngVersion(f.rev).ver}`);
   if (f.clean) cleanOutDir(f);
-  stageShared(outDir(f));
   if (usesEmbedded(targets)) await packArchive(tc, f, noEmbedFonts);
   const built: string[] = [];
   for (const t of targets) built.push(await buildTarget(tc, t, f, fail));

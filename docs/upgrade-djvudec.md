@@ -60,7 +60,7 @@ is also documented in upstream `src/djvu.h`.
 Pay special attention to:
 
 - **New functions** — may need `EngineDjvuDec.cpp` updates
-- **Removed/renamed functions** — update `src/shared/EngineDjvuDec.cpp`
+- **Removed/renamed functions** — update `src/ng/EngineDjvuDec.cpp`
 - **`djvu_init()`** — must be called once before concurrent decode (bilinear
   scaler table). `djvu_doc_open` also calls it, but that is not enough when
   render threads race on first open. `EngineDjvuDec.cpp` calls it once from a
@@ -70,20 +70,20 @@ Current integration points:
 
 | File | Role |
 |------|------|
-| `src/shared/EngineDjvuDec.cpp` | Engine using the djvu_* API |
-| `src/shared/EngineCreate.cpp` | Creates the djvudec engine for DjVu files |
+| `src/ng/EngineDjvuDec.cpp` | Engine using the djvu_* API |
+| `src/ng/EngineCreate.cpp` | Creates the djvudec engine for DjVu files |
 | `cmd/helper/ng-targets.ts` | `djvudec` static lib target |
 | `ext/versions.txt` | Vendored dependency version log |
 
 ### 5. Update EngineDjvuDec (if needed)
 
-Review `src/shared/EngineDjvuDec.cpp` for any API mismatches. Common cases:
+Review `src/ng/EngineDjvuDec.cpp` for any API mismatches. Common cases:
 
 - New init function → ensure a once-guarded call before concurrent use
 - New metadata/render helpers → wire up if SumatraPDF should expose them
 - Changed struct fields → fix accessors
 
-After editing it, run `bun cmd/format.ts`.
+After editing it, run `bun cmd/ng-format.ts`.
 
 ### 6. Build and smoke-test
 

@@ -74,9 +74,9 @@ Current integration points:
 
 | File | Role |
 |------|------|
-| `src/shared/ChmFile.cpp` / `ChmFile.h` | CHM document open / entry read |
-| `src/shared/ChmDump.cpp` | `-dump-chm` diagnostics |
-| `src/shared/SumatraTestCommon.cpp` | `-test-chm` LZX / open regression |
+| `src/ng/ChmFile.cpp` / `ChmFile.h` | CHM document open / entry read |
+| `src/ng/ChmDump.cpp` | `-dump-chm` diagnostics |
+| `src/ng/SumatraTestCommon.cpp` | `-test-chm` LZX / open regression |
 | `cmd/helper/ng-targets.ts` | `chmdec` static lib target |
 | `ext/versions.txt` | Vendored dependency version log |
 

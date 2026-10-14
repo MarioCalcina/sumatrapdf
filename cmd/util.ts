@@ -30,7 +30,7 @@ export function findClangFormat(): string {
   throw new Error("couldn't find clang-format (brew install clang-format)");
 }
 
-// clang-format every generated C++ file so gen-code output matches cmd/format.ts
+// clang-format every generated C++ file so gen-code output matches cmd/ng-format.ts
 export async function clangFormatFiles(rootDir: string, relativePaths: string[]): Promise<void> {
   const clangFormatPath = findClangFormat();
   for (const rel of [...new Set(relativePaths)]) {
@@ -53,23 +53,6 @@ export async function isGitClean(dir: string): Promise<boolean> {
   return out.length === 0;
 }
 
-export function extractSumatraVersion(): string {
-  const path = join("src", "shared", "Version.h");
-  const content = readFileSync(path, "utf-8");
-  const prefix = "#define CURR_VERSION ";
-  for (const line of content.split("\n")) {
-    if (line.startsWith(prefix)) {
-      const ver = line.substring(prefix.length).trim();
-      const parts = ver.split(".");
-      if (parts.length === 0 || parts.length > 3) throw new Error(`invalid version: ${ver}`);
-      for (const p of parts) {
-        if (isNaN(parseInt(p, 10))) throw new Error(`invalid version: ${ver}`);
-      }
-      return ver;
-    }
-  }
-  throw new Error(`couldn't extract CURR_VERSION from ${path}`);
-}
 
 function normalizeNewlines(data: string): string {
   return data.replace(/\r\n/g, "\n").replace(/\r/g, "\n");

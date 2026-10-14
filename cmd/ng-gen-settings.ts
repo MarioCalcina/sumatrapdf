@@ -3,7 +3,7 @@
 
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
-import { extractSumatraVersion, clangFormatFiles, runLogged, isGitClean } from "./helper/ng-gen-util";
+import { clangFormatFiles, runLogged, isGitClean } from "./util";
 
 async function runCapture(cmd: string, args: string[], cwd?: string): Promise<string> {
   const proc = Bun.spawn([cmd, ...args], { stdout: "pipe", stderr: "pipe", cwd });
@@ -2989,7 +2989,8 @@ export async function main(opts?: { formatOutput?: boolean }) {
   const timeStart = performance.now();
   const updateWebsite = process.argv.includes("-website");
 
-  const ver = extractSumatraVersion();
+  // the sumatrapdfreader.org release whose settings pages these settings follow
+  const ver = "3.7";
   const verUrlized = ver.replaceAll(".", "-");
 
   const settingsFileName = `settings${verUrlized}.html`;

@@ -1,9 +1,7 @@
-// this file is compiled as part of mupdf library and ends up
-// in libsumatrapdf.dll, to avoid issues related to crossing .dll boundaries
-// It implements loading of Fonts included in windows
-#include "mupdf/fitz.h"
-#include "mupdf/ucdn.h"
-#include "mupdf/pdf.h"
+/* Copyright 2026 the SumatraPDF project authors (see AUTHORS file).
+   License: GPLv3 */
+
+#include <stdlib.h>
 
 // Wrappers around harfbuzz allocators that use standard C malloc/free.
 // With HAVE_ATEXIT defined, harfbuzz registers atexit handlers to free

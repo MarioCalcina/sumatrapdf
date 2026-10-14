@@ -7,7 +7,7 @@ update means re-deriving our changes from a 1400-file diff.
 This directory is that record. Each `.patch` is one logical change against the
 mupdf revision we vendored, in `git diff` format, with a description of what it
 does and why. Whole files of our own that are compiled into the `mupdf` project
-are not patches: they live in `src/mupdf/` (see its README) and are not part
+are not patches: they live in `src/ng/mupdf/` (see its README) and are not part
 of the vendored tree at all.
 
 **Base revision: mupdf `1.28.5`** (tag `1.28.5`, commit `8ad45e92f`), the
@@ -44,7 +44,7 @@ relative to `ext/mupdf`, so `-p1` from inside that directory.
 | `0043-merge-exit-code-on-failure` | `merge` exits 1 when an input or the save fails |
 | `0044-svg-unsized-image` | `<image>` with no width/height uses the raster's pixel size; a percentage `<svg>` with no viewBox adopts that size (#6266) |
 | `0046-grep-keep-page-of-pending-line` | `grep` read a text page the search had already dropped (#6276) |
-| `0047-jpeg-xl-pdf` | JPEG XL images and PDF `/JXLDecode` via jxldec (`src/mupdf/load-jxl.cpp`) |
+| `0047-jpeg-xl-pdf` | JPEG XL images and PDF `/JXLDecode` via jxldec (`src/ng/mupdf/load-jxl.cpp`) |
 | `0048-pdf-compress-enum` | `compress=flate` and `compress=brotli` reach the enum; a non-boolean used to be taken as success |
 | `0049-merge-catch-bad-write-options` | `merge -O` reports an unknown option instead of aborting with no `fz_try` |
 | `0050-rearrange-pages-keep-old-parent-tree` | `pdf_rearrange_pages` keeps the old structure `/ParentTree` alive while it is still read; Merge PDF on a tagged PDF used freed memory |

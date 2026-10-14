@@ -186,7 +186,7 @@ export function extractPageText(file: string, pageNo: number = -1): string {
   return all.split("_").join("\n");
 }
 
-// Command ids (sent with WM_COMMAND) live in src/shared/Commands.h, but they're
+// Command ids (sent with WM_COMMAND) live in src/ng/Commands.h, but they're
 // generated and renumber whenever a command is added or removed -- so tests must
 // never hardcode the integer. Look it up by name at runtime instead, so a test
 // keeps targeting the right command after the enum shifts.
@@ -194,7 +194,7 @@ let cmdIdCache: Map<string, number> | null = null;
 export function cmdId(name: string): number {
   if (!cmdIdCache) {
     cmdIdCache = new Map();
-    const src = readFileSync(join(ROOT, "src", "shared", "Commands.h"), "utf8");
+    const src = readFileSync(join(ROOT, "src", "ng", "Commands.h"), "utf8");
     const re = /\b(Cmd\w+)\s*=\s*(\d+)\b/g;
     let m: RegExpExecArray | null;
     while ((m = re.exec(src)) !== null) {
@@ -203,7 +203,7 @@ export function cmdId(name: string): number {
   }
   const id = cmdIdCache.get(name);
   if (id === undefined) {
-    throw new Error(`cmdId: '${name}' not found in src/shared/Commands.h`);
+    throw new Error(`cmdId: '${name}' not found in src/ng/Commands.h`);
   }
   return id;
 }

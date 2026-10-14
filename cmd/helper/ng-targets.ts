@@ -294,21 +294,21 @@ const dav1dArmCpu: ArchExtra = {
 // orig premake5.files.lua engines_files() plus the ebook / document-model
 // sources it needs. Listed one by one because src/ will hold the UI too.
 const enginesSources = [
-  "src/gui/UIModels.cpp",
+  "src/ng/gui/UIModels.cpp",
   "src/ng/gui/PlatformFont.cpp",
   "src/ng/gui/PlatformFont_posix.cpp",
   "src/ng/gui/PlatformText.cpp",
   "src/ng/Annotation.cpp",
-  "src/AnnotSearch.cpp",
-  "src/PdfDate.cpp",
+  "src/ng/AnnotSearch.cpp",
+  "src/ng/PdfDate.cpp",
   "src/ng/AvifReader.cpp",
   "src/ng/CachedObjects.cpp",
-  "src/ChapterTable.cpp",
+  "src/ng/ChapterTable.cpp",
   "src/ng/ChmDump.cpp",
   "src/ng/ChmFile.cpp",
-  "src/DocProperties.cpp",
+  "src/ng/DocProperties.cpp",
   "src/ng/EbookDoc.cpp",
-  "src/EbookFormatter.cpp",
+  "src/ng/EbookFormatter.cpp",
   "src/ng/EngineBase.cpp",
   "src/ng/EngineCreate.cpp",
   "src/ng/EngineDjvuDec.cpp",
@@ -318,23 +318,23 @@ const enginesSources = [
   "src/ng/EngineImages.cpp",
   "src/ng/EngineMupdf.cpp",
   "src/ng/EnginePs.cpp",
-  "src/FilterUtil.cpp",
-  "src/GumboHtmlParser.cpp",
+  "src/ng/FilterUtil.cpp",
+  "src/ng/GumboHtmlParser.cpp",
   "src/ng/HtmlFormatter.cpp",
   "src/ng/ImageReader.cpp",
   "src/ng/JxlReader.cpp",
   "src/ng/LitDoc.cpp",
   "src/ng/MobiDoc.cpp",
-  "src/PalmDbReader.cpp",
+  "src/ng/PalmDbReader.cpp",
   "src/ng/PdfCad.cpp",
   "src/ng/PdfCreator.cpp",
-  "src/PdfDarkModeColor.cpp",
-  "src/PdfDarkModeImageStats.cpp",
-  "src/PdfDarkModeProfile.cpp",
+  "src/ng/PdfDarkModeColor.cpp",
+  "src/ng/PdfDarkModeImageStats.cpp",
+  "src/ng/PdfDarkModeProfile.cpp",
   "src/ng/PdfSign.cpp",
   "src/ng/PdfSync.cpp",
   "src/ng/PngOptimizer.cpp",
-  "src/TextSearch.cpp",
+  "src/ng/TextSearch.cpp",
   "src/ng/TextSelection.cpp",
   "src/ng/WebpReader.cpp",
 ];
@@ -352,7 +352,7 @@ const appSources = [
   "src/ng/Commands.cpp",
   "src/ng/DisplayMode.cpp",
   "src/ng/DisplayModel.cpp",
-  "src/DocController.cpp",
+  "src/ng/DocController.cpp",
   "src/ng/DocumentLayout.cpp",
   "src/ng/EmbeddedResources.cpp",
   "src/ng/FileHistory.cpp",
@@ -365,8 +365,8 @@ const appSources = [
   "src/ng/NavFilesInFolderCommon.cpp",
   "src/ng/PagePosition.cpp",
   "src/ng/RefHoverDetect.cpp",
-  "src/RefHoverInternal.cpp",
-  "src/RefHoverText.cpp",
+  "src/ng/RefHoverInternal.cpp",
+  "src/ng/RefHoverText.cpp",
   "src/ng/RefHoverTextDetect.cpp",
   "src/ng/RenderCache.cpp",
   "src/ng/ShortcutParse.cpp",
@@ -383,8 +383,8 @@ export const targets: Target[] = [
     sources: [
       "src/ng/tools/test_embedded.cpp",
       "src/ng/EmbeddedResources.cpp",
-      "src/base/LogNoOp.cpp",
-      "src/shared/CrashHandlerNoOp.cpp",
+      "src/ng/base/LogNoOp.cpp",
+      "src/ng/CrashHandlerNoOp.cpp",
     ],
     includes: ["src/ng"],
     embedded: true,
@@ -396,9 +396,9 @@ export const targets: Target[] = [
     name: "MakeLZSA",
     kind: "console",
     sources: [
-      "src/shared/tools/MakeLzSA.cpp",
-      "src/shared/CrashHandlerNoOp.cpp",
-      "src/base/LogNoOp.cpp",
+      "src/ng/tools/MakeLzSA.cpp",
+      "src/ng/CrashHandlerNoOp.cpp",
+      "src/ng/base/LogNoOp.cpp",
       "ext/lzma/C/LzFind.c",
       "ext/lzma/C/LzmaEnc.c",
     ],
@@ -466,7 +466,7 @@ export const targets: Target[] = [
     name: "a-harfbuzz",
     kind: "staticlib",
     sources: ["ext/a-harfbuzz/harfbuzz.cc"],
-    // hb_*_impl: plain malloc wrappers in src/mupdf/mupdf_load_system_font.c,
+    // hb_*_impl: plain malloc wrappers in src/ng/mupdf/harfbuzz_alloc.c,
     // so harfbuzz allocation does not need mupdf's thread-local fz_hb_secret
     defines: [
       "HAVE_FALLBACK=1",
@@ -611,13 +611,13 @@ export const targets: Target[] = [
     alwaysOptimize: true,
   },
   {
-    // mupdf plus our own files that are compiled into it (src/mupdf/)
+    // mupdf plus our own files that are compiled into it (src/ng/mupdf/)
     name: "mupdf",
     kind: "staticlib",
     sources: [
       "src/ng/mupdf/*.c",
       // JPEG XL images and PDF /JXLDecode streams through jxldec
-      "src/mupdf/load-jxl.cpp",
+      "src/ng/mupdf/load-jxl.cpp",
       "ext/mupdf/source/cbz/*.c",
       "ext/mupdf/source/fitz/*.c",
       "ext/mupdf/source/html/*.c",
@@ -630,7 +630,7 @@ export const targets: Target[] = [
     ],
     exclude: [
       "ext/mupdf/source/fitz/leptonica-wrap.c", // no OCR
-      "ext/mupdf/source/fitz/noto.c", // src/mupdf/noto_sumatra.c instead
+      "ext/mupdf/source/fitz/noto.c", // src/ng/mupdf/noto_sumatra.c instead
       "ext/mupdf/source/tools/cmapdump.c",
       "ext/mupdf/source/tools/mubar.c",
       // both define main(); nothing calls muraster and GNU ld rejects the
@@ -745,7 +745,7 @@ export const targets: Target[] = [
     name: "a-unrar",
     kind: "staticlib",
     sources: ["ext/a-unrar/unrar.cpp"],
-    // unrar's own Archive class collides with src/base/Archive.cpp's Archive.
+    // unrar's own Archive class collides with src/ng/base/Archive.cpp's Archive.
     // Consumers only use the C API in dll.hpp, which never names the class,
     // so a TU-local rename is safe
     defines: ["UNRAR", "RARDLL", "SILENT", "Archive=UnrarArchive"],
@@ -874,7 +874,7 @@ export const targets: Target[] = [
     alwaysOptimize: true,
   },
   {
-    // LzSA decoder for src/base/LzmaSimpleArchive.cpp. Deliberately not
+    // LzSA decoder for src/ng/base/LzmaSimpleArchive.cpp. Deliberately not
     // liblzma: orig keeps this copy out of libarchive so the installer can
     // extract without the delay-loaded DLL.
     name: "lzma",
@@ -885,7 +885,7 @@ export const targets: Target[] = [
     alwaysOptimize: true,
   },
   {
-    // orig's "base" project: src/base plus gui/Dpi. No gpui.
+    // the base library: src/ng/base plus gui/Dpi. No gpui.
     name: "base",
     kind: "staticlib",
     sources: ["src/ng/base/*.cpp", "src/ng/base/*.mm", "src/ng/gui/Dpi*.cpp"],
@@ -894,7 +894,7 @@ export const targets: Target[] = [
       // CrashHandlerNoOp.cpp and one of SumatraLog.cpp / LogNoOp.cpp
       "src/ng/base/CrashHandler_mac.cpp",
       "src/ng/base/CrashHandler_posix.cpp",
-      "src/base/LogNoOp.cpp",
+      "src/ng/base/LogNoOp.cpp",
     ],
     defines: ["LIBARCHIVE_STATIC"],
     includes: ["src/ng", "ext/a-zlib", "ext/a-libarchive", "ext/lzma/C"],
@@ -955,7 +955,7 @@ export const targets: Target[] = [
     sources: appSources,
     defines: ["LIBARCHIVE_STATIC", "CMARK_GFM_STATIC_DEFINE", "DISABLE_DOCUMENT_RESTRICTIONS"],
     perSource: [
-      { glob: "src/shared/Commands.cpp", flags: ["-DNO_THUMBNAIL_STATE_ARG"] },
+      { glob: "src/ng/Commands.cpp", flags: ["-DNO_THUMBNAIL_STATE_ARG"] },
     ],
     // MarkdownToc.cpp renders markdown with cmark-gfm (linked in through mupdf)
     includes: [

@@ -143,7 +143,7 @@ static void LoadFontFromCacheOrNet(Str name, EmbeddedFont* f) {
     f->size = len(data);
 }
 
-// mupdf's built-in fonts (src/mupdf/noto_sumatra.c). Each is loaded once.
+// mupdf's built-in fonts (src/ng/mupdf/noto_sumatra.c). Each is loaded once.
 static const u8* LoadEmbeddedFont(const char* fileName, int* size) {
     Str name(fileName);
     AutoUnlockMutex lock(&gFontsMutex);

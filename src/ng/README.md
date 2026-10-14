@@ -1,8 +1,7 @@
 # SumatraPDF ng
 
-This fork builds ng for macOS only. Dependencies are under `ext/`. Files ng
-shares with the original tree live in `src/shared/` and `src/base/`;
-`cmd/helper/ng-shared.ts` lists them.
+This fork builds ng for macOS only. Dependencies are under `ext/`; every
+source of ours is under `src/ng/`, the base library in `src/ng/base/`.
 
 Build on a Mac with `bun cmd/ng-build.ts -dbg` or `-rel`. Outputs live in
 `out/mac/dbg` and `out/mac/rel`. The build also wraps the executable in
@@ -16,7 +15,7 @@ saves and restores settings. Pass `-- -for-testing` for a throwaway run.
 
 ## Keyboard shortcuts
 
-`src/shared/Accelerators.cpp` holds the Windows defaults and a per-platform
+`src/ng/Accelerators.cpp` holds the Windows defaults and a per-platform
 layer over them. Shortcut strings in the settings take `Cmd` (also `Command`,
 `Super`, `Meta`) for the Command key.
 
@@ -64,19 +63,16 @@ edge, `Cmd + Up / Down` to the document's. `Shift + Option + Left / Right`
 extend a mouse selection by word.
 
 Ng scripts use the `cmd/ng-` prefix, with build helpers under `cmd/helper/ng-`.
-Use `ng-gen-commands.ts` and `ng-gen-settings.ts` for ng generated headers;
-the original generators still write the original app's files. Format ng
-C/C++ with `bun cmd/ng-format.ts`. Embedded byte arrays are generated and
-ignored; shared sources and headers are staged under each build's
-`generated/shared/` so their includes use ng headers. To diverge a shared file,
-copy it into `src/ng` and remove it from `ng-shared.ts`, then update its target.
-Translation staging lives in `.work/ng`; `bun cmd/trans-dl.ts` (run by CI)
+`ng-gen-commands.ts` and `ng-gen-settings.ts` write the generated command and
+settings code. Format C/C++ with `bun cmd/ng-format.ts`. Embedded byte arrays
+are generated and ignored. Translation staging lives in `.work/ng`; `bun cmd/trans-dl.ts` (run by CI)
 writes `.work/translations.txt` from apptranslator's public history, plus
 `translations/fork.txt` for strings the history lacks, so all of orig's
-languages are complete. Numbers and dates follow the macOS region. The manual uses the same website checkout and `.work/docs` staging as the
-original app.
+languages are complete. Numbers and dates follow the macOS region. The manual comes from a
+sumatra-website checkout, staged in `.work/docs`.
 
-`mac-daily.yml` builds debug and release and runs the base unit tests.
+`mac-daily.yml` builds debug and release and runs the base unit tests;
+`mac-tests.yml` (manual) runs the integration tests in `tests/`.
 `mac-app.yml` (manual) builds `SumatraPDF-mac.dmg`, publishes it as a GitHub
 release with `update-check-mac.txt` (what Check for Updates reads: the version,
 the dmg and its SHA-256) and takes screenshots of the app.
@@ -120,8 +116,7 @@ AppKit code lives in `*_mac.mm` files, mostly `gui/NativeWindow_mac.mm`:
   app menu
 - File > Open With lists the apps Finder offers for the document, Share the
   sharing services (AirDrop, Mail, Messages...); Send by Email goes through the
-  mail sharing service. Orig's Open in Acrobat / Foxit / ... rows look for
-  Windows programs and never show
+  mail sharing service; ExternalViewers from the settings come before it
 - Settings can make SumatraPDF the default PDF reader
 - `InfoPlist.strings` in every language (`translations/infoplist.txt`) tell
   why macOS asks for the local network: the print panel looks for printers

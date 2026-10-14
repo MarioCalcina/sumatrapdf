@@ -43,7 +43,7 @@ import { commands, commandAltDescs } from "./gen-commands";
 
 // strings that should not be sent for translation
 // (e.g. command names whose display text is set dynamically)
-// ("..." is from a comment in src/base/Base.cpp)
+// ("..." is from a comment in src/ng/base/Base.cpp)
 const translationBlacklist: string[] = ["..."];
 
 const DEFAULT_SERVER = "https://www.apptranslator.org";
@@ -179,7 +179,7 @@ function extractTips(): string[] {
   const tips: string[] = [];
   // orig and ng share the tips
   {
-    const path = join("src", "shared", "HomePageCommon.cpp");
+    const path = join("src", "ng", "HomePageCommon.cpp");
     const m = tipsPattern.exec(readFileSync(path, "utf-8"));
     if (!m) throw new Error(`sumatraTips not found in ${path}`);
     tips.push(

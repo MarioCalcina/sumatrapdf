@@ -7,7 +7,7 @@
 //   --since <id or yyyy-mm-dd>            only reports whose id is greater
 //
 // A report has each frame as "module + offset" and each module's Mach-O UUID
-// (src/base/CrashHandler_mac.cpp). Symbolication is atos against the .dSYM
+// (src/ng/base/CrashHandler_mac.cpp). Symbolication is atos against the .dSYM
 // with that UUID, found via Spotlight, out/mac/*/ or .work/ng-crashes/symbols/,
 // where the .dSYM.zip of an uploaded build (build-ng-mac.ts) is downloaded to.
 // Reports are cached as .work/ng-crashes/<id>.crash, symbolicated as <id>.txt.

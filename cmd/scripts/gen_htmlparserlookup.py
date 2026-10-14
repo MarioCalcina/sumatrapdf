@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Generates src/base/HtmlTags.h / .cpp: enums for HTML tags, align attribute
+Generates src/ng/base/HtmlTags.h / .cpp: enums for HTML tags, align attribute
 values and CSS properties, plus lookups from a name to the enum value and
 from an HTML/XML entity name to its rune. Names live in tables (linear scan
 for the short lists, binary search for entities); run clang-format after.
@@ -200,8 +200,8 @@ def main():
         "tag_flags": tag_flags,
         "entities": entities_str,
     }
-    open("src/base/HtmlTags.h", "w", newline="\n").write(header)
-    open("src/base/HtmlTags.cpp", "w", newline="\n").write(code)
+    open("src/ng/base/HtmlTags.h", "w", newline="\n").write(header)
+    open("src/ng/base/HtmlTags.cpp", "w", newline="\n").write(code)
 
 
 if __name__ == "__main__":

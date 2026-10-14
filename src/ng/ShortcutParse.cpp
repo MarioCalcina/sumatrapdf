@@ -35,9 +35,10 @@ Str (*gShortcutLangCode)() = nullptr;
 
 // http://www.kbdedit.com/manual/low_level_vk_list.html
 // https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
-// virtual key names: see cmd/gen-code.ts virtKeys (regenerate with bun cmd/gen-code.ts)
+// key name -> Windows virtual key code, the key ids shortcuts are stored with;
+// each number is a zigzag-LEB128 varint (SeqStrNum). The first name of a code
+// is the one menus show.
 
-// @gen-start virt-keys-num
 // clang-format off
 static SeqStrNum gVirtKeysNum =
     "numpad0\0" "\xc0\x01" \
@@ -141,7 +142,6 @@ static SeqStrNum gVirtKeysNum =
     "'\0" "\xbc\x03" \
     "\0";
 // clang-format on
-// @gen-end virt-keys-num
 
 static bool skipVirtKey(Str& s, Str key) {
     if (!str::StartsWithI(s, key)) {

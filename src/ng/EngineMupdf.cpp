@@ -54,7 +54,7 @@ float EngineMupdfSetEbookLayoutAspect(float dyOverDx) {
     return prev;
 }
 
-// in mupdf_load_system_font.c
+// in mupdf/mupdf_load_system_font_mac.c
 extern "C" void install_load_mac_font_funcs(fz_context* ctx);
 
 static AnnotationType AnnotationTypeFromPdfAnnot(enum pdf_annot_type tp) {

@@ -114,7 +114,7 @@ function generateCode(): string {
 
 export function main() {
   const rootDir = join(import.meta.dir, "..");
-  const flagsPath = join(rootDir, "src", "shared", "Flags.cpp");
+  const flagsPath = join(rootDir, "src", "ng", "Flags.cpp");
   const content = readFileSync(flagsPath, "utf-8");
 
   const startMarker = "// @gen-start flags";
@@ -123,7 +123,7 @@ export function main() {
   const startIdx = content.indexOf(startMarker);
   const endIdx = content.indexOf(endMarker);
   if (startIdx < 0 || endIdx < 0) {
-    console.error("Could not find gen markers in src/shared/Flags.cpp");
+    console.error("Could not find gen markers in src/ng/Flags.cpp");
     process.exit(1);
   }
 
@@ -133,7 +133,7 @@ export function main() {
   const newContent = before + "\n" + generated + "\n" + after;
 
   writeFileSync(flagsPath, newContent, "utf-8");
-  console.log("Generated flags code in src/shared/Flags.cpp");
+  console.log("Generated flags code in src/ng/Flags.cpp");
 }
 
 if (import.meta.main) {

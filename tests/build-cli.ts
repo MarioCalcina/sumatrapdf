@@ -3,8 +3,6 @@ import { ROOT } from "./util.ts";
 import { outDirName, resolveSources, type BuildFlags } from "../cmd/helper/ng-compile";
 import { forArch, targets } from "../cmd/helper/ng-targets";
 import { hostArch, macArchs } from "../cmd/helper/ng-toolchain";
-import { isShared, sharedFiles } from "../cmd/helper/ng-shared";
-import { existsSync } from "node:fs";
 
 function run(args: string[], script = "ng-build.ts"): { code: number; stdout: string; stderr: string } {
   const proc = Bun.spawnSync(["bun", join(ROOT, "cmd", script), ...args], { cwd: ROOT });
@@ -45,16 +43,9 @@ export async function testit(): Promise<void> {
   for (const target of targets) {
     for (const arch of macArchs) {
       for (const src of resolveSources(forArch(target, arch), fail)) {
-        check(
-          !src.startsWith("src/") || src.startsWith("src/ng/") || isShared(src),
-          `${target.name} uses unlisted originals`,
-        );
+        check(!src.startsWith("src/") || src.startsWith("src/ng/"), `${target.name} builds ${src} outside src/ng`);
       }
     }
-  }
-  for (const src of sharedFiles) {
-    check(existsSync(join(ROOT, src)), `shared source missing: ${src}`);
-    check(!existsSync(join(ROOT, src.replace(/^src\//, "src/ng/"))), `shared source still duplicated: ${src}`);
   }
   console.log("PASS: unified build CLI validation");
 }

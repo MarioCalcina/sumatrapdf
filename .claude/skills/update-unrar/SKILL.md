@@ -23,7 +23,7 @@ description: Regenerate the amalgamated UnRAR copy in ext/a-unrar from upstream 
    bun cmd/amalgam.ts -unrar <repo-url> <tag-or-commit>
    ```
 
-   It writes `unrar.cpp`, `dll.hpp` (the C API `src/base/Archive.cpp` uses), `license.txt`, `acknow.txt` and `version.txt` into `ext/a-unrar/`.
+   It writes `unrar.cpp`, `dll.hpp` (the C API `src/ng/base/Archive.cpp` uses), `license.txt`, `acknow.txt` and `version.txt` into `ext/a-unrar/`.
    Add `-keep` to reuse the existing checkout while iterating on the amalgamation rules.
 
 2. Check `ext/a-unrar/version.txt` — it records the project homepage, source repo URL, requested

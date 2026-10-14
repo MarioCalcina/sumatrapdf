@@ -1,6 +1,6 @@
 Decode JPEG XL images and PDF /JXLDecode streams with jxldec.
 
-The decoder adapter lives in src/mupdf/load-jxl.cpp and load-jxl.h. Reuse the self-describing image path for PDF colorspaces,
+The decoder adapter lives in src/ng/mupdf/load-jxl.cpp and load-jxl.h. Reuse the self-describing image path for PDF colorspaces,
 Decode arrays and masks. Preserve JXL filters when expanding PDF streams.
 
 ---

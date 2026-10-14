@@ -1,31 +1,24 @@
 # Our additions to mupdf
 
-Files here are ours, not mupdf's: they are compiled into the `mupdf` project
-(`mupdf_files()` in `premake5.files.lua`, the `mupdf` lib in
-`cmd/deps-build-defs.ts` for ninja) but live outside the vendored `ext/mupdf`
-tree so that they are not mistaken for upstream code and do not need an
-`ext/patches/` entry. This directory is on the `mupdf` project's include path,
-so the tools we patch inside `ext/mupdf` include them by bare name
-(`#include "pkcs7-windows.h"`); our own code under `src/` uses
-`#include "mupdf/pkcs7-windows.h"`.
+Files here are ours, not mupdf's: the `mupdf` target in
+`cmd/helper/ng-targets.ts` compiles them, but they live outside the vendored
+`ext/mupdf` tree so that they are not mistaken for upstream code and do not
+need an `ext/patches/` entry. This directory is on the `mupdf` target's include
+path, so the tools we patch inside `ext/mupdf` include them by bare name
+(`#include "pkcs7_mac.h"`).
 
-- `mupdf_load_system_font.c` - loads installed fonts through the Windows font
-  directory or fontconfig on Linux for mupdf's font fallback, plus the
-  plain-malloc harfbuzz allocator wrappers
+- `mupdf_load_system_font_mac.c` — finds installed fonts through Core Text for
+  mupdf's font fallback
+- `harfbuzz_alloc.c` — plain-malloc harfbuzz allocators, safe during atexit
 - `noto_sumatra.[ch]` — compiled instead of mupdf's `noto.c`: the built-in fonts
   are not linked into the binary but fetched by file name through
-  `fz_set_builtin_font_loader()`. SumatraPDF tries the `fonts\` entries of
-  `IDR_EMBEDDED_PAK` (staged by `cmd/pack-embedded-prebuild.cmd`; wasm and
-  `SUMATRA_NO_EMBED_FONTS=1` leave them out), then a cache directory, then the
-  URL in `fonts_map.c` (`bun cmd/upload-fonts.ts`)
-- `pkcs7-windows.[ch]` — PDF signature verification and signing on the Win32
-  CryptoAPI instead of OpenSSL (patch `0003` makes mupdf's `pdfsign` / `murun`
-  call it)
-
-- `pkcs7_mac.[ch]` — PDF signing with a .pfx through the macOS Security
-  framework (ng only; no verification yet)
-
-- `load-jxl.cpp` / `load-jxl.h` - JPEG XL metadata and pixel decoding through
+  `fz_set_builtin_font_loader()`. SumatraPDF tries the `fonts/` entries of the
+  embedded archive (`cmd/helper/embedded.ts`), then a cache directory, then the
+  URL in `fonts_map.c`
+- `pkcs7_mac.[ch]` — PDF signature verification and signing with a .pfx through
+  the macOS Security framework (patch `0003` makes mupdf's `pdfsign` / `murun`
+  use it too)
+- `load-jxl.cpp` / `load-jxl.h` — JPEG XL metadata and pixel decoding through
   jxldec for MuPDF images and PDF `/JXLDecode` streams
 
 _Changes_ to mupdf itself still go into `ext/mupdf` in place and get recorded as

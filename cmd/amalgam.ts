@@ -409,7 +409,7 @@ const unrarWinSources = new Set(["isnt.cpp", "motw.cpp"]);
 function genUnrar(ctx: Ctx): void {
   const root = ctx.checkoutDir;
 
-  // src/base/Archive.cpp includes this for the RAR API; nothing else in the
+  // src/ng/base/Archive.cpp includes this for the RAR API; nothing else in the
   // header set is public.
   ctx.files.set("dll.hpp", readText(join(root, "dll.hpp")));
 
@@ -683,7 +683,7 @@ function genFreetype(ctx: Ctx): void {
   const rules: IncludeRules = { resolve: dirResolver([]), guarded: true };
   const chunks: string[] = [];
   for (const name of freetypeBaseSources) {
-    chunks.push(prepare(join(root, "src", "base", name), rules));
+    chunks.push(prepare(join(root, "src", "ng", "base", name), rules));
   }
   for (const name of freetypeModuleSources) {
     chunks.push(prepare(join(root, "src", name), rules));
@@ -1211,7 +1211,7 @@ function genLibarchive(ctx: Ctx): void {
   // The config is config_posix.h, which the build writes (libarchivePosixConfig
   // in cmd/helper/ng-targets.ts); archive_platform.h reaches it through
   // `#include PLATFORM_CONFIG_H`, a macro the inliner leaves alone.
-  // Under libarchive/ because mupdf and src/base/Archive.cpp include
+  // Under libarchive/ because mupdf and src/ng/base/Archive.cpp include
   // "libarchive/archive.h"; both ext/a-libarchive and ext/a-libarchive/libarchive
   // are on the include path, as the vendored tree's two dirs were.
   const shipped = ["archive.h", "archive_entry.h"];

@@ -140,7 +140,7 @@ void ImageReader_UnitTests() {
         FreePixmap(frame);
     }
 
-    Str icoData = file::ReadFile(StrL("src/shared/gfx/SumatraPDF-smaller.ico"));
+    Str icoData = file::ReadFile(StrL("src/gfx/SumatraPDF-smaller.ico"));
     FileTypeInfo icoInfo = GuessFileInfoFromData(icoData);
     utassert(icoInfo.nImages > 1);
     frames = PixmapsFromData(icoData);

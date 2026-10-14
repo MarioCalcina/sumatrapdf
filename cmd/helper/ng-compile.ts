@@ -13,7 +13,6 @@ import { dirname, isAbsolute, join, relative } from "node:path";
 import { Glob } from "bun";
 import { hostArch, macMinVersion, type Arch, type Toolchain } from "./ng-toolchain";
 import { findTarget, forArch, type Target } from "./ng-targets";
-import { isShared, sharedFiles, sharedPath } from "./ng-shared";
 import { embedLzsa } from "./embedded";
 import { ngVersion, versionDefines } from "./ng-version";
 
@@ -30,40 +29,6 @@ export type BuildFlags = {
 export type Fail = (msg: string) => never;
 
 export const root = join(import.meta.dir, "..", "..");
-
-function sharedDir(dir: string): string {
-  return join(dir, "generated", "shared");
-}
-
-// Stage shared files so quoted includes resolve ng headers before original headers.
-export function stageShared(dir: string): void {
-  for (const src of sharedFiles) {
-    const dst = join(sharedDir(dir), sharedPath(src));
-    let data = readFileSync(join(root, src));
-    if (/\.(cpp|c|h)$/.test(src)) {
-      const text = data.toString("utf8").replace(/(#include ")(?:\.\.\/)+ext\//g, `$1${join(root, "ext")}/`);
-      data = Buffer.from(text);
-    }
-    if (existsSync(dst) && readFileSync(dst).equals(data)) continue;
-    mkdirSync(dirname(dst), { recursive: true });
-    writeFileSync(dst, data);
-  }
-  // a file that stopped being shared would still win over ng's own
-  const staged = new Set(sharedFiles.map(sharedPath));
-  if (!existsSync(sharedDir(dir))) return;
-  for (const rel of new Glob("**/*").scanSync({ cwd: sharedDir(dir) })) {
-    if (!staged.has(rel)) rmSync(join(sharedDir(dir), rel));
-  }
-}
-
-function withShared(t: Target, dir: string): Target {
-  return {
-    ...t,
-    includes: (t.includes ?? []).flatMap((p) =>
-      p.startsWith("src/ng") ? [p, relative(root, join(sharedDir(dir), p.replace(/^src\/ng/, "src")))] : [p],
-    ),
-  };
-}
 
 // ─── output layout ────────────────────────────────────────────────────────
 
@@ -99,18 +64,9 @@ export function resolveSources(t: Target, fail: Fail): string[] {
   for (const pattern of t.sources) {
     const g = new Glob(pattern);
     const matches = Array.from(g.scanSync({ cwd: root, dot: false }));
-    if (pattern.startsWith("src/")) {
-      matches.push(
-        ...sharedFiles.filter((p) => {
-          const path = sharedPath(p);
-          return g.match(pattern.startsWith("src/ng/") ? path.replace(/^src\//, "src/ng/") : path);
-        }),
-      );
-    }
     if (matches.length === 0) fail(`target ${t.name}: no files match ${pattern}`);
     for (const m of matches.sort()) {
-      const path = sharedPath(m);
-      if (excluded.some((e) => e.match(m) || e.match(path) || e.match(path.replace(/^src\//, "src/ng/")))) continue;
+      if (excluded.some((e) => e.match(m))) continue;
       if (!out.includes(m)) out.push(m);
     }
   }
@@ -220,9 +176,7 @@ function perSourceFlags(t: Target, src: string, arch: Arch): string[] {
   const out: string[] = [];
   for (const ps of t.perSource ?? []) {
     if (ps.arch && !ps.arch.includes(arch)) continue;
-    const glob = new Glob(ps.glob);
-    const path = sharedPath(src);
-    if (!glob.match(src) && !glob.match(path) && !glob.match(path.replace(/^src\//, "src/ng/"))) continue;
+    if (!new Glob(ps.glob).match(src)) continue;
     out.push(...ps.flags);
   }
   return out;
@@ -319,7 +273,7 @@ async function runPool<T>(jobs: T[], n: number, fn: (job: T) => Promise<boolean>
 }
 
 async function compileTarget(tc: Toolchain, t0: Target, f: BuildFlags, dir: string, fail: Fail): Promise<string[]> {
-  const t = withGenerated(withShared(forArch(t0, f.arch), dir), f.arch, dir);
+  const t = withGenerated(forArch(t0, f.arch), f.arch, dir);
   const sources = resolveSources(t, fail);
   const objs: string[] = [];
   const jobs: CompileJob[] = [];
@@ -335,10 +289,6 @@ async function compileTarget(tc: Toolchain, t0: Target, f: BuildFlags, dir: stri
     if (!flagsChanged && !needsCompile(src, obj)) continue;
     mkdirSync(dirname(obj), { recursive: true });
     const cmd = compileCmd(tc, t, f, src, obj);
-    if (isShared(src)) {
-      const staged = join(sharedDir(dir), sharedPath(src));
-      for (let i = 0; i < cmd.length; i++) if (cmd[i] === src) cmd[i] = staged;
-    }
     jobs.push({ src, obj, cmd });
   }
   if (jobs.length === 0) {

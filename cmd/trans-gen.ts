@@ -229,7 +229,7 @@ function genTranslationInfoCpp() {
   );
   const fileContent = compactCTmpl.replace("{{langs}}", rows.join("\n"));
 
-  const path = join("src", "shared", "TranslationLangs.cpp");
+  const path = join("src", "ng", "TranslationLangs.cpp");
   console.log(`fileContent: path: ${path}, file size: ${fileContent.length}`);
   Bun.write(path, fileContent);
 }
