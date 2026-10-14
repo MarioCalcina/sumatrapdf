@@ -1,14 +1,14 @@
-signatures: use our Windows CryptoAPI pkcs7 helper instead of OpenSSL
+signatures: use our macOS Security pkcs7 helper instead of OpenSSL
 
-Signature verification and signing go through the Windows CryptoAPI instead of
-OpenSSL, which we do not link. The helper itself (pkcs7-windows.[ch]) is not
-part of the mupdf tree: it lives in src/mupdf/ (our additions to mupdf, as
-opposed to patches) and src/mupdf is on the mupdf include path. pdfsign.c and
-murun.c call pkcs7_windows_* in place of pkcs7_openssl_*.
+Signature verification and signing go through Security.framework instead of
+OpenSSL, which we do not link. The helper itself (pkcs7_mac.[ch]) is not part
+of the mupdf tree: it lives in src/ng/mupdf/ (our additions to mupdf, as
+opposed to patches), which is on the mupdf include path. pdfsign.c and
+murun.c call pkcs7_mac_* in place of pkcs7_openssl_*.
 
 ---
 diff --git a/source/tools/murun.c b/source/tools/murun.c
-index 61b6219..733f986 100644
+index 61b6219..a935cc2 100644
 --- a/source/tools/murun.c
 +++ b/source/tools/murun.c
 @@ -24,7 +24,7 @@
@@ -16,7 +16,7 @@ index 61b6219..733f986 100644
  #if FZ_ENABLE_PDF
  #include "mupdf/pdf.h"
 -#include "mupdf/helpers/pkcs7-openssl.h"
-+#include "pkcs7-windows.h"
++#include "pkcs7_mac.h"
  #endif
  
  #if FZ_ENABLE_JS
@@ -25,7 +25,7 @@ index 61b6219..733f986 100644
  	fz_try(ctx)
  	{
 -		verifier = pkcs7_openssl_new_verifier(ctx);
-+		verifier = pkcs7_windows_new_verifier(ctx);
++		verifier = pkcs7_mac_new_verifier(ctx);
  		val = pdf_check_widget_certificate(ctx, verifier, widget);
  	}
  	fz_always(ctx)
@@ -34,7 +34,7 @@ index 61b6219..733f986 100644
  	fz_try(ctx)
  	{
 -		verifier = pkcs7_openssl_new_verifier(ctx);
-+		verifier = pkcs7_windows_new_verifier(ctx);
++		verifier = pkcs7_mac_new_verifier(ctx);
  		val = pdf_check_widget_digest(ctx, verifier, widget);
  	}
  	fz_always(ctx)
@@ -43,7 +43,7 @@ index 61b6219..733f986 100644
  	fz_try(ctx)
  	{
 -		verifier = pkcs7_openssl_new_verifier(ctx);
-+		verifier = pkcs7_windows_new_verifier(ctx);
++		verifier = pkcs7_mac_new_verifier(ctx);
  		dn = pdf_signature_get_widget_signatory(ctx, verifier, widget);
  		if (dn)
  		{
@@ -52,7 +52,7 @@ index 61b6219..733f986 100644
  		fz_buffer *buf = ffi_tonewbuffer(J, 1);
  		fz_try(ctx)
 -			signer = pkcs7_openssl_read_pfx_from_buffer(ctx, buf, password);
-+			signer = pkcs7_windows_read_pfx_from_buffer(ctx, buf, password);
++			signer = pkcs7_mac_read_pfx_from_buffer(ctx, buf, password);
  		fz_always(ctx)
  			fz_drop_buffer(ctx, buf);
  		fz_catch(ctx)
@@ -61,12 +61,12 @@ index 61b6219..733f986 100644
  		const char *filename = js_tostring(J, 1);
  		fz_try(ctx)
 -			signer = pkcs7_openssl_read_pfx(ctx, filename, password);
-+			signer = pkcs7_windows_read_pfx(ctx, filename, password);
++			signer = pkcs7_mac_read_pfx(ctx, filename, password);
  		fz_catch(ctx)
  			rethrow(J);
  	}
 diff --git a/source/tools/pdfsign.c b/source/tools/pdfsign.c
-index b524dbd..501dcc4 100644
+index b524dbd..ce00eba 100644
 --- a/source/tools/pdfsign.c
 +++ b/source/tools/pdfsign.c
 @@ -26,7 +26,7 @@
@@ -74,7 +74,7 @@ index b524dbd..501dcc4 100644
  #include "mupdf/fitz.h"
  #include "mupdf/pdf.h"
 -#include "mupdf/helpers/pkcs7-openssl.h"
-+#include "pkcs7-windows.h"
++#include "pkcs7_mac.h"
  
  #include <string.h>
  #include <stdlib.h>
@@ -83,7 +83,7 @@ index b524dbd..501dcc4 100644
  	}
  
 -	verifier = pkcs7_openssl_new_verifier(ctx);
-+	verifier = pkcs7_windows_new_verifier(ctx);
++	verifier = pkcs7_mac_new_verifier(ctx);
  	fz_var(dn);
  	fz_try(ctx)
  	{
@@ -92,7 +92,7 @@ index b524dbd..501dcc4 100644
  	fz_try(ctx)
  	{
 -		signer = pkcs7_openssl_read_pfx(ctx, certificatefile, certificatepassword);
-+		signer = pkcs7_windows_read_pfx(ctx, certificatefile, certificatepassword);
++		signer = pkcs7_mac_read_pfx(ctx, certificatefile, certificatepassword);
  
  		parent = pdf_dict_get(ctx, signature, PDF_NAME(P));
  		if (pdf_is_dict(ctx, parent))
@@ -101,7 +101,7 @@ index b524dbd..501dcc4 100644
  	}
  
 -	verifier = pkcs7_openssl_new_verifier(ctx);
-+	verifier = pkcs7_windows_new_verifier(ctx);
++	verifier = pkcs7_mac_new_verifier(ctx);
  
  	dn = pdf_signature_get_signatory(ctx, verifier, doc, signature);
  	if (dn)

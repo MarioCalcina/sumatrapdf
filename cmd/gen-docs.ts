@@ -1,11 +1,11 @@
 // Stages the in-app manual under .work/docs: the markdown pages (from the
 // sumatra-website repo) reachable from SumatraPDF-documentation.md, a
 // manifest, the concatenated all-docs.md and the static files the on-demand
-// renderer (docs/gen_docs.render.js) needs. The build's prebuild packs that dir into IDR_EMBEDDED_PAK.
+// renderer (docs/gen_docs.render.js) needs. The build packs that dir into the
+// app's embedded archive (cmd/helper/embedded.ts).
 import { readFileSync, writeFileSync, existsSync, readdirSync, mkdirSync, renameSync, rmSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { commands as commandsDef } from "./gen-commands";
-import { checkCdnImages } from "./r2";
 import { copyFileNormalized, websiteDocsDir } from "./util.js";
 
 const docsDir = "docs";
@@ -134,10 +134,9 @@ function writeBundledRenderJs(outDir: string): void {
   writeFileSync(join(outDir, "gen_docs.render.js"), template.replace(marker, bundle));
 }
 
-// Build the manual in a scratch dir and swap it in at the end: a build's
-// prebuild (cmd/pack-embedded-prebuild.cmd) mirrors .work/docs and packs
-// without the manual when the dir is missing, so it must never see a
-// half-written one.
+// Build the manual in a scratch dir and swap it in at the end: the build
+// packs .work/docs, without the manual when the dir is missing, so it must
+// never see a half-written one.
 function writeManualPakFiles(pages: string[]): void {
   const outDir = `${manualOutDir}.tmp`;
   rmSync(outDir, { recursive: true, force: true });
@@ -249,8 +248,8 @@ function checkCommandsAreDocumented(): void {
 }
 
 export type GenDocsOptions = {
-  // called from the build scripts: no network (r2 image check) and no
-  // Commands.md audit, just a fresh .work/docs for the prebuild to pack
+  // called from the build scripts: no Commands.md audit, just a fresh
+  // .work/docs for the prebuild to pack
   forBuild?: boolean;
 };
 
@@ -267,13 +266,7 @@ export async function main(opts: GenDocsOptions = {}) {
   // validates links by walking the doc graph from the main page
   const pages = collectPages();
   writeManualPakFiles(pages);
-  if (!opts.forBuild) {
-    await checkCdnImages([mdDir]);
-  }
 
-  // the build's prebuild (cmd/pack-embedded-prebuild.cmd) stages .work/docs
-  // with translations + marked/mermaid under out/<cfg>/embedded[-static]
-  // and packs IDR_EMBEDDED_PAK, so rebuild the exe to pick up the new manual
   console.log(
     `To preview on-demand rendering, open: file://${resolve(join(manualOutDir, "manual.shell.html"))} (needs a local server or in-app help)`,
   );
