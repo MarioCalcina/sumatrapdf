@@ -7,12 +7,10 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlClient, ControlCommand } from "./control.ts";
-import { IS_MAC } from "./host.ts";
-import { assemblePdf, cmdId, runStandalone, SLOW_BUILD_FACTOR, tmpPath, USE_NG } from "./util.ts";
-import { captureWindowToPng, enumWindows, findTopWindow, getWindowPid, getWindowText, sleep } from "./winapi.ts";
+import { assemblePdf, cmdId, runStandalone, SLOW_BUILD_FACTOR, tmpPath } from "./util.ts";
+import { sleep } from "./winapi.ts";
 import { killAndWait, launchControlled, sendCommand } from "./win-automation.ts";
 
-const FLOAT_CLASS = "SUMATRA_ANNOT_FILTER_WND";
 // GetLightness units: muted text must stay this far from its fill (issue #6123)
 const MIN_DELTA = 80;
 
@@ -48,29 +46,13 @@ async function annotDump(client: ControlClient): Promise<string> {
   return String(res[1] ?? "");
 }
 
-function findAnnotList(pid: number): number {
-  // ng's tool windows use gpui's class. The list's title is Annotations.
-  if (USE_NG) {
-    let found = 0;
-    enumWindows((hwnd) => {
-      if (getWindowPid(hwnd) === pid && getWindowText(hwnd) === "Annotations") {
-        found = hwnd;
-        return false;
-      }
-      return true;
-    });
-    return found;
-  }
-  return findTopWindow(pid, FLOAT_CLASS);
-}
-
 async function waitFloat(client: ControlClient, pid: number): Promise<{ dump: string; hwnd: number }> {
   const deadline = Date.now() + 8000 * SLOW_BUILD_FACTOR;
   let dump = "";
   for (;;) {
     dump = await annotDump(client);
     // macOS has no HWND. The dump already carries the button colors.
-    const hwnd = IS_MAC ? 1 : findAnnotList(pid);
+    const hwnd = 1;
     if (/annotFilter floatVisible=1/.test(dump) && hwnd && parseSaveNew(dump).dy > 0) {
       return { dump, hwnd };
     }
@@ -113,16 +95,13 @@ export async function testit(): Promise<void> {
     sendCommand(frame, cmdId("CmdToggleEditPDF"));
     await sleep(300);
     sendCommand(frame, cmdId("CmdFindAnnotation"));
-    const pid = IS_MAC ? (proc.pid ?? 0) : getWindowPid(frame) || proc.pid!;
+    const pid = (proc.pid ?? 0);
     const { dump, hwnd } = await waitFloat(client, pid);
     if (/saveEnabled=1/.test(dump)) {
       throw new Error(`issue-6123: save buttons should be disabled with no edits\n${dump}`);
     }
 
     const rc = parseSaveNew(dump);
-    if (!IS_MAC) {
-      captureWindowToPng(hwnd, join(dir, "annot-list.png"));
-    }
     const [tr, tg, tb] = parseRgb(rc.text);
     const [br, bg, bb] = parseRgb(rc.bg);
     const delta = Math.abs(lightness(tr, tg, tb) - lightness(br, bg, bb));

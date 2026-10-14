@@ -10,47 +10,14 @@
 import { copyFileSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlClient, ControlCommand } from "./control";
-import { IS_MAC } from "./host.ts";
 import { ROOT, cmdId, runStandalone, SLOW_BUILD_FACTOR, tmpPath } from "./util";
-import {
-  enumWindows,
-  getClassName,
-  getFocusedHwnd,
-  getWindowPid,
-  getWindowRect,
-  getWindowText,
-  isWindowVisible,
-  postMessage,
-  sendText,
-  sleep,
-  WM_KEYDOWN,
-} from "./winapi";
-import { clickAt, killAndWait, launchControlled, sendCommand } from "./win-automation";
+import { sleep } from "./winapi";
+import { killAndWait, launchControlled, sendCommand } from "./win-automation";
 
 const VK_PRIOR = 0x21;
 const VK_NEXT = 0x22;
 const SRC_PDF = join(ROOT, "ext", "a-zlib", "zlib.3.pdf");
 const TERM = "the";
-
-// Orig's Find window is an owned popup with the default class. Ng's is the
-// gpui tool window of the same title. Either way, pick it out by title.
-function findFindWindow(pid: number): number {
-  let found = 0;
-  enumWindows((hwnd) => {
-    if (getWindowPid(hwnd) !== pid || !isWindowVisible(hwnd)) {
-      return true;
-    }
-    const cls = getClassName(hwnd);
-    const findClass = cls === "SumatraWgDefaultWinClass" || cls === "GpuiSystemMonitor";
-    const r = getWindowRect(hwnd);
-    if (findClass && getWindowText(hwnd) === "Find" && r.bottom - r.top > 120) {
-      found = hwnd;
-      return false;
-    }
-    return true;
-  });
-  return found;
-}
 
 // "sel" is the results list's current item. NOTREADY until the count scan ends.
 async function resultsSel(client: ControlClient): Promise<number> {
@@ -174,46 +141,8 @@ export async function testit(): Promise<void> {
   try {
     await client.waitForRenderIdle();
     await client.setNotificationsEnabled(false);
-    if (IS_MAC) {
-      await macPageResults(client, frame);
-      return;
-    }
-    const pid = getWindowPid(frame);
-
-    sendCommand(frame, cmdId("CmdFindFirst"));
-    const deadline = Date.now() + 5000 * SLOW_BUILD_FACTOR;
-    let findWnd = 0;
-    while (Date.now() < deadline) {
-      findWnd = findFindWindow(pid);
-      if (findWnd) {
-        break;
-      }
-      await sleep(100);
-    }
-    if (!findWnd) {
-      throw new Error("issue-6117: the Find window did not open");
-    }
-    sendText(getFocusedHwnd(frame), TERM, true);
-    await resultsSel(client); // wait out the count scan
-
-    // focus the results list by clicking a row, the way the report describes
-    await clickAt(findWnd, 60, 120, 500 * SLOW_BUILD_FACTOR);
-    const start = await resultsSel(client);
-    if (start < 0) {
-      throw new Error("issue-6117: clicking a result did not select it");
-    }
-
-    // PageDown must move the list by more than one row and must not be eaten
-    // by the document's scroll accelerator
-    postMessage(findWnd, WM_KEYDOWN, VK_NEXT, 0);
-    const afterDown = await waitForSel(
-      client,
-      (sel) => sel > start + 1,
-      `PageDown did not move a whole page from ${start}`,
-    );
-
-    postMessage(findWnd, WM_KEYDOWN, VK_PRIOR, 0);
-    await waitForSel(client, (sel) => sel < afterDown, `PageUp did not move back from ${afterDown}`);
+    await macPageResults(client, frame);
+    return;
   } finally {
     client.close();
     await killAndWait(proc);

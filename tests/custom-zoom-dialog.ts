@@ -8,19 +8,10 @@
 
 import { join } from "node:path";
 import { ControlClient, ControlCommand, withControlledSumatra } from "./control.ts";
-import { IS_MAC } from "./host.ts";
-import { EXE, ROOT, USE_NG, cmdId, runStandalone, SLOW_BUILD_FACTOR, writeAppdata } from "./util.ts";
+import { EXE, ROOT, cmdId, runStandalone, SLOW_BUILD_FACTOR, writeAppdata } from "./util.ts";
 import {
   ensureModifierKeysUp,
-  enumWindows,
-  findChildWindow,
-  getClassName,
-  getWindowPid,
-  getWindowRect,
-  getControlText,
-  getWindowText,
   getWorkArea,
-  isWindowVisible,
   postMessage,
   sleep,
   VK_DOWN,
@@ -30,8 +21,6 @@ import {
   WM_KEYUP,
 } from "./winapi.ts";
 import { sendCommand, waitForFrame } from "./win-automation.ts";
-
-const DIALOG_CLASS = "SumatraWgDefaultWinClass";
 
 // The mac dialog is a tool window. 1 is only a stand-in so the key posts,
 // which the control channel delivers to the modal dialog.
@@ -84,36 +73,11 @@ const ZOOM_LEVELS = [
   "8.33%",
 ];
 
-function findDialog(pid: number, frame: number): number {
-  let res = 0;
-  enumWindows((hwnd) => {
-    if (hwnd === frame || getWindowPid(hwnd) !== pid || !isWindowVisible(hwnd)) {
-      return true;
-    }
-    const cls = getClassName(hwnd);
-    // ng: the dialog is a gpui tool window titled Zoom, not the default class
-    const ngZoom = cls === "GpuiSystemMonitor" && getWindowText(hwnd) === "Zoom";
-    if (cls === DIALOG_CLASS || ngZoom) {
-      res = hwnd;
-      return false;
-    }
-    return true;
-  });
-  return res;
-}
-
 async function waitForDialog(pid: number, frame: number): Promise<number> {
   const deadline = Date.now() + 5000 * SLOW_BUILD_FACTOR;
   for (;;) {
-    if (IS_MAC) {
-      if (await macZoom()) {
-        return 1;
-      }
-    } else {
-      const hwnd = findDialog(pid, frame);
-      if (hwnd) {
-        return hwnd;
-      }
+    if (await macZoom()) {
+      return 1;
     }
     if (Date.now() > deadline) {
       throw new Error("custom-zoom-dialog: the dialog did not open");
@@ -125,7 +89,7 @@ async function waitForDialog(pid: number, frame: number): Promise<number> {
 async function waitForDialogGone(pid: number, frame: number): Promise<void> {
   const deadline = Date.now() + 5000 * SLOW_BUILD_FACTOR;
   for (;;) {
-    const open = IS_MAC ? (await macZoom()) !== null : findDialog(pid, frame) !== 0;
+    const open = (await macZoom()) !== null;
     if (!open) {
       return;
     }
@@ -148,9 +112,6 @@ async function pressKey(hwnd: number, vkey: number): Promise<void> {
 // orig reads the Edit child. ng has no child HWND; the field is the tool
 // window's focused edit, named customzoom on the control channel.
 async function fieldNow(client: ControlClient, edit: number): Promise<string> {
-  if (!USE_NG) {
-    return getControlText(edit);
-  }
   const res = await client.request(ControlCommand.TestToolWindow, ["state", "customzoom"]);
   const m = /editText='([^']*)'/.exec(String(res[1] ?? ""));
   return m?.[1] ?? "";
@@ -228,7 +189,7 @@ async function checkTallList(): Promise<void> {
 
       sendCommand(frame, cmdId("CmdZoomCustom"));
       const dlg = await waitForDialog(pid, frame);
-      const dr = IS_MAC ? (await macZoom())!.rect : getWindowRect(dlg);
+      const dr = (await macZoom())!.rect;
       const wa = getWorkArea();
       if (dr.bottom - dr.top > wa.bottom - wa.top) {
         throw new Error(
@@ -237,7 +198,7 @@ async function checkTallList(): Promise<void> {
         );
       }
       // still usable: the field follows the list, which now scrolls
-      const edit = USE_NG ? dlg : findChildWindow(dlg, "Edit");
+      const edit = dlg;
       await editText(client, edit, "100%", "the field did not start on the current zoom");
       // the list runs largest first, so the level under 100% is 90%
       await pressKey(edit, VK_DOWN);
@@ -266,21 +227,18 @@ export async function testit(): Promise<void> {
       sendCommand(frame, cmdId("CmdZoomCustom"));
       const dlg = await waitForDialog(pid, frame);
 
-      const title = IS_MAC ? (await macZoom())!.title : getWindowText(dlg);
+      const title = (await macZoom())!.title;
       if (title !== "Zoom") {
         throw new Error(`custom-zoom-dialog: the title is "${title}", want "Zoom"`);
       }
-      if (!USE_NG && findChildWindow(dlg, "ComboBox")) {
-        throw new Error("custom-zoom-dialog: the zoom is still a combo box");
-      }
-      const edit = USE_NG ? dlg : findChildWindow(dlg, "Edit");
+      const edit = dlg;
       if (!edit) {
         throw new Error("custom-zoom-dialog: no edit field");
       }
       // the list is drawn by the dialog, not a window of its own, so what says
       // it is there is the height it takes and the arrow keys below
-      const dr = IS_MAC ? (await macZoom())!.rect : getWindowRect(dlg);
-      const rowDy = USE_NG ? 22 : getWindowRect(edit).bottom - getWindowRect(edit).top;
+      const dr = (await macZoom())!.rect;
+      const rowDy = 22;
       if (dr.bottom - dr.top < 6 * rowDy) {
         throw new Error(`custom-zoom-dialog: the dialog is too short to hold a list ${JSON.stringify(dr)}`);
       }
@@ -308,7 +266,7 @@ export async function testit(): Promise<void> {
       // order, with no separator row and nothing beyond the ends
       sendCommand(frame, cmdId("CmdZoomCustom"));
       const dlg2 = await waitForDialog(pid, frame);
-      const edit2 = USE_NG ? dlg2 : findChildWindow(dlg2, "Edit");
+      const edit2 = dlg2;
       await editText(client, edit2, "125%", "reopening did not show the zoom it is at");
       const down = await walk(client, edit2, VK_DOWN);
       const up = await walk(client, edit2, VK_UP);

@@ -5,19 +5,12 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlClient, ControlCommand } from "./control.ts";
-import { IS_MAC } from "./host.ts";
-import { cmdId, runStandalone, SLOW_BUILD_FACTOR, tmpPath, USE_NG, makeBlankPdf } from "./util.ts";
+import { cmdId, runStandalone, SLOW_BUILD_FACTOR, tmpPath, makeBlankPdf } from "./util.ts";
 import {
-  captureWindowPixels,
   clientToScreen,
-  getClassName,
   getClientRect,
-  getFocusedHwnd,
-  getRootWindow,
   packCoords,
-  postMessage,
   sendMessage,
-  sendText,
   setCursorPos,
   sleep,
   MK_SHIFT,
@@ -25,12 +18,10 @@ import {
   VK_ESCAPE,
   VK_RETURN,
   WM_COMMAND,
-  WM_KEYDOWN,
   WM_MOUSEMOVE,
 } from "./winapi.ts";
 import {
   clickAt,
-  findChildByClass,
   findCanvas,
   killAndWait,
   launchControlled,
@@ -157,57 +148,7 @@ async function executeFromCommandPaletteNg(client: ControlClient, frame: number)
 }
 
 async function executeFromCommandPalette(client: ControlClient, frame: number): Promise<void> {
-  if (USE_NG) {
-    await executeFromCommandPaletteNg(client, frame);
-    return;
-  }
-  sendCommand(frame, cmdId("CmdCommandPalette"));
-  const openDeadline = Date.now() + 8_000;
-  let palette = 0;
-  let edit = 0;
-  while (Date.now() < openDeadline) {
-    edit = getFocusedHwnd(frame);
-    if (edit && getClassName(edit) === "Edit") {
-      palette = getRootWindow(edit);
-      if (palette && palette !== frame) {
-        break;
-      }
-    }
-    await sleep(50);
-  }
-  if (!palette || !edit) {
-    throw new Error("line-annotation-placement: command palette did not open");
-  }
-
-  const query = ">Create Line Annotation";
-  sendText(edit, query);
-  const filterDeadline = Date.now() + 3_000;
-  let itemCount = 0;
-  for (;;) {
-    const res = await client.request(ControlCommand.TestCommandPalette, []);
-    const raw = String(res[1] ?? "");
-    const m = /items=(\d+) querySel=-?\d+,-?\d+ queryLen=(\d+) cmd=(-?\d+)/.exec(raw);
-    if (res[0] === 0 && m && +m[2]! === query.length) {
-      itemCount = +m[1]!;
-      break;
-    }
-    if (Date.now() > filterDeadline) {
-      throw new Error(`line-annotation-placement: palette query did not settle\n${raw}`);
-    }
-    await sleep(40);
-  }
-
-  for (let i = 0; i < itemCount; i++) {
-    const res = await client.request(ControlCommand.TestCommandPalette, []);
-    const raw = String(res[1] ?? "");
-    const m = /cmd=(-?\d+)/.exec(raw);
-    if (res[0] === 0 && m && +m[1]! === cmdId("CmdCreateAnnotLine")) {
-      await pressKey(edit, VK_RETURN, 0);
-      return;
-    }
-    postMessage(edit, WM_KEYDOWN, VK_DOWN, 0);
-  }
-  throw new Error("line-annotation-placement: Line annotation command was not in the filtered palette");
+  await executeFromCommandPaletteNg(client, frame);
 }
 
 function moveMouse(canvas: number, point: Point, key = 0): void {
@@ -269,24 +210,20 @@ export async function testit(): Promise<void> {
     const bx = lineButton.x + Math.floor(lineButton.dx / 2);
     const by = lineButton.y + Math.floor(lineButton.dy / 2);
     const clickLineToolbar = async () => {
-      if (USE_NG) {
-        // a button laid out or re-enabled this frame can't be hit until the frame
-        // is painted: click until the tool takes
-        const deadline = Date.now() + TOOLBAR_CLICK_TIMEOUT_MS * SLOW_BUILD_FACTOR;
-        for (;;) {
-          const res = await client.request(ControlCommand.TestInput, ["click", bx, by, 0, 0]);
-          const raw = String(res[1] ?? "");
-          if (res[0] !== 0 || !raw.startsWith("OK")) {
-            throw new Error(`line-annotation-placement: toolbar click failed: ${raw}`);
-          }
-          await sleep(TOOLBAR_CLICK_SETTLE_MS);
-          if ((await placementState(client)).active || Date.now() > deadline) {
-            return;
-          }
+      // a button laid out or re-enabled this frame can't be hit until the frame
+      // is painted: click until the tool takes
+      const deadline = Date.now() + TOOLBAR_CLICK_TIMEOUT_MS * SLOW_BUILD_FACTOR;
+      for (;;) {
+        const res = await client.request(ControlCommand.TestInput, ["click", bx, by, 0, 0]);
+        const raw = String(res[1] ?? "");
+        if (res[0] !== 0 || !raw.startsWith("OK")) {
+          throw new Error(`line-annotation-placement: toolbar click failed: ${raw}`);
+        }
+        await sleep(TOOLBAR_CLICK_SETTLE_MS);
+        if ((await placementState(client)).active || Date.now() > deadline) {
+          return;
         }
       }
-      const toolbar = findChildByClass(frame, "SUMATRA_VIRT_TOOLBAR");
-      await clickAt(toolbar, bx, by, 0);
     };
 
     await clickLineToolbar();
@@ -319,7 +256,7 @@ export async function testit(): Promise<void> {
     }
 
     await client.setNotificationsEnabled(false);
-    const before = IS_MAC ? null : captureWindowPixels(canvas);
+    const before = null;
     const blueBefore = countPreviewBlue(before, start, end);
     // SetCursorPos queues a WM_MOUSEMOVE with no Shift, which can land after the
     // synthetic one and undo the snap. Resend until the 45-degree preview sticks.
@@ -342,18 +279,6 @@ export async function testit(): Promise<void> {
     state = await placementState(client);
     if (!snapped || !state.raw.includes(`end=${end.x},${end.y}`)) {
       throw new Error(`line-annotation-placement: releasing Shift did not restore the pointer endpoint\n${state.raw}`);
-    }
-    if (IS_MAC) {
-      console.log("SKIP line-annotation-placement: preview pixels are read from a window DC");
-    } else {
-      await sleep(150);
-      const after = captureWindowPixels(canvas);
-      const blueAfter = countPreviewBlue(after, start, end);
-      if (blueAfter < blueBefore + 80) {
-        throw new Error(
-          `line-annotation-placement: live preview did not paint while moving (${blueBefore} -> ${blueAfter})`,
-        );
-      }
     }
 
     await clickAt(canvas, outside.x, outside.y, 0);

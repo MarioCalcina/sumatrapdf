@@ -13,21 +13,9 @@
 
 import { writeFileSync } from "node:fs";
 import { ControlCommand } from "./control.ts";
-import { IS_MAC } from "./host.ts";
-import { runStandalone, SLOW_BUILD_FACTOR, tmpPath, USE_NG } from "./util.ts";
-import { clickAt, findCanvas, killAndWait, launchControlled } from "./win-automation.ts";
-import {
-  enumChildWindows,
-  enumWindows,
-  getClassName,
-  getClientRect,
-  getControlText,
-  getWindowPid,
-  getWindowText,
-  postMessage,
-  sleep,
-  WM_CLOSE,
-} from "./winapi.ts";
+import { runStandalone, SLOW_BUILD_FACTOR, tmpPath } from "./util.ts";
+import { killAndWait, launchControlled } from "./win-automation.ts";
+import { sleep } from "./winapi.ts";
 
 // one page, one empty signature field named CEO covering most of the page
 function writePdfWithBigSigField(path: string): void {
@@ -58,58 +46,6 @@ function writePdfWithBigSigField(path: string): void {
   writeFileSync(path, pdf, "latin1");
 }
 
-// a top-level window of this process whose title is `title`, or 0
-function findWindowByTitle(pid: number, title: string): number {
-  let found = 0;
-  enumWindows((h) => {
-    if (getWindowPid(h) !== pid || getWindowText(h) !== title) {
-      return true;
-    }
-    found = h;
-    return false;
-  });
-  return found;
-}
-
-// the dialog enumerates certificates before it shows, which can take a while
-async function waitForWindowByTitle(
-  pid: number,
-  title: string,
-  timeoutMs = 12000 * SLOW_BUILD_FACTOR,
-): Promise<number> {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    const h = findWindowByTitle(pid, title);
-    if (h) {
-      return h;
-    }
-    await sleep(100);
-  }
-  return 0;
-}
-
-// text of the placement ComboBox (the one that names a signature field or
-// "new signature"). The dialog also has a certificate drop-down now (#5965).
-function comboText(hwnd: number): string {
-  let first = "";
-  let placement = "";
-  enumChildWindows(hwnd, (h) => {
-    if (getClassName(h) !== "ComboBox") {
-      return true;
-    }
-    const t = getControlText(h);
-    if (!first) {
-      first = t;
-    }
-    if (/signature|CEO|page/i.test(t)) {
-      placement = t;
-      return false;
-    }
-    return true;
-  });
-  return placement || first;
-}
-
 export async function testit(): Promise<void> {
   const pdf = tmpPath("issue-5964.pdf");
   writePdfWithBigSigField(pdf);
@@ -125,9 +61,6 @@ export async function testit(): Promise<void> {
     };
     const waitForSignDialog = async (winPid: number): Promise<number> => {
       const timeoutMs = 1500 * SLOW_BUILD_FACTOR;
-      if (!IS_MAC) {
-        return waitForWindowByTitle(winPid, "Sign Document", timeoutMs);
-      }
       const deadline = Date.now() + timeoutMs;
       while (Date.now() < deadline) {
         if (await signDialogOpen()) {
@@ -142,46 +75,28 @@ export async function testit(): Promise<void> {
     let pid = 0;
     let cx = 0;
     let cy = 0;
-    if (IS_MAC) {
-      if (await signDialogOpen()) {
-        throw new Error("issue-5964: Sign Document was already open before the click");
-      }
-      const layout = String((await client.request(ControlCommand.TestLayout, []))[1] ?? "");
-      const scale = Number(/scale=([0-9.]+)/.exec(layout)?.[1] ?? "1") || 1;
-      const m = /item name=canvas visible=\d+ rect=(-?\d+),(-?\d+),(-?\d+),(-?\d+)/.exec(layout);
-      if (!m) {
-        throw new Error("issue-5964: no canvas rect");
-      }
-      const dx = Number(m[3]);
-      const dy = Number(m[4]);
-      if (dx < 100 || dy < 100) {
-        throw new Error(`issue-5964: canvas is ${dx}x${dy}, too small to click into the field`);
-      }
-      const page = /page n=1 shown=1 .*screen=(-?\d+),(-?\d+),(-?\d+),(-?\d+)/.exec(layout);
-      if (!page) {
-        throw new Error("issue-5964: page is not on screen");
-      }
-      // TestInput is in the same dips ToDoc hit-tests. The page rect is
-      // canvas pixels plus the canvas origin in dips.
-      cx = Math.round(scale * (Number(page[1]) + Number(page[3]) / 2));
-      cy = Math.round(scale * (Number(page[2]) + Number(page[4]) / 2));
-    } else {
-      canvas = findCanvas(frame);
-      if (!canvas) {
-        throw new Error("issue-5964: could not find the canvas window");
-      }
-      pid = getWindowPid(frame);
-      if (findWindowByTitle(pid, "Sign Document")) {
-        throw new Error("issue-5964: Sign Document was already open before the click");
-      }
-      // click the middle of the canvas, which is inside the signature field
-      const cr = getClientRect(canvas);
-      if (cr.right < 100 || cr.bottom < 100) {
-        throw new Error(`issue-5964: canvas is ${cr.right}x${cr.bottom}, too small to click into the field`);
-      }
-      cx = Math.floor(cr.right / 2);
-      cy = Math.floor(cr.bottom / 2);
+    if (await signDialogOpen()) {
+      throw new Error("issue-5964: Sign Document was already open before the click");
     }
+    const layout = String((await client.request(ControlCommand.TestLayout, []))[1] ?? "");
+    const scale = Number(/scale=([0-9.]+)/.exec(layout)?.[1] ?? "1") || 1;
+    const m = /item name=canvas visible=\d+ rect=(-?\d+),(-?\d+),(-?\d+),(-?\d+)/.exec(layout);
+    if (!m) {
+      throw new Error("issue-5964: no canvas rect");
+    }
+    const dx = Number(m[3]);
+    const dy = Number(m[4]);
+    if (dx < 100 || dy < 100) {
+      throw new Error(`issue-5964: canvas is ${dx}x${dy}, too small to click into the field`);
+    }
+    const page = /page n=1 shown=1 .*screen=(-?\d+),(-?\d+),(-?\d+),(-?\d+)/.exec(layout);
+    if (!page) {
+      throw new Error("issue-5964: page is not on screen");
+    }
+    // TestInput is in the same dips ToDoc hit-tests. The page rect is
+    // canvas pixels plus the canvas origin in dips.
+    cx = Math.round(scale * (Number(page[1]) + Number(page[3]) / 2));
+    cy = Math.round(scale * (Number(page[2]) + Number(page[4]) / 2));
 
     // A click is hit-tested against the page's widgets through
     // EngineMupdf::GetFzPageInfoCanFail(), which TryLocks the engine's page and
@@ -197,25 +112,19 @@ export async function testit(): Promise<void> {
         await client.waitForRenderIdle();
         await sleep(500);
       }
-      if (IS_MAC) {
-        const res = await client.request(ControlCommand.TestInput, ["click", cx, cy, 0, 0]);
-        const raw = String(res[1] ?? "");
-        if (res[0] !== 0 || raw.startsWith("ERR")) {
-          throw new Error(`issue-5964: click failed: ${raw || res[0]}`);
-        }
-      } else {
-        await clickAt(canvas, cx, cy, 0);
+      const res = await client.request(ControlCommand.TestInput, ["click", cx, cy, 0, 0]);
+      const raw = String(res[1] ?? "");
+      if (res[0] !== 0 || raw.startsWith("ERR")) {
+        throw new Error(`issue-5964: click failed: ${raw || res[0]}`);
       }
       clicks++;
       dlg = await waitForSignDialog(pid);
     }
     if (!dlg) {
       let extra = "";
-      if (IS_MAC) {
-        const list = String((await client.request(ControlCommand.TestToolWindow, ["list"]))[1] ?? "");
-        const place = String((await client.request(ControlCommand.TestToolWindow, ["sign-placement"]))[1] ?? "");
-        extra = ` click=${cx},${cy} placement='${place.trim()}' list=${list.trim()}`;
-      }
+      const list = String((await client.request(ControlCommand.TestToolWindow, ["list"]))[1] ?? "");
+      const place = String((await client.request(ControlCommand.TestToolWindow, ["sign-placement"]))[1] ?? "");
+      extra = ` click=${cx},${cy} placement='${place.trim()}' list=${list.trim()}`;
       throw new Error(`issue-5964: ${clicks} clicks on the empty signature field didn't open Sign Document.${extra}`);
     }
 
@@ -224,12 +133,8 @@ export async function testit(): Promise<void> {
     // filled in, so give the drop-down a moment.
     let placement = "";
     for (const deadline = Date.now() + 3000 * SLOW_BUILD_FACTOR; Date.now() < deadline;) {
-      if (USE_NG) {
-        const res = await client.request(ControlCommand.TestToolWindow, ["sign-placement"]);
-        placement = String(res[1] ?? "").trim();
-      } else {
-        placement = comboText(dlg);
-      }
+      const res = await client.request(ControlCommand.TestToolWindow, ["sign-placement"]);
+      placement = String(res[1] ?? "").trim();
       if (placement) {
         break;
       }
@@ -240,11 +145,7 @@ export async function testit(): Promise<void> {
     }
     console.log(`  clicking the empty signature field opened Sign Document on '${placement}' ✓`);
 
-    if (IS_MAC) {
-      await client.request(ControlCommand.TestToolWindow, ["close", "signdocument"]);
-    } else {
-      postMessage(dlg, WM_CLOSE, 0, 0);
-    }
+    await client.request(ControlCommand.TestToolWindow, ["close", "signdocument"]);
     await sleep(200);
   } finally {
     client.close();

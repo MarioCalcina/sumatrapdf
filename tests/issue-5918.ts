@@ -11,8 +11,7 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlClient, ControlCommand } from "./control";
-import { IS_MAC } from "./host";
-import { cmdId, runStandalone, tmpPath, USE_NG } from "./util";
+import { cmdId, runStandalone, tmpPath } from "./util";
 import {
   findChildWindow,
   getWindowText,
@@ -24,15 +23,7 @@ import {
   TVM_GETCOUNT,
   WM_CLOSE,
 } from "./winapi";
-import {
-  killAndWait,
-  launchControlled,
-  launchSumatra,
-  sendCommand,
-  waitForExit,
-  waitForFrame,
-  waitForTitle,
-} from "./win-automation";
+import { killAndWait, launchControlled, sendCommand, waitForExit, waitForFrame, waitForTitle } from "./win-automation";
 
 const nFiles = 400;
 const headingsPerFile = 3;
@@ -100,11 +91,8 @@ async function launch(
   file: string,
 ): Promise<{ proc: Bun.Subprocess; client: ControlClient | null; frame: number }> {
   const path = join(dir, file);
-  if (USE_NG) {
-    const launched = await launchControlled([path]);
-    return { proc: launched.proc, client: launched.client, frame: launched.frame };
-  }
-  return { proc: launchSumatra([path]), client: null, frame: 0 };
+  const launched = await launchControlled([path]);
+  return { proc: launched.proc, client: launched.client, frame: launched.frame };
 }
 
 // The mac frame has no HWND. The current tab's path is the window title's file.
@@ -150,7 +138,7 @@ async function testTocAndNextFile(dir: string): Promise<void> {
   const wantFull = nFiles * (1 + headingsPerFile);
   try {
     const frame = launchedFrame || (await waitForFrame(proc.pid!));
-    if (IS_MAC && client) {
+    if (client) {
       await waitForFile(client, "page-0000.html", 60000);
     } else {
       await waitForTitle(frame, (t) => t.startsWith("page-0000.html"), 60000);
@@ -176,7 +164,7 @@ async function testTocAndNextFile(dir: string): Promise<void> {
         throw new Error(`issue-5918: TOC dropped to ${n} items after next-file, want it kept at ${wantFull}`);
       }
       const opened =
-        IS_MAC && client
+        client
           ? (await currentFile(client)).endsWith("page-0001.html")
           : getWindowText(frame).startsWith("page-0001.html");
       if (opened) {

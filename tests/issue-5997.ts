@@ -4,10 +4,9 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlCommand, type ControlClient } from "./control";
-import { IS_MAC } from "./host";
 import { cmdId, runStandalone, SLOW_BUILD_FACTOR, tmpPath } from "./util";
-import { clientToScreen, getClientRect, postMessage, sleep, VK_ESCAPE, WM_CHAR, WM_KEYDOWN } from "./winapi";
-import { findCanvas, killAndWait, launchControlled, openContextMenu, waitForContextMenu } from "./win-automation";
+import { sleep } from "./winapi";
+import { killAndWait, launchControlled } from "./win-automation";
 
 const AUTHOR = "Annotation author";
 const CONTENTS = "Copied annotation content";
@@ -41,38 +40,18 @@ function makePdf(): Buffer {
 }
 
 function setClipboard(value: string): void {
-  if (IS_MAC) {
-    const res = Bun.spawnSync(["pbcopy"], { stdin: Buffer.from(value), stdout: "pipe", stderr: "pipe" });
-    if (res.exitCode !== 0) {
-      throw new Error(`issue-5997: pbcopy failed: ${res.stderr.toString()}`);
-    }
-    return;
-  }
-  const res = Bun.spawnSync(["powershell.exe", "-NoProfile", "-Command", `Set-Clipboard -Value '${value}'`], {
-    stdout: "pipe",
-    stderr: "pipe",
-  });
+  const res = Bun.spawnSync(["pbcopy"], { stdin: Buffer.from(value), stdout: "pipe", stderr: "pipe" });
   if (res.exitCode !== 0) {
-    throw new Error(`issue-5997: Set-Clipboard failed: ${res.stderr.toString()}`);
+    throw new Error(`issue-5997: pbcopy failed: ${res.stderr.toString()}`);
   }
 }
 
 function clipboardText(): string {
-  if (IS_MAC) {
-    const res = Bun.spawnSync(["pbpaste"], { stdout: "pipe", stderr: "pipe" });
-    if (res.exitCode !== 0) {
-      throw new Error(`issue-5997: pbpaste failed: ${res.stderr.toString()}`);
-    }
-    return res.stdout.toString().replace(/\r?\n$/, "");
-  }
-  const res = Bun.spawnSync(["powershell.exe", "-NoProfile", "-Command", "Get-Clipboard -Raw"], {
-    stdout: "pipe",
-    stderr: "pipe",
-  });
+  const res = Bun.spawnSync(["pbpaste"], { stdout: "pipe", stderr: "pipe" });
   if (res.exitCode !== 0) {
-    throw new Error(`issue-5997: Get-Clipboard failed: ${res.stderr.toString()}`);
+    throw new Error(`issue-5997: pbpaste failed: ${res.stderr.toString()}`);
   }
-  return res.stdout.toString().trim();
+  return res.stdout.toString().replace(/\r?\n$/, "");
 }
 
 // screen= is the frame point TestContextMenuAt and ctxcmd use.
@@ -127,36 +106,9 @@ export async function testit(): Promise<void> {
   ]);
   try {
     await client.waitForRenderIdle();
-    if (IS_MAC) {
-      const at = await freeTextCenter(client);
-      await copyCommentAt(client, at.x, at.y);
-      const deadline = Date.now() + 5000 * SLOW_BUILD_FACTOR;
-      let copied = sentinel;
-      while (copied === sentinel && Date.now() < deadline) {
-        await sleep(50);
-        copied = clipboardText();
-      }
-      if (copied !== CONTENTS) {
-        throw new Error(
-          `issue-5997: copied ${JSON.stringify(copied)}, expected ${JSON.stringify(CONTENTS)} (author was ${AUTHOR})`,
-        );
-      }
-      console.log("issue-5997: copied the FreeText contents");
-      return;
-    }
-    const canvas = findCanvas(frame);
-    const cr = getClientRect(canvas);
-    const pt = clientToScreen(canvas, Math.floor(cr.right / 2), Math.floor(cr.bottom / 4));
-    openContextMenu(canvas, pt.x, pt.y);
-    const popup = await waitForContextMenu(3000);
-    if (!popup) {
-      throw new Error("issue-5997: annotation context menu did not open");
-    }
-
-    // English "Copy Comment" has the M mnemonic. Selecting it lets the real
-    // TrackPopupMenu/OnWindowContextMenu path write to the clipboard.
-    postMessage(popup, WM_CHAR, "m".charCodeAt(0), 0);
-    const deadline = Date.now() + 5000;
+    const at = await freeTextCenter(client);
+    await copyCommentAt(client, at.x, at.y);
+    const deadline = Date.now() + 5000 * SLOW_BUILD_FACTOR;
     let copied = sentinel;
     while (copied === sentinel && Date.now() < deadline) {
       await sleep(50);
@@ -167,10 +119,8 @@ export async function testit(): Promise<void> {
         `issue-5997: copied ${JSON.stringify(copied)}, expected ${JSON.stringify(CONTENTS)} (author was ${AUTHOR})`,
       );
     }
-
-    // In case the mnemonic was ignored after a failure, don't leave a popup
-    // menu open while the process is torn down.
-    postMessage(popup, WM_KEYDOWN, VK_ESCAPE, 0);
+    console.log("issue-5997: copied the FreeText contents");
+    return;
   } finally {
     client.close();
     await killAndWait(proc);

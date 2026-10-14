@@ -7,9 +7,9 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlCommand } from "./control";
-import { assemblePdf, runStandalone, tmpPath, USE_NG } from "./util";
+import { assemblePdf, runStandalone, tmpPath } from "./util";
 import { launchControlled, killAndWait } from "./win-automation";
-import { countVisibleTreeRows, findChildWindow, sleep } from "./winapi";
+import { sleep } from "./winapi";
 
 function makePdf(): string {
   const objs = [
@@ -46,29 +46,16 @@ export async function testit(): Promise<void> {
     let sidebar = false;
     while (Date.now() < deadline) {
       // ng draws the outline in the sidebar; there is no SysTreeView32
-      if (USE_NG) {
-        const raw = String((await client.request(ControlCommand.TestUiState, ["count"]))[1] ?? "");
-        rows = Number(/tocRows=(-?\d+)/.exec(raw)?.[1] ?? 0);
-        const layout = await client.layout();
-        sidebar = layout.items["sidebarTop"]?.visible === true;
-        if (sidebar && rows >= 2) {
-          break;
-        }
-      } else {
-        tree = findChildWindow(frame, "SysTreeView32");
-        if (tree) {
-          rows = countVisibleTreeRows(tree);
-          if (rows >= 2) {
-            break;
-          }
-        }
+      const raw = String((await client.request(ControlCommand.TestUiState, ["count"]))[1] ?? "");
+      rows = Number(/tocRows=(-?\d+)/.exec(raw)?.[1] ?? 0);
+      const layout = await client.layout();
+      sidebar = layout.items["sidebarTop"]?.visible === true;
+      if (sidebar && rows >= 2) {
+        break;
       }
       await sleep(40);
     }
-    if (!USE_NG && !tree) {
-      throw new Error("toc-show-on-open: bookmarks tree did not appear");
-    }
-    if (USE_NG && !sidebar) {
+    if (!sidebar) {
       throw new Error("toc-show-on-open: bookmarks tree did not appear");
     }
     if (rows < 2) {

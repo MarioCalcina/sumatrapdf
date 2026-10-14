@@ -1,5 +1,4 @@
 import { Socket, createConnection } from "node:net";
-import { IS_WIN } from "./host.ts";
 import { macControlRequest, registerControlPath } from "./mac-control.ts";
 import { ensureModifierKeysUp, killAndWait, testWindowPos } from "./winapi.ts";
 import { drainProcStderr, SLOW_BUILD_FACTOR } from "./util.ts";
@@ -242,132 +241,10 @@ function encodeRequest(cmd: number, id: number, args: ControlArg[]): Buffer {
   return Buffer.from(packet);
 }
 
-class PacketReader {
-  pos = 0;
-
-  constructor(readonly data: Buffer) {}
-
-  u16(): number {
-    const v = this.data.readUInt16LE(this.pos);
-    this.pos += 2;
-    return v;
-  }
-
-  u32(): number {
-    const v = this.data.readUInt32LE(this.pos);
-    this.pos += 4;
-    return v;
-  }
-
-  i32(): number {
-    const v = this.data.readInt32LE(this.pos);
-    this.pos += 4;
-    return v;
-  }
-
-  bytes(len: number): Buffer {
-    const v = this.data.subarray(this.pos, this.pos + len);
-    this.pos += len;
-    return v;
-  }
-}
-
-function decodeArg(r: PacketReader): ControlArg | undefined {
-  const type = r.u16();
-  if (type === ArgType.End) {
-    return undefined;
-  }
-  if (type === ArgType.Int32) {
-    return r.i32();
-  }
-  if (type === ArgType.Bytes) {
-    return r.bytes(r.u32());
-  }
-  if (type === ArgType.String) {
-    const len = r.u32();
-    const bytes = r.bytes(len);
-    const zero = r.bytes(1)[0];
-    if (zero !== 0) {
-      throw new Error("invalid control string terminator");
-    }
-    return new TextDecoder().decode(bytes);
-  }
-  if (type === ArgType.List) {
-    const n = r.u16();
-    const list: ControlArg[] = [];
-    for (let i = 0; i < n; i++) {
-      const arg = decodeArg(r);
-      if (arg === undefined) {
-        throw new Error("unexpected end marker in control list");
-      }
-      list.push(arg);
-    }
-    return list;
-  }
-  throw new Error(`unknown control argument type ${type}`);
-}
-
 // A named pipe on Windows; elsewhere a unix domain socket, <name> being its
 // path or, without a "/", /tmp/<name>.sock (see SumatraControl.cpp).
 function pipePath(pipeName: string): string {
-  if (!IS_WIN) {
-    return pipeName.includes("/") ? pipeName : `/tmp/${pipeName}.sock`;
-  }
-  return pipeName.startsWith("\\\\.\\pipe\\") ? pipeName : `\\\\.\\pipe\\${pipeName}`;
-}
-
-async function readExactly(socket: Socket, len: number): Promise<Buffer> {
-  const chunks: Buffer[] = [];
-  let total = 0;
-  while (total < len) {
-    const chunk = socket.read(len - total) as Buffer | null;
-    // Bun can return an empty buffer when nothing is readable yet. Treating
-    // that as data spins and never flushes the request we just wrote.
-    if (chunk && chunk.length > 0) {
-      chunks.push(chunk);
-      total += chunk.length;
-      continue;
-    }
-    await waitForReadable(socket);
-  }
-  return Buffer.concat(chunks, total);
-}
-
-function waitForReadable(socket: Socket): Promise<void> {
-  // if the pipe already closed (e.g. the app died on a debug report), the
-  // close/end events fired in the past and will never fire again -- reject
-  // instead of waiting forever
-  if (socket.destroyed || socket.readableEnded) {
-    return Promise.reject(new Error("control pipe closed while reading"));
-  }
-  return new Promise((resolve, reject) => {
-    const cleanup = () => {
-      socket.off("readable", onReadable);
-      socket.off("end", onEnd);
-      socket.off("close", onClose);
-      socket.off("error", onError);
-    };
-    const onReadable = () => {
-      cleanup();
-      resolve();
-    };
-    const onEnd = () => {
-      cleanup();
-      reject(new Error("control pipe closed while reading"));
-    };
-    const onClose = () => {
-      cleanup();
-      reject(new Error("control pipe closed while reading"));
-    };
-    const onError = (err: Error) => {
-      cleanup();
-      reject(err);
-    };
-    socket.once("readable", onReadable);
-    socket.once("end", onEnd);
-    socket.once("close", onClose);
-    socket.once("error", onError);
-  });
+  return pipeName.includes("/") ? pipeName : `/tmp/${pipeName}.sock`;
 }
 
 // EventEmitter requires a listener or Bun prints EPIPE when the app closes the pipe
@@ -435,40 +312,7 @@ export class ControlClient {
   async request(cmd: ControlCommand, args: ControlArg[] = []): Promise<ControlArg[]> {
     // The node socket's read loop spins on macOS once a second connection is
     // also talking. Window messages already use that connection; use it here too.
-    if (!IS_WIN) {
-      return macControlRequest(cmd, args);
-    }
-    if (this.socket.destroyed) {
-      throw new Error("control pipe closed");
-    }
-    const id = this.nextId++ & 0xffff;
-    this.socket.write(encodeRequest(cmd, id, args));
-
-    try {
-      const sizeBuf = await readExactly(this.socket, 4);
-      const size = sizeBuf.readUInt32LE(0);
-      const payload = await readExactly(this.socket, size);
-      const r = new PacketReader(payload);
-      const responseId = r.u16();
-      if (responseId !== id) {
-        throw new Error(`control response id mismatch: got ${responseId}, expected ${id}`);
-      }
-      const result: ControlArg[] = [];
-      for (;;) {
-        const arg = decodeArg(r);
-        if (arg === undefined) {
-          break;
-        }
-        result.push(arg);
-      }
-      return result;
-    } catch (e) {
-      const msg = String((e as Error)?.message ?? e);
-      if (/EPIPE|control pipe closed/i.test(msg)) {
-        throw new Error(`SumatraPDF exited while waiting for control response (${msg})`);
-      }
-      throw e;
-    }
+    return macControlRequest(cmd, args);
   }
 
   // Discards unsaved changes in every tab first, so quitting never waits on

@@ -7,9 +7,9 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlCommand } from "./control";
-import { assemblePdf, runStandalone, tmpPath, USE_NG } from "./util";
+import { assemblePdf, runStandalone, tmpPath } from "./util";
 import { launchControlled, killAndWait } from "./win-automation";
-import { findChildWindow, sleep, treeGetSelection, treeIsItemInView } from "./winapi";
+import { sleep } from "./winapi";
 
 const N_CHAPTERS = 40;
 const N_SECTIONS = 3;
@@ -64,20 +64,9 @@ async function checkOpenedAt(pdf: string, appdata: string, pageNo: number): Prom
     const deadline = Date.now() + 4000;
     let state = "bookmarks tree did not appear";
     while (Date.now() < deadline) {
-      if (USE_NG) {
-        state = String((await client.request(ControlCommand.TestUiState, ["count"]))[1] ?? "");
-        if (/tocSelShown=1/.test(state)) {
-          return;
-        }
-      } else {
-        const tree = findChildWindow(frame, "SysTreeView32");
-        const sel = tree ? treeGetSelection(tree) : 0n;
-        if (sel !== 0n) {
-          state = "selected bookmark is scrolled out of view";
-          if (treeIsItemInView(tree, sel)) {
-            return;
-          }
-        }
+      state = String((await client.request(ControlCommand.TestUiState, ["count"]))[1] ?? "");
+      if (/tocSelShown=1/.test(state)) {
+        return;
       }
       await sleep(40);
     }

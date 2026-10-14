@@ -10,18 +10,9 @@
 import { copyFileSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlCommand, type ControlClient, waitForHome } from "./control.ts";
-import { ROOT, USE_NG, cmdId, runStandalone, tmpPath } from "./util";
-import { sendMessage, setCursorPos } from "./winapi";
-import {
-  findCanvas,
-  findChildByClass,
-  launchControlled,
-  sendCommand,
-  waitForTitle,
-  killAndWait,
-} from "./win-automation";
-const WM_KEYDOWN = 0x0100;
-const WM_CHAR = 0x0102;
+import { ROOT, cmdId, runStandalone, tmpPath } from "./util";
+import { setCursorPos } from "./winapi";
+import { findCanvas, launchControlled, sendCommand, waitForTitle, killAndWait } from "./win-automation";
 const VK_RETURN = 0x0d;
 const VK_UP = 0x26;
 const VK_RIGHT = 0x27;
@@ -52,19 +43,11 @@ function makeAppDir(name: string): string {
 // changed before the queued key arrived, so the key was silently lost.
 async function key(client: ControlClient, target: number, vk: number): Promise<void> {
   // ng draws the search box in the frame, so a posted WM_KEYDOWN has no Edit
-  if (USE_NG) {
-    await client.request(ControlCommand.TestInput, ["key", vk, 0, 0, 0]);
-    return;
-  }
-  sendMessage(target, WM_KEYDOWN, vk, 0);
+  await client.request(ControlCommand.TestInput, ["key", vk, 0, 0, 0]);
 }
 
 async function typeChar(client: ControlClient, target: number, ch: string): Promise<void> {
-  if (USE_NG) {
-    await client.request(ControlCommand.TestInput, ["char", ch.charCodeAt(0), 0, 0, 0]);
-    return;
-  }
-  sendMessage(target, WM_CHAR, ch.charCodeAt(0), 0);
+  await client.request(ControlCommand.TestInput, ["char", ch.charCodeAt(0), 0, 0, 0]);
 }
 
 async function withHomePage(
@@ -87,10 +70,7 @@ async function withHomePage(
       (h) => h.entries === nFiles && h.searchBox && h.sel === 0 && !h.searchFocus,
       "home page never reached its initial selection",
     );
-    const searchEdit = USE_NG ? 0 : findChildByClass(canvas, "Edit");
-    if (!USE_NG && !searchEdit) {
-      throw new Error("issue-1136: home-page search edit not found");
-    }
+    const searchEdit = 0;
     await fn(frame, canvas, searchEdit, client);
   } finally {
     client.close();

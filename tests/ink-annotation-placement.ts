@@ -4,32 +4,20 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlClient, ControlCommand } from "./control.ts";
-import { cmdId, pollUntil, runStandalone, tmpPath, SLOW_BUILD_FACTOR, USE_NG, makeBlankPdf } from "./util.ts";
+import { cmdId, pollUntil, runStandalone, tmpPath, SLOW_BUILD_FACTOR, makeBlankPdf } from "./util.ts";
 import {
-  clientToScreen,
-  getClassName,
   getClientRect,
-  getFocusedHwnd,
-  getRootWindow,
-  MK_LBUTTON,
   packCoords,
   postMessage,
   sendMessage,
-  sendText,
-  setCursorPos,
   sleep,
   VK_DOWN,
   VK_ESCAPE,
   VK_RETURN,
   WM_COMMAND,
   WM_KEYDOWN,
-  WM_LBUTTONDOWN,
-  WM_LBUTTONUP,
-  WM_MOUSEMOVE,
 } from "./winapi.ts";
 import {
-  clickAt,
-  findChildByClass,
   findCanvas,
   killAndWait,
   launchControlled,
@@ -164,58 +152,7 @@ async function executeFromCommandPaletteNg(client: ControlClient, frame: number)
 }
 
 async function executeFromCommandPalette(client: ControlClient, frame: number): Promise<void> {
-  if (USE_NG) {
-    await executeFromCommandPaletteNg(client, frame);
-    return;
-  }
-  sendCommand(frame, cmdId("CmdCommandPalette"));
-  const openDeadline = Date.now() + 8_000;
-  let palette = 0;
-  let edit = 0;
-  while (Date.now() < openDeadline) {
-    edit = getFocusedHwnd(frame);
-    if (edit && getClassName(edit) === "Edit") {
-      palette = getRootWindow(edit);
-      if (palette && palette !== frame) {
-        break;
-      }
-    }
-    await sleep(50);
-  }
-  if (!palette || !edit) {
-    throw new Error("ink-annotation-placement: command palette did not open");
-  }
-
-  const query = ">Create Ink Annotation";
-  sendText(edit, query);
-  const filterDeadline = Date.now() + 3_000;
-  let itemCount = 0;
-  for (;;) {
-    const res = await client.request(ControlCommand.TestCommandPalette, []);
-    const raw = String(res[1] ?? "");
-    const m = /items=(\d+) querySel=-?\d+,-?\d+ queryLen=(\d+) cmd=(-?\d+)/.exec(raw);
-    if (res[0] === 0 && m && +m[2]! === query.length) {
-      itemCount = +m[1]!;
-      break;
-    }
-    if (Date.now() > filterDeadline) {
-      throw new Error(`ink-annotation-placement: palette query did not settle\n${raw}`);
-    }
-    await sleep(40);
-  }
-
-  for (let i = 0; i < itemCount; i++) {
-    const res = await client.request(ControlCommand.TestCommandPalette, []);
-    const raw = String(res[1] ?? "");
-    const m = /cmd=(-?\d+)/.exec(raw);
-    if (res[0] === 0 && m && +m[1]! === cmdId("CmdCreateAnnotInk")) {
-      postMessage(edit, WM_KEYDOWN, VK_RETURN, 0);
-      return;
-    }
-    postMessage(edit, WM_KEYDOWN, VK_DOWN, 0);
-    await sleep(80);
-  }
-  throw new Error("ink-annotation-placement: Ink command was not in the filtered palette");
+  await executeFromCommandPaletteNg(client, frame);
 }
 
 async function ngMouse(client: ControlClient, kind: string, point: Point, button: number): Promise<void> {
@@ -229,37 +166,16 @@ async function ngMouse(client: ControlClient, kind: string, point: Point, button
 async function moveMouse(client: ControlClient, canvas: number, point: Point): Promise<void> {
   // ng: a posted move is hit-tested at the real cursor, which a locked
   // desktop keeps at 0,0, so the preview never follows the point.
-  if (USE_NG) {
-    await ngMouse(client, "move", point, 0);
-    return;
-  }
-  const screen = clientToScreen(canvas, point.x, point.y);
-  setCursorPos(screen.x, screen.y);
-  sendMessage(canvas, WM_MOUSEMOVE, 0, packCoords(point.x, point.y));
+  await ngMouse(client, "move", point, 0);
 }
 
 async function drawStroke(client: ControlClient, canvas: number, points: Point[]): Promise<void> {
-  if (USE_NG) {
-    const first = points[0]!;
-    await ngMouse(client, "down", first, 0);
-    for (let i = 1; i < points.length; i++) {
-      await ngMouse(client, "move", points[i]!, 1);
-    }
-    await ngMouse(client, "up", points[points.length - 1]!, 0);
-    await sleep(100);
-    return;
-  }
   const first = points[0]!;
-  await moveMouse(client, canvas, first);
-  sendMessage(canvas, WM_LBUTTONDOWN, MK_LBUTTON, packCoords(first.x, first.y));
-  // Let SetCapture's physical-cursor move settle before submitting the path.
-  await sleep(50);
+  await ngMouse(client, "down", first, 0);
   for (let i = 1; i < points.length; i++) {
-    const point = points[i]!;
-    sendMessage(canvas, WM_MOUSEMOVE, MK_LBUTTON, packCoords(point.x, point.y));
+    await ngMouse(client, "move", points[i]!, 1);
   }
-  const last = points[points.length - 1]!;
-  sendMessage(canvas, WM_LBUTTONUP, 0, packCoords(last.x, last.y));
+  await ngMouse(client, "up", points[points.length - 1]!, 0);
   await sleep(100);
 }
 
@@ -321,12 +237,7 @@ export async function testit(): Promise<void> {
       const y = button.y + Math.floor(button.dy / 2);
       // ng draws the toolbar in the frame. A posted down/up pair can be split
       // by a cursor snap, which gpui treats as a drag.
-      if (USE_NG) {
-        await ngMouse(client, "click", { x, y }, 0);
-        return;
-      }
-      const toolbar = findChildByClass(frame, "SUMATRA_VIRT_TOOLBAR");
-      await clickAt(toolbar, x, y, 0);
+      await ngMouse(client, "click", { x, y }, 0);
     };
 
     await clickInkToolbar();
@@ -349,11 +260,7 @@ export async function testit(): Promise<void> {
       );
     }
 
-    if (USE_NG) {
-      await ngMouse(client, "click", outside, 0);
-    } else {
-      await clickAt(canvas, outside.x, outside.y, 0);
-    }
+    await ngMouse(client, "click", outside, 0);
     state = await waitForPlacement(client, false, "outside click");
     if (state.notification || state.annotations !== 0) {
       throw new Error(`ink-annotation-placement: outside first click did not cancel cleanly\n${state.raw}`);

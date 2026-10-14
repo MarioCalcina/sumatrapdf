@@ -2,10 +2,9 @@
 // Leaving "=" collapsed its layout box but the text kept painting.
 
 import { ControlClient, ControlCommand } from "./control.ts";
-import { IS_MAC } from "./host.ts";
 import { cmdId, runStandalone } from "./util.ts";
 import { killAndWait, launchControlled, sendCommand } from "./win-automation.ts";
-import { getFocusedHwnd, sendText, sleep } from "./winapi.ts";
+import { sendText, sleep } from "./winapi.ts";
 
 type Palette = { open: boolean; queryLen: number; settingHelp: boolean };
 
@@ -43,12 +42,6 @@ export async function testit(): Promise<void> {
     await waitFor(client, "the palette never opened", (p) => p.open);
     // mac types into the palette through TestInput. The query edit has no HWND.
     let edit = 0;
-    if (!IS_MAC) {
-      edit = getFocusedHwnd(frame);
-      if (!edit) {
-        throw new Error("issue-6246: no query edit");
-      }
-    }
 
     // [query, setting help expected]: in and out of "=" through other modes
     const steps: [string, boolean][] = [

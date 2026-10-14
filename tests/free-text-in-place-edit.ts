@@ -6,30 +6,19 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlClient, ControlCommand } from "./control.ts";
-import { cmdId, runStandalone, SLOW_BUILD_FACTOR, tmpPath, USE_NG, makeBlankPdf } from "./util.ts";
+import { cmdId, runStandalone, SLOW_BUILD_FACTOR, tmpPath, makeBlankPdf } from "./util.ts";
 import {
-  clientToScreen,
-  enumChildWindows,
-  findTopWindow,
-  getClassName,
-  getControlText,
   packCoords,
   sendMessage,
   sendText,
-  setCursorPos,
   sleep,
-  MK_LBUTTON,
   VK_ESCAPE,
   WM_CHAR,
   WM_COMMAND,
   WM_KEYDOWN,
   WM_KEYUP,
-  WM_LBUTTONDBLCLK,
-  WM_LBUTTONDOWN,
-  WM_LBUTTONUP,
-  WM_MOUSEMOVE,
 } from "./winapi.ts";
-import { clickAt, findCanvas, killAndWait, launchControlled, sendCommandSync } from "./win-automation.ts";
+import { findCanvas, killAndWait, launchControlled, sendCommandSync } from "./win-automation.ts";
 
 type Rect = { x: number; y: number; dx: number; dy: number };
 type EditState = { active: boolean; rect: Rect; text: string; raw: string };
@@ -94,23 +83,9 @@ async function selectedRect(client: ControlClient): Promise<Rect> {
   return { x: +m[1]!, y: +m[2]!, dx: +m[3]!, dy: +m[4]! };
 }
 
-function doubleClickAt(canvas: number, x: number, y: number): void {
-  const s = clientToScreen(canvas, x, y);
-  setCursorPos(s.x, s.y);
-  sendMessage(canvas, WM_MOUSEMOVE, 0, packCoords(x, y));
-  sendMessage(canvas, WM_LBUTTONDOWN, MK_LBUTTON, packCoords(x, y));
-  sendMessage(canvas, WM_LBUTTONUP, 0, packCoords(x, y));
-  sendMessage(canvas, WM_LBUTTONDBLCLK, MK_LBUTTON, packCoords(x, y));
-  sendMessage(canvas, WM_LBUTTONUP, 0, packCoords(x, y));
-}
-
 // ng's frame turns a posted double-click into dips with the window DPI.
 // TestInput is already in that space, same as the property-row chip.
 async function doubleClickAnnot(client: ControlClient, canvas: number, x: number, y: number): Promise<void> {
-  if (!USE_NG) {
-    doubleClickAt(canvas, x, y);
-    return;
-  }
   const first = await client.request(ControlCommand.TestInput, ["click", x, y, 0, 0]);
   const second = await client.request(ControlCommand.TestInput, ["click", x, y, 0, 0]);
   if (first[0] !== 0 || second[0] !== 0) {
@@ -118,22 +93,6 @@ async function doubleClickAnnot(client: ControlClient, canvas: number, x: number
       `free-text-in-place-edit: double-click failed: ${String(first[1] ?? "")} ${String(second[1] ?? "")}`,
     );
   }
-}
-
-// the canvas can have other Edit children; pick the one showing `pred`
-function findBox(canvas: number, pred: (text: string) => boolean): number {
-  let found = 0;
-  enumChildWindows(canvas, (hwnd) => {
-    if (getClassName(hwnd) !== "Edit") {
-      return true;
-    }
-    if (pred(getControlText(hwnd))) {
-      found = hwnd;
-      return false;
-    }
-    return true;
-  });
-  return found;
 }
 
 // WM_SETTEXT is marshalled cross-process and still runs SizeInPlaceEditToText.
@@ -149,10 +108,7 @@ function pressKey(hwnd: number, vk: number): void {
 
 // ng edits in a gpui text area on the frame. Orig's box is an Edit child.
 function editBox(frame: number, canvas: number, pred: (text: string) => boolean): number {
-  if (USE_NG) {
-    return frame;
-  }
-  return findBox(canvas, pred);
+  return frame;
 }
 
 async function clickContentsChip(client: ControlClient, procPid: number): Promise<void> {
@@ -166,18 +122,10 @@ ${raw}`);
   }
   const x = +chip[1]! + Math.floor(+chip[3]! / 2);
   const y = +chip[2]! + Math.floor(+chip[4]! / 2);
-  if (USE_NG) {
-    const res = await client.request(ControlCommand.TestInput, ["click", x, y, 0, 0]);
-    if (res[0] !== 0 || !String(res[1] ?? "").startsWith("OK")) {
-      throw new Error(`free-text-in-place-edit: contents click failed: ${String(res[1] ?? "")}`);
-    }
-    return;
+  const res = await client.request(ControlCommand.TestInput, ["click", x, y, 0, 0]);
+  if (res[0] !== 0 || !String(res[1] ?? "").startsWith("OK")) {
+    throw new Error(`free-text-in-place-edit: contents click failed: ${String(res[1] ?? "")}`);
   }
-  const tb = findTopWindow(procPid, "SumatraAnnotEditToolbar");
-  if (!tb) {
-    throw new Error("free-text-in-place-edit: property row window not found");
-  }
-  await clickAt(tb, x - +placed[1]!, y - +placed[2]!);
 }
 
 export async function testit(): Promise<void> {

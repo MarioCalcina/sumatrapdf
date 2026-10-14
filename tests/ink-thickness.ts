@@ -11,41 +11,11 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlClient, ControlCommand } from "./control.ts";
-import { IS_MAC } from "./host.ts";
-import { cmdId, pollUntil, runStandalone, tmpPath, USE_NG, makeBlankPdf } from "./util.ts";
-import {
-  clientToScreen,
-  findTopWindow,
-  getClientRect,
-  getWindowRect,
-  isWindowVisible,
-  MK_LBUTTON,
-  MK_RBUTTON,
-  packCoords,
-  postMessage,
-  sendMessage,
-  setCursorPos,
-  VK_ESCAPE,
-  WM_KEYDOWN,
-  WM_LBUTTONDOWN,
-  WM_LBUTTONUP,
-  WM_MOUSEMOVE,
-  WM_RBUTTONDOWN,
-  WM_RBUTTONUP,
-} from "./winapi.ts";
-import {
-  clickAt,
-  findCanvas,
-  findChildByClass,
-  killAndWait,
-  launchControlled,
-  sendCommandSync,
-} from "./win-automation.ts";
+import { cmdId, pollUntil, runStandalone, tmpPath, makeBlankPdf } from "./util.ts";
+import { clientToScreen, postMessage, setCursorPos, VK_ESCAPE, WM_KEYDOWN } from "./winapi.ts";
+import { findCanvas, findChildByClass, killAndWait, launchControlled, sendCommandSync } from "./win-automation.ts";
 
 const MAIN_TOOLBAR_CLASS = "SUMATRA_VIRT_TOOLBAR";
-const HOVER_MENU_CLASS = "SumatraToolbarHoverMenu";
-const ANNOT_TOOLBAR_CLASS = "SumatraAnnotEditToolbar";
-const POPUP_CLASS = "SumatraAnnotColorPopup";
 // the widest the slider goes, kInkThicknessMax in Toolbar.cpp
 const MAX_THICKNESS = 16;
 
@@ -73,10 +43,8 @@ function annotButtonRect(raw: string, cmd: number): Rect | null {
 // them, which gpui treats as a drag and the control never receives the click.
 async function ngClick(client: ControlClient, x: number, y: number, button = 0): Promise<void> {
   // The drop-down closes when the real cursor is somewhere else.
-  if (IS_MAC) {
-    const at = clientToScreen(0, x, y);
-    setCursorPos(at.x, at.y);
-  }
+  const at = clientToScreen(0, x, y);
+  setCursorPos(at.x, at.y);
   const res = await client.request(ControlCommand.TestInput, ["click", x, y, button, 0]);
   const raw = String(res[1] ?? "");
   if (res[0] !== 0 || !raw.startsWith("OK")) {
@@ -105,36 +73,6 @@ function thicknessDip(raw: string): ThicknessHit | null {
     return null;
   }
   return { value: item[6]!, x, y, x2, y2 };
-}
-
-// right-click opens the drop-down at once, without waiting for the hover delay.
-function rightClickToolbar(toolbar: number, x: number, y: number): void {
-  const s = clientToScreen(toolbar, x, y);
-  setCursorPos(s.x, s.y);
-  const lp = packCoords(x, y);
-  sendMessage(toolbar, WM_MOUSEMOVE, 0, lp);
-  sendMessage(toolbar, WM_RBUTTONDOWN, MK_RBUTTON, lp);
-  sendMessage(toolbar, WM_RBUTTONUP, 0, lp);
-}
-
-async function waitInkDropdown(
-  client: ControlClient,
-  toolbar: number,
-  btn: Rect,
-  what: string,
-): Promise<RegExpExecArray> {
-  const x = btn.x + (btn.dx >> 1);
-  const y = btn.y + (btn.dy >> 1);
-  rightClickToolbar(toolbar, x, y);
-  const re = /dropdown-item idx=\d+ cmd=\d+ current=\d rect=(-?\d+),(-?\d+),(-?\d+),(-?\d+) text=thickness=(\d+)/;
-  const dump = await pollUntil(
-    () => toolbarDump(client),
-    (s) => re.test(s),
-    {
-      error: (s) => `ink-thickness: ${what}\n${s}`,
-    },
-  );
-  return re.exec(dump)!;
 }
 
 async function markupDump(client: ControlClient): Promise<string> {
@@ -186,19 +124,6 @@ async function drawStrokeNg(client: ControlClient, pts: { x: number; y: number }
   await client.request(ControlCommand.TestInput, ["up", last.x, last.y, 0, 0]);
 }
 
-function drawStroke(canvas: number, pts: { x: number; y: number }[]): void {
-  const first = pts[0]!;
-  const s = clientToScreen(canvas, first.x, first.y);
-  setCursorPos(s.x, s.y);
-  sendMessage(canvas, WM_MOUSEMOVE, 0, packCoords(first.x, first.y));
-  sendMessage(canvas, WM_LBUTTONDOWN, MK_LBUTTON, packCoords(first.x, first.y));
-  for (let i = 1; i < pts.length; i++) {
-    sendMessage(canvas, WM_MOUSEMOVE, MK_LBUTTON, packCoords(pts[i]!.x, pts[i]!.y));
-  }
-  const last = pts[pts.length - 1]!;
-  sendMessage(canvas, WM_LBUTTONUP, 0, packCoords(last.x, last.y));
-}
-
 export async function testit(): Promise<void> {
   const dir = tmpPath("ink-thickness");
   rmSync(dir, { recursive: true, force: true });
@@ -247,59 +172,33 @@ export async function testit(): Promise<void> {
     );
     let cx = 0;
     let cy = 0;
-    if (USE_NG) {
-      const x = btn.x + (btn.dx >> 1);
-      const y = btn.y + (btn.dy >> 1);
-      await ngClick(client, x, y, 1);
-      const dump = await pollUntil(
-        () => toolbarDump(client),
-        (s) => thicknessDip(s) !== null,
-        {
-          error: (s) => `ink-thickness: the ink drop-down has no thickness slider\n${s}`,
-        },
-      );
-      const hit = thicknessDip(dump)!;
-      if (hit.value !== "3") {
-        throw new Error(`ink-thickness: the slider opened at ${hit.value}, want the setting's 3`);
-      }
-      const colors = [...dump.matchAll(/dropdown-item idx=\d+ cmd=\d+ current=(\d) rect=[-\d,]+ text=(#[0-9a-f]+)/g)];
-      const current = colors.filter((m) => m[1] === "1").map((m) => m[2]);
-      if (current.length !== 1 || current[0] !== "#00ff00") {
-        throw new Error(`ink-thickness: the color in use is ${current.join(" ")}, want #00ff00`);
-      }
-      await ngClick(client, hit.x2 - 1, (hit.y + hit.y2) >> 1);
-      const ui = String((await client.request(ControlCommand.TestUiState, []))[1] ?? "");
-      const canvasRc = /canvas=(-?\d+),(-?\d+),(-?\d+),(-?\d+)/.exec(ui);
-      if (!canvasRc) {
-        throw new Error(`ink-thickness: no canvas in the ui state\n${ui}`);
-      }
-      cx = +canvasRc[1]! + (+canvasRc[3]! >> 1);
-      cy = +canvasRc[2]! + (+canvasRc[4]! >> 1);
-    } else {
-      const item = await waitInkDropdown(client, toolbar, btn, "the ink drop-down has no thickness slider");
-      const dump = await toolbarDump(client);
-      if (item[5] !== "3") {
-        throw new Error(`ink-thickness: the slider opened at ${item[5]}, want the setting's 3`);
-      }
-      const colors = [...dump.matchAll(/dropdown-item idx=\d+ cmd=\d+ current=(\d) rect=[-\d,]+ text=(#[0-9a-f]+)/g)];
-      const current = colors.filter((m) => m[1] === "1").map((m) => m[2]);
-      if (current.length !== 1 || current[0] !== "#00ff00") {
-        throw new Error(`ink-thickness: the color in use is ${current.join(" ")}, want #00ff00`);
-      }
-
-      // dragged all the way to Thick, the next stroke is as wide as it goes
-      const menu = findTopWindow(pid, HOVER_MENU_CLASS);
-      if (!menu || !isWindowVisible(menu)) {
-        throw new Error("ink-thickness: the ink drop-down did not open");
-      }
-      const mr = getWindowRect(menu);
-      const sy = (+item[2]! + +item[4]!) >> 1;
-      await clickAt(menu, +item[3]! - 1 - mr.left, sy - mr.top, 0);
-
-      const canvasRect = getClientRect(canvas);
-      cx = Math.floor(canvasRect.right / 2);
-      cy = Math.floor(canvasRect.bottom / 2);
+    const x = btn.x + (btn.dx >> 1);
+    const y = btn.y + (btn.dy >> 1);
+    await ngClick(client, x, y, 1);
+    const dump = await pollUntil(
+      () => toolbarDump(client),
+      (s) => thicknessDip(s) !== null,
+      {
+        error: (s) => `ink-thickness: the ink drop-down has no thickness slider\n${s}`,
+      },
+    );
+    const hit = thicknessDip(dump)!;
+    if (hit.value !== "3") {
+      throw new Error(`ink-thickness: the slider opened at ${hit.value}, want the setting's 3`);
     }
+    const colors = [...dump.matchAll(/dropdown-item idx=\d+ cmd=\d+ current=(\d) rect=[-\d,]+ text=(#[0-9a-f]+)/g)];
+    const current = colors.filter((m) => m[1] === "1").map((m) => m[2]);
+    if (current.length !== 1 || current[0] !== "#00ff00") {
+      throw new Error(`ink-thickness: the color in use is ${current.join(" ")}, want #00ff00`);
+    }
+    await ngClick(client, hit.x2 - 1, (hit.y + hit.y2) >> 1);
+    const ui = String((await client.request(ControlCommand.TestUiState, []))[1] ?? "");
+    const canvasRc = /canvas=(-?\d+),(-?\d+),(-?\d+),(-?\d+)/.exec(ui);
+    if (!canvasRc) {
+      throw new Error(`ink-thickness: no canvas in the ui state\n${ui}`);
+    }
+    cx = +canvasRc[1]! + (+canvasRc[3]! >> 1);
+    cy = +canvasRc[2]! + (+canvasRc[4]! >> 1);
     const stroke = [
       { x: cx - 60, y: cy },
       { x: cx - 20, y: cy + 20 },
@@ -307,11 +206,7 @@ export async function testit(): Promise<void> {
       { x: cx + 60, y: cy },
     ];
     sendCommandSync(frame, cmdId("CmdCreateAnnotInk"));
-    if (USE_NG) {
-      await drawStrokeNg(client, stroke);
-    } else {
-      drawStroke(canvas, stroke);
-    }
+    await drawStrokeNg(client, stroke);
     await client.waitForRenderIdle();
     const width = await inkAnnotWidth(client);
     if (width !== MAX_THICKNESS) {
@@ -328,11 +223,7 @@ export async function testit(): Promise<void> {
         error: "ink-thickness: Esc did not leave the ink tool",
       },
     );
-    if (USE_NG) {
-      await ngClick(client, cx - 60, cy);
-    } else {
-      await clickAt(canvas, cx - 60, cy, 0);
-    }
+    await ngClick(client, cx - 60, cy);
     await pollUntil(
       async () => /annotEditToolbar .*/.exec(await markupDump(client))?.[0] ?? "",
       (line) => /annotEditToolbar visible=1/.test(line),
@@ -350,7 +241,7 @@ export async function testit(): Promise<void> {
     }
     const placed = parseRect(/ placed=(-?\d+),(-?\d+),(\d+),(\d+)/.exec(chips.line));
     let chip = parseRect(/[=;]color:(-?\d+),(-?\d+),(\d+),(\d+)/.exec(chips.line));
-    if (USE_NG && chip.dx <= 0) {
+    if (chip.dx <= 0) {
       const ready = await pollUntil(
         async () => /annotEditToolbar .*/.exec(await markupDump(client))?.[0] ?? "",
         (line) => {
@@ -361,15 +252,7 @@ export async function testit(): Promise<void> {
       );
       chip = parseRect(/[=;]color:(-?\d+),(-?\d+),(\d+),(\d+)/.exec(ready));
     }
-    if (USE_NG) {
-      await ngClick(client, chip.x + (chip.dx >> 1), chip.y + (chip.dy >> 1));
-    } else {
-      const annotToolbar = findTopWindow(pid, ANNOT_TOOLBAR_CLASS);
-      if (!annotToolbar) {
-        throw new Error("ink-thickness: no annotation property row window");
-      }
-      await clickAt(annotToolbar, chip.x - placed.x + (chip.dx >> 1), chip.y - placed.y + (chip.dy >> 1), 0);
-    }
+    await ngClick(client, chip.x + (chip.dx >> 1), chip.y + (chip.dy >> 1));
     const thickRe = /thickness=(\d+):(-?\d+),(-?\d+),(\d+),(\d+)/;
     const popupLine = await pollUntil(
       async () => /annotColorPopup .*/.exec(await markupDump(client))?.[0] ?? "",
@@ -389,16 +272,7 @@ export async function testit(): Promise<void> {
 
     // dragged back to Thin, the stroke itself gets thinner
     const slider = { x: +th[2]!, y: +th[3]!, dx: +th[4]!, dy: +th[5]! };
-    if (USE_NG) {
-      await ngClick(client, slider.x + 1, slider.y + (slider.dy >> 1));
-    } else {
-      const popup = findTopWindow(pid, POPUP_CLASS);
-      if (!popup || !isWindowVisible(popup)) {
-        throw new Error("ink-thickness: the color chip's drop-down did not open");
-      }
-      const pr = getWindowRect(popup);
-      await clickAt(popup, slider.x - pr.left, slider.y + (slider.dy >> 1) - pr.top, 0);
-    }
+    await ngClick(client, slider.x + 1, slider.y + (slider.dy >> 1));
     await client.waitForRenderIdle();
     const thin = await pollUntil(
       () => inkAnnotWidth(client),

@@ -19,9 +19,9 @@
 import { copyFileSync, existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlCommand } from "./control";
-import { cmdId, tmpPath, USE_NG } from "./util";
+import { cmdId, tmpPath } from "./util";
 import { launchControlled, sendCommandSync, killAndWait } from "./win-automation";
-import { collapseTreeRoots, countVisibleTreeRows, findChildWindow, sleep, treeGetSelection } from "./winapi";
+import { sleep } from "./winapi";
 
 // a PDF with a nested (multi-level) table of contents
 const TOC_PDF = "C:\\Users\\kjk\\OneDrive\\!sumatra\\bugs\\bug-1352-merged_manuals-1.4.2.pdf";
@@ -92,71 +92,33 @@ export async function testit(): Promise<void> {
   try {
     await client.waitForRenderIdle();
 
-    if (USE_NG) {
-      const deadline = Date.now() + 8000;
-      let loaded = await ngToc(client, "count");
-      while (Date.now() < deadline && loaded.rows <= 0) {
-        await sleep(40);
-        loaded = await ngToc(client, "count");
-      }
-      if (loaded.rows <= 0) {
-        throw new Error("could not find the TOC tree window");
-      }
-      sendCommandSync(frame, CmdGoToLastPage);
-      await client.waitForRenderIdle();
-      const collapsed = (await ngToc(client, "collapse-roots")).rows;
-      sendCommandSync(frame, CmdExpandToCurrentPage);
-      const afterDeadline = Date.now() + 3000;
-      let after = collapsed;
-      let hasSelection = false;
-      while (Date.now() < afterDeadline) {
-        const state = await ngToc(client, "count");
-        after = state.rows;
-        hasSelection = state.sel;
-        if (after > collapsed && hasSelection) {
-          break;
-        }
-        await sleep(30);
-      }
-      checkExpanded(collapsed, after, hasSelection);
-      return;
-    }
-
-    // wait for the TOC tree to load with items
     const deadline = Date.now() + 8000;
-    let tree = 0;
-    while (Date.now() < deadline) {
-      tree = findChildWindow(frame, "SysTreeView32");
-      if (tree && countVisibleTreeRows(tree) > 0) {
-        break;
-      }
+    let loaded = await ngToc(client, "count");
+    while (Date.now() < deadline && loaded.rows <= 0) {
       await sleep(40);
+      loaded = await ngToc(client, "count");
     }
-    if (!tree) {
+    if (loaded.rows <= 0) {
       throw new Error("could not find the TOC tree window");
     }
-
-    // go to the last page (deep in the document, under nested TOC entries)
     sendCommandSync(frame, CmdGoToLastPage);
     await client.waitForRenderIdle();
-
-    // collapse the whole tree, then measure
-    collapseTreeRoots(tree);
-    const collapsed = countVisibleTreeRows(tree);
-
-    // invoke the command under test
+    const collapsed = (await ngToc(client, "collapse-roots")).rows;
     sendCommandSync(frame, CmdExpandToCurrentPage);
     const afterDeadline = Date.now() + 3000;
     let after = collapsed;
+    let hasSelection = false;
     while (Date.now() < afterDeadline) {
-      after = countVisibleTreeRows(tree);
-      if (after > collapsed && treeGetSelection(tree) !== 0n) {
+      const state = await ngToc(client, "count");
+      after = state.rows;
+      hasSelection = state.sel;
+      if (after > collapsed && hasSelection) {
         break;
       }
       await sleep(30);
     }
-    const hasSelection = treeGetSelection(tree) !== 0n;
     checkExpanded(collapsed, after, hasSelection);
+    return;
   } finally {
     client.close();
     await killAndWait(proc);

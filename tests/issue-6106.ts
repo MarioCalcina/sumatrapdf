@@ -6,9 +6,8 @@
 
 import { join } from "node:path";
 import { ControlClient, ControlCommand } from "./control.ts";
-import { IS_MAC } from "./host.ts";
 import { ROOT, cmdId, runStandalone } from "./util.ts";
-import { MK_LBUTTON, packCoords, sendMessage, sleep, WM_LBUTTONDOWN, WM_LBUTTONUP } from "./winapi.ts";
+import { sleep } from "./winapi.ts";
 import { killAndWait, launchControlled, sendCommand } from "./win-automation.ts";
 
 type BarState = {
@@ -60,20 +59,11 @@ async function barState(client: ControlClient): Promise<BarState | null> {
 async function clickBar(client: ControlClient, st: BarState, kind: "down" | "up"): Promise<void> {
   const x = st.pause.x + Math.floor(st.pause.dx / 2);
   const y = st.pause.y + Math.floor(st.pause.dy / 2);
-  if (IS_MAC) {
-    const res = await client.request(ControlCommand.TestToolWindow, ["input", "readaloudbar", kind, x, y, 0, 0]);
-    const raw = String(res[1] ?? "");
-    if ((res[0] as number) !== 0 || raw.startsWith("ERR")) {
-      throw new Error(`issue-6106: playback bar ${kind}: ${raw}`);
-    }
-    return;
+  const res = await client.request(ControlCommand.TestToolWindow, ["input", "readaloudbar", kind, x, y, 0, 0]);
+  const raw = String(res[1] ?? "");
+  if ((res[0] as number) !== 0 || raw.startsWith("ERR")) {
+    throw new Error(`issue-6106: playback bar ${kind}: ${raw}`);
   }
-  sendMessage(
-    st.hwnd,
-    kind === "down" ? WM_LBUTTONDOWN : WM_LBUTTONUP,
-    kind === "down" ? MK_LBUTTON : 0,
-    packCoords(x, y),
-  );
 }
 
 export async function testit(): Promise<void> {

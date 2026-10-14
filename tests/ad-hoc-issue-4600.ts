@@ -16,7 +16,6 @@ import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { deflateRawSync } from "node:zlib";
 import { join } from "node:path";
 import { ControlCommand, withControlledSumatra } from "./control.ts";
-import { IS_MAC } from "./host.ts";
 import { EXE, runStandalone, tmpPath, crc32 } from "./util.ts";
 
 const EPUB_DIR = tmpPath("epub-font");
@@ -28,7 +27,7 @@ const BMP_HEIGHT_OFF = 22;
 const BMP_BPP_OFF = 28;
 
 // SimSun ships with Windows only
-const CJK_FONT = IS_MAC ? "Heiti SC" : "SimSun";
+const CJK_FONT = "Heiti SC";
 
 // --- minimal zip writer (an EPUB is a zip) --------------------------------
 

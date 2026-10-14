@@ -6,20 +6,9 @@
 
 import { writeFileSync } from "node:fs";
 import { ControlClient, ControlCommand } from "./control.ts";
-import { IS_MAC } from "./host.ts";
 import { runStandalone, tmpPath } from "./util.ts";
-import { clickAt, killAndWait, launchControlled } from "./win-automation.ts";
-import {
-  enumWindows,
-  getWindowPid,
-  getWindowText,
-  MK_LBUTTON,
-  packCoords,
-  sendMessage,
-  sleep,
-  WM_LBUTTONDBLCLK,
-  WM_LBUTTONUP,
-} from "./winapi.ts";
+import { killAndWait, launchControlled } from "./win-automation.ts";
+import { sleep } from "./winapi.ts";
 
 const query = "needle";
 const matchPages = [1, 2, 3];
@@ -124,38 +113,13 @@ async function clickFindNext(
   y: number,
   dbl: boolean,
 ): Promise<void> {
-  if (IS_MAC) {
-    // The floating find UI is the "find" tool window. A second click inside
-    // the double-click interval is what WM_LBUTTONDBLCLK is on Windows.
-    const res = await client.request(ControlCommand.TestToolWindow, ["input", "find", "click", x, y, 0, 0]);
-    const raw = String(res[1] ?? "");
-    if (raw.startsWith("ERR") || raw === "NOTREADY") {
-      throw new Error(`issue-6035: find next ${dbl ? "double-click" : "click"}: ${raw}`);
-    }
-    return;
+  // The floating find UI is the "find" tool window. A second click inside
+  // the double-click interval is what WM_LBUTTONDBLCLK is on Windows.
+  const res = await client.request(ControlCommand.TestToolWindow, ["input", "find", "click", x, y, 0, 0]);
+  const raw = String(res[1] ?? "");
+  if (raw.startsWith("ERR") || raw === "NOTREADY") {
+    throw new Error(`issue-6035: find next ${dbl ? "double-click" : "click"}: ${raw}`);
   }
-  if (!dbl) {
-    await clickAt(findWin, x, y, 50);
-    return;
-  }
-  const lp = packCoords(x, y);
-  sendMessage(findWin, WM_LBUTTONDBLCLK, MK_LBUTTON, lp);
-  sendMessage(findWin, WM_LBUTTONUP, 0, lp);
-}
-
-function findFindWindow(pid: number, frame: number): number {
-  let found = 0;
-  enumWindows((hwnd) => {
-    if (hwnd === frame || getWindowPid(hwnd) !== pid) {
-      return true;
-    }
-    if (getWindowText(hwnd) === "Find") {
-      found = hwnd;
-      return false;
-    }
-    return true;
-  });
-  return found;
 }
 
 export async function testit(): Promise<void> {
@@ -170,7 +134,7 @@ export async function testit(): Promise<void> {
       throw new Error(`issue-6035: result pages are ${state.pages.join(",")}, want ${matchPages.join(",")}`);
     }
 
-    const findWin = IS_MAC ? 1 : findFindWindow(proc.pid!, frame);
+    const findWin = 1;
     if (!findWin) {
       throw new Error("issue-6035: Find window not found");
     }

@@ -5,12 +5,8 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlCommand } from "./control.ts";
-import { IS_MAC } from "./host.ts";
 import { runStandalone, tmpPath } from "./util.ts";
-import { sendCopyDataW } from "./winapi.ts";
 import { killAndWait, launchControlled } from "./win-automation.ts";
-
-const kCopyDataDdeW = 0x44646557;
 
 // prettier-ignore
 const repros: { name: string; bytes: number[] }[] = [
@@ -38,35 +34,15 @@ export async function testit(): Promise<void> {
   });
 
   // DDE Open is WM_COPYDATA. Opening each file on the command line hits the same sniff.
-  if (IS_MAC) {
-    for (const path of paths) {
-      const { proc, client } = await launchControlled([path]);
-      try {
-        await client.request(ControlCommand.Ping, []);
-      } finally {
-        client.close();
-        await killAndWait(proc);
-      }
-    }
-    console.log("issue-6161: OK");
-    return;
-  }
-
-  const { proc, client, frame } = await launchControlled([paths[0]!]);
-  try {
-    // the app died while opening each file, so answering a ping is the test
-    await client.request(ControlCommand.Ping, []);
-    for (let i = 1; i < paths.length; i++) {
-      if (!sendCopyDataW(frame, kCopyDataDdeW, `[Open("${paths[i]}")]`)) {
-        throw new Error(`issue-6161: could not open ${paths[i]}`);
-      }
+  for (const path of paths) {
+    const { proc, client } = await launchControlled([path]);
+    try {
       await client.request(ControlCommand.Ping, []);
+    } finally {
+      client.close();
+      await killAndWait(proc);
     }
-  } finally {
-    client.close();
-    await killAndWait(proc);
   }
-
   console.log("issue-6161: OK");
 }
 

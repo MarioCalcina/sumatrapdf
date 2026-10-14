@@ -15,39 +15,17 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlClient, ControlCommand } from "./control.ts";
-import { assemblePdf, cmdId, runStandalone, SLOW_BUILD_FACTOR, tmpPath, USE_NG } from "./util.ts";
+import { assemblePdf, cmdId, runStandalone, SLOW_BUILD_FACTOR, tmpPath } from "./util.ts";
 import {
-  captureWindowToPng,
   getWorkArea,
   clientToScreen,
-  findTopWindow,
-  getWindowRect,
-  isWindowVisible,
-  readWindowDCRow,
   packCoords,
   sendMessage,
-  setCursorPos,
   setProcessDpiAware,
   sleep,
-  MK_RBUTTON,
   WM_COMMAND,
-  WM_MOUSEMOVE,
-  WM_MOUSELEAVE,
-  WM_RBUTTONDOWN,
-  WM_RBUTTONUP,
 } from "./winapi.ts";
-import {
-  clickAt,
-  findChildByClass,
-  killAndWait,
-  launchControlled,
-  parkCursorAway,
-  sendCommand,
-  sendCommandSync,
-} from "./win-automation.ts";
-
-const TOOLBAR_CLASS = "SUMATRA_VIRT_TOOLBAR";
-const MENU_CLASS = "SumatraToolbarHoverMenu";
+import { killAndWait, launchControlled, sendCommand, sendCommandSync } from "./win-automation.ts";
 
 // what the zoom drop-down lists: the levels the zoom buttons step through
 // (DisplayModel's defaultZoomLevels), smallest first, with the two fit modes
@@ -247,12 +225,8 @@ async function waitMenu(client: ControlClient, pid: number, want: boolean, what:
 }
 
 async function menuShowing(client: ControlClient, pid: number): Promise<number> {
-  if (USE_NG) {
-    const view = await readHover(client);
-    return view.box && view.box.x2 > view.box.x ? view.box.gen : 0;
-  }
-  const h = findTopWindow(pid, MENU_CLASS);
-  return h !== 0 && isWindowVisible(h) ? h : 0;
+  const view = await readHover(client);
+  return view.box && view.box.x2 > view.box.x ? view.box.gen : 0;
 }
 
 // A hwnd read before an await can already be a different drop-down: the cursor
@@ -276,23 +250,15 @@ async function clickMenuItem(
     if (h === 0) {
       detail = "closed before the click";
     } else {
-      const view = USE_NG ? await readHover(client) : null;
+      const view = await readHover(client);
       const it = (view ? view.items : await dropdownItems(client)).find((x) => x.cmd === cmd);
       if (!it) {
         detail = "row not in the drop-down";
       } else if ((await menuShowing(client, pid)) === h) {
-        if (USE_NG) {
-          const x = Math.floor((it.dx + it.dx2) / 2);
-          const y = Math.floor((it.dy + it.dy2) / 2);
-          await ngInput(client, ["click", x, y, 0, 0]);
-          detail = `${it.text} @${x},${y}`;
-        } else {
-          const r = getWindowRect(h);
-          const x = Math.floor((it.x + it.x2) / 2) - r.left;
-          const y = Math.floor((it.y + it.y2) / 2) - r.top;
-          await clickAt(h, x, y, 0);
-          detail = `${it.text} @${x},${y}`;
-        }
+        const x = Math.floor((it.dx + it.dx2) / 2);
+        const y = Math.floor((it.dy + it.dy2) / 2);
+        await ngInput(client, ["click", x, y, 0, 0]);
+        detail = `${it.text} @${x},${y}`;
         clicked = true;
         if ((await menuShowing(client, pid)) === 0) {
           return;
@@ -309,30 +275,16 @@ async function clickMenuItem(
 // rest the mouse on a toolbar button: the real cursor has to be there (the
 // drop-down reads it) and the toolbar has to see a move
 async function hoverToolbar(client: ControlClient, toolbar: number, x: number, y: number): Promise<void> {
-  if (USE_NG) {
-    await ngInput(client, ["move", x, y, 0, 0]);
-    return;
-  }
-  const s = clientToScreen(toolbar, x, y);
-  setCursorPos(s.x, s.y);
-  sendMessage(toolbar, WM_MOUSEMOVE, 0, packCoords(x, y));
+  await ngInput(client, ["move", x, y, 0, 0]);
 }
 
 // right-click a toolbar button. The cursor has to be there so the drop-down
 // does not close itself, but the toolbar is not sent a move: that would start
 // the hover timer, and this is the check that right-click does not wait for it
 async function rightClickToolbar(client: ControlClient, toolbar: number, x: number, y: number): Promise<void> {
-  if (USE_NG) {
-    // button 1 is the right button. The click also moves, which arms the hover
-    // timer; the button-up opens the drop-down without waiting for it.
-    await ngInput(client, ["click", x, y, 1, 0]);
-    return;
-  }
-  const s = clientToScreen(toolbar, x, y);
-  setCursorPos(s.x, s.y);
-  const lp = packCoords(x, y);
-  sendMessage(toolbar, WM_RBUTTONDOWN, MK_RBUTTON, lp);
-  sendMessage(toolbar, WM_RBUTTONUP, 0, lp);
+  // button 1 is the right button. The click also moves, which arms the hover
+  // timer; the button-up opens the drop-down without waiting for it.
+  await ngInput(client, ["click", x, y, 1, 0]);
 }
 
 // keep resting the mouse on a button until its drop-down is up: something else
@@ -361,14 +313,7 @@ async function hoverUntilMenu(
 }
 
 function toolbarOf(frame: number): number {
-  if (USE_NG) {
-    return frame;
-  }
-  const toolbar = findChildByClass(frame, TOOLBAR_CLASS);
-  if (!toolbar) {
-    throw new Error("toolbar-hover-dropdown: no toolbar");
-  }
-  return toolbar;
+  return frame;
 }
 
 async function zoomLabel(client: ControlClient): Promise<string> {
@@ -429,11 +374,7 @@ function dropdownItemsFrom(raw: string): Item[] {
 
 // what the drop-down that is up is showing, in screen coordinates
 async function dropdownItems(client: ControlClient): Promise<Item[]> {
-  if (USE_NG) {
-    return (await readHover(client)).items;
-  }
-  const raw = String((await client.request(ControlCommand.TestToolbarButtons, []))[1] ?? "");
-  return dropdownItemsFrom(raw);
+  return (await readHover(client)).items;
 }
 
 // The zoom label updates in the command. The strip's box is whoever the next
@@ -515,51 +456,6 @@ function checkPyramid(items: Item[], want: number[], levels: string[]): void {
 // a COLORREF (0x00bbggrr) as r, g, b
 function channels(c: number): number[] {
   return [c & 0xff, (c >> 8) & 0xff, (c >> 16) & 0xff];
-}
-
-function checkRightHalfShading(items: Item[], levels: string[], menu: number): { bg: number; shade: number } {
-  const wr = getWindowRect(menu);
-  const dx = wr.right - wr.left;
-  const rows = rowsOf(items);
-  const topLen = rows[0]!.length;
-  // where the top row splits; past that point, in every row, is the larger side
-  const rightFrom = Math.floor((levels.length - topLen) / 2) + Math.floor(topLen / 2);
-  const splits: number[] = [];
-  let bg = -1;
-  let shade = -1;
-  for (const r of rows) {
-    const y = Math.floor((r[0]!.y + r[0]!.y2) / 2) - wr.top;
-    const run = readWindowDCRow(menu, 0, y, dx);
-    const texts = r.map((it) => it.text).join();
-    // a row of nothing but smaller levels still has the space past its end on
-    // the larger side
-    const first = r.find((it) => levels.indexOf(it.text) >= rightFrom);
-    const split = (first ? first.x : r[r.length - 1]!.x2) - wr.left;
-    splits.push(split);
-    // 3px either side of the split: inside a cell's padding, clear of its text
-    const left = run[split - 3]!;
-    const right = run[split + 3]!;
-    if (left === right) {
-      throw new Error(`toolbar-hover-dropdown: the row [${texts}] is one ground either side of x=${split}`);
-    }
-    if (bg < 0) {
-      bg = left;
-      shade = right;
-    }
-    if (left !== bg || right !== shade) {
-      throw new Error(`toolbar-hover-dropdown: the row [${texts}] is not the same two grounds as the rows above`);
-    }
-    if (run[dx - 3] !== shade) {
-      throw new Error(`toolbar-hover-dropdown: the row [${texts}] leaves the space past its end unshaded`);
-    }
-    if (run[2] !== bg) {
-      throw new Error(`toolbar-hover-dropdown: the row [${texts}] shades the space before its start`);
-    }
-  }
-  if (new Set(splits).size < 2) {
-    throw new Error(`toolbar-hover-dropdown: the two grounds meet along a straight line at ${splits.join()}`);
-  }
-  return { bg, shade };
 }
 
 // ng paints the pyramid in the frame, and PrintWindow does not see that, so the
@@ -675,15 +571,11 @@ async function menuBounds(
   client: ControlClient,
   menu: number,
 ): Promise<{ left: number; top: number; right: number; bottom: number }> {
-  if (USE_NG) {
-    const box = (await readHover(client)).box;
-    if (!box || box.gen !== menu) {
-      throw new Error("toolbar-hover-dropdown: the drop-down closed");
-    }
-    return { left: box.x, top: box.y, right: box.x2, bottom: box.y2 };
+  const box = (await readHover(client)).box;
+  if (!box || box.gen !== menu) {
+    throw new Error("toolbar-hover-dropdown: the drop-down closed");
   }
-  const r = getWindowRect(menu);
-  return { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
+  return { left: box.x, top: box.y, right: box.x2, bottom: box.y2 };
 }
 
 async function shadingOf(
@@ -692,25 +584,17 @@ async function shadingOf(
   levels: string[],
   menu: number,
 ): Promise<{ bg: number; shade: number }> {
-  if (USE_NG) {
-    const view = await readHover(client);
-    if (!view.box) {
-      throw new Error("toolbar-hover-dropdown: the drop-down closed before its shading could be read");
-    }
-    return checkRightHalfShadingNg(view.items.length ? view.items : items, levels, view.box, view.right);
+  const view = await readHover(client);
+  if (!view.box) {
+    throw new Error("toolbar-hover-dropdown: the drop-down closed before its shading could be read");
   }
-  return checkRightHalfShading(items, levels, menu);
+  return checkRightHalfShadingNg(view.items.length ? view.items : items, levels, view.box, view.right);
 }
 
 async function clickDropCell(client: ControlClient, menu: number, it: Item): Promise<void> {
-  if (USE_NG) {
-    const x = Math.floor((it.dx + it.dx2) / 2);
-    const y = Math.floor((it.dy + it.dy2) / 2);
-    await ngInput(client, ["click", x, y, 0, 0]);
-    return;
-  }
-  const r = getWindowRect(menu);
-  await clickAt(menu, Math.floor((it.x + it.x2) / 2) - r.left, Math.floor((it.y + it.y2) / 2) - r.top, 0);
+  const x = Math.floor((it.dx + it.dx2) / 2);
+  const y = Math.floor((it.dy + it.dy2) / 2);
+  await ngInput(client, ["click", x, y, 0, 0]);
 }
 
 // a second instance, this one told to use its own zoom levels and a dark theme:
@@ -824,9 +708,6 @@ export async function testit(): Promise<void> {
     const cy = save2.y + Math.floor(save2.dy / 2);
     const menu = await hoverUntilMenu(client, toolbar, pid, cx, cy, "resting on Save did not open the drop-down");
     await sleep(200);
-    if (!USE_NG) {
-      captureWindowToPng(menu, join(dir, "dropdown.png"));
-    }
 
     // directly under the button (it slides left when its width would run off
     // the right edge of the screen, so only the button's centre has to be in it)
@@ -874,14 +755,8 @@ export async function testit(): Promise<void> {
       if (menu === 0) {
         break;
       }
-      if (USE_NG) {
-        // off the toolbar, on the page. The close grace is 150ms.
-        await ngInput(client, ["move", 40, 500, 0, 0]);
-      } else {
-        parkCursorAway([getWindowRect(frame), getWindowRect(menu)]);
-        sendMessage(menu, WM_MOUSELEAVE, 0, 0);
-        sendMessage(toolbar, WM_MOUSELEAVE, 0, 0);
-      }
+      // off the toolbar, on the page. The close grace is 150ms.
+      await ngInput(client, ["move", 40, 500, 0, 0]);
       const sliceEnd = Date.now() + 400;
       let gone = false;
       while (Date.now() < sliceEnd) {
@@ -912,11 +787,7 @@ export async function testit(): Promise<void> {
     const sy = save3.y + Math.floor(save3.dy / 2);
     await rightClickToolbar(client, toolbar, sx, sy);
     await waitMenu(client, pid, true, "right-clicking Save did not open the drop-down before the icon click");
-    if (USE_NG) {
-      await ngInput(client, ["click", sx, sy, 0, 0]);
-    } else {
-      await clickAt(toolbar, sx, sy, 0);
-    }
+    await ngInput(client, ["click", sx, sy, 0, 0]);
     await waitMenu(client, pid, false, "clicking the Save icon did not close the drop-down");
     const stayClosedUntil = Date.now() + 1500;
     while (Date.now() < stayClosedUntil) {
@@ -971,9 +842,6 @@ export async function testit(): Promise<void> {
 
     zoomMenu = await hoverUntilMenu(client, toolbar, pid, zx, zy, "resting on Zoom In did not open the drop-down");
     await sleep(200);
-    if (!USE_NG) {
-      captureWindowToPng(zoomMenu, join(dir, "zoom-dropdown.png"));
-    }
 
     let items = await dropdownItems(client);
     const texts = items.map((it) => it.text);
@@ -999,17 +867,9 @@ export async function testit(): Promise<void> {
     const cell300 = items.find((it) => it.text === "300%")!;
     // and it is a cue rather than a highlight: a few units off the plain
     // ground, where a cell lit up under the mouse is 20 units off it
-    if (USE_NG) {
-      const view = await readHover(client);
-      if (!view.right.has(items.indexOf(cell300))) {
-        throw new Error("toolbar-hover-dropdown: 300% is not on the shaded half");
-      }
-    } else {
-      const cellX = cell300.x - zr.left + 3;
-      const cellY = Math.floor((cell300.y + cell300.y2) / 2) - zr.top;
-      if (readWindowDCRow(zoomMenu, cellX, cellY, 1)[0] !== grounds.shade) {
-        throw new Error("toolbar-hover-dropdown: 300% is not on the shaded half");
-      }
+    const view = await readHover(client);
+    if (!view.right.has(items.indexOf(cell300))) {
+      throw new Error("toolbar-hover-dropdown: 300% is not on the shaded half");
     }
     const step = Math.max(...channels(grounds.bg).map((c, i) => Math.abs(c - channels(grounds.shade)[i]!)));
     if (step < 3 || step > 15) {

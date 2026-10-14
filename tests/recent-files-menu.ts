@@ -3,23 +3,11 @@
 // must survive a menu rebuild, and invoking it must open that file.
 import { join } from "node:path";
 import { ControlCommand } from "./control.ts";
-import { ROOT, USE_NG, cmdId, runStandalone } from "./util.ts";
-import { killAndWait, launchControlled, pressKey, waitForContextMenu, waitForTitle } from "./win-automation.ts";
-import {
-  getMenuItemCount,
-  getMenuItemId,
-  getMenuItemText,
-  getPopupMenuHandle,
-  postMessage,
-  sendMessage,
-  VK_ESCAPE,
-} from "./winapi.ts";
+import { ROOT, cmdId, runStandalone } from "./util.ts";
+import { killAndWait, launchControlled, waitForTitle } from "./win-automation.ts";
+import { sendMessage } from "./winapi.ts";
 
 const WM_COMMAND = 0x0111;
-// the menu bar toolbar posts kMenuBarCmdFirst + <top level menu index> (Menu.cpp)
-const kMenuBarCmdFirst = 50000;
-// a re-open within 500ms of dismissing the popup is treated as toggle-close
-const kMenuReopenMs = 510;
 
 const docA = join(ROOT, "tests", "issue-1189.pdf");
 const docB = join(ROOT, "tests", "issue-3219.pdf");
@@ -30,36 +18,21 @@ async function fileMenuIds(
   names: string[],
   client: { request: (cmd: ControlCommand, args: (string | number)[]) => Promise<unknown[]> },
 ): Promise<number[]> {
-  if (USE_NG) {
-    const res = await client.request(ControlCommand.TestMainMenu, ["history"]);
-    if (res[0] !== 0) {
-      throw new Error(`recent files menu: ${String(res[1] ?? "")}`);
-    }
-    const ids = new Array(names.length).fill(0);
-    for (const line of String(res[1] ?? "").split("\n")) {
-      const m = /^id=(\d+) text=(.*)$/.exec(line.trim());
-      if (!m) {
-        continue;
-      }
-      const idx = names.findIndex((n) => m[2]!.includes(n));
-      if (idx >= 0) {
-        ids[idx] = Number(m[1]);
-      }
-    }
-    return ids;
+  const res = await client.request(ControlCommand.TestMainMenu, ["history"]);
+  if (res[0] !== 0) {
+    throw new Error(`recent files menu: ${String(res[1] ?? "")}`);
   }
-  postMessage(frame, WM_COMMAND, kMenuBarCmdFirst, 0);
-  const popup = await waitForContextMenu();
-  const menu = getPopupMenuHandle(popup);
   const ids = new Array(names.length).fill(0);
-  for (let i = 0; i < getMenuItemCount(menu); i++) {
-    const text = getMenuItemText(menu, i);
-    const idx = names.findIndex((n) => text.includes(n));
+  for (const line of String(res[1] ?? "").split("\n")) {
+    const m = /^id=(\d+) text=(.*)$/.exec(line.trim());
+    if (!m) {
+      continue;
+    }
+    const idx = names.findIndex((n) => m[2]!.includes(n));
     if (idx >= 0) {
-      ids[idx] = getMenuItemId(menu, i);
+      ids[idx] = Number(m[1]);
     }
   }
-  await pressKey(frame, VK_ESCAPE, 0);
   return ids;
 }
 
@@ -78,9 +51,6 @@ export async function testit(): Promise<void> {
       throw new Error(`recent files share command id ${idA}`);
     }
 
-    if (!USE_NG) {
-      await Bun.sleep(kMenuReopenMs);
-    }
     const [idA2] = await fileMenuIds(frame, ["issue-1189"], client);
     if (idA2 !== idA) {
       throw new Error(`command id changed when the menu was rebuilt: ${idA} -> ${idA2}`);

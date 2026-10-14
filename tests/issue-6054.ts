@@ -3,41 +3,12 @@
 
 import { join } from "node:path";
 import { ControlCommand } from "./control.ts";
-import { IS_MAC } from "./host.ts";
 import { ROOT, runStandalone } from "./util.ts";
-import { FRAME_CLASS, killAndWait, launchControlled } from "./win-automation.ts";
-import { enumWindows, getClassName, getWindowPid, isWindowVisible, sleep } from "./winapi.ts";
+import { killAndWait, launchControlled } from "./win-automation.ts";
+import { sleep } from "./winapi.ts";
 
 const PDF_A = join(ROOT, "tests", "issue-1189.pdf");
 const PDF_B = join(ROOT, "tests", "issue-1809.pdf");
-
-function countVisibleFrames(pid: number): number {
-  let n = 0;
-  enumWindows((hwnd) => {
-    if (getWindowPid(hwnd) === pid && getClassName(hwnd) === FRAME_CLASS && isWindowVisible(hwnd)) {
-      n++;
-    }
-    return true;
-  });
-  return n;
-}
-
-async function waitForStableFrameCount(pid: number, timeoutMs = 8000): Promise<number> {
-  const deadline = Date.now() + timeoutMs;
-  let last = 0;
-  let stableAt = 0;
-  while (Date.now() < deadline) {
-    const n = countVisibleFrames(pid);
-    if (n !== last) {
-      last = n;
-      stableAt = Date.now();
-    } else if (n > 0 && Date.now() - stableAt >= 400) {
-      return n;
-    }
-    await sleep(50);
-  }
-  return last;
-}
 
 async function macWindowCount(
   client: { request: (cmd: number, args: unknown[]) => Promise<unknown[]> },
@@ -64,10 +35,7 @@ async function countFramesForFlags(flags: string[]): Promise<number> {
   const { proc, client } = await launchControlled([...flags, PDF_A, PDF_B]);
   try {
     await client.waitForRenderIdle();
-    if (IS_MAC) {
-      return await macWindowCount(client);
-    }
-    return await waitForStableFrameCount(proc.pid!);
+    return await macWindowCount(client);
   } finally {
     client.close();
     await killAndWait(proc);

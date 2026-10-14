@@ -1,12 +1,10 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlClient, ControlCommand } from "./control.ts";
-import { IS_MAC } from "./host.ts";
 import { ROOT, cmdId, runStandalone, tmpPath } from "./util.ts";
 import {
   findChildWindow,
   findTopWindow,
-  isWindowVisible,
   postMessage,
   sendText,
   sleep,
@@ -15,7 +13,7 @@ import {
   VK_RETURN,
   WM_KEYDOWN,
 } from "./winapi.ts";
-import { killAndWait, launchControlled, sendCommand, findPalette } from "./win-automation.ts";
+import { killAndWait, launchControlled, sendCommand } from "./win-automation.ts";
 
 const THUMBNAIL_CLASS = "SumatraPDF_ThumbnailNavigation";
 const SETTINGS = `UiLanguage = en
@@ -86,16 +84,9 @@ export async function testit(): Promise<void> {
     const deadline = Date.now() + 8_000;
     let handles = { palette: 0, edit: 0 };
     while (Date.now() < deadline) {
-      if (IS_MAC) {
-        if (await paletteOpen(client)) {
-          handles = { palette: frame, edit: frame };
-          break;
-        }
-      } else {
-        handles = findPalette(frame);
-        if (handles.palette && handles.edit) {
-          break;
-        }
+      if (await paletteOpen(client)) {
+        handles = { palette: frame, edit: frame };
+        break;
       }
       await sleep(50);
     }
@@ -121,33 +112,19 @@ export async function testit(): Promise<void> {
     if ((await waitForThumbnail(client, false))?.active !== false) {
       throw new Error("command-palette-thumbnails: thumbnail grid remained in command view");
     }
-    if (IS_MAC) {
-      if (!(await paletteOpen(client))) {
-        throw new Error("command-palette-thumbnails: switching to command view closed the palette");
-      }
-      console.log("SKIP command-palette-thumbnails window identity: macOS palette is not an HWND");
-    } else {
-      const commandView = findPalette(frame);
-      if (commandView.palette !== handles.palette) {
-        throw new Error("command-palette-thumbnails: switching views replaced the palette");
-      }
-      if (!isWindowVisible(handles.palette)) {
-        throw new Error("command-palette-thumbnails: switching to command view closed the palette");
-      }
+    if (!(await paletteOpen(client))) {
+      throw new Error("command-palette-thumbnails: switching to command view closed the palette");
     }
 
-    sendText(IS_MAC ? frame : findPalette(frame).edit, "&");
+    sendText(frame, "&");
     const returned = await waitForThumbnail(client, true);
     if (!returned?.active || returned.page !== 2) {
       throw new Error(`command-palette-thumbnails: thumbnail grid did not return: ${JSON.stringify(returned)}`);
     }
-    if (!IS_MAC && findPalette(frame).palette !== handles.palette) {
-      throw new Error("command-palette-thumbnails: switching views replaced the palette");
-    }
 
     postMessage(handles.palette, WM_KEYDOWN, VK_RETURN, 0);
     const navigateDeadline = Date.now() + 3_000;
-    const paletteVisible = async () => (IS_MAC ? await paletteOpen(client) : isWindowVisible(handles.palette));
+    const paletteVisible = async () => (await paletteOpen(client));
     while (Date.now() < navigateDeadline && ((await paletteVisible()) || (await currentPage(client)) !== 2)) {
       await sleep(40);
     }

@@ -7,20 +7,11 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlClient, ControlCommand } from "./control.ts";
-import { cmdId, pollUntil, runStandalone, tmpPath, USE_NG, makeBlankPdf } from "./util.ts";
-import { findTopWindow, packCoords, sendMessage, WM_COMMAND, WM_KILLFOCUS } from "./winapi.ts";
-import {
-  clickAt,
-  findCanvas,
-  findChildByClass,
-  killAndWait,
-  launchControlled,
-  sendCommandSync,
-  typeIntoInput,
-} from "./win-automation.ts";
+import { cmdId, pollUntil, runStandalone, tmpPath, makeBlankPdf } from "./util.ts";
+import { packCoords, sendMessage, WM_COMMAND, WM_KILLFOCUS } from "./winapi.ts";
+import { findCanvas, killAndWait, launchControlled, sendCommandSync } from "./win-automation.ts";
 
 const TEXT = "kept-through-osk-focus";
-const TOOLBAR_CLASS = "SumatraAnnotEditToolbar";
 
 type Rect = { x: number; y: number; dx: number; dy: number };
 
@@ -88,91 +79,48 @@ export async function testit(): Promise<void> {
     if (contentsChip.dx === 0) {
       throw new Error(`issue-6137-contents: no contents chip: ${dump}`);
     }
-    if (USE_NG) {
-      // the row is drawn in the frame. Kill-focus with no new window is the
-      // on-screen keyboard; a click on the page still commits.
-      const opened = await client.request(ControlCommand.TestInput, [
-        "click",
-        contentsChip.x + Math.floor(contentsChip.dx / 2),
-        contentsChip.y + Math.floor(contentsChip.dy / 2),
-        0,
-        0,
-      ]);
-      if (opened[0] !== 0 || !String(opened[1] ?? "").startsWith("OK")) {
-        throw new Error(`issue-6137-contents: contents click failed: ${String(opened[1] ?? "")}`);
-      }
-      await pollUntil(
-        async () => toolbarDump(client),
-        (s) => / editing=1/.test(s),
-        {
-          error: (s) => `issue-6137-contents: contents editor did not open: ${s}`,
-        },
-      );
-      await pollUntil(
-        async () => String((await client.request(ControlCommand.TestUiState, []))[1] ?? ""),
-        (s) => /edit=1/.test(s),
-      );
-      for (const ch of TEXT) {
-        await client.request(ControlCommand.TestInput, ["char", ch.charCodeAt(0), 0, 0, 0]);
-      }
-      await pollUntil(
-        async () => String((await client.request(ControlCommand.TestUiState, []))[1] ?? ""),
-        (s) => s.includes(TEXT),
-        { error: (s) => `issue-6137-contents: edit box holds "${s}", want "${TEXT}"` },
-      );
-
-      sendMessage(frame, WM_KILLFOCUS, 0, 0);
-      dump = await toolbarDump(client);
-      if (!/ editing=1/.test(dump)) {
-        throw new Error(`issue-6137-contents: OSK kill-focus closed the editor: ${dump}`);
-      }
-
-      const box = parseRect(/ placed=(-?\d+),(-?\d+),(\d+),(\d+)/.exec(dump));
-      const x = box.x > 80 ? 24 : box.x + box.dx + 24;
-      const y = box.y + Math.floor(box.dy / 2);
-      await client.request(ControlCommand.TestInput, ["click", x, y, 0, 0]);
-      await client.waitForRenderIdle();
-
-      dump = await toolbarDump(client);
-      if (!/annotEditToolbar visible=1/.test(dump) || !/ editing=0/.test(dump)) {
-        throw new Error(`issue-6137-contents: click-away did not commit: ${dump}`);
-      }
-      const contents = await selectedContents(client);
-      if (contents !== TEXT) {
-        throw new Error(`issue-6137-contents: contents are "${contents}", want "${TEXT}"`);
-      }
-      return;
-    }
-    const tbHwnd = findTopWindow(proc.pid!, TOOLBAR_CLASS);
-    if (!tbHwnd) {
-      throw new Error("issue-6137-contents: property row window not found");
-    }
-
-    await clickAt(
-      tbHwnd,
-      contentsChip.x - placed.x + Math.floor(contentsChip.dx / 2),
-      contentsChip.y - placed.y + Math.floor(contentsChip.dy / 2),
+    // the row is drawn in the frame. Kill-focus with no new window is the
+    // on-screen keyboard; a click on the page still commits.
+    const opened = await client.request(ControlCommand.TestInput, [
+      "click",
+      contentsChip.x + Math.floor(contentsChip.dx / 2),
+      contentsChip.y + Math.floor(contentsChip.dy / 2),
       0,
+      0,
+    ]);
+    if (opened[0] !== 0 || !String(opened[1] ?? "").startsWith("OK")) {
+      throw new Error(`issue-6137-contents: contents click failed: ${String(opened[1] ?? "")}`);
+    }
+    await pollUntil(
+      async () => toolbarDump(client),
+      (s) => / editing=1/.test(s),
+      {
+        error: (s) => `issue-6137-contents: contents editor did not open: ${s}`,
+      },
     );
-    dump = await toolbarDump(client);
-    if (!/ editing=1/.test(dump)) {
-      throw new Error(`issue-6137-contents: contents editor did not open: ${dump}`);
+    await pollUntil(
+      async () => String((await client.request(ControlCommand.TestUiState, []))[1] ?? ""),
+      (s) => /edit=1/.test(s),
+    );
+    for (const ch of TEXT) {
+      await client.request(ControlCommand.TestInput, ["char", ch.charCodeAt(0), 0, 0, 0]);
     }
+    await pollUntil(
+      async () => String((await client.request(ControlCommand.TestUiState, []))[1] ?? ""),
+      (s) => s.includes(TEXT),
+      { error: (s) => `issue-6137-contents: edit box holds "${s}", want "${TEXT}"` },
+    );
 
-    const edit = findChildByClass(tbHwnd, "Edit");
-    if (!edit) {
-      throw new Error("issue-6137-contents: contents edit box not found");
-    }
-    await typeIntoInput(edit, TEXT, false);
-
-    // OSK: kill-focus with no window taking it. Must not close the box.
-    sendMessage(edit, WM_KILLFOCUS, 0, 0);
+    sendMessage(frame, WM_KILLFOCUS, 0, 0);
     dump = await toolbarDump(client);
     if (!/ editing=1/.test(dump)) {
       throw new Error(`issue-6137-contents: OSK kill-focus closed the editor: ${dump}`);
     }
 
-    await clickAt(canvas, 420, 620, 0);
+    const box = parseRect(/ placed=(-?\d+),(-?\d+),(\d+),(\d+)/.exec(dump));
+    const x = box.x > 80 ? 24 : box.x + box.dx + 24;
+    const y = box.y + Math.floor(box.dy / 2);
+    await client.request(ControlCommand.TestInput, ["click", x, y, 0, 0]);
     await client.waitForRenderIdle();
 
     dump = await toolbarDump(client);
@@ -183,6 +131,7 @@ export async function testit(): Promise<void> {
     if (contents !== TEXT) {
       throw new Error(`issue-6137-contents: contents are "${contents}", want "${TEXT}"`);
     }
+    return;
   } finally {
     client.close();
     await killAndWait(proc);

@@ -7,33 +7,20 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlClient, ControlCommand } from "./control.ts";
-import { assemblePdf, cmdId, runStandalone, shortcutLabel, tmpPath, USE_NG } from "./util.ts";
+import { assemblePdf, cmdId, runStandalone, shortcutLabel, tmpPath } from "./util.ts";
 import {
   clientToScreen,
   getClientRect,
-  getPopupMenuHandle,
   packCoords,
-  postMessage,
-  readMenuTree,
   sendMessage,
   sleep,
   setCursorPos,
   VK_ESCAPE,
   WM_COMMAND,
-  WM_KEYDOWN,
   WM_MOUSEMOVE,
   type MenuItem,
 } from "./winapi.ts";
-import {
-  clickAt,
-  findCanvas,
-  killAndWait,
-  launchControlled,
-  openContextMenu,
-  pressKey,
-  sendCommandSync,
-  waitForContextMenu,
-} from "./win-automation.ts";
+import { clickAt, findCanvas, killAndWait, launchControlled, pressKey, sendCommandSync } from "./win-automation.ts";
 
 type Square = { x: number; y: number; dx: number; dy: number };
 type MarkupState = { raw: string; selected: boolean; annotations: number; squares: Square[] };
@@ -170,25 +157,12 @@ function menuFromDump(raw: string): MenuItem[] {
 
 // the page context menu at a client point of the canvas, then dismiss it
 async function contextMenuAt(client: ControlClient, canvas: number, x: number, y: number): Promise<MenuItem[]> {
-  if (USE_NG) {
-    const res = await client.request(ControlCommand.TestContextMenuAt, [x, y]);
-    const raw = String(res[1] ?? "");
-    if (res[0] !== 0) {
-      throw new Error(`annot-cut-paste: could not read the context menu\n${raw}`);
-    }
-    return menuFromDump(raw);
+  const res = await client.request(ControlCommand.TestContextMenuAt, [x, y]);
+  const raw = String(res[1] ?? "");
+  if (res[0] !== 0) {
+    throw new Error(`annot-cut-paste: could not read the context menu\n${raw}`);
   }
-  const s = clientToScreen(canvas, x, y);
-  openContextMenu(canvas, s.x, s.y);
-  const popup = await waitForContextMenu(3000);
-  if (!popup) {
-    return [];
-  }
-  const hmenu = getPopupMenuHandle(popup);
-  const items = hmenu ? readMenuTree(hmenu) : [];
-  postMessage(popup, WM_KEYDOWN, VK_ESCAPE, 0);
-  await sleep(150);
-  return items;
+  return menuFromDump(raw);
 }
 
 function findMenuItem(items: MenuItem[], text: string): MenuItem | null {

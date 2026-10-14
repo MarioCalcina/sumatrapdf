@@ -2,13 +2,11 @@
 // on empty page must leave that edit-size mode. Mouse-up used to re-select
 // whatever annotationUnderCursor last saw, so a click away after creating a
 // stamp (hover still on the stamp) kept the handles up.
-import { mkdirSync, readFileSync, rmSync } from "node:fs";
+import { mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { ControlClient, ControlCommand } from "./control";
-import { IS_MAC } from "./host.ts";
 import { ROOT, cmdId, runStandalone, tmpPath } from "./util";
 import {
-  captureWindowToPng,
   clientToScreen,
   getClientRect,
   packCoords,
@@ -33,9 +31,6 @@ function hover(canvas: number, x: number, y: number) {
 // Canvas pixels, as the canvas HWND reports them. On mac the control channel
 // wants the same point in frame pixels.
 async function framePt(client: ControlClient, x: number, y: number): Promise<{ x: number; y: number }> {
-  if (!IS_MAC) {
-    return { x, y };
-  }
   const o = await canvasFrame(client);
   return { x: x + o.x, y: y + o.y };
 }
@@ -166,11 +161,9 @@ export async function testit(): Promise<void> {
     // getClientRect is the canvas on Windows and the whole frame on mac
     let awayX = Math.max(40, cr.right - 40);
     let awayY = Math.max(40, cr.bottom - 40);
-    if (IS_MAC) {
-      const page = await canvasFrame(client);
-      awayX = Math.max(40, page.x + page.dx - 40);
-      awayY = Math.max(40, page.y + page.dy - 40);
-    }
+    const page = await canvasFrame(client);
+    awayX = Math.max(40, page.x + page.dx - 40);
+    awayY = Math.max(40, page.y + page.dy - 40);
 
     sendMessage(frame, WM_COMMAND, cmdId("CmdCreateAnnotStamp"), packCoords(stamp.x, stamp.y));
     await client.waitForRenderIdle();
@@ -262,11 +255,9 @@ export async function testit(): Promise<void> {
     // letterboxed, so that point is not the rect the model actually created.
     let resizeX = freeText.x + 212;
     let resizeY = freeText.y + 109;
-    if (IS_MAC) {
-      const placed = await selectedAnnotState(client);
-      resizeX = placed.rect.x + placed.rect.dx;
-      resizeY = placed.rect.y + placed.rect.dy;
-    }
+    const placed = await selectedAnnotState(client);
+    resizeX = placed.rect.x + placed.rect.dx;
+    resizeY = placed.rect.y + placed.rect.dy;
     const resizedX = resizeX + 40;
     const resizedY = resizeY + 40;
     const pResize = clientToScreen(canvas, resizeX, resizeY);
@@ -277,35 +268,16 @@ export async function testit(): Promise<void> {
     sendMessage(canvas, WM_MOUSEMOVE, MK_LBUTTON, packCoords(resizedX, resizedY));
     sendMessage(canvas, WM_LBUTTONUP, 0, packCoords(resizedX, resizedY));
     await client.waitForRenderIdle();
-    if (IS_MAC) {
-      const afterUp = await selectedAnnotState(client);
-      sendMessage(canvas, WM_MOUSEMOVE, 0, packCoords(resizedX + 60, resizedY + 60));
-      await client.waitForRenderIdle();
-      const afterMove = await selectedAnnotState(client);
-      const a = afterUp.rect;
-      const b = afterMove.rect;
-      if (a.x !== b.x || a.y !== b.y || a.dx !== b.dx || a.dy !== b.dy) {
-        throw new Error(
-          `issue-5933: annotation kept resizing after the left mouse button was released: up=${afterUp.raw} move=${afterMove.raw}`,
-        );
-      }
-    } else {
-      const afterResizeUpPng = join(dir, "after-resize-up.png");
-      if (!captureWindowToPng(canvas, afterResizeUpPng)) {
-        throw new Error("issue-5933: capture after resize mouse-up failed");
-      }
-
-      sendMessage(canvas, WM_MOUSEMOVE, 0, packCoords(resizedX + 60, resizedY + 60));
-      await client.waitForRenderIdle();
-      const afterUnpressedMovePng = join(dir, "after-unpressed-move.png");
-      if (!captureWindowToPng(canvas, afterUnpressedMovePng)) {
-        throw new Error("issue-5933: capture after unpressed mouse move failed");
-      }
-      const afterResizeUp = readFileSync(afterResizeUpPng);
-      const afterUnpressedMove = readFileSync(afterUnpressedMovePng);
-      if (!afterResizeUp.equals(afterUnpressedMove)) {
-        throw new Error("issue-5933: annotation kept resizing after the left mouse button was released");
-      }
+    const afterUp = await selectedAnnotState(client);
+    sendMessage(canvas, WM_MOUSEMOVE, 0, packCoords(resizedX + 60, resizedY + 60));
+    await client.waitForRenderIdle();
+    const afterMove = await selectedAnnotState(client);
+    const a = afterUp.rect;
+    const b = afterMove.rect;
+    if (a.x !== b.x || a.y !== b.y || a.dx !== b.dx || a.dy !== b.dy) {
+      throw new Error(
+        `issue-5933: annotation kept resizing after the left mouse button was released: up=${afterUp.raw} move=${afterMove.raw}`,
+      );
     }
 
     const caretAt = await framePt(client, 100, 200);

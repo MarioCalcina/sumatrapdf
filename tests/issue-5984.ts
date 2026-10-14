@@ -3,10 +3,8 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlCommand, type ControlClient } from "./control.ts";
-import { IS_MAC } from "./host.ts";
 import { cmdId, runStandalone, SLOW_BUILD_FACTOR, tmpPath } from "./util.ts";
-import { launchControlled, pressEscape, sendCommand, waitForFocusClass, killAndWait } from "./win-automation.ts";
-import { getControlText, sendMessage, WM_CHAR } from "./winapi.ts";
+import { launchControlled, sendCommand, killAndWait } from "./win-automation.ts";
 
 const query = "needle";
 const firstMatchPage = 80;
@@ -71,12 +69,6 @@ async function waitForPage(client: ControlClient, expected: number, timeoutMs = 
     await Bun.sleep(50);
   }
   return page;
-}
-
-function typeRapidly(edit: number, text: string): void {
-  for (const ch of text) {
-    sendMessage(edit, WM_CHAR, ch.charCodeAt(0), 0);
-  }
 }
 
 const VK_ESCAPE = 0x1b;
@@ -162,23 +154,14 @@ export async function testit(): Promise<void> {
 
     sendCommand(frame, cmdId("CmdFindFirst"));
     let edit = 0;
-    if (IS_MAC) {
-      await waitMacFindEdit(client, false);
-      await macType(client, query);
-    } else {
-      edit = await waitForFocusClass(frame, "Edit");
-      typeRapidly(edit, query);
-    }
+    await waitMacFindEdit(client, false);
+    await macType(client, query);
     let page = await waitForPage(client, firstMatchPage);
     if (page !== firstMatchPage) {
       throw new Error(`issue-5984: initial search landed on page ${page}, want ${firstMatchPage}`);
     }
 
-    if (IS_MAC) {
-      await macHideFind(client);
-    } else {
-      await pressEscape(edit);
-    }
+    await macHideFind(client);
     await client.request(ControlCommand.TestFavoriteNav, ["goto", 1]);
     page = await waitForPage(client, 1);
     if (page !== 1) {
@@ -187,15 +170,9 @@ export async function testit(): Promise<void> {
 
     sendCommand(frame, cmdId("CmdFindFirst"));
     let repeatedText = "";
-    if (IS_MAC) {
-      await waitMacFindEdit(client, true);
-      await macType(client, query);
-      repeatedText = await macFindText(client);
-    } else {
-      edit = await waitForFocusClass(frame, "Edit");
-      typeRapidly(edit, query);
-      repeatedText = getControlText(edit);
-    }
+    await waitMacFindEdit(client, true);
+    await macType(client, query);
+    repeatedText = await macFindText(client);
     if (repeatedText !== query) {
       throw new Error(`issue-5984: repeated typing produced '${repeatedText}', want '${query}'`);
     }

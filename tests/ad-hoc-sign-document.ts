@@ -9,28 +9,13 @@
 import { copyFileSync, existsSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { ControlClient, ControlCommand } from "./control.ts";
-import { IS_MAC } from "./host.ts";
 import { pdfSigFieldObjects, verifyPdfSignature, writeTestPfx, type TestCert } from "./pki.ts";
 import { ROOT, cmdId, runStandalone, tmpPath, writePdfWithEmptySigField } from "./util.ts";
-import { clickAt, findCanvas, killAndWait, launchControlled, pressEnter, sendCommand } from "./win-automation.ts";
-import {
-  captureWindowToPng,
-  enumChildWindows,
-  enumWindows,
-  getClassName,
-  getClientRect,
-  getControlText,
-  getWindowPid,
-  getWindowText,
-  postMessage,
-  sendText,
-  sleep,
-  WM_CLOSE,
-} from "./winapi.ts";
+import { killAndWait, launchControlled, sendCommand } from "./win-automation.ts";
+import { postMessage, sleep, WM_CLOSE } from "./winapi.ts";
 
 const kPassword = "sumatra-test-pw";
 const kCertName = "SumatraPDF SignTest";
-const kDlgTitle = "Sign Document";
 const kSaveTimeoutMs = 20000;
 
 // How the test reaches the dialog: win32 windows on Windows, the control
@@ -63,88 +48,6 @@ async function waitFor<T>(what: string, fn: () => T | Promise<T>, timeoutMs = 12
 }
 
 // --- Windows ---------------------------------------------------------------
-
-function findTopWindow(pid: number, className: string, title?: string): number {
-  let found = 0;
-  enumWindows((h) => {
-    if (getWindowPid(h) !== pid || getClassName(h) !== className) {
-      return true;
-    }
-    if (title !== undefined && getWindowText(h) !== title) {
-      return true;
-    }
-    found = h;
-    return false;
-  });
-  return found;
-}
-
-function childrenOfClass(parent: number, className: string): number[] {
-  const res: number[] = [];
-  enumChildWindows(parent, (h) => {
-    if (getClassName(h) === className) {
-      res.push(h);
-    }
-    return true;
-  });
-  return res;
-}
-
-function winSignUi(pid: number, frame: number): SignUi {
-  const findDlg = () => findTopWindow(pid, "SumatraWgDefaultWinClass", kDlgTitle);
-  return {
-    async sign(pfx, password) {
-      sendCommand(frame, cmdId("CmdSignDocument"));
-      const dlg = await waitFor("Sign Document dialog", findDlg);
-      await sleep(600);
-      const edits = childrenOfClass(dlg, "Edit");
-      if (edits.length < 4) {
-        throw new Error(`Sign dialog: expected 4 edit fields, got ${edits.length}`);
-      }
-      const combos = childrenOfClass(dlg, "ComboBox");
-      const placement =
-        combos.map(getControlText).find((t) => /signature|CEO|page/i.test(t)) ??
-        (combos.length ? getControlText(combos[combos.length - 1]!) : "");
-      sendText(edits[0]!, pfx);
-      sendText(edits[1]!, password);
-      await sleep(300);
-      // Enter activates the default button
-      await pressEnter(dlg);
-      await sleep(2500);
-      return placement;
-    },
-    async dismissError() {
-      const msgBox = findTopWindow(pid, "#32770");
-      if (!msgBox) {
-        return false;
-      }
-      captureWindowToPng(msgBox, tmpPath("sign-document-badpwd.png"));
-      postMessage(msgBox, WM_CLOSE, 0, 0);
-      await sleep(800);
-      return true;
-    },
-    async isOpen() {
-      return findDlg() !== 0;
-    },
-    async close() {
-      postMessage(findDlg(), WM_CLOSE, 0, 0);
-      await sleep(800);
-    },
-    async clickPage() {
-      const canvas = findCanvas(frame);
-      if (!canvas) {
-        throw new Error("could not find the canvas to place the signature");
-      }
-      const cr = getClientRect(canvas);
-      await clickAt(canvas, Math.floor(cr.right / 2), Math.floor(cr.bottom / 2), 400);
-    },
-    async acceptSave() {
-      const save = await waitFor("Save As dialog", () => findTopWindow(pid, "#32770", "Save As"));
-      const edits = childrenOfClass(save, "Edit");
-      await pressEnter(edits.length ? edits[0]! : save);
-    },
-  };
-}
 
 // --- macOS -----------------------------------------------------------------
 
@@ -244,7 +147,7 @@ async function withSignUi(pdf: string, fn: (ui: SignUi) => Promise<void>): Promi
   const { proc, client, frame } = await launchControlled([pdf]);
   try {
     await client.waitForRenderIdle();
-    await fn(IS_MAC ? macSignUi(client, frame) : winSignUi(proc.pid!, frame));
+    await fn(macSignUi(client, frame));
   } finally {
     client.close();
     postMessage(frame, WM_CLOSE, 0, 0);

@@ -4,13 +4,11 @@
 // and friends) still needs Ctrl+click so a drag on the marked text can
 // start a selection (issue #6166).
 
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlClient, ControlCommand } from "./control";
-import { IS_MAC } from "./host";
 import { assemblePdf, runStandalone, SLOW_BUILD_FACTOR, tmpPath } from "./util";
 import {
-  captureWindowToPng,
   clientToScreen,
   getClientRect,
   MK_CONTROL,
@@ -312,22 +310,6 @@ export async function testit(): Promise<void> {
     // Remove unrelated startup/zoom notifications before comparing pixels.
     await client.setNotificationsEnabled(false);
     await moveAndWaitForHover(client, canvas, Math.max(5, cr.right - 10), Math.max(5, cr.bottom - 10), false);
-    if (IS_MAC) {
-      console.log("SKIP pdf-edit-toolbar-interaction: hover outline pixels are read from a window DC");
-    } else {
-      const plainPng = join(dir, "plain.png");
-      if (!captureWindowToPng(canvas, plainPng)) {
-        throw new Error("pdf-edit-toolbar-interaction: plain capture failed");
-      }
-      await moveAndWaitForHover(client, canvas, editCenterX, editCenterY, true);
-      const hoverPng = join(dir, "hover.png");
-      if (!captureWindowToPng(canvas, hoverPng)) {
-        throw new Error("pdf-edit-toolbar-interaction: hover capture failed");
-      }
-      if (readFileSync(plainPng).equals(readFileSync(hoverPng))) {
-        throw new Error("pdf-edit-toolbar-interaction: hover did not draw an annotation bounding box");
-      }
-    }
 
     await clickAt(canvas, editCenterX, editCenterY, 0, MK_CONTROL);
     state = await annotState(client);

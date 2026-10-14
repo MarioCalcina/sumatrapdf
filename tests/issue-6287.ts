@@ -9,11 +9,10 @@
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlCommand, type ControlClient } from "./control.ts";
-import { assemblePdf, runStandalone, SLOW_BUILD_FACTOR, tmpPath, USE_NG } from "./util.ts";
-import { sleep, findTopWindow, MK_LBUTTON } from "./winapi.ts";
-import { clickAt, launchControlled } from "./win-automation.ts";
+import { assemblePdf, runStandalone, SLOW_BUILD_FACTOR, tmpPath } from "./util.ts";
+import { sleep } from "./winapi.ts";
+import { launchControlled } from "./win-automation.ts";
 
-const FLOAT_CLASS = "SUMATRA_ANNOT_FILTER_WND";
 const NOTE =
   "Replace this sentence with a shorter one. The paragraph goes on to explain why the change is needed, " +
   "and then proposes the new wording in full so the reviewer can paste it in.";
@@ -62,16 +61,7 @@ async function waitFor(client: ControlClient, what: string, pred: (s: State) => 
 
 // select the first row: ng has a test action, orig's list takes a click
 async function selectFirstRow(client: ControlClient, pid: number): Promise<void> {
-  if (USE_NG) {
-    await client.request(ControlCommand.TestAnnotFilter, ["click", 0, 0]);
-    return;
-  }
-  const s = await waitFor(client, "the list never laid out", (st) => st.itemDy > 0);
-  const floatWnd = findTopWindow(pid, FLOAT_CLASS);
-  if (!floatWnd) {
-    throw new Error("issue-6287: no Annotations window");
-  }
-  await clickAt(floatWnd, 24, s.listY + Math.floor(s.itemDy / 2), 200, MK_LBUTTON);
+  await client.request(ControlCommand.TestAnnotFilter, ["click", 0, 0]);
 }
 
 export async function testit(): Promise<void> {

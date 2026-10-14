@@ -10,9 +10,9 @@
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlCommand } from "./control.ts";
-import { ROOT, SLOW_BUILD_FACTOR, USE_NG, cmdId, runStandalone, tmpPath } from "./util";
-import { postMessage, sendText, sleep, WM_CLOSE } from "./winapi";
-import { launchControlled, pressKey, sendCommand, waitForExit, waitForFocusClass, killAndWait } from "./win-automation";
+import { ROOT, SLOW_BUILD_FACTOR, cmdId, runStandalone, tmpPath } from "./util";
+import { postMessage, sleep, WM_CLOSE } from "./winapi";
+import { launchControlled, sendCommand, waitForExit, killAndWait } from "./win-automation";
 import type { ControlClient } from "./control.ts";
 
 const VK_RETURN = 0x0d;
@@ -103,15 +103,9 @@ export async function testit(): Promise<void> {
   const searchDir = makeAppDir("search");
   await run(searchDir, async (frame, client) => {
     sendCommand(frame, cmdId("CmdFindFirst"));
-    if (USE_NG) {
-      await waitFindOpen(client);
-      await ngFind(client, "set", "CAF");
-      await ngFind(client, "enter");
-      return;
-    }
-    const edit = await waitForFocusClass(frame, "Edit");
-    sendText(edit, "CAF");
-    await pressKey(edit, VK_RETURN, 0);
+    await waitFindOpen(client);
+    await ngFind(client, "set", "CAF");
+    await ngFind(client, "enter");
   });
   const afterSearch = readFileStates(searchDir);
   if (afterSearch.includes("FilePath")) {
@@ -121,11 +115,7 @@ export async function testit(): Promise<void> {
   const favDir = makeAppDir("favorite");
   await run(favDir, async (frame, client) => {
     sendCommand(frame, cmdId("CmdFavoriteAdd"));
-    if (USE_NG) {
-      await confirmAddFavorite(client);
-      return;
-    }
-    await pressKey(await waitForFocusClass(frame, "Edit"), VK_RETURN, 0);
+    await confirmAddFavorite(client);
   });
   const afterFav = readFileStates(favDir);
   if (!afterFav.includes("FilePath") || !afterFav.includes("PageNo")) {

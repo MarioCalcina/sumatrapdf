@@ -5,41 +5,28 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlClient, ControlCommand } from "./control.ts";
-import { IS_MAC } from "./host.ts";
-import { cmdId, runStandalone, tmpPath, USE_NG, makeBlankPdf, SLOW_BUILD_FACTOR } from "./util.ts";
+import { cmdId, runStandalone, tmpPath, makeBlankPdf, SLOW_BUILD_FACTOR } from "./util.ts";
 import {
-  captureWindowPixels,
-  clientToScreen,
-  getClassName,
   getClientRect,
-  getFocusedHwnd,
-  getRootWindow,
   MK_CONTROL,
   MK_LBUTTON,
   MK_RBUTTON,
   MK_SHIFT,
   packCoords,
-  postMessage,
   sendMessage,
-  sendText,
-  setCursorPos,
   sleep,
   VK_DOWN,
   VK_ESCAPE,
   VK_RETURN,
   VK_SPACE,
   WM_COMMAND,
-  WM_KEYDOWN,
   WM_LBUTTONDBLCLK,
-  WM_LBUTTONDOWN,
   WM_LBUTTONUP,
-  WM_MOUSEMOVE,
   WM_RBUTTONDOWN,
   WM_RBUTTONUP,
 } from "./winapi.ts";
 import {
   clickAt,
-  findChildByClass,
   findCanvas,
   killAndWait,
   launchControlled,
@@ -47,7 +34,6 @@ import {
   sendCommand,
   ngKey,
   ngType,
-  countPreviewBlue,
 } from "./win-automation.ts";
 
 type Point = { x: number; y: number };
@@ -179,57 +165,7 @@ async function executeFromCommandPaletteNg(client: ControlClient, frame: number)
 }
 
 async function executeFromCommandPalette(client: ControlClient, frame: number): Promise<void> {
-  if (USE_NG) {
-    await executeFromCommandPaletteNg(client, frame);
-    return;
-  }
-  sendCommand(frame, cmdId("CmdCommandPalette"));
-  const openDeadline = Date.now() + 8_000;
-  let palette = 0;
-  let edit = 0;
-  while (Date.now() < openDeadline) {
-    edit = getFocusedHwnd(frame);
-    if (edit && getClassName(edit) === "Edit") {
-      palette = getRootWindow(edit);
-      if (palette && palette !== frame) {
-        break;
-      }
-    }
-    await sleep(50);
-  }
-  if (!palette || !edit) {
-    throw new Error("polyline-annotation-placement: command palette did not open");
-  }
-
-  const query = ">Create Polyline Annotation";
-  sendText(edit, query);
-  const filterDeadline = Date.now() + 3_000;
-  let itemCount = 0;
-  for (;;) {
-    const res = await client.request(ControlCommand.TestCommandPalette, []);
-    const raw = String(res[1] ?? "");
-    const m = /items=(\d+) querySel=-?\d+,-?\d+ queryLen=(\d+) cmd=(-?\d+)/.exec(raw);
-    if (res[0] === 0 && m && +m[2]! === query.length) {
-      itemCount = +m[1]!;
-      break;
-    }
-    if (Date.now() > filterDeadline) {
-      throw new Error(`polyline-annotation-placement: palette query did not settle\n${raw}`);
-    }
-    await sleep(40);
-  }
-
-  for (let i = 0; i < itemCount; i++) {
-    const res = await client.request(ControlCommand.TestCommandPalette, []);
-    const raw = String(res[1] ?? "");
-    const m = /cmd=(-?\d+)/.exec(raw);
-    if (res[0] === 0 && m && +m[1]! === cmdId("CmdCreateAnnotPolyLine")) {
-      await pressKey(edit, VK_RETURN, 0);
-      return;
-    }
-    postMessage(edit, WM_KEYDOWN, VK_DOWN, 0);
-  }
-  throw new Error("polyline-annotation-placement: Polyline command was not in the filtered palette");
+  await executeFromCommandPaletteNg(client, frame);
 }
 
 function ngMods(key: number): number {
@@ -239,7 +175,7 @@ function ngMods(key: number): number {
   }
   // On macOS bit 1 is Control, which is the context click. Command is bit 8.
   if (key & MK_CONTROL) {
-    mods |= IS_MAC ? 8 : 1;
+    mods |= 8;
   }
   return mods;
 }
@@ -255,18 +191,12 @@ async function ngMouse(client: ControlClient, kind: string, point: Point, button
 async function moveMouse(client: ControlClient, canvas: number, point: Point, key = 0): Promise<void> {
   // ng: a posted move is hit-tested at the real cursor, which a locked
   // desktop keeps at 0,0, so the preview never follows the point.
-  if (USE_NG) {
-    await ngMouse(client, "move", point, 0, key);
-    return;
-  }
-  const screen = clientToScreen(canvas, point.x, point.y);
-  setCursorPos(screen.x, screen.y);
-  sendMessage(canvas, WM_MOUSEMOVE, key, packCoords(point.x, point.y));
+  await ngMouse(client, "move", point, 0, key);
 }
 
 // Posted MK_SHIFT / MK_CONTROL never reach gpui; it reads its own modifiers.
 async function clickCanvas(client: ControlClient, canvas: number, point: Point, key = 0): Promise<void> {
-  if (USE_NG && key !== 0) {
+  if (key !== 0) {
     await ngMouse(client, "click", point, 0, key);
     return;
   }
@@ -345,24 +275,20 @@ export async function testit(): Promise<void> {
       const y = button.y + Math.floor(button.dy / 2);
       // ng draws the toolbar in the frame. A posted down/up pair can be split
       // by a cursor snap, which gpui treats as a drag.
-      if (USE_NG) {
-        // a button laid out or re-enabled this frame can't be hit until the frame
-        // is painted: click until the tool takes
-        const deadline = Date.now() + TOOLBAR_CLICK_TIMEOUT_MS * SLOW_BUILD_FACTOR;
-        for (;;) {
-          const res = await client.request(ControlCommand.TestInput, ["click", x, y, 0, 0]);
-          const raw = String(res[1] ?? "");
-          if (res[0] !== 0 || !raw.startsWith("OK")) {
-            throw new Error(`polyline-annotation-placement: toolbar click failed: ${raw}`);
-          }
-          await sleep(TOOLBAR_CLICK_SETTLE_MS);
-          if ((await placementState(client)).active || Date.now() > deadline) {
-            return;
-          }
+      // a button laid out or re-enabled this frame can't be hit until the frame
+      // is painted: click until the tool takes
+      const deadline = Date.now() + TOOLBAR_CLICK_TIMEOUT_MS * SLOW_BUILD_FACTOR;
+      for (;;) {
+        const res = await client.request(ControlCommand.TestInput, ["click", x, y, 0, 0]);
+        const raw = String(res[1] ?? "");
+        if (res[0] !== 0 || !raw.startsWith("OK")) {
+          throw new Error(`polyline-annotation-placement: toolbar click failed: ${raw}`);
+        }
+        await sleep(TOOLBAR_CLICK_SETTLE_MS);
+        if ((await placementState(client)).active || Date.now() > deadline) {
+          return;
         }
       }
-      const toolbar = findChildByClass(frame, "SUMATRA_VIRT_TOOLBAR");
-      clickAt(toolbar, x, y, 0);
     };
 
     await clickToolbar();
@@ -395,38 +321,19 @@ export async function testit(): Promise<void> {
     }
     await client.setNotificationsEnabled(false);
     const anchor = placementEnd(state.raw);
-    if (USE_NG) {
-      // the stroke is custom paint, which PrintWindow does not capture. The
-      // dumped end is the same point the preview is drawn to.
-      if (!anchor) {
-        throw new Error(`polyline-annotation-placement: anchor end missing\n${state.raw}`);
-      }
-      await moveMouse(client, canvas, p2);
-      state = await placementState(client);
-      const end = placementEnd(state.raw);
-      const want = { x: anchor.x + (p2.x - p1.x), y: anchor.y + (p2.y - p1.y) };
-      if (!end || Math.abs(end.x - want.x) > 1 || Math.abs(end.y - want.y) > 1) {
-        throw new Error(
-          `polyline-annotation-placement: live preview did not follow the pointer (end=${end?.x},${end?.y} want=${want.x},${want.y})\n${state.raw}`,
-        );
-      }
-    } else {
-      const before = captureWindowPixels(canvas);
-      const blueBefore = countPreviewBlue(before, p1, p2);
-      await moveMouse(client, canvas, p2);
-      // the preview is drawn on the next frame; a single capture can still be the
-      // one from before the move
-      let after = captureWindowPixels(canvas);
-      let blueAfter = countPreviewBlue(after, p1, p2);
-      const paintDeadline = Date.now() + 2_000;
-      while (blueAfter < blueBefore + 80 && Date.now() < paintDeadline) {
-        await sleep(50);
-        after = captureWindowPixels(canvas);
-        blueAfter = countPreviewBlue(after, p1, p2);
-      }
-      if (blueAfter < blueBefore + 80) {
-        throw new Error(`polyline-annotation-placement: live preview did not paint (${blueBefore} -> ${blueAfter})`);
-      }
+    // the stroke is custom paint, which PrintWindow does not capture. The
+    // dumped end is the same point the preview is drawn to.
+    if (!anchor) {
+      throw new Error(`polyline-annotation-placement: anchor end missing\n${state.raw}`);
+    }
+    await moveMouse(client, canvas, p2);
+    state = await placementState(client);
+    const end = placementEnd(state.raw);
+    const want = { x: anchor.x + (p2.x - p1.x), y: anchor.y + (p2.y - p1.y) };
+    if (!end || Math.abs(end.x - want.x) > 1 || Math.abs(end.y - want.y) > 1) {
+      throw new Error(
+        `polyline-annotation-placement: live preview did not follow the pointer (end=${end?.x},${end?.y} want=${want.x},${want.y})\n${state.raw}`,
+      );
     }
     await clickPoints(canvas, [p2, p3]);
     state = await placementState(client);
@@ -545,14 +452,10 @@ export async function testit(): Promise<void> {
     for (let i = 0; i < 4 && !snapped; i++) {
       // a posted move reads GetKeyState, which is up on a locked desktop, and
       // would clear the snap the control-pipe move just applied
-      if (USE_NG) {
-        await moveMouse(client, canvas, nearlyFlat, MK_SHIFT);
-      } else {
-        sendMessage(canvas, WM_MOUSEMOVE, MK_SHIFT, packCoords(nearlyFlat.x, nearlyFlat.y));
-      }
+      await moveMouse(client, canvas, nearlyFlat, MK_SHIFT);
       state = await placementState(client);
       const end = placementEnd(state.raw);
-      const origin = USE_NG && shiftAnchor ? shiftAnchor : p1;
+      const origin = shiftAnchor ? shiftAnchor : p1;
       snapped = !!end && Math.abs(end.y - origin.y) <= 1 && Math.abs(end.x - origin.x) > 40;
     }
     if (!snapped) {
@@ -560,7 +463,7 @@ export async function testit(): Promise<void> {
     }
     await moveMouse(client, canvas, nearlyFlat);
     state = await placementState(client);
-    if (USE_NG && shiftAnchor) {
+    if (shiftAnchor) {
       const back = placementEnd(state.raw);
       const wantX = shiftAnchor.x + (nearlyFlat.x - p1.x);
       const wantY = shiftAnchor.y + (nearlyFlat.y - p1.y);
@@ -585,17 +488,9 @@ export async function testit(): Promise<void> {
     const vertex = { x: nearlyFlat.x, y: p1.y };
     const steep = { x: p1.x + 100, y: p1.y + 108 };
     await moveMouse(client, canvas, vertex);
-    if (USE_NG) {
-      await ngMouse(client, "down", vertex, 0, MK_SHIFT);
-      await ngMouse(client, "move", steep, 1, MK_SHIFT);
-      await ngMouse(client, "up", steep, 0, MK_SHIFT);
-    } else {
-      sendMessage(canvas, WM_LBUTTONDOWN, MK_LBUTTON | MK_SHIFT, packCoords(vertex.x, vertex.y));
-      // SetCapture synthesizes a move without Shift; let it land first
-      await sleep(50);
-      sendMessage(canvas, WM_MOUSEMOVE, MK_LBUTTON | MK_SHIFT, packCoords(steep.x, steep.y));
-      sendMessage(canvas, WM_LBUTTONUP, MK_SHIFT, packCoords(steep.x, steep.y));
-    }
+    await ngMouse(client, "down", vertex, 0, MK_SHIFT);
+    await ngMouse(client, "move", steep, 1, MK_SHIFT);
+    await ngMouse(client, "up", steep, 0, MK_SHIFT);
     await client.waitForRenderIdle();
     state = await placementState(client);
     const dragged = [...state.raw.matchAll(/polyline vertices=\d+ closed=\d pts=([^\n]*)/g)];

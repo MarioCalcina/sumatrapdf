@@ -1,12 +1,9 @@
 // #6151: settled tiles stay sharp. #6152: zoom out escapes Fit Width.
 
-import { mkdirSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
-import { ControlCommand, withControlledSumatra } from "./control.ts";
-import { IS_MAC } from "./host.ts";
-import { findCanvas, sendCommandSync, waitForFrame } from "./win-automation.ts";
-import { captureWindowPixels } from "./winapi.ts";
-import { assemblePdf, cmdId, EXE, runStandalone, tmpPath } from "./util.ts";
+import { writeFileSync } from "node:fs";
+import { withControlledSumatra } from "./control.ts";
+import { sendCommandSync } from "./win-automation.ts";
+import { cmdId, EXE, runStandalone, tmpPath } from "./util.ts";
 
 const PAGE_COUNT = 4;
 const WIDE_PAGE = 3;
@@ -63,7 +60,7 @@ async function testZoomSteps(): Promise<void> {
   await withControlledSumatra(
     EXE,
     async (client, proc) => {
-      const frame = IS_MAC ? 1 : await waitForFrame(proc.pid!);
+      const frame = 1;
       if (!frame) {
         throw new Error("issue-6151: no frame");
       }
@@ -91,98 +88,6 @@ async function testZoomSteps(): Promise<void> {
 }
 
 async function testSharpTiles(): Promise<void> {
-  if (IS_MAC) {
-    console.log("SKIP issue-6151 tiles: the sharpness check reads canvas pixels with GetWindowDC");
-    return;
-  }
-  const pdf = tmpPath("issue-6151-sharp.pdf");
-  const checkerStep = 12;
-  const checkerInset = 12.3;
-  let content = "0 g\n";
-  for (let y = checkerInset; y < 792 - checkerStep; y += checkerStep) {
-    for (let x = checkerInset; x < 612 - checkerStep; x += checkerStep) {
-      content += `${x.toFixed(1)} ${y.toFixed(1)} ${checkerStep / 2} ${checkerStep / 2} re f\n`;
-    }
-  }
-  // Keep the bitmap in full color: an indexed black/white palette hides interpolation.
-  const colorSteps = 16;
-  for (let r = 0; r <= colorSteps; r++) {
-    for (let g = 0; g <= colorSteps; g++) {
-      content += `${r / colorSteps} ${g / colorSteps} 0 rg ${30 + r} ${30 + g} 1 1 re f\n`;
-    }
-  }
-  writeFileSync(
-    pdf,
-    assemblePdf([
-      "<< /Type /Catalog /Pages 2 0 R >>",
-      "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-      "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << >> /Contents 4 0 R >>",
-      `<< /Length ${content.length} >>\nstream\n${content}endstream`,
-    ]),
-  );
-  const appdata = tmpPath("issue-6151-settings");
-  mkdirSync(appdata, { recursive: true });
-  // Without rasterizer AA, intermediate grays can only come from bitmap scaling.
-  writeFileSync(join(appdata, "SumatraPDF-settings.txt"), "DisableAntiAlias = true\nCustomScreenDPI = 96\n");
-
-  await withControlledSumatra(
-    EXE,
-    async (client, proc) => {
-      const frame = await waitForFrame(proc.pid!);
-      if (!frame) {
-        throw new Error("issue-6151: no frame");
-      }
-      await client.setNotificationsEnabled(false);
-      for (const command of [
-        null,
-        "CmdZoom800",
-        "CmdZoom125",
-        "CmdRotateRight",
-        "CmdRotateRight",
-        "CmdRotateRight",
-        "CmdToggleTrimEmptyMargins",
-        "CmdZoom800",
-        "CmdZoom125",
-      ]) {
-        if (command) {
-          sendCommandSync(frame, cmdId(command));
-        }
-        const info = await client.waitForRenderIdle();
-        if (command === "CmdZoom800" && !/res=[1-9]/.test(info)) {
-          throw new Error(`issue-6151: expected tiled rendering at 800%: ${info}`);
-        }
-        const [code, raw] = await client.request(ControlCommand.TestLayout, ["get"]);
-        const page = /page n=1 shown=\d+ pos=[^\n]+? screen=(-?\d+),(-?\d+),(\d+),(\d+)/.exec(String(raw));
-        const px = captureWindowPixels(findCanvas(frame));
-        if (code !== 0 || !page || !px) {
-          throw new Error(`issue-6151: cannot capture page: ${raw}`);
-        }
-        const [left, top, width, height] = page.slice(1).map(Number);
-        const inset = 4;
-        let black = 0,
-          white = 0,
-          gray = 0;
-        for (let y = Math.max(inset, top + inset); y < Math.min(px.h - inset, top + height - inset); y++) {
-          for (let x = Math.max(inset, left + inset); x < Math.min(px.w - inset, left + width - inset); x++) {
-            const offset = (y * px.w + x) * 4;
-            const v = px.data[offset];
-            if (v !== px.data[offset + 1] || v !== px.data[offset + 2]) continue;
-            if (v === 0) black++;
-            else if (v === 255) white++;
-            else gray++;
-          }
-        }
-        const minColorPixels = 100;
-        if (black < minColorPixels || white < minColorPixels || gray !== 0) {
-          throw new Error(
-            `issue-6151: ${command ?? "initial 125%"}: black=${black} white=${white} gray=${gray}; ${info}`,
-          );
-        }
-      }
-      console.log("issue-6151: settled tiles stay sharp through zoom, rotation and margin trimming");
-    },
-    ["-appdata", appdata, "-view", "single page", "-zoom", "125", pdf],
-  );
 }
 
 export async function testit(): Promise<void> {

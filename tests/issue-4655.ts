@@ -12,10 +12,8 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { ControlCommand, withControlledSumatra } from "./control.ts";
-import { IS_MAC } from "./host.ts";
-import { captureWindowPixels, captureWindowToPng } from "./winapi.ts";
-import { findCanvas, sendCommandSync, waitForFrame } from "./win-automation.ts";
-import { cmdId, EXE, runStandalone, tmpPath } from "./util.ts";
+import { sendCommandSync, waitForFrame } from "./win-automation.ts";
+import { cmdId, EXE, runStandalone } from "./util.ts";
 
 const PDF = join(import.meta.dir, "issue-4655.pdf");
 
@@ -72,10 +70,6 @@ export function makePdf(): Buffer {
   return Buffer.concat(parts);
 }
 
-function isDark(b: number, g: number, r: number): boolean {
-  return b < 80 && g < 80 && r < 80;
-}
-
 export async function testit(): Promise<void> {
   if (!existsSync(PDF)) {
     throw new Error(`issue-4655: fixture not found: ${PDF}`);
@@ -93,43 +87,12 @@ export async function testit(): Promise<void> {
       sendCommandSync(frame, cmdId("CmdZoomFitPage"));
       await client.waitForRenderIdle();
 
-      if (IS_MAC) {
-        // Same dark-pixel count as the canvas shot, from the page render.
-        const res = await client.request(ControlCommand.TestRenderPageColors, [PDF, 1]);
-        const raw = String(res[1] ?? "");
-        const n = Number(/darkLeft=(\d+)/.exec(raw)?.[1] ?? "-1");
-        if ((res[0] as number) !== 0 || n < 80) {
-          throw new Error(`issue-4655: matrix bracket pieces did not draw (${n} dark pixels)\n${raw.trim()}`);
-        }
-        return;
-      }
-
-      const canvas = findCanvas(frame);
-      if (!canvas) {
-        throw new Error("issue-4655: no canvas");
-      }
-      captureWindowToPng(canvas, tmpPath("issue-4655.png"));
-      const shot = captureWindowPixels(canvas);
-      if (!shot) {
-        throw new Error("issue-4655: capture failed");
-      }
-
-      // left half of the page holds the stacked Symbol bracket pieces; Helvetica
-      // "OK" is on the right. A failed Symbol substitute leaves that half blank.
-      const x1 = Math.floor(shot.w * 0.45);
-      let n = 0;
-      for (let y = 0; y < shot.h; y++) {
-        for (let x = 0; x < x1; x++) {
-          const i = (y * shot.w + x) * 4;
-          if (isDark(shot.data[i]!, shot.data[i + 1]!, shot.data[i + 2]!)) {
-            n++;
-          }
-        }
-      }
-      if (n < 80) {
-        throw new Error(
-          `issue-4655: matrix bracket pieces did not draw (${n} dark pixels in left 45% of ${shot.w}x${shot.h})`,
-        );
+      // Same dark-pixel count as the canvas shot, from the page render.
+      const res = await client.request(ControlCommand.TestRenderPageColors, [PDF, 1]);
+      const raw = String(res[1] ?? "");
+      const n = Number(/darkLeft=(\d+)/.exec(raw)?.[1] ?? "-1");
+      if ((res[0] as number) !== 0 || n < 80) {
+        throw new Error(`issue-4655: matrix bracket pieces did not draw (${n} dark pixels)\n${raw.trim()}`);
       }
     },
     [PDF],

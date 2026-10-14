@@ -10,30 +10,17 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlClient, ControlCommand } from "./control.ts";
-import { IS_MAC } from "./host.ts";
-import { assemblePdf, cmdId, pollUntil, runStandalone, tmpPath, USE_NG } from "./util.ts";
+import { assemblePdf, cmdId, pollUntil, runStandalone, tmpPath } from "./util.ts";
 import {
   clientToScreen,
-  enumWindows,
   findTopWindow,
-  getWindowOwner,
-  getWindowPid,
-  getWindowRect,
-  getWindowText,
-  isWindowAbove,
   isWindowVisible,
-  MK_RBUTTON,
   packCoords,
-  postMessage,
   sendMessage,
   setCursorPos,
   sleep,
   VK_ESCAPE,
   WM_COMMAND,
-  WM_KEYDOWN,
-  WM_MOUSEMOVE,
-  WM_RBUTTONDOWN,
-  WM_RBUTTONUP,
 } from "./winapi.ts";
 import {
   clickAt,
@@ -46,10 +33,8 @@ import {
   sendCommandSync,
 } from "./win-automation.ts";
 
-const TOOLBAR_CLASS = "SumatraAnnotEditToolbar";
 const MAIN_TOOLBAR_CLASS = "SUMATRA_VIRT_TOOLBAR";
 const HOVER_MENU_CLASS = "SumatraToolbarHoverMenu";
-const POPUP_CLASS = "SumatraAnnotColorPopup";
 // the two preset colors the test picks from: translucent red, opaque green
 const PRESETS = "#80ff0000 #00ff00";
 // ink's own colors, with the alpha it paints them at
@@ -123,10 +108,8 @@ function chipNames(dump: string): string[] {
 // them, which gpui treats as a drag and the swatch never receives the click.
 async function ngClick(client: ControlClient, x: number, y: number, button = 0): Promise<void> {
   // The toolbar drop-down closes when the real cursor is somewhere else.
-  if (IS_MAC) {
-    const at = clientToScreen(0, x, y);
-    setCursorPos(at.x, at.y);
-  }
+  const at = clientToScreen(0, x, y);
+  setCursorPos(at.x, at.y);
   const res = await client.request(ControlCommand.TestInput, ["click", x, y, button, 0]);
   const raw = String(res[1] ?? "");
   if (res[0] !== 0 || !raw.startsWith("OK")) {
@@ -145,7 +128,7 @@ export async function openChipDropdown(client: ControlClient, pid: number, kind:
   const chipRe = new RegExp(`[=;]${kind}:(-?\\d+),(-?\\d+),(\\d+),(\\d+)`);
   let chip = parseRect(chipRe.exec(dump));
   // ng lays the chips out a frame after the row appears
-  if (USE_NG && chip.dx <= 0) {
+  if (chip.dx <= 0) {
     const ready = await pollUntil(
       async () => toolbarDump(client),
       (d) => parseRect(chipRe.exec(d)).dx > 0,
@@ -153,23 +136,7 @@ export async function openChipDropdown(client: ControlClient, pid: number, kind:
     );
     chip = parseRect(chipRe.exec(ready));
   }
-  if (USE_NG) {
-    await ngClick(client, chip.x + Math.floor(chip.dx / 2), chip.y + Math.floor(chip.dy / 2));
-  } else {
-    const tbHwnd = findTopWindow(pid, TOOLBAR_CLASS);
-    if (!tbHwnd) {
-      throw new Error("annot-color-dropdown: annotation toolbar window not found");
-    }
-    await clickAt(tbHwnd, chip.x - placed.x + Math.floor(chip.dx / 2), chip.y - placed.y + Math.floor(chip.dy / 2), 0);
-
-    await pollUntil(
-      () => findTopWindow(pid, POPUP_CLASS),
-      (popup) => popup !== 0 && isWindowVisible(popup),
-      {
-        error: `annot-color-dropdown: the ${kind} drop-down did not open, chip at ${JSON.stringify(chip)} of ${dump}`,
-      },
-    );
-  }
+  await ngClick(client, chip.x + Math.floor(chip.dx / 2), chip.y + Math.floor(chip.dy / 2));
   const line = await pollUntil(
     async () => /annotColorPopup .*/.exec(await markupDump(client))?.[0] ?? "",
     // The popup is marked visible before the frame lays the swatches out.
@@ -198,85 +165,36 @@ async function macColorDialog(client: ControlClient): Promise<boolean> {
   return !!m && Number(m[2]) >= -1000 && m[5] === COLOR_DIALOG_TITLE;
 }
 
-// the drop-down's visible color dialog, if it is up
-function findColorDialog(pid: number): number {
-  let found = 0;
-  enumWindows((hwnd) => {
-    if (getWindowPid(hwnd) !== pid || !isWindowVisible(hwnd)) {
-      return true;
-    }
-    if (getWindowText(hwnd) !== COLOR_DIALOG_TITLE) {
-      return true;
-    }
-    found = hwnd;
-    return false;
-  });
-  return found;
-}
-
 // The button at the right end of the drop-down opens the color dialog. It has
 // to end up in front of the main window, which it only does if it is owned by
 // it, and the drop-down has to be gone.
 async function checkEditColors(client: ControlClient, pid: number, frame: number, swatches: Rect[]): Promise<void> {
-  if (USE_NG) {
-    // ng draws the pencil in the card. Its rect arrives a frame after the swatches.
-    const line = await pollUntil(
-      async () => /annotColorPopup .*/.exec(await markupDump(client))?.[0] ?? "",
-      (s) => {
-        const m = /edit=(-?\d+),(-?\d+),(\d+),(\d+)/.exec(s);
-        return !!m && +m[3]! > 0 && +m[4]! > 0;
-      },
-      { error: "annot-color-dropdown: Edit colors has no rect" },
-    );
-    const edit = parseRect(/edit=(-?\d+),(-?\d+),(\d+),(\d+)/.exec(line));
-    await ngClick(client, edit.x + Math.floor(edit.dx / 2), edit.y + Math.floor(edit.dy / 2));
-  } else {
-    const popup = findTopWindow(pid, POPUP_CLASS);
-    const r = getWindowRect(popup);
-    const last = swatches[swatches.length - 1]!;
-    const x = last.x + last.dx + Math.floor((r.right - (last.x + last.dx)) / 2);
-    await clickAt(popup, x - r.left, last.y + Math.floor(last.dy / 2) - r.top, 0);
-  }
+  // ng draws the pencil in the card. Its rect arrives a frame after the swatches.
+  const line = await pollUntil(
+    async () => /annotColorPopup .*/.exec(await markupDump(client))?.[0] ?? "",
+    (s) => {
+      const m = /edit=(-?\d+),(-?\d+),(\d+),(\d+)/.exec(s);
+      return !!m && +m[3]! > 0 && +m[4]! > 0;
+    },
+    { error: "annot-color-dropdown: Edit colors has no rect" },
+  );
+  const edit = parseRect(/edit=(-?\d+),(-?\d+),(\d+),(\d+)/.exec(line));
+  await ngClick(client, edit.x + Math.floor(edit.dx / 2), edit.y + Math.floor(edit.dy / 2));
 
-  if (IS_MAC) {
-    await pollUntil(
-      () => macColorDialog(client),
-      (up) => up,
-      {
-        error: "annot-color-dropdown: Edit colors did not open the color dialog",
-      },
-    );
-    if (!/annotColorPopup visible=0/.test(await markupDump(client))) {
-      throw new Error("annot-color-dropdown: the drop-down stayed up under the color dialog");
-    }
-    await client.request(ControlCommand.TestToolWindow, ["input", "changecolor", "key", VK_ESCAPE, 0, 0, 0]);
-    await pollUntil(
-      () => macColorDialog(client),
-      (up) => !up,
-      {
-        error: "annot-color-dropdown: the color dialog did not close",
-      },
-    );
-    return;
-  }
-  const dlg = await pollUntil(
-    () => findColorDialog(pid),
-    (hwnd) => hwnd !== 0,
+  await pollUntil(
+    () => macColorDialog(client),
+    (up) => up,
     {
       error: "annot-color-dropdown: Edit colors did not open the color dialog",
     },
   );
-  if (getWindowOwner(dlg) !== frame || !isWindowAbove(dlg, frame)) {
-    throw new Error("annot-color-dropdown: the color dialog is not in front of the main window");
-  }
-  const stillUp = findTopWindow(pid, POPUP_CLASS);
-  if (stillUp && isWindowVisible(stillUp)) {
+  if (!/annotColorPopup visible=0/.test(await markupDump(client))) {
     throw new Error("annot-color-dropdown: the drop-down stayed up under the color dialog");
   }
-  postMessage(dlg, WM_KEYDOWN, VK_ESCAPE, 0);
+  await client.request(ControlCommand.TestToolWindow, ["input", "changecolor", "key", VK_ESCAPE, 0, 0, 0]);
   await pollUntil(
-    () => findColorDialog(pid),
-    (hwnd) => hwnd === 0,
+    () => macColorDialog(client),
+    (up) => !up,
     {
       error: "annot-color-dropdown: the color dialog did not close",
     },
@@ -286,23 +204,12 @@ async function checkEditColors(client: ControlClient, pid: number, frame: number
 // picks one of the swatches of the open drop-down
 export async function pickSwatch(client: ControlClient, pid: number, swatches: Rect[], idx: number): Promise<void> {
   const sw = swatches[idx]!;
-  if (USE_NG) {
-    await ngClick(client, sw.x + Math.floor(sw.dx / 2), sw.y + Math.floor(sw.dy / 2));
-    await pollUntil(
-      async () => /annotColorPopup visible=0/.test(await markupDump(client)),
-      (gone) => gone,
-      { error: "annot-color-dropdown: the drop-down stayed up after picking a color" },
-    );
-  } else {
-    const popup = findTopWindow(pid, POPUP_CLASS);
-    const r = getWindowRect(popup);
-    await clickAt(popup, sw.x - r.left + Math.floor(sw.dx / 2), sw.y - r.top + Math.floor(sw.dy / 2), 0);
-    await pollUntil(
-      () => findTopWindow(pid, POPUP_CLASS),
-      (hwnd) => hwnd === 0 || !isWindowVisible(hwnd),
-      { error: "annot-color-dropdown: the drop-down stayed up after picking a color" },
-    );
-  }
+  await ngClick(client, sw.x + Math.floor(sw.dx / 2), sw.y + Math.floor(sw.dy / 2));
+  await pollUntil(
+    async () => /annotColorPopup visible=0/.test(await markupDump(client)),
+    (gone) => gone,
+    { error: "annot-color-dropdown: the drop-down stayed up after picking a color" },
+  );
   await client.waitForRenderIdle();
 }
 
@@ -528,13 +435,7 @@ async function waitForHoverColors(client: ControlClient, want?: string): Promise
 // that button's drop-down. ng has no toolbar HWND; the click goes through
 // the control channel, in frame dips.
 async function rightClickToolbar(client: ControlClient, toolbar: number, x: number, y: number): Promise<void> {
-  if (USE_NG) {
-    await ngClick(client, x, y, 1);
-    return;
-  }
-  const lp = packCoords(x, y);
-  sendMessage(toolbar, WM_RBUTTONDOWN, MK_RBUTTON, lp);
-  sendMessage(toolbar, WM_RBUTTONUP, 0, lp);
+  await ngClick(client, x, y, 1);
 }
 
 async function hoverDump(client: ControlClient): Promise<string> {
@@ -544,24 +445,13 @@ async function hoverDump(client: ControlClient): Promise<string> {
 // Esc dismisses a right-click drop-down; moving the mouse away does not
 async function closeHoverMenu(client: ControlClient, pid: number, frame: number): Promise<void> {
   await pressKey(frame, VK_ESCAPE, 0);
-  if (USE_NG) {
-    await pollUntil(
-      async () => hoverDump(client),
-      (s) => /dropdown cmd=0 /.test(s),
-      {
-        error: "annot-color-dropdown: the toolbar drop-down would not close",
-      },
-    );
-    return;
-  }
-  for (let i = 0; i < 30; i++) {
-    const h = findTopWindow(pid, HOVER_MENU_CLASS);
-    if (!h || !isWindowVisible(h)) {
-      return;
-    }
-    await sleep(100);
-  }
-  throw new Error("annot-color-dropdown: the toolbar drop-down would not close");
+  await pollUntil(
+    async () => hoverDump(client),
+    (s) => /dropdown cmd=0 /.test(s),
+    {
+      error: "annot-color-dropdown: the toolbar drop-down would not close",
+    },
+  );
 }
 
 async function testToolbarButtons(): Promise<void> {
@@ -640,41 +530,22 @@ async function testToolbarButtons(): Promise<void> {
     const raw = await pollUntil(
       async () => hoverDump(client),
       (s) => {
-        if (!USE_NG) {
-          return /^dropdown-item idx=1 /m.test(s);
-        }
         const dip = /^dropdown-dip idx=1 rect=(-?\d+),(-?\d+),(-?\d+),(-?\d+)/m.exec(s);
         return !!dip && +dip[3]! > +dip[1]! && +dip[4]! > +dip[2]!;
       },
     );
-    if (USE_NG) {
-      const dip = /^dropdown-dip idx=1 rect=(-?\d+),(-?\d+),(-?\d+),(-?\d+)/m.exec(raw);
-      if (!dip) {
-        throw new Error(`annot-color-dropdown: the Square drop-down has no second swatch\n${raw}`);
-      }
-      await ngClick(client, (+dip[1]! + +dip[3]!) >> 1, (+dip[2]! + +dip[4]!) >> 1);
-      await pollUntil(
-        async () => hoverDump(client),
-        (s) => /dropdown cmd=0 /.test(s),
-        {
-          error: "annot-color-dropdown: the drop-down stayed up after picking a color",
-        },
-      );
-    } else {
-      const item = /^dropdown-item idx=1 cmd=\d+ current=\d rect=(-?\d+),(-?\d+),(-?\d+),(-?\d+)/m.exec(raw);
-      if (!item) {
-        throw new Error(`annot-color-dropdown: the Square drop-down has no second swatch\n${raw}`);
-      }
-      const menu = findTopWindow(pid, HOVER_MENU_CLASS);
-      const mr = getWindowRect(menu);
-      const cx = (+item[1]! + +item[3]!) >> 1;
-      const cy = (+item[2]! + +item[4]!) >> 1;
-      await clickAt(menu, cx - mr.left, cy - mr.top, 0);
-      await pollUntil(
-        () => findTopWindow(pid, HOVER_MENU_CLASS),
-        (hwnd) => hwnd === 0 || !isWindowVisible(hwnd),
-      );
+    const dip = /^dropdown-dip idx=1 rect=(-?\d+),(-?\d+),(-?\d+),(-?\d+)/m.exec(raw);
+    if (!dip) {
+      throw new Error(`annot-color-dropdown: the Square drop-down has no second swatch\n${raw}`);
     }
+    await ngClick(client, (+dip[1]! + +dip[3]!) >> 1, (+dip[2]! + +dip[4]!) >> 1);
+    await pollUntil(
+      async () => hoverDump(client),
+      (s) => /dropdown cmd=0 /.test(s),
+      {
+        error: "annot-color-dropdown: the drop-down stayed up after picking a color",
+      },
+    );
 
     sendMessage(frame, WM_COMMAND, cmdId("CmdCreateAnnotSquare"), packCoords(300, 300));
     await client.waitForRenderIdle();
@@ -690,41 +561,21 @@ async function testToolbarButtons(): Promise<void> {
     const ly = line.y + (line.dy >> 1);
     await rightClickToolbar(client, toolbar, lx, ly);
     await waitForHoverColors(client);
-    if (USE_NG) {
-      await ngClick(client, lx, ly);
-      await pollUntil(
-        async () => hoverDump(client),
-        (s) => /dropdown cmd=0 /.test(s),
-        {
-          error: "annot-color-dropdown: clicking the Line button left its color drop-down up",
-        },
-      );
-      const stayClosedUntil = Date.now() + 1500;
-      while (Date.now() < stayClosedUntil) {
-        await client.request(ControlCommand.TestInput, ["move", lx, ly, 0, 0]);
-        if (!/dropdown cmd=0 /.test(await hoverDump(client))) {
-          throw new Error("annot-color-dropdown: clicking the Line button left its color drop-down up");
-        }
-        await sleep(100);
+    await ngClick(client, lx, ly);
+    await pollUntil(
+      async () => hoverDump(client),
+      (s) => /dropdown cmd=0 /.test(s),
+      {
+        error: "annot-color-dropdown: clicking the Line button left its color drop-down up",
+      },
+    );
+    const stayClosedUntil = Date.now() + 1500;
+    while (Date.now() < stayClosedUntil) {
+      await client.request(ControlCommand.TestInput, ["move", lx, ly, 0, 0]);
+      if (!/dropdown cmd=0 /.test(await hoverDump(client))) {
+        throw new Error("annot-color-dropdown: clicking the Line button left its color drop-down up");
       }
-    } else {
-      await clickAt(toolbar, lx, ly, 0);
-      await pollUntil(
-        () => findTopWindow(pid, HOVER_MENU_CLASS),
-        (hwnd) => hwnd === 0 || !isWindowVisible(hwnd),
-        { error: "annot-color-dropdown: clicking the Line button left its color drop-down up" },
-      );
-      const stayClosedUntil = Date.now() + 1500;
-      while (Date.now() < stayClosedUntil) {
-        const s = clientToScreen(toolbar, lx, ly);
-        setCursorPos(s.x, s.y);
-        sendMessage(toolbar, WM_MOUSEMOVE, 0, packCoords(lx, ly));
-        const h = findTopWindow(pid, HOVER_MENU_CLASS);
-        if (h && isWindowVisible(h)) {
-          throw new Error("annot-color-dropdown: clicking the Line button left its color drop-down up");
-        }
-        await sleep(100);
-      }
+      await sleep(100);
     }
   } finally {
     client.close();

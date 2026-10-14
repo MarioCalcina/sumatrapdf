@@ -8,7 +8,6 @@
 // Run: bun tests/palette-prefix-keys.ts [--no-build]
 
 import { ControlCommand, withControlledSumatra, type ControlClient } from "./control.ts";
-import { IS_MAC } from "./host.ts";
 import { cmdId, EXE, runStandalone } from "./util.ts";
 import { findCanvas, sendCommand, waitForFrame } from "./win-automation.ts";
 import { WM_CHAR, WM_KEYDOWN, VK_ESCAPE, getFocusedHwnd, postMessage, sleep } from "./winapi.ts";
@@ -85,8 +84,8 @@ export async function testit(): Promise<void> {
       await sleep(300);
       const edit = getFocusedHwnd(frame);
       // macOS has one handle for the frame, the canvas and the focus: ask the find UI
-      const findUi = IS_MAC ? String((await client.request(ControlCommand.TestFindUiState, ["state"]))[1] ?? "") : "";
-      const findOpen = IS_MAC ? /compact=1|floating=1/.test(findUi) : edit !== canvas;
+      const findUi = String((await client.request(ControlCommand.TestFindUiState, ["state"]))[1] ?? "");
+      const findOpen = /compact=1|floating=1/.test(findUi);
       if (!edit || !findOpen) {
         throw new Error("palette-prefix-keys: the find box did not take the focus");
       }

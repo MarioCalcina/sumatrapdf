@@ -5,24 +5,10 @@
 // covered by code review / manual check rather than this script.
 
 import { writeFileSync } from "node:fs";
-import { IS_MAC } from "./host.ts";
 import { ControlCommand } from "./control.ts";
 import { cmdId, SLOW_BUILD_FACTOR, tmpPath } from "./util";
 import { launchControlled, killAndWait } from "./win-automation";
-import {
-  enumWindows,
-  getClassName,
-  getWindowPid,
-  getWindowText,
-  isWindowVisible,
-  postMessage,
-  sendMessage,
-  sleep,
-  VK_ESCAPE,
-  WM_COMMAND,
-  WM_KEYDOWN,
-  WM_KEYUP,
-} from "./winapi";
+import { sendMessage, sleep, VK_ESCAPE, WM_COMMAND } from "./winapi";
 
 function makeTextPdf(): Buffer {
   const line = "hello translation window";
@@ -49,56 +35,7 @@ function makeTextPdf(): Buffer {
   return Buffer.from(pdf, "latin1");
 }
 
-// top-level window of this process that is not the main frame and looks like a
-// secondary dialog (captioned, reasonably tall)
-function findSecondaryWindow(pid: number, frame: number, titleIncludes?: string): number {
-  let res = 0;
-  enumWindows((hwnd) => {
-    if (getWindowPid(hwnd) !== pid || hwnd === frame) {
-      return true;
-    }
-    if (!isWindowVisible(hwnd)) {
-      return true;
-    }
-    const cls = getClassName(hwnd);
-    if (cls.includes("SUMATRA") || cls.length === 0) {
-      return true;
-    }
-    if (titleIncludes) {
-      const title = getWindowText(hwnd);
-      if (!title.toLowerCase().includes(titleIncludes.toLowerCase())) {
-        return true;
-      }
-    }
-    res = hwnd;
-    return false;
-  });
-  return res;
-}
-
-function pressEscape(hwnd: number): void {
-  postMessage(hwnd, WM_KEYDOWN, VK_ESCAPE, 0);
-  postMessage(hwnd, WM_KEYUP, VK_ESCAPE, 0);
-}
-
 const ESC_SETTLE_MS = 300;
-
-async function waitForSecondary(
-  pid: number,
-  frame: number,
-  titleIncludes: string | undefined,
-  timeoutMs: number,
-): Promise<number> {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    const h = findSecondaryWindow(pid, frame, titleIncludes);
-    if (h) {
-      return h;
-    }
-    await sleep(100);
-  }
-  return 0;
-}
 
 async function testTranslateEscCloses(): Promise<void> {
   const pdf = tmpPath("issue-5934-translate.pdf");
@@ -115,48 +52,31 @@ async function testTranslateEscCloses(): Promise<void> {
     }
 
     sendMessage(frame, WM_COMMAND, BigInt(cmdId("CmdTranslateSelection")), 0n);
-    if (IS_MAC) {
-      // The translate UI is a tool window. enumWindows does not see it.
-      const deadline = Date.now() + 4000;
-      let list = "";
-      while (Date.now() < deadline) {
-        list = String((await client.request(ControlCommand.TestToolWindow, ["list"]))[1] ?? "");
-        if (/(^|\n)translate /.test(list)) {
-          break;
-        }
-        await sleep(100);
-      }
-      if (!/(^|\n)translate /.test(list)) {
-        throw new Error(`translate: dialog did not appear (selection empty?)\n${list}`);
-      }
-      // a key sent before the tool window's first frame is lost: press until it closes
-      const closeBy = Date.now() + 3000 * SLOW_BUILD_FACTOR;
-      while (Date.now() < closeBy) {
-        await client.request(ControlCommand.TestToolWindow, ["input", "translate", "key", VK_ESCAPE, 0, 0, 0]);
-        await sleep(ESC_SETTLE_MS);
-        list = String((await client.request(ControlCommand.TestToolWindow, ["list"]))[1] ?? "");
-        if (!/(^|\n)translate /.test(list)) {
-          console.log("  translate: Esc closes ✓");
-          return;
-        }
-      }
-      throw new Error(`translate: Esc did not close the translate dialog\n${list}`);
-    }
-    const tw = await waitForSecondary(proc.pid!, frame, "translate", 4000);
-    if (!tw) {
-      throw new Error("translate: dialog did not appear (selection empty?)");
-    }
-
-    pressEscape(tw);
-    const deadline = Date.now() + 3000;
+    // The translate UI is a tool window. enumWindows does not see it.
+    const deadline = Date.now() + 4000;
+    let list = "";
     while (Date.now() < deadline) {
-      if (!isWindowVisible(tw) && !findSecondaryWindow(proc.pid!, frame, "translate")) {
+      list = String((await client.request(ControlCommand.TestToolWindow, ["list"]))[1] ?? "");
+      if (/(^|\n)translate /.test(list)) {
+        break;
+      }
+      await sleep(100);
+    }
+    if (!/(^|\n)translate /.test(list)) {
+      throw new Error(`translate: dialog did not appear (selection empty?)\n${list}`);
+    }
+    // a key sent before the tool window's first frame is lost: press until it closes
+    const closeBy = Date.now() + 3000 * SLOW_BUILD_FACTOR;
+    while (Date.now() < closeBy) {
+      await client.request(ControlCommand.TestToolWindow, ["input", "translate", "key", VK_ESCAPE, 0, 0, 0]);
+      await sleep(ESC_SETTLE_MS);
+      list = String((await client.request(ControlCommand.TestToolWindow, ["list"]))[1] ?? "");
+      if (!/(^|\n)translate /.test(list)) {
         console.log("  translate: Esc closes ✓");
         return;
       }
-      await sleep(30);
     }
-    throw new Error("translate: Esc did not close the translate dialog");
+    throw new Error(`translate: Esc did not close the translate dialog\n${list}`);
   } finally {
     client.close();
     await killAndWait(proc);

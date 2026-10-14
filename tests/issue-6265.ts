@@ -15,10 +15,8 @@ import { deflateSync } from "node:zlib";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlClient, ControlCommand, withControlledSumatra } from "./control.ts";
-import { IS_MAC } from "./host.ts";
 import { cmdId, EXE, runStandalone, tmpPath, pngChunk, makeZip } from "./util.ts";
-import { captureWindowPixels } from "./winapi.ts";
-import { findCanvas, sendCommand, waitForFrame } from "./win-automation.ts";
+import { sendCommand, waitForFrame } from "./win-automation.ts";
 
 const VIEW_W = 900;
 const VIEW_H = 1600;
@@ -95,32 +93,6 @@ function makeEpub(png: Buffer): Buffer {
   ]);
 }
 
-function countBlue(data: Uint8Array): number {
-  let n = 0;
-  for (let i = 0; i < data.length; i += 4) {
-    const b = data[i]!;
-    const g = data[i + 1]!;
-    const r = data[i + 2]!;
-    if (b >= 180 && r <= 80 && g <= 80) {
-      n++;
-    }
-  }
-  return n;
-}
-
-function countRed(data: Uint8Array): number {
-  let n = 0;
-  for (let i = 0; i < data.length; i += 4) {
-    const b = data[i]!;
-    const g = data[i + 1]!;
-    const r = data[i + 2]!;
-    if (r >= 180 && g <= 80 && b <= 80) {
-      n++;
-    }
-  }
-  return n;
-}
-
 async function renderPageColors(
   client: ControlClient,
   path: string,
@@ -140,27 +112,6 @@ async function renderPageColors(
   };
 }
 
-async function showPage(
-  client: ControlClient,
-  frame: number,
-  pageCmd: number | null,
-): Promise<{ red: number; blue: number; w: number; h: number }> {
-  if (pageCmd != null) {
-    sendCommand(frame, pageCmd);
-  }
-  await client.waitForRenderIdle(30000);
-  await client.setNotificationsEnabled(false);
-  const canvas = findCanvas(frame);
-  if (!canvas) {
-    throw new Error("issue-6265: no canvas");
-  }
-  const cap = captureWindowPixels(canvas);
-  if (!cap) {
-    throw new Error("issue-6265: capture failed");
-  }
-  return { red: countRed(cap.data), blue: countBlue(cap.data), w: cap.w, h: cap.h };
-}
-
 export async function testit(): Promise<void> {
   const dir = tmpPath("issue-6265");
   rmSync(dir, { recursive: true, force: true });
@@ -177,37 +128,17 @@ export async function testit(): Promise<void> {
       }
       sendCommand(frame, cmdId("CmdZoomFitPageAndSinglePage"));
       // macOS has no window DC. The engine page bitmap is what was clipped.
-      if (IS_MAC) {
-        for (const pageNo of [1, 2]) {
-          const page = await renderPageColors(client, epubPath, pageNo);
-          console.log(`issue-6265 page ${pageNo}: red=${page.red} blue=${page.blue} ${page.w}x${page.h}`);
-          if (page.red < 200) {
-            throw new Error(
-              `issue-6265: page ${pageNo} did not paint the red half (red=${page.red} blue=${page.blue})`,
-            );
-          }
-          if (page.blue < 200) {
-            throw new Error(`issue-6265: page ${pageNo} clipped the image (red=${page.red} blue=${page.blue})`);
-          }
+      for (const pageNo of [1, 2]) {
+        const page = await renderPageColors(client, epubPath, pageNo);
+        console.log(`issue-6265 page ${pageNo}: red=${page.red} blue=${page.blue} ${page.w}x${page.h}`);
+        if (page.red < 200) {
+          throw new Error(
+            `issue-6265: page ${pageNo} did not paint the red half (red=${page.red} blue=${page.blue})`,
+          );
         }
-        return;
-      }
-      const page1 = await showPage(client, frame, null);
-      console.log(`issue-6265 page 1: red=${page1.red} blue=${page1.blue} ${page1.w}x${page1.h}`);
-      if (page1.red < 200) {
-        throw new Error(`issue-6265: page 1 did not paint the red half (red=${page1.red} blue=${page1.blue})`);
-      }
-      if (page1.blue < 200) {
-        throw new Error(`issue-6265: page 1 clipped the image (red=${page1.red} blue=${page1.blue})`);
-      }
-
-      const page2 = await showPage(client, frame, cmdId("CmdGoToNextPage"));
-      console.log(`issue-6265 page 2: red=${page2.red} blue=${page2.blue} ${page2.w}x${page2.h}`);
-      if (page2.red < 200) {
-        throw new Error(`issue-6265: page 2 did not paint the red half (red=${page2.red} blue=${page2.blue})`);
-      }
-      if (page2.blue < 200) {
-        throw new Error(`issue-6265: page 2 clipped the image (red=${page2.red} blue=${page2.blue})`);
+        if (page.blue < 200) {
+          throw new Error(`issue-6265: page ${pageNo} clipped the image (red=${page.red} blue=${page.blue})`);
+        }
       }
     },
     ["-view", "single page", "-zoom", "fit page", epubPath],

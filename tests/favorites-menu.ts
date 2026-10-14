@@ -4,24 +4,11 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlCommand } from "./control.ts";
-import { assemblePdf, cmdId, runStandalone, tmpPath, USE_NG } from "./util.ts";
-import { killAndWait, launchControlled, pressKey, waitForContextMenu } from "./win-automation.ts";
-import {
-  getMenuItemCount,
-  getMenuItemId,
-  getMenuItemText,
-  getPopupMenuHandle,
-  getSubMenu,
-  postMessage,
-  sendMessage,
-  VK_ESCAPE,
-} from "./winapi.ts";
+import { assemblePdf, cmdId, runStandalone, tmpPath } from "./util.ts";
+import { killAndWait, launchControlled } from "./win-automation.ts";
+import { sendMessage } from "./winapi.ts";
 
 const WM_COMMAND = 0x0111;
-// the menu bar toolbar posts kMenuBarCmdFirst + <top level menu index> (Menu.cpp)
-const kMenuBarCmdFirst = 50000;
-// index of "F&avorites" in menuDefMenubar
-const kFavoritesMenuIdx = 6;
 // a re-open within 500ms of dismissing the popup is treated as toggle-close
 const kMenuReopenMs = 510;
 
@@ -36,51 +23,26 @@ function makePdf(): string {
   return assemblePdf(objects);
 }
 
-// ids of the menu items whose label contains one of `names`, looking inside
-// submenus (favorites for a file with more than one favorite get their own)
-function collectIds(menu: bigint, names: string[], ids: number[]): void {
-  for (let i = 0; i < getMenuItemCount(menu); i++) {
-    const sub = getSubMenu(menu, i);
-    if (sub) {
-      collectIds(sub, names, ids);
-      continue;
-    }
-    const text = getMenuItemText(menu, i);
-    const idx = names.findIndex((n) => text.includes(n));
-    if (idx >= 0) {
-      ids[idx] = getMenuItemId(menu, i);
-    }
-  }
-}
-
 async function favoritesMenuIds(
   frame: number,
   names: string[],
   client: { request: (cmd: ControlCommand, args: (string | number)[]) => Promise<unknown[]> },
 ): Promise<number[]> {
-  if (USE_NG) {
-    const res = await client.request(ControlCommand.TestFavoriteNav, ["menu", 0]);
-    if (res[0] !== 0) {
-      throw new Error(`favorites menu: ${String(res[1] ?? "")}`);
-    }
-    const ids = new Array(names.length).fill(0);
-    for (const line of String(res[1] ?? "").split("\n")) {
-      const m = /^id=(\d+) text=(.*)$/.exec(line.trim());
-      if (!m) {
-        continue;
-      }
-      const idx = names.findIndex((n) => m[2].includes(n));
-      if (idx >= 0) {
-        ids[idx] = Number(m[1]);
-      }
-    }
-    return ids;
+  const res = await client.request(ControlCommand.TestFavoriteNav, ["menu", 0]);
+  if (res[0] !== 0) {
+    throw new Error(`favorites menu: ${String(res[1] ?? "")}`);
   }
-  postMessage(frame, WM_COMMAND, kMenuBarCmdFirst + kFavoritesMenuIdx, 0);
-  const popup = await waitForContextMenu();
   const ids = new Array(names.length).fill(0);
-  collectIds(getPopupMenuHandle(popup), names, ids);
-  await pressKey(frame, VK_ESCAPE, 0);
+  for (const line of String(res[1] ?? "").split("\n")) {
+    const m = /^id=(\d+) text=(.*)$/.exec(line.trim());
+    if (!m) {
+      continue;
+    }
+    const idx = names.findIndex((n) => m[2].includes(n));
+    if (idx >= 0) {
+      ids[idx] = Number(m[1]);
+    }
+  }
   return ids;
 }
 

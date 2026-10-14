@@ -9,18 +9,9 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlClient, ControlCommand } from "./control.ts";
-import { IS_MAC } from "./host.ts";
 import { runStandalone, tmpPath, makeTopBottomPdf } from "./util.ts";
 import { findCanvas, launchControlled, killAndWait, ensureModifierKeysUp } from "./win-automation.ts";
-import {
-  clientToScreen,
-  getClientRect,
-  getScrollInfo,
-  packCoords,
-  sendMessage,
-  setCursorPos,
-  sleep,
-} from "./winapi.ts";
+import { getScrollInfo, sendMessage, sleep } from "./winapi.ts";
 
 const WM_MOUSEWHEEL = 0x020a;
 const WHEEL_DELTA = 120;
@@ -45,12 +36,6 @@ async function wheelDown(canvas: number, notches: number): Promise<void> {
   // mac treats a wheel lParam of 0 as the canvas center. A screen point is
   // not a frame-client point, so it misses the document.
   let lp = 0;
-  if (!IS_MAC) {
-    const cr = getClientRect(canvas);
-    const mid = clientToScreen(canvas, Math.floor(cr.right / 2), Math.floor(cr.bottom / 2));
-    setCursorPos(mid.x, mid.y);
-    lp = packCoords(mid.x, mid.y);
-  }
   const wp = (-WHEEL_DELTA << 16) >>> 0;
   for (let i = 0; i < notches; i++) {
     sendMessage(canvas, WM_MOUSEWHEEL, wp, lp);

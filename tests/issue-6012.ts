@@ -4,39 +4,9 @@
 // Run: bun tests/issue-6012.ts [--no-build]
 
 import { ControlCommand, type ControlClient } from "./control.ts";
-import { IS_MAC } from "./host.ts";
 import { cmdId, runStandalone } from "./util.ts";
 import { killAndWait, launchControlled, sendCommandSync } from "./win-automation.ts";
-import { enumWindows, getClientRect, getWindowPid, getWindowText, sleep } from "./winapi.ts";
-
-const DLG_TITLE = "Advanced Settings";
-
-function findDialog(pid: number): number {
-  let found = 0;
-  enumWindows((hwnd) => {
-    if (getWindowPid(hwnd) !== pid) {
-      return true;
-    }
-    if (getWindowText(hwnd).includes(DLG_TITLE)) {
-      found = hwnd;
-      return false;
-    }
-    return true;
-  });
-  return found;
-}
-
-async function waitForDialog(pid: number, timeoutMs = 8000): Promise<number> {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    const dlg = findDialog(pid);
-    if (dlg) {
-      return dlg;
-    }
-    await sleep(30);
-  }
-  throw new Error("issue-6012: Advanced Settings did not open");
-}
+import { sleep } from "./winapi.ts";
 
 async function macAdvRaw(client: ControlClient): Promise<string> {
   return String((await client.request(ControlCommand.TestToolWindow, ["state", "advsettings"]))[1] ?? "");
@@ -92,23 +62,15 @@ export async function testit(): Promise<void> {
   const { proc, client, frame } = await launchControlled([]);
   try {
     sendCommandSync(frame, cmdId("CmdAdvancedSettings"));
-    if (IS_MAC) {
-      const dx = await waitForMacDialog(client);
-      if (dx < 480) {
-        throw new Error(`issue-6012: client width ${dx} is below the 480px minimum`);
-      }
-    } else {
-      const dlg = await waitForDialog(proc.pid!);
-      const cr = getClientRect(dlg);
-      if (cr.right < 480) {
-        throw new Error(`issue-6012: client width ${cr.right} is below the 480px minimum`);
-      }
+    const dx = await waitForMacDialog(client);
+    if (dx < 480) {
+      throw new Error(`issue-6012: client width ${dx} is below the 480px minimum`);
     }
 
     requireMatch(await adv(client, "changed"), /changed=0\b.*banner=0/, "fresh dialog should have no edits");
     requireMatch(await adv(client, "esc"), /closed=1/, "Esc should close when nothing is unsaved");
     const goneDeadline = Date.now() + 5000;
-    const dialogGone = async () => (IS_MAC ? !(await macDialogOpen(client)) : !findDialog(proc.pid!));
+    const dialogGone = async () => (!(await macDialogOpen(client)));
     while (!(await dialogGone()) && Date.now() < goneDeadline) {
       await sleep(30);
     }
@@ -118,14 +80,10 @@ export async function testit(): Promise<void> {
 
     sendCommandSync(frame, cmdId("CmdAdvancedSettings"));
     let dlg2 = 0;
-    if (IS_MAC) {
-      await waitForMacDialog(client);
-    } else {
-      dlg2 = await waitForDialog(proc.pid!);
-    }
+    await waitForMacDialog(client);
     requireMatch(await adv(client, "toggle", 0), /changed=1 banner=1/, "one edit must show the banner");
     requireMatch(await adv(client, "esc"), /closed=0/, "Esc must not close with unsaved edits");
-    const stillOpen = IS_MAC ? await macDialogOpen(client) : getWindowPid(dlg2) === proc.pid;
+    const stillOpen = await macDialogOpen(client);
     if (!stillOpen) {
       throw new Error("issue-6012: Esc closed Advanced Settings with unsaved edits");
     }

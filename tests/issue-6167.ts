@@ -2,26 +2,8 @@
 import { strict as assert } from "node:assert";
 import { writeFileSync } from "node:fs";
 import { ControlClient, ControlCommand } from "./control";
-import { assemblePdf, cmdId, runStandalone, tmpPath, USE_NG, writeAppdata } from "./util";
+import { assemblePdf, cmdId, runStandalone, tmpPath, writeAppdata } from "./util";
 import { killAndWait, launchControlled, sendCommandSync } from "./win-automation";
-import {
-  countVisibleTreeRows,
-  findChildWindow,
-  sendMessage,
-  treeExpand,
-  treeExpandRecursively,
-  treeGetNextItem,
-  treeGetRoot,
-  TVE_COLLAPSE,
-  TVE_EXPAND,
-  TVGN_NEXT,
-  TVGN_CHILD,
-  TVM_GETCOUNT,
-  TVM_SELECTITEM,
-  TVGN_CARET,
-  VK_RETURN,
-  WM_KEYDOWN,
-} from "./winapi";
 
 // Three levels; negative /Count keeps each branch initially collapsed.
 export function makeTocPdf(width = 3): Buffer {
@@ -116,57 +98,7 @@ export async function testit(): Promise<void> {
   writeFileSync(pdf, makeTocPdf());
   writeFileSync(other, makeTocPdf());
   const appdata = writeAppdata("issue-6167-settings", "NoHomeTab = true\nShowToc = true\n");
-  if (USE_NG) {
-    await testNg(pdf, other, appdata);
-    return;
-  }
-  const { proc, client, frame } = await launchControlled(["-appdata", appdata, pdf, other]);
-  try {
-    await client.waitForRenderIdle();
-    const tree = findChildWindow(frame, "SysTreeView32");
-    assert.ok(tree, "TOC tree exists");
-    const count = () => Number(sendMessage(tree, TVM_GETCOUNT, 0, 0));
-    const switchBack = () => {
-      sendCommandSync(frame, cmdId("CmdNextTab"));
-      sendCommandSync(frame, cmdId("CmdNextTab"));
-    };
-    assert.equal(count(), 3, "initially insert only collapsed roots");
-    let root = treeGetNextItem(tree, TVGN_NEXT, treeGetRoot(tree));
-    sendMessage(tree, TVM_SELECTITEM, TVGN_CARET, root);
-    sendMessage(tree, WM_KEYDOWN, VK_RETURN, 0);
-    assert.equal(count(), 6, "expand inserts one level");
-    let child = treeGetNextItem(tree, TVGN_CHILD, root);
-    treeExpand(tree, TVE_EXPAND, child);
-    assert.equal(count(), 9, "nested expansion inserts its children");
-    treeExpand(tree, TVE_COLLAPSE, root);
-
-    // Two rebuilds must preserve the expanded child beneath an unloaded parent.
-    switchBack();
-    assert.equal(count(), 3, "tab switch discards hidden native items");
-    switchBack();
-    assert.equal(count(), 3, "saving expansion state does not populate branches");
-    root = treeGetNextItem(tree, TVGN_NEXT, treeGetRoot(tree));
-    treeExpand(tree, TVE_EXPAND, root);
-    assert.equal(countVisibleTreeRows(tree), 9, "hidden child keeps its saved expansion");
-    child = treeGetNextItem(tree, TVGN_CHILD, root);
-    treeExpand(tree, TVE_COLLAPSE, child);
-    treeExpand(tree, TVE_EXPAND, child);
-    assert.equal(count(), 9, "repeated expansion does not duplicate items");
-
-    treeExpandRecursively(tree, TVE_EXPAND);
-    assert.equal(count(), 39, "expand all materializes the entire model");
-    assert.equal(countVisibleTreeRows(tree), 39, "all descendants are visible");
-    treeExpandRecursively(tree, TVE_COLLAPSE);
-    switchBack();
-    assert.equal(count(), 3, "collapse to level one survives a rebuild");
-    sendCommandSync(frame, cmdId("CmdGoToLastPage"));
-    sendCommandSync(frame, cmdId("CmdExpandToCurrentPage"));
-    assert.ok(countVisibleTreeRows(tree) > 3, "navigation expands an unloaded destination");
-    console.log("issue-6167: OK");
-  } finally {
-    client.close();
-    await killAndWait(proc);
-  }
+  await testNg(pdf, other, appdata);
 }
 
 if (import.meta.main) {

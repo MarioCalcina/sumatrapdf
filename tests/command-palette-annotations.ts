@@ -6,10 +6,9 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlClient, ControlCommand } from "./control.ts";
-import { IS_MAC } from "./host.ts";
 import { assemblePdf, cmdId, runStandalone, tmpPath } from "./util.ts";
 import { postMessage, sendText, sleep, VK_RETURN, WM_KEYDOWN } from "./winapi.ts";
-import { killAndWait, launchControlled, sendCommand, findPalette } from "./win-automation.ts";
+import { killAndWait, launchControlled, sendCommand } from "./win-automation.ts";
 
 const SETTINGS = `UiLanguage = en
 Theme = Light
@@ -79,16 +78,9 @@ export async function testit(): Promise<void> {
     const openDeadline = Date.now() + 8_000;
     let handles = { palette: 0, edit: 0 };
     while (Date.now() < openDeadline) {
-      if (IS_MAC) {
-        if (await paletteState(client)) {
-          handles = { palette: frame, edit: frame };
-          break;
-        }
-      } else {
-        handles = findPalette(frame);
-        if (handles.palette && handles.edit) {
-          break;
-        }
+      if (await paletteState(client)) {
+        handles = { palette: frame, edit: frame };
+        break;
       }
       await sleep(50);
     }

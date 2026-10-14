@@ -7,9 +7,8 @@
 import { copyFileSync, existsSync, mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import type { ControlClient } from "./control.ts";
-import { IS_MAC } from "./host.ts";
 import { cmdId, tmpPath } from "./util.ts";
-import { launchControlled, launchSumatra, sendCommand, waitForFrame, killAndWait } from "./win-automation.ts";
+import { launchControlled, sendCommand, killAndWait } from "./win-automation.ts";
 import { getWindowText, sleep } from "./winapi.ts";
 
 const SRC_PDF = join(import.meta.dir, "issue-3219.pdf");
@@ -42,20 +41,11 @@ export async function testit(): Promise<void> {
   let proc;
   let frame: number;
   let client: ControlClient | undefined;
-  if (IS_MAC) {
-    const launched = await launchControlled([aaa]);
-    proc = launched.proc;
-    frame = launched.frame;
-    client = launched.client;
-    await client.waitForRenderIdle();
-  } else {
-    proc = launchSumatra([aaa]);
-    const found = await waitForFrame(proc.pid!);
-    if (!found) {
-      throw new Error("SumatraPDF frame window not found");
-    }
-    frame = found;
-  }
+  const launched = await launchControlled([aaa]);
+  proc = launched.proc;
+  frame = launched.frame;
+  client = launched.client;
+  await client.waitForRenderIdle();
   try {
     const command = cmdId("CmdDeleteFileAndOpenNext");
 

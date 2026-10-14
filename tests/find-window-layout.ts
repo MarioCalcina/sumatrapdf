@@ -2,26 +2,9 @@
 // hit count, so moving to the last result cannot resize the search combo box.
 import { writeFileSync } from "node:fs";
 import { ControlCommand, type ControlClient } from "./control.ts";
-import { runStandalone, tmpPath, USE_NG } from "./util.ts";
+import { runStandalone, tmpPath } from "./util.ts";
 import { killAndWait, launchControlled } from "./win-automation.ts";
-import {
-  enumWindows,
-  enumChildWindows,
-  findChildWindow,
-  getClassName,
-  getParentWindow,
-  getWindowPid,
-  getWindowRect,
-  getWindowText,
-  postMessage,
-  sendMessage,
-  sendText,
-  sleep,
-  VK_END,
-  VK_HOME,
-  VK_RETURN,
-  WM_KEYDOWN,
-} from "./winapi.ts";
+import { sleep, VK_END, VK_HOME, VK_RETURN } from "./winapi.ts";
 
 const query = "needle";
 // Keep page and hit counts at different digit widths: the reservation is based
@@ -100,44 +83,6 @@ async function waitForPage(client: ControlClient, expected: number, timeoutMs = 
     await sleep(50);
   }
   throw new Error(`find-window-layout: page did not reach ${expected}: ${raw}`);
-}
-
-function findWindowByTitle(pid: number, title: string): number {
-  let found = 0;
-  enumWindows((hwnd) => {
-    if (getWindowPid(hwnd) === pid && getWindowText(hwnd) === title) {
-      found = hwnd;
-      return false;
-    }
-    return true;
-  });
-  return found;
-}
-
-function findDirectChild(parent: number, className: string): number {
-  let found = 0;
-  enumChildWindows(parent, (hwnd) => {
-    if (getParentWindow(hwnd) === parent && getClassName(hwnd) === className) {
-      found = hwnd;
-      return false;
-    }
-    return true;
-  });
-  return found;
-}
-
-async function waitForEditSelection(edit: number, expected: number, timeoutMs = 2000): Promise<void> {
-  const EM_GETSEL = 0x00b0;
-  const deadline = Date.now() + timeoutMs;
-  let selection = -1;
-  while (Date.now() < deadline) {
-    selection = Number(sendMessage(edit, EM_GETSEL, 0, 0)) & 0xffff;
-    if (selection === expected) {
-      return;
-    }
-    await sleep(25);
-  }
-  throw new Error(`find-window-layout: page-range caret stayed at ${selection}, expected ${expected}`);
 }
 
 async function toolReq(client: ControlClient, args: (string | number)[]): Promise<string> {
@@ -242,47 +187,8 @@ export async function testit(): Promise<void> {
   try {
     await client.waitForRenderIdle();
     await waitForSelection(client, 0);
-    if (USE_NG) {
-      await testNg(client);
-      return;
-    }
-
-    const findWindow = findWindowByTitle(getWindowPid(frame), "Find");
-    const combo = findWindow ? findChildWindow(findWindow, "ComboBox") : 0;
-    const searchEdit = combo ? findChildWindow(combo, "Edit") : 0;
-    const pagesEdit = findWindow ? findDirectChild(findWindow, "Edit") : 0;
-    if (!combo || !searchEdit || !pagesEdit) {
-      throw new Error("find-window-layout: find controls not found");
-    }
-    const initial = getWindowRect(combo);
-
-    // Home in the page-range edit must move its caret, not the result selection.
-    const EM_SETSEL = 0x00b1;
-    sendText(pagesEdit, "1-9");
-    sendMessage(pagesEdit, EM_SETSEL, 3, 3);
-    postMessage(pagesEdit, WM_KEYDOWN, VK_HOME, 0);
-    await waitForEditSelection(pagesEdit, 0);
-
-    // Enter flushes the page-range edit's pending search. Wait for that scan
-    // before testing navigation so it cannot reset the selection afterwards.
-    postMessage(searchEdit, WM_KEYDOWN, VK_RETURN, 0);
-    await sleep(50);
-    await waitForSelection(client, 0);
-    // The first End collapses the initial select-all to the text boundary; the
-    // second uses the floating Find window's two-press result navigation.
-    postMessage(searchEdit, WM_KEYDOWN, VK_END, 0);
-    postMessage(searchEdit, WM_KEYDOWN, VK_END, 0);
-    await waitForSelection(client, hitCount - 1);
-    await waitForPage(client, pageCount);
-    const after = getWindowRect(combo);
-    const initialWidth = initial.right - initial.left;
-    const afterWidth = after.right - after.left;
-    if (afterWidth !== initialWidth) {
-      throw new Error(`find-window-layout: combo width changed from ${initialWidth} to ${afterWidth}`);
-    }
-    console.log(
-      `find-window-layout: combo width stayed ${initialWidth}px for 1 / ${hitCount} and ${hitCount} / ${hitCount}`,
-    );
+    await testNg(client);
+    return;
   } finally {
     client.close();
     await killAndWait(proc);

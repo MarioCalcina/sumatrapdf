@@ -4,11 +4,9 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlClient, ControlCommand } from "./control.ts";
-import { assemblePdf, cmdId, runStandalone, SLOW_BUILD_FACTOR, tmpPath, USE_NG } from "./util.ts";
-import { findTopWindow, getWindowPid, packCoords, sendMessage, sleep, WM_COMMAND } from "./winapi.ts";
-import { clickAt, killAndWait, launchControlled, sendCommandSync } from "./win-automation.ts";
-
-const FLOAT_CLASS = "SUMATRA_ANNOT_FILTER_WND";
+import { assemblePdf, cmdId, runStandalone, SLOW_BUILD_FACTOR, tmpPath } from "./util.ts";
+import { packCoords, sendMessage, sleep, WM_COMMAND } from "./winapi.ts";
+import { killAndWait, launchControlled, sendCommandSync } from "./win-automation.ts";
 
 function makePdfWithAttachment(): string {
   const payload = "hello";
@@ -81,7 +79,7 @@ export async function testit(): Promise<void> {
       itemDy = +(/itemDy=(-?\d+)/.exec(listRaw)?.[1] ?? 0);
       listY = +(/listY=(-?\d+)/.exec(listRaw)?.[1] ?? 0);
       // ng draws the list in the frame and does not report a row height
-      const rowReady = USE_NG || itemDy > 0;
+      const rowReady = true;
       if (/annotFilter floatVisible=1/.test(listRaw) && nAll >= 1 && rowReady) {
         break;
       }
@@ -90,19 +88,10 @@ export async function testit(): Promise<void> {
       }
       await sleep(40);
     }
-    if (USE_NG) {
-      // a double-click applies the row now; a single click waits out a timer
-      const picked = await client.request(ControlCommand.TestAnnotFilter, ["dblclick", 0]);
-      if (picked[0] !== 0) {
-        throw new Error(`issue-6103: could not select the attachment row: ${String(picked[1] ?? picked[0])}`);
-      }
-    } else {
-      const pid = getWindowPid(frame) || proc.pid!;
-      const floatWnd = findTopWindow(pid, FLOAT_CLASS);
-      if (!floatWnd) {
-        throw new Error(`issue-6103: annotation list window missing\n${listRaw}`);
-      }
-      await clickAt(floatWnd, 24, listY + Math.floor(itemDy / 2));
+    // a double-click applies the row now; a single click waits out a timer
+    const picked = await client.request(ControlCommand.TestAnnotFilter, ["dblclick", 0]);
+    if (picked[0] !== 0) {
+      throw new Error(`issue-6103: could not select the attachment row: ${String(picked[1] ?? picked[0])}`);
     }
 
     const withFile = await toolbarDump(client, "file attachment toolbar did not appear");

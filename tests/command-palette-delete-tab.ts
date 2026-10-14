@@ -4,28 +4,9 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlClient, ControlCommand } from "./control.ts";
-import { IS_MAC } from "./host.ts";
 import { ROOT, cmdId, runStandalone, tmpPath } from "./util.ts";
-import {
-  enumWindows,
-  getClassName,
-  getWindowPid,
-  isWindowVisible,
-  postMessage,
-  sendText,
-  sleep,
-  VK_DELETE,
-  VK_DOWN,
-  WM_KEYDOWN,
-} from "./winapi.ts";
-import {
-  FRAME_CLASS,
-  killAndWait,
-  launchControlled,
-  sendCommand,
-  sendCommandSync,
-  findPalette,
-} from "./win-automation.ts";
+import { postMessage, sendText, sleep, VK_DELETE, VK_DOWN, WM_KEYDOWN } from "./winapi.ts";
+import { killAndWait, launchControlled, sendCommand, sendCommandSync } from "./win-automation.ts";
 
 const SETTINGS = `UiLanguage = en
 Theme = Light
@@ -50,22 +31,8 @@ async function paletteState(client: ControlClient): Promise<Palette> {
 }
 
 async function frameCount(client: ControlClient, pid: number): Promise<number> {
-  if (IS_MAC) {
-    const raw = String((await client.request(ControlCommand.TestUiState, []))[1] ?? "");
-    return Number(/windows=(\d+)/.exec(raw)?.[1] ?? "0");
-  }
-  return getFrames(pid).length;
-}
-
-function getFrames(pid: number): number[] {
-  const res: number[] = [];
-  enumWindows((hwnd) => {
-    if (getWindowPid(hwnd) === pid && getClassName(hwnd) === FRAME_CLASS && isWindowVisible(hwnd)) {
-      res.push(hwnd);
-    }
-    return true;
-  });
-  return res;
+  const raw = String((await client.request(ControlCommand.TestUiState, []))[1] ?? "");
+  return Number(/windows=(\d+)/.exec(raw)?.[1] ?? "0");
 }
 
 async function waitFor(client: ControlClient, what: string, pred: (p: Palette) => boolean): Promise<Palette> {
@@ -108,16 +75,9 @@ export async function testit(): Promise<void> {
     const openDeadline = Date.now() + 8000;
     let handles = { palette: 0, edit: 0 };
     while (Date.now() < openDeadline) {
-      if (IS_MAC) {
-        if ((await paletteState(client)).open) {
-          handles = { palette: frame, edit: frame };
-          break;
-        }
-      } else {
-        handles = findPalette(frame);
-        if (handles.palette && handles.edit) {
-          break;
-        }
+      if ((await paletteState(client)).open) {
+        handles = { palette: frame, edit: frame };
+        break;
       }
       await sleep(50);
     }

@@ -13,10 +13,8 @@ import { ControlCommand, withControlledSumatra } from "./control.ts";
 import { EXE, runStandalone, tmpPath } from "./util.ts";
 
 const RED = "ff0000";
-const GREEN = "00ff00";
 const YELLOW = "ffff00";
 const BLUE = "0000ff";
-const WHITE = "ffffff";
 const BLACK = "000000";
 
 type Corners = { w: number; h: number; tl: string; tr: string; bl: string; br: string };

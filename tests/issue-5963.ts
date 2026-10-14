@@ -8,55 +8,11 @@
 //
 // Run:  bun tests/issue-5963.ts [--no-build]   (or via tests/run-almost-all.ts)
 
-import { existsSync, rmSync, writeFileSync } from "node:fs";
+import { writeFileSync } from "node:fs";
 import { ControlCommand } from "./control.ts";
-import { IS_MAC } from "./host.ts";
-import { cmdId, runStandalone, tmpPath, USE_NG, removeTestCert, runPowerShell } from "./util.ts";
+import { cmdId, runStandalone, tmpPath } from "./util.ts";
 import { killAndWait, launchControlled, sendCommand } from "./win-automation.ts";
-import {
-  enumChildWindows,
-  enumWindows,
-  getClassName,
-  getControlText,
-  getWindowPid,
-  getWindowText,
-  postMessage,
-  sendMessage,
-  sleep,
-  WM_CLOSE,
-} from "./winapi.ts";
-
-const kCertSubject = "CN=SumatraPDF AppearSignTest";
-const BM_GETCHECK = 0x00f0;
-const BST_CHECKED = 1;
-// dn | date | text name — no labels, no graphic name
-const kNoLabelsFlags = 2 | 4 | 8;
-
-function makeTestCert(): string | null {
-  const created = runPowerShell(`
-    $rsa = [System.Security.Cryptography.RSA]::Create(2048)
-    $req = [System.Security.Cryptography.X509Certificates.CertificateRequest]::new(
-      '${kCertSubject}', $rsa,
-      [System.Security.Cryptography.HashAlgorithmName]::SHA256,
-      [System.Security.Cryptography.RSASignaturePadding]::Pkcs1)
-    $cert = $req.CreateSelfSigned([datetime]::UtcNow.AddDays(-1), [datetime]::UtcNow.AddYears(1))
-    $flags = [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::PersistKeySet -bor
-             [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable
-    $stored = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new(
-      $cert.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Pfx, 'x'), 'x', $flags)
-    $store = New-Object System.Security.Cryptography.X509Certificates.X509Store('My','CurrentUser')
-    $store.Open('ReadWrite')
-    $store.Add($stored)
-    $store.Close()
-    Write-Output $stored.Thumbprint
-  `);
-  const thumb = created.out.trim().split(/\s+/).pop() ?? "";
-  if (!created.ok || !/^[0-9A-F]{40}$/i.test(thumb)) {
-    console.log(`\nSKIP issue-5963 sign: could not create a test certificate:\n${created.out}`);
-    return null;
-  }
-  return thumb.toUpperCase();
-}
+import { postMessage, sleep, WM_CLOSE } from "./winapi.ts";
 
 function writePlainPdf(path: string): void {
   const objs: string[] = [];
@@ -84,63 +40,6 @@ function writePlainPdf(path: string): void {
   writeFileSync(path, pdf, "latin1");
 }
 
-// 1x1 red PNG so the signed file has an obvious image XObject
-function writeTinyPng(path: string): void {
-  const b64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
-  writeFileSync(path, Buffer.from(b64, "base64"));
-}
-
-function findTopWindow(pid: number, className: string, title?: string): number {
-  let found = 0;
-  enumWindows((h) => {
-    if (getWindowPid(h) !== pid || getClassName(h) !== className) {
-      return true;
-    }
-    if (title !== undefined && getWindowText(h) !== title) {
-      return true;
-    }
-    found = h;
-    return false;
-  });
-  return found;
-}
-
-async function waitFor<T>(what: string, fn: () => T, timeoutMs = 8000): Promise<T> {
-  const deadline = Date.now() + timeoutMs;
-  for (;;) {
-    const v = fn();
-    if (v) {
-      return v;
-    }
-    if (Date.now() > deadline) {
-      throw new Error(`timed out waiting for ${what}`);
-    }
-    await sleep(100);
-  }
-}
-
-function stripAmp(s: string): string {
-  return s.replace(/&/g, "");
-}
-
-function checkboxTexts(dlg: number): Map<string, number> {
-  const map = new Map<string, number>();
-  enumChildWindows(dlg, (h) => {
-    if (getClassName(h) === "Button") {
-      const t = stripAmp(getControlText(h));
-      if (t) {
-        map.set(t, h);
-      }
-    }
-    return true;
-  });
-  return map;
-}
-
-function isChecked(hwnd: number): boolean {
-  return Number(sendMessage(hwnd, BM_GETCHECK, 0, 0)) === BST_CHECKED;
-}
-
 export async function testit(): Promise<void> {
   const pdf = tmpPath("issue-5963.pdf");
   writePlainPdf(pdf);
@@ -151,14 +50,6 @@ export async function testit(): Promise<void> {
     sendCommand(frame, cmdId("CmdSignDocument"));
     // macOS has no HWND for the dialog. The checks below read it over control.
     let dlg = 0;
-    if (!IS_MAC) {
-      const pid = getWindowPid(frame);
-      dlg = await waitFor("Sign Document dialog", () =>
-        USE_NG
-          ? findTopWindow(pid, "GpuiSystemMonitor", "Sign Document")
-          : findTopWindow(pid, "SumatraWgDefaultWinClass", "Sign Document"),
-      );
-    }
 
     const want = [
       [/labels/i, "Show labels"],
@@ -167,100 +58,36 @@ export async function testit(): Promise<void> {
       [/date/i, "Show date"],
       [/graphic/i, "Show name as graphic"],
     ] as const;
-    if (USE_NG) {
-      let raw = "";
-      for (const deadline = Date.now() + 3000; Date.now() < deadline;) {
-        const res = await client.request(ControlCommand.TestToolWindow, ["sign-checks"]);
-        raw = String(res[1] ?? "");
-        if (/labels/i.test(raw)) {
-          break;
-        }
-        await sleep(100);
+    let raw = "";
+    for (const deadline = Date.now() + 3000; Date.now() < deadline;) {
+      const res = await client.request(ControlCommand.TestToolWindow, ["sign-checks"]);
+      raw = String(res[1] ?? "");
+      if (/labels/i.test(raw)) {
+        break;
       }
-      const checks = new Map<string, boolean>();
-      for (const line of raw.split("\n")) {
-        const m = /^(.*)=([01])$/.exec(line.trim());
-        if (m) {
-          checks.set(m[1], m[2] === "1");
-        }
+      await sleep(100);
+    }
+    const checks = new Map<string, boolean>();
+    for (const line of raw.split("\n")) {
+      const m = /^(.*)=([01])$/.exec(line.trim());
+      if (m) {
+        checks.set(m[1], m[2] === "1");
       }
-      for (const [re, label] of want) {
-        const hit = [...checks.entries()].find(([t]) => re.test(t));
-        if (!hit) {
-          throw new Error(`issue-5963: missing '${label}' checkbox; have: ${[...checks.keys()].join(", ")}`);
-        }
-        if (!hit[1]) {
-          throw new Error(`issue-5963: '${label}' should be checked by default`);
-        }
+    }
+    for (const [re, label] of want) {
+      const hit = [...checks.entries()].find(([t]) => re.test(t));
+      if (!hit) {
+        throw new Error(`issue-5963: missing '${label}' checkbox; have: ${[...checks.keys()].join(", ")}`);
       }
-    } else {
-      let boxes = new Map<string, number>();
-      for (const deadline = Date.now() + 3000; Date.now() < deadline;) {
-        boxes = checkboxTexts(dlg);
-        if ([...boxes.keys()].some((t) => /labels/i.test(t))) {
-          break;
-        }
-        await sleep(100);
-      }
-      for (const [re, label] of want) {
-        const hwnd = [...boxes.entries()].find(([t]) => re.test(t))?.[1];
-        if (!hwnd) {
-          throw new Error(`issue-5963: missing '${label}' checkbox; have: ${[...boxes.keys()].join(", ")}`);
-        }
-        if (!isChecked(hwnd)) {
-          throw new Error(`issue-5963: '${label}' should be checked by default`);
-        }
+      if (!hit[1]) {
+        throw new Error(`issue-5963: '${label}' should be checked by default`);
       }
     }
     console.log("  Sign Document offers appearance checkboxes, all on by default ✓");
-    if (IS_MAC) {
-      await client.request(ControlCommand.TestToolWindow, ["close", "signdocument"]);
-    } else {
-      postMessage(dlg, WM_CLOSE, 0, 0);
-    }
+    await client.request(ControlCommand.TestToolWindow, ["close", "signdocument"]);
     await sleep(200);
 
-    if (IS_MAC) {
-      console.log("SKIP issue-5963 sign: the test certificate is created in the Windows certificate store");
-      return;
-    }
-
-    const thumb = makeTestCert();
-    if (!thumb) {
-      return;
-    }
-
-    const png = tmpPath("issue-5963.png");
-    const signed = tmpPath("issue-5963-signed.pdf");
-    writeTinyPng(png);
-    rmSync(signed, { force: true });
-    try {
-      const signedRes = await client.request(ControlCommand.TestSignDocument, [
-        pdf,
-        signed,
-        thumb,
-        "",
-        "",
-        png,
-        kNoLabelsFlags,
-      ]);
-      const signRaw = String(signedRes[1] ?? "");
-      if (signedRes[0] !== 0) {
-        throw new Error(`issue-5963 sign: ${signRaw.trim()}`);
-      }
-      if (!existsSync(signed)) {
-        throw new Error("issue-5963: signed file was not written");
-      }
-      const bytes = new TextDecoder("latin1").decode(await Bun.file(signed).arrayBuffer());
-      if (!/\/Subtype\s*\/Image/.test(bytes)) {
-        throw new Error("issue-5963: signed file has no image XObject");
-      }
-      console.log("  signed with an image and without labels; PDF embeds the image ✓");
-    } finally {
-      removeTestCert(thumb);
-      rmSync(signed, { force: true });
-      rmSync(png, { force: true });
-    }
+    return;
   } finally {
     client.close();
     postMessage(frame, WM_CLOSE, 0, 0);

@@ -6,31 +6,9 @@
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlCommand, type ControlClient } from "./control";
-import { IS_MAC } from "./host";
 import { cmdId, runStandalone, SLOW_BUILD_FACTOR, tmpPath } from "./util";
-import {
-  enumWindows,
-  getWindowPid,
-  getWindowText,
-  postMessage,
-  sleep,
-  VK_DOWN,
-  VK_RETURN,
-  VK_UP,
-  WM_CLOSE,
-} from "./winapi";
-import { killAndWait, launchControlled, pressKey, sendCommand, waitForExit } from "./win-automation";
-
-function findChangeThemeDialog(pid: number): number {
-  let found = 0;
-  enumWindows((hwnd) => {
-    if (getWindowPid(hwnd) === pid && getWindowText(hwnd) === "Change Theme") {
-      found = hwnd;
-    }
-    return true;
-  });
-  return found;
-}
+import { postMessage, sleep, VK_DOWN, VK_RETURN, VK_UP, WM_CLOSE } from "./winapi";
+import { killAndWait, launchControlled, sendCommand, waitForExit } from "./win-automation";
 
 async function macThemeOpen(client: ControlClient): Promise<boolean> {
   const raw = String((await client.request(ControlCommand.TestToolWindow, ["state", "changetheme"]))[1] ?? "");
@@ -58,18 +36,6 @@ async function macThemeKey(client: ControlClient, vk: number): Promise<void> {
   }
 }
 
-async function waitForChangeThemeDialog(pid: number, open: boolean, timeoutMs = 5000): Promise<number> {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    const found = findChangeThemeDialog(pid);
-    if (open === (found !== 0)) {
-      return found;
-    }
-    await sleep(30);
-  }
-  throw new Error(`issue-5995: Change Theme dialog did not ${open ? "appear" : "close"}`);
-}
-
 function savedTheme(settingsPath: string): string {
   const settings = readFileSync(settingsPath, "utf8");
   const match = /^Theme\s*=\s*(.*)$/m.exec(settings);
@@ -80,17 +46,10 @@ async function chooseAdjacentTheme(appDataDir: string, key: number): Promise<voi
   const { proc, client, frame } = await launchControlled(["-appdata", appDataDir], { saveSettings: true });
   try {
     sendCommand(frame, cmdId("CmdChangeTheme"));
-    if (IS_MAC) {
-      await waitMacTheme(client, true);
-      await macThemeKey(client, key);
-      await macThemeKey(client, VK_RETURN);
-      await waitMacTheme(client, false);
-    } else {
-      const dialog = await waitForChangeThemeDialog(proc.pid!, true);
-      await pressKey(dialog, key, 0);
-      await pressKey(dialog, VK_RETURN, 0);
-      await waitForChangeThemeDialog(proc.pid!, false);
-    }
+    await waitMacTheme(client, true);
+    await macThemeKey(client, key);
+    await macThemeKey(client, VK_RETURN);
+    await waitMacTheme(client, false);
     postMessage(frame, WM_CLOSE, 0, 0);
     if (!(await waitForExit(proc))) {
       throw new Error("issue-5995: SumatraPDF did not exit after WM_CLOSE");

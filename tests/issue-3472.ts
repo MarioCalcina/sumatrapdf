@@ -9,9 +9,7 @@
 // does with the real window size.
 
 import { ControlCommand } from "./control.ts";
-import { IS_MAC } from "./host.ts";
-import { findCanvas, launchControlled, killAndWait } from "./win-automation.ts";
-import { getClientRect, getScrollInfo, setForegroundWindow, SB_VERT } from "./winapi.ts";
+import { launchControlled, killAndWait } from "./win-automation.ts";
 import { runStandalone } from "./util.ts";
 
 const EPUB = "tests/issue-5846.epub";
@@ -22,47 +20,25 @@ export async function testit(): Promise<void> {
     await client.waitForRenderIdle();
     // macOS has no scrollbar HWND. TestLayout reports the same scroll range
     // the canvas computed from this window.
-    if (IS_MAC) {
-      const raw = String((await client.request(ControlCommand.TestLayout, []))[1] ?? "");
-      const canvas = /item name=canvas visible=\d+ rect=(-?\d+),(-?\d+),(-?\d+),(-?\d+)/.exec(raw);
-      const si = /scrollV pos=(-?\d+) min=(-?\d+) max=(-?\d+) page=(-?\d+)/.exec(raw);
-      if (!canvas || !si) {
-        throw new Error(`issue-3472: layout missing the scroll range: ${raw}`);
-      }
-      const page = Number(si[4]);
-      const max = Number(si[3]);
-      const overflow = max + 1 - page;
-      const dx = Number(canvas[3]);
-      const dy = Number(canvas[4]);
-      if (page < 100) {
-        throw new Error(`issue-3472: document didn't load (scroll page ${page}, max ${max})`);
-      }
-      if (overflow > 8) {
-        throw new Error(`issue-3472: Fit Width page overflows the window by ${overflow}px (canvas ${dx}x${dy})`);
-      }
-      console.log(`issue-3472: canvas ${dx}x${dy}, Fit Width page overflow ${overflow}px`);
-      return;
+    const raw = String((await client.request(ControlCommand.TestLayout, []))[1] ?? "");
+    const canvas = /item name=canvas visible=\d+ rect=(-?\d+),(-?\d+),(-?\d+),(-?\d+)/.exec(raw);
+    const si = /scrollV pos=(-?\d+) min=(-?\d+) max=(-?\d+) page=(-?\d+)/.exec(raw);
+    if (!canvas || !si) {
+      throw new Error(`issue-3472: layout missing the scroll range: ${raw}`);
     }
-    setForegroundWindow(frame);
-    const canvas = findCanvas(frame);
-    if (!canvas) {
-      throw new Error("issue-3472: no canvas");
-    }
-    const cr = getClientRect(canvas);
-    const si = getScrollInfo(canvas, SB_VERT);
-    // in single-page view the vertical scroll range is the page; when the page
-    // fits, the range is the viewport and there is nothing to scroll
-    const overflow = si.max + 1 - si.page;
-    if (si.page < 100) {
-      throw new Error(`issue-3472: document didn't load (scroll info ${JSON.stringify(si)})`);
+    const page = Number(si[4]);
+    const max = Number(si[3]);
+    const overflow = max + 1 - page;
+    const dx = Number(canvas[3]);
+    const dy = Number(canvas[4]);
+    if (page < 100) {
+      throw new Error(`issue-3472: document didn't load (scroll page ${page}, max ${max})`);
     }
     if (overflow > 8) {
-      throw new Error(
-        `issue-3472: Fit Width page overflows the window by ${overflow}px ` +
-          `(canvas ${cr.right}x${cr.bottom}, scroll ${JSON.stringify(si)})`,
-      );
+      throw new Error(`issue-3472: Fit Width page overflows the window by ${overflow}px (canvas ${dx}x${dy})`);
     }
-    console.log(`issue-3472: canvas ${cr.right}x${cr.bottom}, Fit Width page overflow ${overflow}px`);
+    console.log(`issue-3472: canvas ${dx}x${dy}, Fit Width page overflow ${overflow}px`);
+    return;
   } finally {
     client.close();
     await killAndWait(proc);

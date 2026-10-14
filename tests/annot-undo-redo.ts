@@ -12,21 +12,9 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlClient, ControlCommand } from "./control.ts";
-import { IS_MAC } from "./host.ts";
 import { assemblePdf, cmdId, runStandalone, tmpPath } from "./util.ts";
-import {
-  clientToScreen,
-  packCoords,
-  sendMessage,
-  setCursorPos,
-  sleep,
-  MK_LBUTTON,
-  WM_COMMAND,
-  WM_LBUTTONDOWN,
-  WM_LBUTTONUP,
-  WM_MOUSEMOVE,
-} from "./winapi.ts";
-import { clickAt, findCanvas, killAndWait, launchControlled, sendCommandSync } from "./win-automation.ts";
+import { sleep } from "./winapi.ts";
+import { killAndWait, launchControlled } from "./win-automation.ts";
 
 type Square = { x: number; y: number; dx: number; dy: number };
 type State = {
@@ -78,14 +66,6 @@ async function state(client: ControlClient): Promise<State> {
 }
 
 async function runCmd(client: ControlClient, frame: number, name: string, x?: number, y?: number): Promise<void> {
-  if (!IS_MAC) {
-    if (x === undefined) {
-      sendCommandSync(frame, cmdId(name));
-    } else {
-      sendMessage(frame, WM_COMMAND, cmdId(name), packCoords(x, y));
-    }
-    return;
-  }
   const args = x === undefined ? [name] : [name, x, y];
   const res = await client.request(ControlCommand.TestInvokeCommand, args);
   const raw = String(res[1] ?? "");
@@ -116,10 +96,6 @@ async function framePoint(
 }
 
 async function clickPoint(client: ControlClient, canvas: number, x: number, y: number): Promise<void> {
-  if (!IS_MAC) {
-    await clickAt(canvas, x, y, 0);
-    return;
-  }
   const pt = await framePoint(client, x, y);
   const res = await client.request(ControlCommand.TestInput, ["click", pt.dipX, pt.dipY, 0, 0]);
   const raw = String(res[1] ?? "");
@@ -129,19 +105,6 @@ async function clickPoint(client: ControlClient, canvas: number, x: number, y: n
 }
 
 async function dragResize(client: ControlClient, canvas: number, corner: { x: number; y: number }): Promise<void> {
-  if (!IS_MAC) {
-    const start = clientToScreen(canvas, corner.x, corner.y);
-    setCursorPos(start.x, start.y);
-    sendMessage(canvas, WM_LBUTTONDOWN, MK_LBUTTON, packCoords(corner.x, corner.y));
-    for (let i = 1; i <= 6; i++) {
-      const p = { x: corner.x + i * 6, y: corner.y + i * 6 };
-      const sp = clientToScreen(canvas, p.x, p.y);
-      setCursorPos(sp.x, sp.y);
-      sendMessage(canvas, WM_MOUSEMOVE, MK_LBUTTON, packCoords(p.x, p.y));
-    }
-    sendMessage(canvas, WM_LBUTTONUP, 0, packCoords(corner.x + 36, corner.y + 36));
-    return;
-  }
   const downPt = await framePoint(client, corner.x, corner.y);
   const down = await client.request(ControlCommand.TestInput, ["down", downPt.dipX, downPt.dipY, 0, 0]);
   if (down[0] !== 0) {
@@ -227,10 +190,7 @@ export async function testit(): Promise<void> {
   try {
     await client.waitForRenderIdle();
     await client.setNotificationsEnabled(false);
-    const canvas = IS_MAC ? 0 : findCanvas(frame);
-    if (!IS_MAC && !canvas) {
-      throw new Error("annot-undo-redo: no canvas");
-    }
+    const canvas = 0;
     await runCmd(client, frame, "CmdToggleEditPDF");
 
     let s = await state(client);
@@ -251,27 +211,25 @@ export async function testit(): Promise<void> {
       throw new Error(`annot-undo-redo: Save tooltip must name the file, got "${saveBtn.tip}"`);
     }
 
-    if (IS_MAC) {
-      // Fit page keeps moving the square for a moment after the first idle.
-      let prev = s.squares[0]!;
-      for (let i = 0; i < 20; i++) {
-        await sleep(50);
-        s = await state(client);
-        const cur = s.squares[0]!;
-        if (
-          Math.abs(cur.x - prev.x) <= 1 &&
-          Math.abs(cur.y - prev.y) <= 1 &&
-          Math.abs(cur.dx - prev.dx) <= 1 &&
-          Math.abs(cur.dy - prev.dy) <= 1
-        ) {
-          break;
-        }
-        prev = cur;
+    // Fit page keeps moving the square for a moment after the first idle.
+    let prev = s.squares[0]!;
+    for (let i = 0; i < 20; i++) {
+      await sleep(50);
+      s = await state(client);
+      const cur = s.squares[0]!;
+      if (
+        Math.abs(cur.x - prev.x) <= 1 &&
+        Math.abs(cur.y - prev.y) <= 1 &&
+        Math.abs(cur.dx - prev.dx) <= 1 &&
+        Math.abs(cur.dy - prev.dy) <= 1
+      ) {
+        break;
       }
+      prev = cur;
     }
     const original = s.squares[0]!;
     const mid = { x: original.x + Math.floor(original.dx / 2), y: original.y + Math.floor(original.dy / 2) };
-    const hit = IS_MAC ? await framePoint(client, mid.x, mid.y) : { x: mid.x, y: mid.y, dipX: mid.x, dipY: mid.y };
+    const hit = await framePoint(client, mid.x, mid.y);
 
     // delete -> undo -> redo -> undo
     await runCmd(client, frame, "CmdDeleteAnnotation", hit.x, hit.y);
@@ -309,9 +267,9 @@ export async function testit(): Promise<void> {
 
     // a paste writes the annotation and its properties: one undo step
     await clickPoint(client, canvas, mid.x, mid.y);
-    const copyAt = IS_MAC ? await framePoint(client, mid.x, mid.y) : hit;
+    const copyAt = await framePoint(client, mid.x, mid.y);
     await runCmd(client, frame, "CmdCopyAnnotation", copyAt.x, copyAt.y);
-    const pasteAt = IS_MAC ? await framePoint(client, mid.x + 150, mid.y + 100) : { x: mid.x + 150, y: mid.y + 100 };
+    const pasteAt = await framePoint(client, mid.x + 150, mid.y + 100);
     await runCmd(client, frame, "CmdPasteAnnotation", pasteAt.x, pasteAt.y);
     await client.waitForRenderIdle();
     s = await state(client);

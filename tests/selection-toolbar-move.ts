@@ -7,10 +7,9 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlClient, ControlCommand } from "./control.ts";
-import { IS_MAC } from "./host.ts";
 import { cmdId, runStandalone, SLOW_BUILD_FACTOR, tmpPath, makeTextPdf } from "./util.ts";
 import { killAndWait, launchControlled, sendCommandSync, pressVKey } from "./win-automation.ts";
-import { SWP_NOACTIVATE, SWP_NOZORDER, getWindowRect, moveWindow, postChar, setWindowPos, sleep } from "./winapi.ts";
+import { getWindowRect, moveWindow, postChar, sleep } from "./winapi.ts";
 
 const VK_END = 0x23;
 
@@ -110,12 +109,8 @@ export async function testit(): Promise<void> {
     for (const step of steps) {
       originX += step.dx;
       originY += step.dy;
-      if (IS_MAC) {
-        if (!moveWindow(frame, originX, originY, width, height)) {
-          throw new Error(`selection-toolbar-move: move failed at ${originX},${originY}`);
-        }
-      } else if (!setWindowPos(frame, originX, originY, width, height, SWP_NOZORDER | SWP_NOACTIVATE)) {
-        throw new Error(`selection-toolbar-move: SetWindowPos failed at ${originX},${originY}`);
+      if (!moveWindow(frame, originX, originY, width, height)) {
+        throw new Error(`selection-toolbar-move: move failed at ${originX},${originY}`);
       }
       const raw = await toolbarDump(client);
       if (!toolbarVisible(raw)) {
@@ -123,38 +118,19 @@ export async function testit(): Promise<void> {
       }
       const tb = parsePlaced(raw);
       const frameNow = getWindowRect(frame);
-      if (IS_MAC) {
-        // placed= is the card inside the frame, not a screen point. A card
-        // left on the old screen spot shifts placed by about the frame delta.
-        const frameDx = frameNow.left - frame0.left;
-        const frameDy = frameNow.top - frame0.top;
-        if (frameDx === 0 && frameDy === 0) {
-          throw new Error(`selection-toolbar-move: frame did not move from ${frame0.left},${frame0.top}\n${raw}`);
-        }
-        const tbDx = tb.x - tb0.x;
-        const tbDy = tb.y - tb0.y;
-        if (Math.abs(tbDx) > 40 || Math.abs(tbDy) > 40) {
-          throw new Error(
-            `selection-toolbar-move: toolbar left its place in the frame ` +
-              `(frame ${frameDx},${frameDy} placed ${tbDx},${tbDy})\n${raw}`,
-          );
-        }
-        if (tb.dx !== tb0.dx || tb.dy !== tb0.dy) {
-          throw new Error(
-            `selection-toolbar-move: toolbar size changed ${tb.dx},${tb.dy} vs ${tb0.dx},${tb0.dy}\n${raw}`,
-          );
-        }
-        continue;
-      }
+      // placed= is the card inside the frame, not a screen point. A card
+      // left on the old screen spot shifts placed by about the frame delta.
       const frameDx = frameNow.left - frame0.left;
       const frameDy = frameNow.top - frame0.top;
+      if (frameDx === 0 && frameDy === 0) {
+        throw new Error(`selection-toolbar-move: frame did not move from ${frame0.left},${frame0.top}\n${raw}`);
+      }
       const tbDx = tb.x - tb0.x;
       const tbDy = tb.y - tb0.y;
-      if (tbDx !== frameDx || tbDy !== frameDy) {
+      if (Math.abs(tbDx) > 40 || Math.abs(tbDy) > 40) {
         throw new Error(
-          `selection-toolbar-move: toolbar did not follow the frame ` +
-            `(frame ${frameDx},${frameDy} toolbar ${tbDx},${tbDy}) ` +
-            `at ${originX},${originY}\n${raw}`,
+          `selection-toolbar-move: toolbar left its place in the frame ` +
+            `(frame ${frameDx},${frameDy} placed ${tbDx},${tbDy})\n${raw}`,
         );
       }
       if (tb.dx !== tb0.dx || tb.dy !== tb0.dy) {
@@ -162,6 +138,7 @@ export async function testit(): Promise<void> {
           `selection-toolbar-move: toolbar size changed ${tb.dx},${tb.dy} vs ${tb0.dx},${tb0.dy}\n${raw}`,
         );
       }
+      continue;
     }
 
     console.log("selection-toolbar-move: OK");

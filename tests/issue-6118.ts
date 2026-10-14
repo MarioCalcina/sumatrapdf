@@ -10,10 +10,9 @@
 import { copyFileSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlClient, ControlCommand } from "./control";
-import { IS_MAC } from "./host";
 import { ROOT, cmdId, pollUntil, runStandalone, tmpPath } from "./util";
 import { getFocusedHwnd, isWindowVisible, postMessage, WM_KEYDOWN } from "./winapi";
-import { clickAt, findChildByClass, killAndWait, launchControlled, sendCommandSync } from "./win-automation";
+import { killAndWait, launchControlled, sendCommandSync } from "./win-automation";
 
 const VK_ESCAPE = 0x1b;
 const SRC_PDF = join(ROOT, "ext", "a-zlib", "zlib.3.pdf");
@@ -75,14 +74,9 @@ export async function testit(): Promise<void> {
       (c) => c !== null,
       { error: "issue-6118: Text toolbar button not found" },
     );
-    if (IS_MAC) {
-      const opened = await client.request(ControlCommand.TestInput, ["click", center!.x, center!.y, 0, 0]);
-      if (opened[0] !== 0 || !String(opened[1] ?? "").startsWith("OK")) {
-        throw new Error(`issue-6118: toolbar click failed: ${String(opened[1] ?? "")}`);
-      }
-    } else {
-      const toolbar = findChildByClass(frame, "SUMATRA_VIRT_TOOLBAR");
-      await clickAt(toolbar, center!.x, center!.y, 0);
+    const opened = await client.request(ControlCommand.TestInput, ["click", center!.x, center!.y, 0, 0]);
+    if (opened[0] !== 0 || !String(opened[1] ?? "").startsWith("OK")) {
+      throw new Error(`issue-6118: toolbar click failed: ${String(opened[1] ?? "")}`);
     }
     await pollUntil(
       () => placementActive(client),

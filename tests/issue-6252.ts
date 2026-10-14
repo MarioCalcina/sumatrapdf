@@ -9,7 +9,6 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlClient, ControlCommand } from "./control";
-import { IS_MAC } from "./host";
 import { assemblePdf, runStandalone, tmpPath } from "./util";
 import { clientToScreen, getClientRect, postMessage, sleep } from "./winapi";
 import { findCanvas, killAndWait, launchControlled } from "./win-automation";
@@ -138,7 +137,7 @@ export async function testit(): Promise<void> {
 
     // over the popup: plain wheel scrolls, Ctrl + wheel zooms.
     // mac has no popup HWND. pop is the popup's center in frame pixels.
-    const onPopup = IS_MAC && p.pop ? clientToScreen(canvas, p.pop.x, p.pop.y) : onLink;
+    const onPopup = p.pop ? clientToScreen(canvas, p.pop.x, p.pop.y) : onLink;
     postWheel(p.hwnd, WM_MOUSEWHEEL, -WHEEL_DELTA, 0, onPopup);
     p = await waitFor(client, "wheel on the popup did not scroll", (q) => below(q, p));
     postWheel(p.hwnd, WM_MOUSEWHEEL, WHEEL_DELTA, MK_CONTROL, onPopup);

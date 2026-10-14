@@ -44,7 +44,6 @@ function makeCbz(nPages: number, v: Variant): Buffer {
 }
 
 const START_PAGE = 10;
-const START_SCROLL_Y = 200;
 const RESTART_COUNT = 2;
 
 function seedSettings(dir: string, cbz: string, v: Variant): void {

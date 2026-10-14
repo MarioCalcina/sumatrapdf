@@ -6,21 +6,9 @@
 
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { IS_MAC } from "./host";
 import { runStandalone, tmpPath, makeBlankPdf } from "./util";
 import { killAndWait, launchControlled } from "./win-automation";
-import {
-  getWindowRect,
-  isZoomed,
-  moveWindow,
-  setWindowPos,
-  showWindow,
-  sleep,
-  SW_RESTORE,
-  SWP_NOACTIVATE,
-  SWP_NOSENDCHANGING,
-  SWP_NOZORDER,
-} from "./winapi";
+import { getWindowRect, isZoomed, moveWindow, showWindow, sleep, SW_RESTORE } from "./winapi";
 
 const SETTINGS = [
   `DefaultDisplayMode = facing`,
@@ -54,17 +42,13 @@ export async function testit(): Promise<void> {
 
     // SWP_NOSENDCHANGING skips the frame's min track size, so the canvas can
     // get as narrow as a squeezed or DPI-changed window leaves it
-    if (IS_MAC) {
-      if (!moveWindow(frame, r.left, r.top, kTinyFrameDx, dy)) {
-        throw new Error("facing-fit-tiny-viewport: could not shrink the frame");
-      }
-      const shrunk = getWindowRect(frame);
-      const shrunkDx = shrunk.right - shrunk.left;
-      if (shrunkDx > 40) {
-        throw new Error(`facing-fit-tiny-viewport: frame stayed ${shrunkDx}px wide`);
-      }
-    } else {
-      setWindowPos(frame, r.left, r.top, kTinyFrameDx, dy, SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSENDCHANGING);
+    if (!moveWindow(frame, r.left, r.top, kTinyFrameDx, dy)) {
+      throw new Error("facing-fit-tiny-viewport: could not shrink the frame");
+    }
+    const shrunk = getWindowRect(frame);
+    const shrunkDx = shrunk.right - shrunk.left;
+    if (shrunkDx > 40) {
+      throw new Error(`facing-fit-tiny-viewport: frame stayed ${shrunkDx}px wide`);
     }
 
     // repaints the canvas; not idle at this size, so a timeout is expected

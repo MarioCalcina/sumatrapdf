@@ -19,7 +19,7 @@ import {
 import { basename, dirname, join, resolve } from "node:path";
 import { deflateRawSync, deflateSync, inflateSync } from "node:zlib";
 import "./host.ts";
-import { ensureModifierKeysUp, enumWindows, getWindowPid, getWindowText, hasInteractiveDesktop } from "./winapi.ts";
+import { ensureModifierKeysUp, hasInteractiveDesktop } from "./winapi.ts";
 
 export const ROOT = join(import.meta.dir, "..");
 
@@ -48,9 +48,6 @@ function exeFromArgv(argv: string[]): string {
 // The exe under test: the debug ASan build, unless `-exe <path>` or
 // SUMATRA_TEST_EXE names another one. Read at import time, before any test runs.
 export const EXE_FROM_ARGV = exeFromArgv(process.argv);
-// the tests still carry orig's paths (Win32 controls) beside ng's; ng is the
-// only app now
-export const USE_NG = true;
 const SOURCE_EXE = EXE_FROM_ARGV || process.env.SUMATRA_TEST_EXE || join(ROOT, "out", "mac", "dbg-asan", "SumatraPDF");
 
 // Keep the executable and its portable settings file in a fresh directory for
@@ -370,77 +367,6 @@ export async function pollUntil<T>(
   }
 }
 
-export function findAnnotWindow(pid: number, frame: number): number {
-  let found = 0;
-  enumWindows((hwnd) => {
-    if (hwnd !== frame && getWindowPid(hwnd) === pid && getWindowText(hwnd).startsWith("Annotations")) {
-      found = hwnd;
-      return false;
-    }
-    return true;
-  });
-  return found;
-}
-
-export async function waitForAnnotWindow(pid: number, frame: number, timeoutMs = 10_000): Promise<number> {
-  return pollUntil(
-    () => findAnnotWindow(pid, frame),
-    (hwnd) => hwnd !== 0,
-    {
-      timeoutMs,
-      intervalMs: 50,
-      error: "Annotations window did not open",
-    },
-  );
-}
-
-// TestDpi (`ControlCommand.TestDpi`) helpers. The command id is imported lazily
-// so util.ts does not cycle with control.ts at load time.
-export async function dpiRequest(
-  client: { request(command: number, args?: unknown[]): Promise<unknown[]> },
-  action: string,
-): Promise<string> {
-  const { ControlCommand } = await import("./control.ts");
-  const response = await client.request(ControlCommand.TestDpi, [action]);
-  const code = Number(response[0] ?? -1);
-  const raw = String(response[1] ?? "");
-  if (code !== 0) {
-    throw new Error(`TestDpi ${action} failed (${code}): ${raw.trim()}`);
-  }
-  return raw;
-}
-
-export function parseDpiFields(raw: string): Record<string, number> {
-  const values: Record<string, number> = {};
-  for (const match of raw.matchAll(/(\w+)=(\d+)/g)) {
-    values[match[1]] = Number(match[2]);
-  }
-  return values;
-}
-
-export async function waitForDpiFrame(
-  client: { request(command: number, args?: unknown[]): Promise<unknown[]> },
-  expectedDpi: number,
-  ready: (fields: Record<string, number>, raw: string) => boolean,
-  timeoutMs = 5000,
-): Promise<{ fields: Record<string, number>; raw: string }> {
-  const load = async () => {
-    const raw = await dpiRequest(client, "state");
-    return { fields: parseDpiFields(raw), raw };
-  };
-  return pollUntil(load, (s) => s.fields.frame === expectedDpi && ready(s.fields, s.raw), {
-    timeoutMs,
-    intervalMs: 40,
-    error: (s) => `DPI state did not settle at ${expectedDpi}: ${s.raw.trim()}`,
-  });
-}
-
-export function requireDpiShrank(name: string, high: number, low: number): void {
-  if (high <= 0 || low <= 0 || high < low * 1.3) {
-    throw new Error(`${name} did not follow 150% -> 75% DPI (${high} -> ${low})`);
-  }
-}
-
 // Directory for temporary / scratch files produced by tests. It lives below
 // TESTS_TMP_DIR so explicit -appdata directories are isolated from the user's
 // settings and from the executable used by the test. Use tmpPath() to get a
@@ -581,23 +507,6 @@ export function makePng(w: number, h: number, rgb: [number, number, number]): Bu
     pngChunk("IDAT", deflateSync(raw)),
     pngChunk("IEND", Buffer.alloc(0)),
   ]);
-}
-
-export function runPowerShell(script: string): { ok: boolean; out: string } {
-  const r = Bun.spawnSync(["powershell.exe", "-NoProfile", "-NonInteractive", "-Command", script]);
-  return { ok: r.exitCode === 0, out: r.stdout.toString() + r.stderr.toString() };
-}
-
-// Removes a signing-test certificate from the CurrentUser\My store.
-export function removeTestCert(thumbprint: string): void {
-  runPowerShell(`
-    $store = New-Object System.Security.Cryptography.X509Certificates.X509Store('My','CurrentUser')
-    $store.Open('ReadWrite')
-    foreach ($c in $store.Certificates.Find('FindByThumbprint', '${thumbprint}', $false)) {
-      $store.Remove($c)
-    }
-    $store.Close()
-  `);
 }
 
 // path of an installed Ghostscript console exe, "" when none

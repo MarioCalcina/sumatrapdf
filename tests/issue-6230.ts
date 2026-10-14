@@ -3,9 +3,8 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlCommand, type ControlClient } from "./control.ts";
-import { SLOW_BUILD_FACTOR, USE_NG, cmdId, runStandalone, tmpPath } from "./util.ts";
-import { launchControlled, sendCommand, waitForFocusClass, killAndWait, pressKey } from "./win-automation.ts";
-import { sendMessage, VK_RETURN, WM_CHAR } from "./winapi.ts";
+import { SLOW_BUILD_FACTOR, cmdId, runStandalone, tmpPath } from "./util.ts";
+import { launchControlled, sendCommand, killAndWait } from "./win-automation.ts";
 
 // "x" matches on page 40 and page 80, "xy" only on page 80. Page filler text
 // avoids the letters x and y so each search moves the view.
@@ -128,25 +127,14 @@ export async function testit(): Promise<void> {
     await expectPage(client, startPage, "go to start page");
 
     sendCommand(frame, cmdId("CmdFindFirst"));
-    if (USE_NG) {
-      // "x" then "xy": each set arms find-as-you-type, Enter starts it
-      await waitFindOpen(client);
-      await ngFind(client, "set", "x");
-      await ngFind(client, "enter");
-      await expectPage(client, firstMatchPage, "search for 'x'");
-      await ngFind(client, "set", "xy");
-      await ngFind(client, "enter");
-      await expectPage(client, secondMatchPage, "search for 'xy'");
-    } else {
-      const edit = await waitForFocusClass(frame, "Edit");
-      // Run both incremental searches so each moves the view.
-      sendMessage(edit, WM_CHAR, "x".charCodeAt(0), 0);
-      await pressKey(edit, VK_RETURN, 0);
-      await expectPage(client, firstMatchPage, "search for 'x'");
-      sendMessage(edit, WM_CHAR, "y".charCodeAt(0), 0);
-      await pressKey(edit, VK_RETURN, 0);
-      await expectPage(client, secondMatchPage, "search for 'xy'");
-    }
+    // "x" then "xy": each set arms find-as-you-type, Enter starts it
+    await waitFindOpen(client);
+    await ngFind(client, "set", "x");
+    await ngFind(client, "enter");
+    await expectPage(client, firstMatchPage, "search for 'x'");
+    await ngFind(client, "set", "xy");
+    await ngFind(client, "enter");
+    await expectPage(client, secondMatchPage, "search for 'xy'");
 
     sendCommand(frame, cmdId("CmdNavigateBack"));
     await expectPage(client, startPage, "Back after search");

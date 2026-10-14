@@ -4,9 +4,8 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlClient, ControlCommand } from "./control.ts";
-import { IS_MAC } from "./host.ts";
 import { ROOT, SLOW_BUILD_FACTOR, cmdId, runStandalone, tmpPath } from "./util.ts";
-import { enumWindows, findChildWindow, getWindowPid, isWindowVisible, sendText, sleep } from "./winapi.ts";
+import { sendText, sleep } from "./winapi.ts";
 import { killAndWait, launchControlled, sendCommand } from "./win-automation.ts";
 
 const SETTINGS = `UiLanguage = en
@@ -32,18 +31,6 @@ async function paletteState(client: ControlClient): Promise<PaletteState | null>
     throw new Error(`image-only-palette-items: could not parse: ${out}`);
   }
   return { items: +m[1]!, queryLen: +m[2]!, selectedCmdId: +m[3]! };
-}
-
-function findPaletteEdit(pid: number, frame: number): number {
-  let edit = 0;
-  enumWindows((hwnd) => {
-    if (hwnd === frame || getWindowPid(hwnd) !== pid || !isWindowVisible(hwnd)) {
-      return true;
-    }
-    edit = findChildWindow(hwnd, "Edit");
-    return edit === 0;
-  });
-  return edit;
 }
 
 async function waitForPalette(client: ControlClient): Promise<void> {
@@ -74,7 +61,7 @@ async function querySelectedCommand(client: ControlClient, pid: number, frame: n
       state = await paletteState(client);
     }
     // mac has no palette edit HWND; TestInput sets the query.
-    const edit = IS_MAC ? 1 : findPaletteEdit(pid, frame);
+    const edit = 1;
     if (state && edit && !sent) {
       sendText(edit, text);
       sent = true;
@@ -104,9 +91,6 @@ async function checkDocument(file: string, shouldShow: boolean, appData: string)
     await client.waitForRenderIdle();
     sendCommand(frame, cmdId("CmdCommandPalette"));
     await waitForPalette(client);
-    if (!IS_MAC && !findPaletteEdit(proc.pid!, frame)) {
-      throw new Error("image-only-palette-items: no command palette edit");
-    }
 
     for (const [query, commandName] of imageCommands) {
       const expected = cmdId(commandName);

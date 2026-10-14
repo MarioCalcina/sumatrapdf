@@ -12,10 +12,9 @@
 
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { IS_MAC } from "./host.ts";
 import { cmdId, tmpPath, assemblePdf } from "./util";
-import { captureWindowPixels, sendMessage, WM_COMMAND } from "./winapi";
-import { findCanvas, launchControlled, sendCommand, waitForExit, killAndWait } from "./win-automation";
+import { sendMessage, WM_COMMAND } from "./winapi";
+import { launchControlled, sendCommand, waitForExit, killAndWait } from "./win-automation";
 
 // white pages, with a small black square in the top-left corner of page 1
 function makePdf(nPages: number, square: number): string {
@@ -85,14 +84,13 @@ async function openAtZoom(
     // is what makes the pixel measurements below immediate instead of a wait.
     await client.setNotificationsEnabled(false);
     await client.waitForRenderIdle(30000);
-    const canvas = findCanvas(frame);
     for (let i = 0; i < nZoomIn; i++) {
       // SendMessage so the zoom is applied before we ask whether tiles are ready
       sendMessage(frame, WM_COMMAND, cmdId("CmdZoomIn"), 0);
       await client.waitForRenderIdle(30000);
     }
     let dark = 0;
-    if (needPixels && IS_MAC) {
+    if (needPixels) {
       // The page box scales with zoom. There is no window DC to count pixels.
       const raw = (await client.layout()).raw;
       const m = /page n=1 shown=\d+ pos=(-?\d+),(-?\d+),(-?\d+),(-?\d+)/.exec(raw);
@@ -100,15 +98,6 @@ async function openAtZoom(
         throw new Error(`issue-1195: no page rect\n${raw}`);
       }
       dark = Math.abs(Number(m[3]) * Number(m[4]));
-    } else if (needPixels) {
-      const px = captureWindowPixels(canvas);
-      if (px) {
-        for (let i = 0; i < px.data.length; i += 4) {
-          if (px.data[i] < 128 && px.data[i + 1] < 128 && px.data[i + 2] < 128) {
-            dark++;
-          }
-        }
-      }
     }
 
     sendCommand(frame, cmdId("CmdExit"));

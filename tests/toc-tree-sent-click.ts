@@ -7,11 +7,9 @@
 // Run: bun tests/toc-tree-sent-click.ts [--no-build]
 
 import { writeFileSync } from "node:fs";
-import { join } from "node:path";
 import { ControlCommand } from "./control.ts";
 import { killAndWait, launchControlled, sendCommandSync } from "./win-automation.ts";
-import { findVisibleChildWindow, sleep, treeGetItemHeight, treeGetSelection } from "./winapi.ts";
-import { cmdId, runStandalone, tmpPath, USE_NG } from "./util.ts";
+import { cmdId, runStandalone, tmpPath } from "./util.ts";
 
 // a 4-page PDF with 4 top-level bookmarks (one per page), /UseOutlines so the
 // bookmarks panel opens automatically
@@ -58,84 +56,35 @@ export function makeBookmarkedPdf(): Buffer {
   return Buffer.concat(parts);
 }
 
-const CLICK_TIMEOUT_MS = 5000;
-
 export async function testit(): Promise<void> {
   const pdfPath = tmpPath("toc-tree-sent-click.pdf");
   writeFileSync(pdfPath, makeBookmarkedPdf());
 
   // ng draws the outline in the frame. "go" is TocTreeItemClicked, the row click.
-  if (USE_NG) {
-    const { proc, client, frame } = await launchControlled([pdfPath]);
-    try {
-      await client.waitForRenderIdle();
-      let countRaw = String((await client.request(ControlCommand.TestUiState, ["count"]))[1] ?? "");
-      let rows = Number(/tocRows=(\d+)/.exec(countRaw)?.[1] ?? -1);
-      if (rows < 4) {
-        sendCommandSync(frame, cmdId("CmdToggleBookmarks"));
-        await client.waitForRenderIdle();
-        countRaw = String((await client.request(ControlCommand.TestUiState, ["count"]))[1] ?? "");
-        rows = Number(/tocRows=(\d+)/.exec(countRaw)?.[1] ?? -1);
-      }
-      if (rows < 4) {
-        throw new Error(`toc-tree-sent-click: bookmarks not shown (${countRaw})`);
-      }
-      const go = String((await client.request(ControlCommand.TestUiState, ["go", 2]))[1] ?? "");
-      if (go.startsWith("ERR")) {
-        throw new Error(`toc-tree-sent-click: ${go}`);
-      }
-      await client.waitForRenderIdle();
-      const info = await client.chapterInfo();
-      if (info.page !== 3) {
-        throw new Error(`toc-tree-sent-click: click did not navigate: page=${info.page} (expected 3)`);
-      }
-    } finally {
-      try {
-        await client.quit();
-      } catch {
-        /* process already gone */
-      }
-      await killAndWait(proc);
-    }
-    return;
-  }
-
   const { proc, client, frame } = await launchControlled([pdfPath]);
-  let child: Bun.Subprocess | null = null;
   try {
     await client.waitForRenderIdle();
-    const tree = findVisibleChildWindow(frame, "SysTreeView32");
-    if (!tree) {
-      throw new Error("toc-tree-sent-click: bookmarks tree not found");
+    let countRaw = String((await client.request(ControlCommand.TestUiState, ["count"]))[1] ?? "");
+    let rows = Number(/tocRows=(\d+)/.exec(countRaw)?.[1] ?? -1);
+    if (rows < 4) {
+      sendCommandSync(frame, cmdId("CmdToggleBookmarks"));
+      await client.waitForRenderIdle();
+      countRaw = String((await client.request(ControlCommand.TestUiState, ["count"]))[1] ?? "");
+      rows = Number(/tocRows=(\d+)/.exec(countRaw)?.[1] ?? -1);
     }
-    const sel0 = treeGetSelection(tree);
-    const h = treeGetItemHeight(tree);
-    const rowNo = 3; // "Chapter Three" -> page 3
-    const y = Math.floor((rowNo - 1) * h + h / 2);
-    const childScript = join(import.meta.dir, "toc-tree-sent-click.child.ts");
-    child = Bun.spawn(["bun", childScript, String(tree), "60", String(y)], { stdout: "ignore", stderr: "ignore" });
-    const t0 = Date.now();
-    while (child.exitCode == null && Date.now() - t0 < CLICK_TIMEOUT_MS) {
-      await sleep(50);
+    if (rows < 4) {
+      throw new Error(`toc-tree-sent-click: bookmarks not shown (${countRaw})`);
     }
-    if (child.exitCode == null) {
-      child.kill();
-      throw new Error(
-        `toc-tree-sent-click: SendMessage(WM_LBUTTONDOWN) on a bookmarks-tree row did not return within ${CLICK_TIMEOUT_MS} ms (drag-detect loop?)`,
-      );
+    const go = String((await client.request(ControlCommand.TestUiState, ["go", 2]))[1] ?? "");
+    if (go.startsWith("ERR")) {
+      throw new Error(`toc-tree-sent-click: ${go}`);
     }
     await client.waitForRenderIdle();
-    const sel1 = treeGetSelection(tree);
     const info = await client.chapterInfo();
-    if (sel1 === sel0 || info.page !== rowNo) {
-      throw new Error(
-        `toc-tree-sent-click: click did not navigate: selection ${sel0} -> ${sel1}, page=${info.page} (expected ${rowNo})`,
-      );
+    if (info.page !== 3) {
+      throw new Error(`toc-tree-sent-click: click did not navigate: page=${info.page} (expected 3)`);
     }
   } finally {
-    if (child && child.exitCode == null) {
-      child.kill();
-    }
     try {
       await client.quit();
     } catch {

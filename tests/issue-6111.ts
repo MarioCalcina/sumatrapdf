@@ -8,11 +8,10 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlClient, ControlCommand } from "./control.ts";
-import { cmdId, ROOT, runStandalone, SLOW_BUILD_FACTOR, tmpPath, USE_NG } from "./util.ts";
-import { findTopWindow, postMessage, sleep, VK_END, WM_KEYDOWN, WM_KEYUP, postChar } from "./winapi.ts";
-import { findChildByClass, killAndWait, launchControlled, sendCommandSync, typeIntoInput } from "./win-automation.ts";
+import { cmdId, ROOT, runStandalone, SLOW_BUILD_FACTOR, tmpPath } from "./util.ts";
+import { postMessage, sleep, VK_END, WM_KEYDOWN, WM_KEYUP, postChar } from "./winapi.ts";
+import { killAndWait, launchControlled, sendCommandSync } from "./win-automation.ts";
 
-const TOOLBAR_CLASS = "SumatraAnnotEditToolbar";
 const NOTE = "fs-annot-note";
 
 async function markupDump(client: ControlClient): Promise<string> {
@@ -137,44 +136,31 @@ export async function testit(): Promise<void> {
 
     // ng draws the property row in the frame. There is no edit HWND; the
     // focused text area takes the characters.
-    if (USE_NG) {
-      const focusDeadline = Date.now() + 5_000 * SLOW_BUILD_FACTOR;
-      let ui = "";
-      while (Date.now() < focusDeadline) {
-        ui = String((await client.request(ControlCommand.TestUiState, []))[1] ?? "");
-        if (/edit=1/.test(ui)) {
-          break;
-        }
-        await sleep(40);
+    const focusDeadline = Date.now() + 5_000 * SLOW_BUILD_FACTOR;
+    let ui = "";
+    while (Date.now() < focusDeadline) {
+      ui = String((await client.request(ControlCommand.TestUiState, []))[1] ?? "");
+      if (/edit=1/.test(ui)) {
+        break;
       }
-      if (!/edit=1/.test(ui)) {
-        throw new Error(`issue-6111: contents edit did not take focus\n${ui}`);
+      await sleep(40);
+    }
+    if (!/edit=1/.test(ui)) {
+      throw new Error(`issue-6111: contents edit did not take focus\n${ui}`);
+    }
+    for (const ch of NOTE) {
+      await client.request(ControlCommand.TestInput, ["char", ch.charCodeAt(0), 0, 0, 0]);
+    }
+    const typedDeadline = Date.now() + 3_000 * SLOW_BUILD_FACTOR;
+    while (Date.now() < typedDeadline) {
+      ui = String((await client.request(ControlCommand.TestUiState, []))[1] ?? "");
+      if (ui.includes(NOTE)) {
+        break;
       }
-      for (const ch of NOTE) {
-        await client.request(ControlCommand.TestInput, ["char", ch.charCodeAt(0), 0, 0, 0]);
-      }
-      const typedDeadline = Date.now() + 3_000 * SLOW_BUILD_FACTOR;
-      while (Date.now() < typedDeadline) {
-        ui = String((await client.request(ControlCommand.TestUiState, []))[1] ?? "");
-        if (ui.includes(NOTE)) {
-          break;
-        }
-        await sleep(40);
-      }
-      if (!ui.includes(NOTE)) {
-        throw new Error(`issue-6111: contents edit holds no note\n${ui}`);
-      }
-    } else {
-      const tbHwnd = findTopWindow(proc.pid!, TOOLBAR_CLASS);
-      if (!tbHwnd) {
-        throw new Error("issue-6111: property row window not found");
-      }
-
-      const edit = findChildByClass(tbHwnd, "Edit");
-      if (!edit) {
-        throw new Error("issue-6111: contents edit box not found");
-      }
-      await typeIntoInput(edit, NOTE, false);
+      await sleep(40);
+    }
+    if (!ui.includes(NOTE)) {
+      throw new Error(`issue-6111: contents edit holds no note\n${ui}`);
     }
     sendCommandSync(frame, cmdId("CmdToggleFullscreen"));
   } finally {

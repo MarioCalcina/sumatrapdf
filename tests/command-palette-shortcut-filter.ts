@@ -3,10 +3,9 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlClient, ControlCommand } from "./control.ts";
-import { IS_MAC } from "./host.ts";
 import { ROOT, cmdId, runStandalone, tmpPath } from "./util.ts";
-import { captureWindowPixels, captureWindowToPng, sendText, sleep } from "./winapi.ts";
-import { killAndWait, launchControlled, sendCommand, findPalette } from "./win-automation.ts";
+import { sendText, sleep } from "./winapi.ts";
+import { killAndWait, launchControlled, sendCommand } from "./win-automation.ts";
 
 const SETTINGS = `UiLanguage = en
 Theme = Light
@@ -34,26 +33,6 @@ async function paletteState(client: ControlClient): Promise<PaletteState | null>
   return { items: +m[1]!, queryLen: +m[2]!, selectedCmdId: +m[3]! };
 }
 
-function countYellowInRightHalf(palette: number): number {
-  const shot = captureWindowPixels(palette);
-  if (!shot) {
-    return 0;
-  }
-  let count = 0;
-  for (let y = 0; y < shot.h; y++) {
-    for (let x = Math.floor(shot.w / 2); x < shot.w; x++) {
-      const off = (y * shot.w + x) * 4;
-      const b = shot.data[off]!;
-      const g = shot.data[off + 1]!;
-      const r = shot.data[off + 2]!;
-      if (r > 240 && g > 240 && b < 30) {
-        count++;
-      }
-    }
-  }
-  return count;
-}
-
 export async function testit(): Promise<void> {
   const appdata = tmpPath("command-palette-shortcut-filter");
   rmSync(appdata, { recursive: true, force: true });
@@ -69,16 +48,9 @@ export async function testit(): Promise<void> {
     const openDeadline = Date.now() + 8_000;
     let handles = { palette: 0, edit: 0 };
     while (Date.now() < openDeadline) {
-      if (IS_MAC) {
-        if (await paletteState(client)) {
-          handles = { palette: 1, edit: 1 };
-          break;
-        }
-      } else {
-        handles = findPalette(frame);
-        if (handles.palette && handles.edit) {
-          break;
-        }
+      if (await paletteState(client)) {
+        handles = { palette: 1, edit: 1 };
+        break;
       }
       await sleep(50);
     }
@@ -100,24 +72,6 @@ export async function testit(): Promise<void> {
     const expected = cmdId("CmdRenameFile");
     if (!state || state.items !== 1 || state.selectedCmdId !== expected) {
       throw new Error(`command-palette-shortcut-filter: shortcut query failed: ${JSON.stringify(state)}`);
-    }
-
-    if (IS_MAC) {
-      console.log("SKIP command-palette-shortcut-filter highlight: macOS has no palette window to sample");
-    } else {
-      const paintDeadline = Date.now() + 3_000;
-      let yellow = 0;
-      while (Date.now() < paintDeadline) {
-        yellow = countYellowInRightHalf(handles.palette);
-        if (yellow > 20) {
-          break;
-        }
-        await sleep(40);
-      }
-      if (yellow <= 20) {
-        captureWindowToPng(handles.palette, tmpPath("command-palette-shortcut-filter.png"));
-        throw new Error(`command-palette-shortcut-filter: shortcut highlight not painted; yellow=${yellow}`);
-      }
     }
 
     console.log("command-palette-shortcut-filter: OK");

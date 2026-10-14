@@ -11,16 +11,13 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlClient, ControlCommand } from "./control.ts";
-import { IS_MAC } from "./host.ts";
 import { ROOT, cmdId, runStandalone, tmpPath } from "./util.ts";
-import { captureWindowPixels, captureWindowToPng, sendText, sleep } from "./winapi.ts";
-import { killAndWait, launchControlled, sendCommand, findPalette } from "./win-automation.ts";
+import { sendText, sleep } from "./winapi.ts";
+import { killAndWait, launchControlled, sendCommand } from "./win-automation.ts";
 
 const FILE_NAME = "issue6104.pdf";
-const LONG_DIR = IS_MAC
-  ? `/${Array(30).fill("zzzzzzzzzzzzzzzzzzzz").join("/")}`
-  : ["C:", ...Array(30).fill("zzzzzzzzzzzzzzzzzzzz")].join("\\");
-const LONG_PATH = IS_MAC ? `${LONG_DIR}/${FILE_NAME}` : `${LONG_DIR}\\${FILE_NAME}`;
+const LONG_DIR = `/${Array(30).fill("zzzzzzzzzzzzzzzzzzzz").join("/")}`;
+const LONG_PATH = `${LONG_DIR}/${FILE_NAME}`;
 
 const SETTINGS = `UiLanguage = en
 Theme = Light
@@ -54,27 +51,6 @@ async function paletteState(client: ControlClient): Promise<PaletteState | null>
   return { items: +m[1]!, queryLen: +m[2]! };
 }
 
-function countYellowInLeftHalf(palette: number): number {
-  const shot = captureWindowPixels(palette);
-  if (!shot) {
-    return 0;
-  }
-  let count = 0;
-  const xMax = Math.floor(shot.w / 2);
-  for (let y = 0; y < shot.h; y++) {
-    for (let x = 0; x < xMax; x++) {
-      const off = (y * shot.w + x) * 4;
-      const b = shot.data[off]!;
-      const g = shot.data[off + 1]!;
-      const r = shot.data[off + 2]!;
-      if (r > 240 && g > 240 && b < 30) {
-        count++;
-      }
-    }
-  }
-  return count;
-}
-
 export async function testit(): Promise<void> {
   const appdata = tmpPath("issue-6104");
   rmSync(appdata, { recursive: true, force: true });
@@ -90,16 +66,9 @@ export async function testit(): Promise<void> {
     const openDeadline = Date.now() + 8_000;
     let handles = { palette: 0, edit: 0 };
     while (Date.now() < openDeadline) {
-      if (IS_MAC) {
-        if (await paletteState(client)) {
-          handles = { palette: frame, edit: frame };
-          break;
-        }
-      } else {
-        handles = findPalette(frame);
-        if (handles.palette && handles.edit) {
-          break;
-        }
+      if (await paletteState(client)) {
+        handles = { palette: frame, edit: frame };
+        break;
       }
       await sleep(50);
     }
@@ -120,24 +89,6 @@ export async function testit(): Promise<void> {
     }
     if (!state || state.items !== 1) {
       throw new Error(`issue-6104: file history query failed: ${JSON.stringify(state)}`);
-    }
-
-    if (IS_MAC) {
-      console.log("SKIP issue-6104 filename highlight: macOS has no window DC");
-    } else {
-      const paintDeadline = Date.now() + 3_000;
-      let yellow = 0;
-      while (Date.now() < paintDeadline) {
-        yellow = countYellowInLeftHalf(handles.palette);
-        if (yellow > 20) {
-          break;
-        }
-        await sleep(40);
-      }
-      if (yellow <= 20) {
-        captureWindowToPng(handles.palette, tmpPath("issue-6104.png"));
-        throw new Error(`issue-6104: filename highlight not painted on the left; yellow=${yellow}`);
-      }
     }
 
     console.log("issue-6104: OK");

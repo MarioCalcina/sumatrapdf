@@ -10,18 +10,8 @@
 import { writeFileSync } from "node:fs";
 import { crc32, deflateSync } from "node:zlib";
 import { ControlClient, ControlCommand } from "./control.ts";
-import { cmdId, runStandalone, tmpPath, USE_NG } from "./util.ts";
-import {
-  enumChildWindows,
-  enumWindows,
-  getClassName,
-  getControlText,
-  getWindowPid,
-  getWindowText,
-  postMessage,
-  sleep,
-  WM_CLOSE,
-} from "./winapi.ts";
+import { cmdId, runStandalone, tmpPath } from "./util.ts";
+import { sleep } from "./winapi.ts";
 import { launchControlled, sendCommandSync, killAndWait } from "./win-automation.ts";
 
 const IMG_W = 12;
@@ -72,76 +62,18 @@ function makePng(w: number, h: number, dpi: number): Buffer {
   return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), ...chunks]);
 }
 
-function findFirstEdit(parent: number): number {
-  let found = 0;
-  enumChildWindows(parent, (hwnd) => {
-    if (getClassName(hwnd) === "Edit") {
-      found = hwnd;
-      return false;
-    }
-    return true;
-  });
-  return found;
-}
-
-async function waitForPropertiesEdit(pid: number, timeoutMs = 8000): Promise<{ props: number; edit: number }> {
-  const deadline = Date.now() + timeoutMs;
-  let lastProps = 0;
-  while (Date.now() < deadline) {
-    let props = 0;
-    enumWindows((hwnd) => {
-      if (getWindowPid(hwnd) !== pid) {
-        return true;
-      }
-      if (getWindowText(hwnd).includes("Document Properties")) {
-        props = hwnd;
-        return false;
-      }
-      return true;
-    });
-    if (props) {
-      lastProps = props;
-      const edit = findFirstEdit(props);
-      if (edit) {
-        return { props, edit };
-      }
-    }
-    await sleep(100);
-  }
-  return { props: lastProps, edit: 0 };
-}
-
 async function propertiesText(frame: number, pid: number, client: ControlClient): Promise<string> {
   sendCommandSync(frame, cmdId("CmdProperties"));
-  if (USE_NG) {
-    const deadline = Date.now() + 8000;
-    while (Date.now() < deadline) {
-      const res = await client.request(ControlCommand.TestDocumentProperties, ["text"]);
-      const raw = String(res[1] ?? "");
-      if (res[0] === 0 && (raw.includes("File:") || raw.includes("Image Size:"))) {
-        return raw;
-      }
-      await sleep(100);
-    }
-    throw new Error("issue-5950: Document Properties text did not appear");
-  }
-  const { props, edit } = await waitForPropertiesEdit(pid);
-  if (!props) {
-    throw new Error("issue-5950: Document Properties window did not open");
-  }
-  if (!edit) {
-    throw new Error("issue-5950: no Edit control in Document Properties");
-  }
-  let text = "";
-  for (let i = 0; i < 20; i++) {
-    text = getControlText(edit);
-    if (text.includes("File:") || text.includes("Image Size:")) {
-      break;
+  const deadline = Date.now() + 8000;
+  while (Date.now() < deadline) {
+    const res = await client.request(ControlCommand.TestDocumentProperties, ["text"]);
+    const raw = String(res[1] ?? "");
+    if (res[0] === 0 && (raw.includes("File:") || raw.includes("Image Size:"))) {
+      return raw;
     }
     await sleep(100);
   }
-  postMessage(props, WM_CLOSE, 0, 0);
-  return text;
+  throw new Error("issue-5950: Document Properties text did not appear");
 }
 
 export async function testit(): Promise<void> {

@@ -5,9 +5,8 @@
 
 import { join } from "node:path";
 import { ControlClient, ControlCommand } from "./control.ts";
-import { IS_MAC } from "./host.ts";
 import { ROOT, cmdId, runStandalone, SLOW_BUILD_FACTOR } from "./util.ts";
-import { MK_LBUTTON, packCoords, sendMessage, sleep, WM_LBUTTONDOWN, WM_LBUTTONUP } from "./winapi.ts";
+import { sleep } from "./winapi.ts";
 import { killAndWait, launchControlled, sendCommand } from "./win-automation.ts";
 
 type BarState = {
@@ -74,19 +73,13 @@ async function barState(client: ControlClient): Promise<BarState | null> {
 async function clickSpeed(client: ControlClient, st: BarState, t: number): Promise<void> {
   const x = st.speed.x + Math.max(2, Math.floor(st.speed.dx * t));
   const y = st.speed.y + Math.floor(st.speed.dy / 2);
-  if (IS_MAC) {
-    for (const kind of ["down", "up"] as const) {
-      const res = await client.request(ControlCommand.TestToolWindow, ["input", "readaloudbar", kind, x, y, 0, 0]);
-      const raw = String(res[1] ?? "");
-      if ((res[0] as number) !== 0 || raw.startsWith("ERR")) {
-        throw new Error(`issue-6107: speed slider ${kind}: ${raw}`);
-      }
+  for (const kind of ["down", "up"] as const) {
+    const res = await client.request(ControlCommand.TestToolWindow, ["input", "readaloudbar", kind, x, y, 0, 0]);
+    const raw = String(res[1] ?? "");
+    if ((res[0] as number) !== 0 || raw.startsWith("ERR")) {
+      throw new Error(`issue-6107: speed slider ${kind}: ${raw}`);
     }
-    return;
   }
-  const lp = packCoords(x, y);
-  sendMessage(st.hwnd, WM_LBUTTONDOWN, MK_LBUTTON, lp);
-  sendMessage(st.hwnd, WM_LBUTTONUP, 0, lp);
 }
 
 export async function testit(): Promise<void> {

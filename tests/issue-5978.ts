@@ -2,13 +2,11 @@
 // field must not draw the selection outline on top of the search field.
 import { copyFileSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { IS_MAC } from "./host";
 import { ROOT, runStandalone, tmpPath } from "./util";
-import { postMessage, setCursorPos, sleep } from "./winapi";
-import { findCanvas, launchControlled, killAndWait, ensureModifierKeysUp } from "./win-automation";
+import { setCursorPos, sleep } from "./winapi";
+import { launchControlled, killAndWait, ensureModifierKeysUp } from "./win-automation";
 import { ControlCommand, type HomeSelection, waitForHome } from "./control.ts";
 
-const WM_MOUSEWHEEL = 0x020a;
 const WHEEL_DELTA = 120;
 const nFiles = 8;
 
@@ -59,10 +57,7 @@ export async function testit(): Promise<void> {
 
     // Windows posts WM_MOUSEWHEEL at the canvas. macOS delivers a wheel
     // through the control channel, over the thumbnail band.
-    const canvas = IS_MAC ? 0 : findCanvas(frame);
-    if (!IS_MAC && !canvas) {
-      throw new Error("issue-5978: no canvas");
-    }
+    const canvas = 0;
 
     // A wheel notch is applied asynchronously, so the state right after posting
     // it is still the pre-scroll one - and the predicate below is already true
@@ -85,17 +80,13 @@ export async function testit(): Promise<void> {
     let last = await settled();
     await ensureModifierKeysUp();
     for (let i = 0; i < 12; i++) {
-      if (IS_MAC) {
-        const area = last.thumbsArea;
-        const x = area.length >= 4 && area[2]! > 0 ? Math.round(area[0]! + area[2]! / 2) : 200;
-        const y = area.length >= 4 && area[3]! > 0 ? Math.round(area[1]! + Math.min(40, area[3]! / 2)) : 240;
-        const res = await client.request(ControlCommand.TestInput, ["wheel", x, y, -WHEEL_DELTA, 0]);
-        const raw = String(res[1] ?? "");
-        if (res[0] !== 0 || raw.startsWith("ERR")) {
-          throw new Error(`issue-5978: wheel failed: ${raw || res[0]}`);
-        }
-      } else {
-        postMessage(canvas, WM_MOUSEWHEEL, (-WHEEL_DELTA << 16) >>> 0, 0n);
+      const area = last.thumbsArea;
+      const x = area.length >= 4 && area[2]! > 0 ? Math.round(area[0]! + area[2]! / 2) : 200;
+      const y = area.length >= 4 && area[3]! > 0 ? Math.round(area[1]! + Math.min(40, area[3]! / 2)) : 240;
+      const res = await client.request(ControlCommand.TestInput, ["wheel", x, y, -WHEEL_DELTA, 0]);
+      const raw = String(res[1] ?? "");
+      if (res[0] !== 0 || raw.startsWith("ERR")) {
+        throw new Error(`issue-5978: wheel failed: ${raw || res[0]}`);
       }
       const h = await settled();
       if (rectsOverlap(h.outline, h.search)) {

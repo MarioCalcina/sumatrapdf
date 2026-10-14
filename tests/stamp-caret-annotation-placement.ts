@@ -6,29 +6,22 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlClient, ControlCommand } from "./control.ts";
-import { cmdId, runStandalone, SLOW_BUILD_FACTOR, tmpPath, USE_NG, makeBlankPdf } from "./util.ts";
+import { cmdId, runStandalone, SLOW_BUILD_FACTOR, tmpPath, makeBlankPdf } from "./util.ts";
 import {
   clientToScreen,
-  getClassName,
   getClientRect,
-  getFocusedHwnd,
-  getRootWindow,
   packCoords,
-  postMessage,
   sendMessage,
-  sendText,
   setCursorPos,
   sleep,
   VK_DOWN,
   VK_ESCAPE,
   VK_RETURN,
   WM_COMMAND,
-  WM_KEYDOWN,
   WM_MOUSEMOVE,
 } from "./winapi.ts";
 import {
   clickAt,
-  findChildByClass,
   findCanvas,
   killAndWait,
   launchControlled,
@@ -190,58 +183,7 @@ async function executeFromCommandPaletteNg(client: ControlClient, frame: number,
 }
 
 async function executeFromCommandPalette(client: ControlClient, frame: number, kind: Kind): Promise<void> {
-  if (USE_NG) {
-    await executeFromCommandPaletteNg(client, frame, kind);
-    return;
-  }
-  sendCommand(frame, cmdId("CmdCommandPalette"));
-  const openDeadline = Date.now() + 8_000;
-  let palette = 0;
-  let edit = 0;
-  while (Date.now() < openDeadline) {
-    edit = getFocusedHwnd(frame);
-    if (edit && getClassName(edit) === "Edit") {
-      palette = getRootWindow(edit);
-      if (palette && palette !== frame) {
-        break;
-      }
-    }
-    await sleep(50);
-  }
-  if (!palette || !edit) {
-    throw new Error("stamp-caret-annotation-placement: command palette did not open");
-  }
-
-  const query = paletteQuery(kind);
-  sendText(edit, query);
-  const filterDeadline = Date.now() + 3_000;
-  let itemCount = 0;
-  for (;;) {
-    const res = await client.request(ControlCommand.TestCommandPalette, []);
-    const raw = String(res[1] ?? "");
-    const m = /items=(\d+) querySel=-?\d+,-?\d+ queryLen=(\d+) cmd=(-?\d+)/.exec(raw);
-    if (res[0] === 0 && m && +m[2]! === query.length) {
-      itemCount = +m[1]!;
-      break;
-    }
-    if (Date.now() > filterDeadline) {
-      throw new Error(`stamp-caret-annotation-placement: palette did not select ${kind}\n${raw}`);
-    }
-    await sleep(40);
-  }
-
-  const want = cmdId(cmdName(kind));
-  for (let i = 0; i < itemCount; i++) {
-    const res = await client.request(ControlCommand.TestCommandPalette, []);
-    const raw = String(res[1] ?? "");
-    const m = /cmd=(-?\d+)/.exec(raw);
-    if (res[0] === 0 && m && +m[1]! === want) {
-      await pressKey(edit, VK_RETURN, 0);
-      return;
-    }
-    postMessage(edit, WM_KEYDOWN, VK_DOWN, 0);
-  }
-  throw new Error(`stamp-caret-annotation-placement: ${kind} command was not in the filtered palette`);
+  await executeFromCommandPaletteNg(client, frame, kind);
 }
 
 async function testKind(
@@ -275,15 +217,10 @@ async function testKind(
   }
   const bx = button.x + Math.floor(button.dx / 2);
   const by = button.y + Math.floor(button.dy / 2);
-  if (USE_NG) {
-    const res = await client.request(ControlCommand.TestInput, ["click", bx, by, 0, 0]);
-    const raw = String(res[1] ?? "");
-    if (res[0] !== 0 || !raw.startsWith("OK")) {
-      throw new Error(`stamp-caret-annotation-placement: ${kind} toolbar click failed: ${raw}`);
-    }
-  } else {
-    const toolbar = findChildByClass(frame, "SUMATRA_VIRT_TOOLBAR");
-    await clickAt(toolbar, bx, by, 0);
+  const res = await client.request(ControlCommand.TestInput, ["click", bx, by, 0, 0]);
+  const raw = String(res[1] ?? "");
+  if (res[0] !== 0 || !raw.startsWith("OK")) {
+    throw new Error(`stamp-caret-annotation-placement: ${kind} toolbar click failed: ${raw}`);
   }
 
   let state = await waitForPlacement(client, kind, true);

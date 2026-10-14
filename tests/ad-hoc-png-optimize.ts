@@ -77,7 +77,7 @@ export async function testit(): Promise<void> {
 
   setClipboardImage();
 
-  await killProcessesNamed("SumatraPDF.exe");
+  await killProcessesNamed("SumatraPDF");
   const proc = launchSumatra([]);
   let newFile = "";
   try {

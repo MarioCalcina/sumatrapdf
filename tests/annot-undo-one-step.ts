@@ -7,18 +7,8 @@ import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { openChipDropdown, pickSwatch } from "./annot-color-dropdown.ts";
 import { ControlClient, ControlCommand } from "./control.ts";
-import { assemblePdf, cmdId, runStandalone, SLOW_BUILD_FACTOR, tmpPath, USE_NG, makeBlankPdf } from "./util.ts";
-import {
-  enumChildWindows,
-  getClassName,
-  getControlText,
-  packCoords,
-  sendMessage,
-  sendText,
-  sleep,
-  WM_CHAR,
-  WM_COMMAND,
-} from "./winapi.ts";
+import { assemblePdf, cmdId, runStandalone, SLOW_BUILD_FACTOR, tmpPath, makeBlankPdf } from "./util.ts";
+import { packCoords, sendMessage, sendText, sleep, WM_CHAR, WM_COMMAND } from "./winapi.ts";
 import { clickAt, findCanvas, killAndWait, launchControlled, sendCommandSync } from "./win-automation.ts";
 
 type State = { raw: string; annotations: number; canUndo: boolean; modified: boolean; editActive: boolean };
@@ -156,18 +146,6 @@ async function stableSquare(client: ControlClient): Promise<Rect> {
   }
 }
 
-function findEditBox(canvas: number): number {
-  let found = 0;
-  enumChildWindows(canvas, (hwnd) => {
-    if (getClassName(hwnd) !== "Edit" || !getControlText(hwnd).startsWith("This is a text")) {
-      return true;
-    }
-    found = hwnd;
-    return false;
-  });
-  return found;
-}
-
 async function launch(name: string, pdfContent: string) {
   const dir = tmpPath(`annot-undo-one-step-${name}`);
   rmSync(dir, { recursive: true, force: true });
@@ -209,7 +187,7 @@ async function testFreeText(): Promise<void> {
     sendMessage(frame, WM_COMMAND, cmdId("CmdCreateAnnotFreeText"), packCoords(120, 250));
     await waitFor(client, (st) => st.editActive, "creating a free text did not open the in-place editor");
     // ng edits in a gpui text area on the frame. Orig's box is an Edit child.
-    const box = USE_NG ? frame : findEditBox(canvas);
+    const box = frame;
     if (!box) {
       throw new Error("annot-undo-one-step: no in-place edit box");
     }

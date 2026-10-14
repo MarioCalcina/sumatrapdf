@@ -310,10 +310,6 @@ async function testCase(mode: "reading" | "created" | "hover" | "main"): Promise
 }
 
 export async function testit(): Promise<void> {
-  if (process.platform !== "darwin") {
-    console.log("mac-highlight: skipped (macOS only)");
-    return;
-  }
   await testCase("reading");
   await testCase("created");
   await testCase("hover");

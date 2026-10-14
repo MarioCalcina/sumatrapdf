@@ -11,9 +11,8 @@ import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { cmdId, runStandalone, tmpPath, crc32 } from "./util.ts";
 import { ControlCommand } from "./control.ts";
-import { IS_MAC } from "./host.ts";
-import { findCanvas, killAndWait, launchControlled, sendCommandSync } from "./win-automation.ts";
-import { readWindowDCColumn, setProcessDpiAware, sleep } from "./winapi.ts";
+import { killAndWait, launchControlled, sendCommandSync } from "./win-automation.ts";
+import { setProcessDpiAware, sleep } from "./winapi.ts";
 
 // Lossless 400x51 solid-color WebP (VP8L). WebP used EngineImages' GDI+ scale
 // path then (#6245 moved it to mupdf's), which is what left a 1-2px dark seam
@@ -26,16 +25,6 @@ const kWebpBlue400x51 = Buffer.from([
   82, 73, 70, 70, 36, 0, 0, 0, 87, 69, 66, 80, 86, 80, 56, 76, 23, 0, 0, 0, 47, 143, 129, 12, 0, 7, 80, 168, 162, 148,
   182, 255, 1, 0, 69, 250, 255, 95, 34, 250, 159, 210, 7, 0,
 ]);
-const kPage1Color = 0x002828c8; // RGB(200,40,40) as COLORREF
-const kPage2Color = 0x00b45028; // RGB(40,80,180) as COLORREF
-
-function colorDist(c: number, want: number): number {
-  return (
-    Math.abs((c & 0xff) - (want & 0xff)) +
-    Math.abs(((c >> 8) & 0xff) - ((want >> 8) & 0xff)) +
-    Math.abs(((c >> 16) & 0xff) - ((want >> 16) & 0xff))
-  );
-}
 
 function makeZip(entries: { name: string; data: Buffer }[]): Buffer {
   const locals: Buffer[] = [];
@@ -166,31 +155,6 @@ export async function testit(): Promise<void> {
     }
 
     await c0.setNotificationsEnabled(false);
-    if (IS_MAC) {
-      console.log("SKIP issue-6018 page-edge pixels: macOS has no window DC");
-    } else {
-      const canvas = findCanvas(f0);
-      if (!canvas) {
-        throw new Error("issue-6018: canvas not found");
-      }
-      const p1 = z.pages.find((p) => p.n === 1)!;
-      const x = p1.sx + Math.floor(p1.sdx / 2);
-      const y = p1.sy + p1.sdy - 2;
-      const col = readWindowDCColumn(canvas, x, y, 5);
-      const hex = col.map((c) => c.toString(16)).join(",");
-      const isBlack = (c: number) => c === 0;
-      if (col.slice(1, 4).some(isBlack)) {
-        throw new Error(`issue-6018: 1px canvas seam between pages at y=${y}: ${hex}\n${z.raw}`);
-      }
-      // last pixel of page 1 / first of page 2: GDI+ bicubic without wrap-mode
-      // darkens these toward the black canvas (issue #6018 follow-up)
-      if (colorDist(col[1]!, kPage1Color) > 80) {
-        throw new Error(`issue-6018: page 1 edge darkened at y=${y + 1}: ${hex}\n${z.raw}`);
-      }
-      if (colorDist(col[2]!, kPage2Color) > 80) {
-        throw new Error(`issue-6018: page 2 edge darkened at y=${y + 2}: ${hex}\n${z.raw}`);
-      }
-    }
 
     sendCommandSync(f0, cmdId("CmdAdvancedSettings"));
     const deadline = Date.now() + 8000;

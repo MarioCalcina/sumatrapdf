@@ -14,7 +14,6 @@
 import { mkdirSync, rmSync, writeFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { ControlCommand, withControlledSumatra } from "./control.ts";
-import { IS_MAC } from "./host.ts";
 import { EXE, runStandalone, tmpPath } from "./util.ts";
 
 // build a PDF whose only image is an external-file stream (/F + /FFilter), with
@@ -102,21 +101,7 @@ export async function testit(): Promise<void> {
   const w = 320;
   const h = 240;
   const jpg = join(dir, "imagestream.jpg");
-  if (IS_MAC) {
-    writeColorJpeg(jpg, w, h);
-  } else {
-    const psMakeJpg =
-      "Add-Type -AssemblyName System.Drawing; " +
-      `$b=New-Object System.Drawing.Bitmap ${w},${h}; $g=[System.Drawing.Graphics]::FromImage($b); ` +
-      "$r=New-Object System.Random 7; for($i=0;$i -lt 200;$i++){$br=New-Object System.Drawing.SolidBrush " +
-      "([System.Drawing.Color]::FromArgb($r.Next(255),$r.Next(255),$r.Next(255)));" +
-      `$g.FillRectangle($br,$r.Next(${w}),$r.Next(${h}),40,40)}; $g.Dispose();` +
-      `$b.Save('${jpg.split("\\").join("\\\\")}',[System.Drawing.Imaging.ImageFormat]::Jpeg); $b.Dispose()`;
-    const mk = Bun.spawnSync(["powershell", "-NoProfile", "-Command", psMakeJpg]);
-    if (!mk.success || !existsSync(jpg)) {
-      throw new Error(`failed to create test JPEG: ${mk.stderr.toString()}`);
-    }
-  }
+  writeColorJpeg(jpg, w, h);
   const pdf = join(dir, "imagestream.pdf");
   writeFileSync(pdf, makeExternalImagePdf("imagestream.jpg", w, h));
 

@@ -4,9 +4,8 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlClient, ControlCommand } from "./control.ts";
-import { IS_MAC } from "./host.ts";
 import { ROOT, cmdId, runStandalone, tmpPath } from "./util.ts";
-import { getClassName, getFocusedHwnd, getRootWindow, sendText, sleep, VK_ESCAPE } from "./winapi.ts";
+import { sendText, sleep, VK_ESCAPE } from "./winapi.ts";
 import { killAndWait, launchControlled, pressKey, sendCommand } from "./win-automation.ts";
 
 const SETTINGS = `UiLanguage = en
@@ -39,15 +38,8 @@ async function openPalette(client: ControlClient, frame: number): Promise<number
   sendCommand(frame, cmdId("CmdCommandPalette"));
   const deadline = Date.now() + 8_000;
   while (Date.now() < deadline) {
-    if (IS_MAC) {
-      if (await paletteState(client)) {
-        return frame;
-      }
-    } else {
-      const edit = getFocusedHwnd(frame);
-      if (edit && getClassName(edit) === "Edit" && getRootWindow(edit) !== frame) {
-        return edit;
-      }
+    if (await paletteState(client)) {
+      return frame;
     }
     await sleep(50);
   }

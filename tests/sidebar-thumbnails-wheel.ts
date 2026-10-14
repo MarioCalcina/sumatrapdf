@@ -6,7 +6,7 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlClient, ControlCommand } from "./control.ts";
-import { cmdId, makePdf, runStandalone, tmpPath, USE_NG } from "./util.ts";
+import { cmdId, makePdf, runStandalone, tmpPath } from "./util.ts";
 import { clientToScreen, getScrollPos, packCoords, sendMessage, SB_HORZ, SB_VERT, sleep } from "./winapi.ts";
 import { findCanvas, killAndWait, launchControlled, sendCommand } from "./win-automation.ts";
 
@@ -84,7 +84,7 @@ export async function testit(): Promise<void> {
 
     let t = await thumbs(client);
     const spot = { x: 40, y: 60 };
-    if (USE_NG && t.page1 && t.page1.dy > 1) {
+    if (t.page1 && t.page1.dy > 1) {
       spot.x = t.page1.x + Math.floor(t.page1.dx / 2);
       spot.y = t.page1.y + Math.min(30, Math.floor(t.page1.dy / 2));
     }

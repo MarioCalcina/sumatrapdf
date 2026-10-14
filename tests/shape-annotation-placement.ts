@@ -5,34 +5,25 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlClient, ControlCommand } from "./control.ts";
-import { IS_MAC } from "./host.ts";
-import { cmdId, runStandalone, SLOW_BUILD_FACTOR, tmpPath, USE_NG, makeBlankPdf } from "./util.ts";
+import { cmdId, runStandalone, SLOW_BUILD_FACTOR, tmpPath, makeBlankPdf } from "./util.ts";
 import {
-  captureWindowPixels,
   clientToScreen,
-  getClassName,
   getClientRect,
-  getFocusedHwnd,
-  getRootWindow,
   MK_LBUTTON,
   MK_SHIFT,
   packCoords,
-  postMessage,
   sendMessage,
-  sendText,
   setCursorPos,
   sleep,
   VK_DOWN,
   VK_RETURN,
   WM_COMMAND,
-  WM_KEYDOWN,
   WM_LBUTTONDOWN,
   WM_LBUTTONUP,
   WM_MOUSEMOVE,
 } from "./winapi.ts";
 import {
   clickAt,
-  findChildByClass,
   findCanvas,
   killAndWait,
   launchControlled,
@@ -41,7 +32,6 @@ import {
   sendCommandSync,
   ngKey,
   ngType,
-  countPreviewBlue,
 } from "./win-automation.ts";
 
 type Point = { x: number; y: number };
@@ -168,58 +158,7 @@ async function executeFromCommandPaletteNg(client: ControlClient, frame: number,
 }
 
 async function executeFromCommandPalette(client: ControlClient, frame: number, command: string): Promise<void> {
-  if (USE_NG) {
-    await executeFromCommandPaletteNg(client, frame, command);
-    return;
-  }
-  sendCommand(frame, cmdId("CmdCommandPalette"));
-  const openDeadline = Date.now() + 8_000;
-  let palette = 0;
-  let edit = 0;
-  while (Date.now() < openDeadline) {
-    edit = getFocusedHwnd(frame);
-    if (edit && getClassName(edit) === "Edit") {
-      palette = getRootWindow(edit);
-      if (palette && palette !== frame) {
-        break;
-      }
-    }
-    await sleep(50);
-  }
-  if (!palette || !edit) {
-    throw new Error("shape-annotation-placement: command palette did not open");
-  }
-
-  const query = `>${command === "CmdCreateAnnotCircle" ? "Create Circle Annotation" : "Create Square Annotation"}`;
-  sendText(edit, query);
-  const filterDeadline = Date.now() + 3_000;
-  let itemCount = 0;
-  for (;;) {
-    const res = await client.request(ControlCommand.TestCommandPalette, []);
-    const raw = String(res[1] ?? "");
-    const m = /items=(\d+) querySel=-?\d+,-?\d+ queryLen=(\d+) cmd=(-?\d+)/.exec(raw);
-    if (res[0] === 0 && m && +m[2]! === query.length) {
-      itemCount = +m[1]!;
-      break;
-    }
-    if (Date.now() > filterDeadline) {
-      throw new Error(`shape-annotation-placement: palette query did not settle\n${raw}`);
-    }
-    await sleep(40);
-  }
-
-  for (let i = 0; i < itemCount; i++) {
-    const res = await client.request(ControlCommand.TestCommandPalette, []);
-    const raw = String(res[1] ?? "");
-    const m = /cmd=(-?\d+)/.exec(raw);
-    if (res[0] === 0 && m && +m[1]! === cmdId(command)) {
-      postMessage(edit, WM_KEYDOWN, VK_RETURN, 0);
-      return;
-    }
-    postMessage(edit, WM_KEYDOWN, VK_DOWN, 0);
-    await sleep(80);
-  }
-  throw new Error(`shape-annotation-placement: ${command} was not in the filtered palette`);
+  await executeFromCommandPaletteNg(client, frame, command);
 }
 
 function moveMouse(canvas: number, point: Point, keys = 0): void {
@@ -304,24 +243,20 @@ export async function testit(): Promise<void> {
     const bx = squareButton.x + Math.floor(squareButton.dx / 2);
     const by = squareButton.y + Math.floor(squareButton.dy / 2);
     const clickSquareToolbar = async () => {
-      if (USE_NG) {
-        // a button laid out or re-enabled this frame can't be hit until the frame
-        // is painted: click until the tool takes
-        const deadline = Date.now() + TOOLBAR_CLICK_TIMEOUT_MS * SLOW_BUILD_FACTOR;
-        for (;;) {
-          const res = await client.request(ControlCommand.TestInput, ["click", bx, by, 0, 0]);
-          const raw = String(res[1] ?? "");
-          if (res[0] !== 0 || !raw.startsWith("OK")) {
-            throw new Error(`shape-annotation-placement: toolbar click failed: ${raw}`);
-          }
-          await sleep(TOOLBAR_CLICK_SETTLE_MS);
-          if ((await placementState(client)).active || Date.now() > deadline) {
-            return;
-          }
+      // a button laid out or re-enabled this frame can't be hit until the frame
+      // is painted: click until the tool takes
+      const deadline = Date.now() + TOOLBAR_CLICK_TIMEOUT_MS * SLOW_BUILD_FACTOR;
+      for (;;) {
+        const res = await client.request(ControlCommand.TestInput, ["click", bx, by, 0, 0]);
+        const raw = String(res[1] ?? "");
+        if (res[0] !== 0 || !raw.startsWith("OK")) {
+          throw new Error(`shape-annotation-placement: toolbar click failed: ${raw}`);
+        }
+        await sleep(TOOLBAR_CLICK_SETTLE_MS);
+        if ((await placementState(client)).active || Date.now() > deadline) {
+          return;
         }
       }
-      const toolbar = findChildByClass(frame, "SUMATRA_VIRT_TOOLBAR");
-      await clickAt(toolbar, bx, by, 0);
     };
 
     await clickSquareToolbar();
@@ -355,40 +290,16 @@ export async function testit(): Promise<void> {
     }
 
     await client.setNotificationsEnabled(false);
-    if (IS_MAC) {
-      console.log("SKIP shape-annotation-placement: preview pixels are read from a window DC");
-      moveMouse(canvas, rectangleEnd);
-      for (let i = 0; i < 4; i++) {
-        sendMessage(canvas, WM_MOUSEMOVE, 0, packCoords(rectangleEnd.x, rectangleEnd.y));
-        state = await placementState(client);
-        if (state.preview.dx >= 120 && state.preview.dy >= 70) {
-          break;
-        }
+    moveMouse(canvas, rectangleEnd);
+    for (let i = 0; i < 4; i++) {
+      sendMessage(canvas, WM_MOUSEMOVE, 0, packCoords(rectangleEnd.x, rectangleEnd.y));
+      state = await placementState(client);
+      if (state.preview.dx >= 120 && state.preview.dy >= 70) {
+        break;
       }
-      if (state.preview.dx < 120 || state.preview.dy < 70) {
-        throw new Error(`shape-annotation-placement: live rectangle preview did not track the mouse\n${state.raw}`);
-      }
-    } else {
-      await sleep(100);
-      const before = captureWindowPixels(canvas);
-      const blueBefore = countPreviewBlue(before, start, rectangleEnd);
-      moveMouse(canvas, rectangleEnd);
-      await sleep(150);
-      let after = captureWindowPixels(canvas);
-      for (let i = 0; i < 4; i++) {
-        sendMessage(canvas, WM_MOUSEMOVE, 0, packCoords(rectangleEnd.x, rectangleEnd.y));
-        after = captureWindowPixels(canvas);
-        state = await placementState(client);
-        if (state.preview.dx >= 120 && state.preview.dy >= 70) {
-          break;
-        }
-      }
-      const blueAfter = countPreviewBlue(after, start, rectangleEnd);
-      if (blueAfter < blueBefore + 80 || state.preview.dx < 120 || state.preview.dy < 70) {
-        throw new Error(
-          `shape-annotation-placement: live rectangle preview did not track the mouse (${blueBefore} -> ${blueAfter})\n${state.raw}`,
-        );
-      }
+    }
+    if (state.preview.dx < 120 || state.preview.dy < 70) {
+      throw new Error(`shape-annotation-placement: live rectangle preview did not track the mouse\n${state.raw}`);
     }
 
     await clickAt(canvas, rectangleEnd.x, rectangleEnd.y, 0);
@@ -418,25 +329,17 @@ export async function testit(): Promise<void> {
 
     await client.setNotificationsEnabled(false);
     await drag(canvas, start, circleEnd, MK_SHIFT);
-    if (!IS_MAC) {
-      await sleep(150);
-    }
-    let previewShot = IS_MAC ? null : captureWindowPixels(canvas);
+    let previewShot = null;
     for (let i = 0; i < 4; i++) {
       // Windows can queue a physical-cursor move after SetCapture. Re-submit
       // the synthetic Shift move immediately before reading the live preview.
       sendMessage(canvas, WM_MOUSEMOVE, MK_LBUTTON | MK_SHIFT, packCoords(circleEnd.x, circleEnd.y));
-      if (!IS_MAC) {
-        previewShot = captureWindowPixels(canvas);
-      }
       state = await placementState(client);
       if (state.constrain && state.preview.dx === state.preview.dy) {
         break;
       }
     }
-    const previewInk = IS_MAC
-      ? 80
-      : countPreviewBlue(previewShot, start, { x: start.x + state.preview.dx, y: start.y + state.preview.dy });
+    const previewInk = 80;
     if (
       !state.active ||
       !state.mouseDown ||

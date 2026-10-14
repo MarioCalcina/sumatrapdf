@@ -6,9 +6,9 @@
 
 import { writeFileSync } from "node:fs";
 import { ControlCommand, type ControlClient } from "./control.ts";
-import { assemblePdf, cmdId, pollUntil, runStandalone, SLOW_BUILD_FACTOR, tmpPath, USE_NG } from "./util.ts";
-import { launchControlled, pressKey, sendCommand, typeIntoInput, waitForFocusClass } from "./win-automation.ts";
-import { getClassName, getParentWindow, VK_ESCAPE, VK_RETURN } from "./winapi.ts";
+import { assemblePdf, cmdId, pollUntil, runStandalone, SLOW_BUILD_FACTOR, tmpPath } from "./util.ts";
+import { launchControlled, sendCommand } from "./win-automation.ts";
+import { VK_ESCAPE } from "./winapi.ts";
 
 const kTerm = "tagged";
 const kPageCount = 4;
@@ -103,50 +103,27 @@ export async function testit(): Promise<void> {
     await client.waitForRenderIdle();
     await client.setNotificationsEnabled(false);
 
-    if (USE_NG) {
-      // the find box is a gpui input. "set" and "enter" follow the bar;
-      // Escape is the key the frame handles
-      sendCommand(frame, cmdId("CmdFindFirst"));
-      await waitFindOpen(client);
-      await ngFind(client, "set", kTerm);
-      await ngFind(client, "enter");
-      await expectSettled(client, "first search", { matches: 2, hitPage: kFirstHitPage });
-
-      await client.request(ControlCommand.TestInput, ["key", VK_ESCAPE, 0, 0, 0]);
-      await expectSettled(client, "after Esc", { matches: 0, hitPage: 0 });
-
-      sendCommand(frame, cmdId("CmdFindFirst"));
-      await waitFindOpen(client);
-      await expectSettled(client, "reopened find", { matches: 2, hitPage: 0, page: kFirstHitPage });
-
-      await ngFind(client, "enter");
-      await expectSettled(client, "one Enter after reopening", { matches: 2, hitPage: kFirstHitPage });
-
-      await ngFind(client, "enter");
-      await expectSettled(client, "second Enter", { hitPage: kSecondHitPage, page: kSecondHitPage });
-      return;
-    }
-
+    // the find box is a gpui input. "set" and "enter" follow the bar;
+    // Escape is the key the frame handles
     sendCommand(frame, cmdId("CmdFindFirst"));
-    const edit = await waitForFocusClass(frame, "Edit");
-    const parent = getParentWindow(edit);
-    const combo = parent && getClassName(parent) === "ComboBox" ? parent : edit;
-    await typeIntoInput(combo, kTerm, false);
-    await pressKey(edit, VK_RETURN);
+    await waitFindOpen(client);
+    await ngFind(client, "set", kTerm);
+    await ngFind(client, "enter");
     await expectSettled(client, "first search", { matches: 2, hitPage: kFirstHitPage });
 
-    await pressKey(edit, VK_ESCAPE);
+    await client.request(ControlCommand.TestInput, ["key", VK_ESCAPE, 0, 0, 0]);
     await expectSettled(client, "after Esc", { matches: 0, hitPage: 0 });
 
     sendCommand(frame, cmdId("CmdFindFirst"));
-    const edit2 = await waitForFocusClass(frame, "Edit");
+    await waitFindOpen(client);
     await expectSettled(client, "reopened find", { matches: 2, hitPage: 0, page: kFirstHitPage });
 
-    await pressKey(edit2, VK_RETURN);
+    await ngFind(client, "enter");
     await expectSettled(client, "one Enter after reopening", { matches: 2, hitPage: kFirstHitPage });
 
-    await pressKey(edit2, VK_RETURN);
+    await ngFind(client, "enter");
     await expectSettled(client, "second Enter", { hitPage: kSecondHitPage, page: kSecondHitPage });
+    return;
   } finally {
     await client.quit();
   }

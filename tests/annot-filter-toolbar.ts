@@ -9,45 +9,9 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlClient, ControlCommand } from "./control";
-import { IS_MAC } from "./host";
 import { assemblePdf, cmdId, runStandalone, SLOW_BUILD_FACTOR, tmpPath } from "./util";
-import {
-  captureWindowToPng,
-  enumChildWindows,
-  findTopWindow,
-  getClassName,
-  getClientRect,
-  getFocusedHwnd,
-  getWindowPid,
-  isWindowVisible,
-  packCoords,
-  sendMessage,
-  sendText,
-  sleep,
-  VK_DELETE,
-  VK_DOWN,
-  VK_ESCAPE,
-  WM_KEYDOWN,
-  WM_LBUTTONDBLCLK,
-  WM_LBUTTONDOWN,
-  WM_LBUTTONUP,
-  MK_CONTROL,
-  MK_LBUTTON,
-} from "./winapi";
-import {
-  clickAt,
-  findChildByClass,
-  killAndWait,
-  launchControlled,
-  pressEscape,
-  pressKey,
-  sendCommand,
-  sendCommandSync,
-} from "./win-automation";
-
-const TOOLBAR_CLASS = "SUMATRA_VIRT_TOOLBAR";
-const FLOAT_CLASS = "SUMATRA_ANNOT_FILTER_WND";
-const CANVAS_CLASS = "SUMATRA_PDF_CANVAS";
+import { sleep, VK_DELETE, VK_DOWN, VK_ESCAPE } from "./winapi";
+import { killAndWait, launchControlled, sendCommandSync } from "./win-automation";
 
 type FilterState = {
   floatVisible: boolean;
@@ -141,36 +105,6 @@ async function waitPageSelected(client: ControlClient, what: string): Promise<st
     }
     await sleep(50);
   }
-}
-
-// Focus moves on its own schedule, and getFocusedHwnd() reads it across
-// processes: one read right after the key can catch the old owner (or nothing).
-async function waitFocusedClass(frame: number, want: string, what: string): Promise<number> {
-  const deadline = Date.now() + 4000 * SLOW_BUILD_FACTOR;
-  let cls = "none";
-  for (;;) {
-    const hwnd = getFocusedHwnd(frame);
-    cls = hwnd ? getClassName(hwnd) : "none";
-    if (hwnd && cls === want) {
-      return hwnd;
-    }
-    if (Date.now() > deadline) {
-      throw new Error(`annot-filter-toolbar: ${what} (class=${cls})`);
-    }
-    await sleep(50);
-  }
-}
-
-function floatEditHwnd(floatWnd: number): number {
-  let e = 0;
-  enumChildWindows(floatWnd, (hwnd) => {
-    if (getClassName(hwnd) === "Edit" && isWindowVisible(hwnd)) {
-      e = hwnd;
-      return false;
-    }
-    return true;
-  });
-  return e;
 }
 
 async function annotAction(client: ControlClient, args: (string | number)[]): Promise<string> {
@@ -292,84 +226,8 @@ export async function testit(): Promise<void> {
   try {
     await client.waitForRenderIdle();
     await client.setNotificationsEnabled(false);
-    if (IS_MAC) {
-      await macAnnotFilter(client, frame);
-      return;
-    }
-    const pid = getWindowPid(frame);
-    sendCommandSync(frame, cmdId("CmdToggleEditPDF"));
-
-    // the main toolbar no longer carries a filter box (#6086)
-    const toolbar = findChildByClass(frame, TOOLBAR_CLASS);
-    if (!toolbar) {
-      throw new Error("annot-filter-toolbar: no toolbar");
-    }
-    captureWindowToPng(toolbar, join(dir, "toolbar.png"));
-    let nEdits = 0;
-    enumChildWindows(toolbar, (hwnd) => {
-      if (getClassName(hwnd) === "Edit" && isWindowVisible(hwnd)) {
-        nEdits++;
-      }
-      return true;
-    });
-    if (nEdits > 1) {
-      throw new Error(`annot-filter-toolbar: toolbar still has a filter box (${nEdits} edits)`);
-    }
-    if (findTopWindow(pid, FLOAT_CLASS)) {
-      throw new Error("annot-filter-toolbar: annotation list opened without being asked for");
-    }
-
-    // Find Annotation opens the floating list
-    sendCommand(frame, cmdId("CmdFindAnnotation"));
-    let st = await waitFilter(client, (s) => s.floatVisible && s.nAll >= 2, 8000);
-    if (st.discardEnabled || st.saveEnabled) {
-      throw new Error(`annot-filter-toolbar: save/discard should be disabled with no changes\n${st.raw}`);
-    }
-    const floatWnd = findTopWindow(pid, FLOAT_CLASS);
-    if (!floatWnd || !isWindowVisible(floatWnd)) {
-      throw new Error("annot-filter-toolbar: floating annotation list window not visible");
-    }
-    captureWindowToPng(floatWnd, join(dir, "floating.png"));
-
-    const edit = floatEditHwnd(floatWnd);
-    if (!edit) {
-      throw new Error("annot-filter-toolbar: floating window has no Edit");
-    }
-    const editRc = getClientRect(edit);
-    await clickAt(edit, Math.floor(editRc.right / 2), Math.floor(editRc.bottom / 2), 200);
-
-    sendMessage(edit, WM_KEYDOWN, VK_DOWN, 0);
-    st = await waitFilter(client, (s) => s.sel >= 0);
-    await waitPageSelected(client, "arrow did not select annotation on the page");
-    st = await waitFilter(client, (s) => s.deleteEnabled);
-
-    sendText(edit, "unique");
-    st = await waitFilter(client, (s) => s.nVisible === 1 && s.floatVisible);
-
-    await pressEscape(edit);
-    st = await waitFilter(client, (s) => s.nVisible >= 2 && s.floatVisible);
-    await pressEscape(edit);
-    await waitFocusedClass(frame, CANVAS_CLASS, "Esc with an empty filter did not focus the canvas");
-
-    // click and double-click in the list
-    st = await waitFilter(client, (s) => s.itemDy > 0);
-    const lp = packCoords(24, st.listY + Math.floor(st.itemDy / 2));
-    sendMessage(floatWnd, WM_LBUTTONDOWN, MK_LBUTTON, lp);
-    sendMessage(floatWnd, WM_LBUTTONUP, 0, lp);
-    st = await waitFilter(client, (s) => s.sel >= 0);
-    sendMessage(floatWnd, WM_LBUTTONDBLCLK, MK_LBUTTON, lp);
-    await waitPageSelected(client, "double-click did not select the annotation");
-
-    // Ctrl+click adds to the selection; Del removes both annotations
-    st = await waitFilter(client, (s) => s.nSel >= 1 && s.deleteEnabled);
-    await clickAt(floatWnd, 24, st.listY + st.itemDy + Math.floor(st.itemDy / 2), 200, MK_CONTROL);
-    st = await waitFilter(client, (s) => s.nSel >= 2);
-    await pressKey(floatWnd, VK_DELETE, 400);
-    st = await waitFilter(client, (s) => s.nAll === 0 && s.nSel === 0 && !s.deleteEnabled);
-
-    // Find Annotation again closes it
-    sendCommand(frame, cmdId("CmdFindAnnotation"));
-    st = await waitFilter(client, (s) => !s.floatVisible);
+    await macAnnotFilter(client, frame);
+    return;
   } finally {
     client.close();
     await killAndWait(proc);

@@ -19,12 +19,6 @@ function u32le(v: number): Uint8Array {
   return b;
 }
 
-function u64le(v: number): Uint8Array {
-  const b = new Uint8Array(8);
-  new DataView(b.buffer).setBigUint64(0, BigInt(v), true);
-  return b;
-}
-
 function cat(...parts: Uint8Array[]): Uint8Array {
   const out = new Uint8Array(parts.reduce((n, part) => n + part.length, 0));
   let off = 0;

@@ -8,16 +8,15 @@
 
 import { existsSync, mkdirSync, readFileSync, rmSync, statSync, unlinkSync, utimesSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { IS_WIN } from "./host.ts";
 import { findGhostscript, runStandalone, tmpPath } from "./util.ts";
 import { killAndWait, launchControlled } from "./win-automation.ts";
 
-const kExe = IS_WIN ? ".exe" : "";
+const kExe = "";
 
 function whereExe(name: string): string {
   let r: ReturnType<typeof Bun.spawnSync>;
   try {
-    r = Bun.spawnSync([IS_WIN ? "where.exe" : "which", name], { stdout: "pipe", stderr: "ignore" });
+    r = Bun.spawnSync(["which", name], { stdout: "pipe", stderr: "ignore" });
   } catch {
     return "";
   }

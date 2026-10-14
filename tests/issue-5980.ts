@@ -5,10 +5,9 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlCommand } from "./control.ts";
-import { IS_MAC } from "./host.ts";
-import { cmdId, EXE, runStandalone, SLOW_BUILD_FACTOR, tmpPath } from "./util.ts";
-import { captureWindowPixels, sleep } from "./winapi.ts";
-import { findCanvas, launchControlled, killAndWait, sendCommand } from "./win-automation.ts";
+import { cmdId, runStandalone, SLOW_BUILD_FACTOR, tmpPath } from "./util.ts";
+import { sleep } from "./winapi.ts";
+import { launchControlled, killAndWait, sendCommand } from "./win-automation.ts";
 
 const SETTINGS = `UiLanguage = en
 CheckForUpdates = false
@@ -49,48 +48,6 @@ function makePdf(): Buffer {
   return Buffer.from(pdf, "latin1");
 }
 
-type Pixels = NonNullable<ReturnType<typeof captureWindowPixels>>;
-
-function blueComponents(px: Pixels): { count: number; sizes: number[] } {
-  const n = px.w * px.h;
-  const blue = new Uint8Array(n);
-  for (let p = 0, i = 0; p < n; p++, i += 4) {
-    // captureWindowPixels is BGRA; the Show Links pen is pure blue.
-    if (px.data[i] >= 180 && px.data[i + 1] <= 80 && px.data[i + 2] <= 80) {
-      blue[p] = 1;
-    }
-  }
-
-  const seen = new Uint8Array(n);
-  const sizes: number[] = [];
-  for (let start = 0; start < n; start++) {
-    if (!blue[start] || seen[start]) {
-      continue;
-    }
-    seen[start] = 1;
-    const stack = [start];
-    let size = 0;
-    while (stack.length > 0) {
-      const p = stack.pop()!;
-      size++;
-      const x = p % px.w;
-      const neighbors = [p - px.w, p + px.w];
-      if (x > 0) neighbors.push(p - 1);
-      if (x + 1 < px.w) neighbors.push(p + 1);
-      for (const next of neighbors) {
-        if (next >= 0 && next < n && blue[next] && !seen[next]) {
-          seen[next] = 1;
-          stack.push(next);
-        }
-      }
-    }
-    if (size >= 20) {
-      sizes.push(size);
-    }
-  }
-  return { count: sizes.length, sizes };
-}
-
 export async function testit(): Promise<void> {
   const dir = tmpPath("issue-5980");
   rmSync(dir, { recursive: true, force: true });
@@ -112,59 +69,32 @@ export async function testit(): Promise<void> {
     await client.setNotificationsEnabled(false);
     await client.waitForRenderIdle();
 
-    if (IS_MAC) {
-      // Each outlined element is one drawn shape (TestOverlayState, ng wire 102).
-      // Windows 102 is StopPerfLog. Two toggles force a paint with links back on.
-      sendCommand(frame, cmdId("CmdToggleLinks"));
-      sendCommand(frame, cmdId("CmdToggleLinks"));
-      const kNgTestOverlayState = 102 as ControlCommand;
-      let shapes = -1;
-      let links = -1;
-      let raw = "";
-      const deadline = Date.now() + 3000 * SLOW_BUILD_FACTOR;
-      while (Date.now() < deadline) {
-        const res = await client.request(kNgTestOverlayState, []);
-        raw = String(res[1] ?? "");
-        shapes = Number(/drawn shapes=(\d+)/.exec(raw)?.[1] ?? "-1");
-        links = Number(/links=(\d+)/.exec(raw)?.[1] ?? "-1");
-        if (links === 1 && shapes > 0) {
-          break;
-        }
-        await sleep(50);
-      }
-      if (links !== 1 || shapes !== 1) {
-        throw new Error(
-          `issue-5980: Show Links drew ${shapes} shapes, expected only the link (links=${links})\n${raw}`,
-        );
-      }
-      console.log(`issue-5980: one link outline (drawn shapes=${shapes}), underline ignored`);
-      return;
-    }
-
-    const canvas = findCanvas(frame);
-    if (!canvas) {
-      throw new Error("issue-5980: no canvas");
-    }
-
-    let components = { count: 0, sizes: [] as number[] };
-    const deadline = Date.now() + 3000;
+    // Each outlined element is one drawn shape (TestOverlayState, ng wire 102).
+    // Windows 102 is StopPerfLog. Two toggles force a paint with links back on.
+    sendCommand(frame, cmdId("CmdToggleLinks"));
+    sendCommand(frame, cmdId("CmdToggleLinks"));
+    const kNgTestOverlayState = 102 as ControlCommand;
+    let shapes = -1;
+    let links = -1;
+    let raw = "";
+    const deadline = Date.now() + 3000 * SLOW_BUILD_FACTOR;
     while (Date.now() < deadline) {
-      const px = captureWindowPixels(canvas);
-      if (px) {
-        components = blueComponents(px);
-        if (components.count > 0) {
-          break;
-        }
+      const res = await client.request(kNgTestOverlayState, []);
+      raw = String(res[1] ?? "");
+      shapes = Number(/drawn shapes=(\d+)/.exec(raw)?.[1] ?? "-1");
+      links = Number(/links=(\d+)/.exec(raw)?.[1] ?? "-1");
+      if (links === 1 && shapes > 0) {
+        break;
       }
       await sleep(50);
     }
-    if (components.count !== 1) {
+    if (links !== 1 || shapes !== 1) {
       throw new Error(
-        `issue-5980: Show Links drew ${components.count} blue components, expected only the link ` +
-          `(sizes: ${components.sizes.join(", ")})`,
+        `issue-5980: Show Links drew ${shapes} shapes, expected only the link (links=${links})\n${raw}`,
       );
     }
-    console.log(`issue-5980: one link outline (${components.sizes[0]} blue pixels), underline ignored`);
+    console.log(`issue-5980: one link outline (drawn shapes=${shapes}), underline ignored`);
+    return;
   } finally {
     client.close();
     await killAndWait(proc);

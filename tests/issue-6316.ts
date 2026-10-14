@@ -7,7 +7,7 @@ import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Socket } from "node:net";
 import { connect, controlCommands as C, sendCommand } from "../cmd/ng-dbg-control";
-import { EXE, USE_NG, makePdf, runStandalone, tmpPath } from "./util";
+import { EXE, makePdf, runStandalone, tmpPath } from "./util";
 import { windowPosArgs } from "./win-automation";
 import { killAndWait, sleep } from "./winapi";
 
@@ -101,10 +101,6 @@ ReloadModifiedDocuments = ${mode === "auto"}
 }
 
 export async function testit(): Promise<void> {
-  if (!USE_NG) {
-    console.log("issue-6316: ng only, skipping");
-    return;
-  }
   await runMode("auto");
   await runMode("reopen");
 }
