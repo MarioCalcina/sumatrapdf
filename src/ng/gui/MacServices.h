@@ -16,3 +16,4 @@ void* MacCursorNew(const Pixmap* pm, float scale, int hotX, int hotY);
 void MacCursorRelease(void* cursor);
 void MacCursorSet(void* cursor);
 bool MacCursorIsCurrent(void* cursor);
+void MacAccessibilityAnnounce(Str text);

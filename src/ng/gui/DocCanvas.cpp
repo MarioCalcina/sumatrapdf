@@ -124,6 +124,9 @@ struct DocCanvasUI {
     // a JavaScript app.popUpMenu link's items while ctxPopup shows them
     StrVec jsMenuItems;
     bool jsMenuOpenPending = false;
+    // the text selection changed and screen readers haven't heard it yet
+    bool a11ySelectionChanged = false;
+    int a11ySelectionMs = 0;
 };
 
 // the popup of a JavaScript app.popUpMenu link: item i is kCmdJsMenuFirst + i
@@ -3301,6 +3304,83 @@ void CanvasTickPresentation(MainWindow* win, int elapsedMs) {
     }
 }
 
+// --- screen readers (orig's uia/Provider.cpp) --------------------------------
+
+// how long a selection stays the same before it is read out: selecting with
+// the mouse changes it on every move
+constexpr int kA11ySelectionSettleMs = 500;
+// how much of a long selection is read out
+constexpr int kA11yAnnounceMaxBytes = 4000;
+
+// orig's OnSelectionChanged (UIA_Text_TextSelectionChangedEventId)
+void DocCanvasSelectionChanged(MainWindow* win) {
+    DocCanvasUI* ui = Ui(win);
+    ui->a11ySelectionChanged = true;
+    ui->a11ySelectionMs = 0;
+}
+
+static void AccessibilitySelectionTick(MainWindow* win, int elapsedMs) {
+    DocCanvasUI* ui = win->docCanvas;
+    if (!ui || !ui->a11ySelectionChanged) {
+        return;
+    }
+    if (win->mouseAction == MouseAction::SelectingText || win->mouseAction == MouseAction::Selecting) {
+        ui->a11ySelectionMs = 0;
+        return;
+    }
+    ui->a11ySelectionMs += elapsedMs;
+    if (ui->a11ySelectionMs < kA11ySelectionSettleMs) {
+        return;
+    }
+    ui->a11ySelectionChanged = false;
+    bool isTextOnly = false;
+    TempStr text = GetSelectedTextTemp(win->CurrentTab(), StrL("\n"), isTextOnly);
+    if (len(text) == 0) {
+        return;
+    }
+    // cut at a character, not inside one
+    if (len(text) > kA11yAnnounceMaxBytes) {
+        int n = kA11yAnnounceMaxBytes;
+        while (n > 0 && ((u8)text.s[n] & 0xC0) == 0x80) {
+            n--;
+        }
+        text.len = n;
+    }
+    MacAccessibilityAnnounce(text);
+    logf("Accessibility: read out the selection, %d bytes\n", len(text));
+}
+
+// orig's document provider: the document, and as its children the visible
+// pages with their text. A page's text is there once it has been extracted.
+static void AccessibleDocument(MainWindow* win, gp::Ctx* cx, gp::El* canvas, DisplayModel* dm, float k) {
+    Str name = path::GetBaseNameTemp(win->ctrl->GetFilePath());
+    canvas->Role(gp::AccessibilityRole::Document)->AriaLabel(GpuiDup(cx->a, name));
+    EngineBase* engine = dm->GetEngine();
+    for (int pageNo = 1; pageNo <= dm->PageCount(); pageNo++) {
+        PageInfo* pi = dm->GetPageInfo(pageNo);
+        if (!pi || !pi->isShown || pi->visibleRatio <= 0) {
+            continue;
+        }
+        Str text;
+        if (engine->HasTextForPage(pageNo)) {
+            text = engine->GetTextForPage(pageNo);
+        } else {
+            engine->RequestTextExtraction(pageNo);
+        }
+        Rect r = pi->pageOnScreen;
+        gp::El* page = gp::Div(cx->a)
+                           ->Absolute()
+                           ->Left((float)r.x * k)
+                           ->Top((float)r.y * k)
+                           ->W((float)r.dx * k)
+                           ->H((float)r.dy * k)
+                           ->Role(gp::AccessibilityRole::Paragraph)
+                           ->AriaLabel(GpuiDup(cx->a, fmt(Tr("Page %s").s, fmt("%d", pageNo))))
+                           ->AriaValue(GpuiDup(cx->a, text));
+        canvas->Child(page);
+    }
+}
+
 // orig's kSelectSmoothScrollTimerID period
 constexpr int kSelectSmoothScrollDelayInMs = 20;
 
@@ -3310,6 +3390,7 @@ void DocCanvasAutoScrollTick(MainWindow* win, int elapsedMs) {
     // orig; here the shell's tick drives them
     SelectionToolbarOnShowTimer(win, elapsedMs);
     KeyboardLinkFollowingViewportChanged(win, elapsedMs);
+    AccessibilitySelectionTick(win, elapsedMs);
 
     MouseAction ma = win->mouseAction;
     if (ma == MouseAction::Selecting || ma == MouseAction::SelectingText) {
@@ -4088,6 +4169,7 @@ gp::El* DocCanvasBuild(MainWindow* win, gp::Ctx* cx) {
                          ->OnScrollWheel(gp::ListenTo(Ui(win)->view, &DocCanvasView::OnWheel));
     canvas->customPaint = &DocCanvasView::OnPaint;
     canvas->customUser = win;
+    AccessibleDocument(win, cx, canvas, dm, k);
     // ng: ContextMenu::IntoEl() returns the child it was given with its own
     // click path on it, so the canvas goes inside a wrapper instead of being
     // the child itself (its click path is what the scroll paths hang off)

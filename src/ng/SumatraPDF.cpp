@@ -1303,8 +1303,9 @@ static void ShowLoadErrorTab(MainWindow* win, Str fullPath, LoadReuse reuse) {
 
 // ng: orig's LoadDocumentFinish, the half that puts the remembered FileState
 // back on screen. What it drops is the window placement (gpui cannot move a
-// window), the UIA notification and the browser-hosted (chm / markdown)
-// branch, which has no scroll position to restore yet (step 11).
+// window) and the browser-hosted (chm / markdown) branch, which has no scroll
+// position to restore yet (step 11). Screen readers see the new document in
+// the canvas' accessibility nodes (AccessibleDocument).
 MainWindow* LoadDocument(MainWindow* win, Str path, LoadPrefs prefs, LoadReuse reuse) {
     if (gCrashOnOpen) {
         log(StrL("LoadDocument: about to call CrashMe()\n"));

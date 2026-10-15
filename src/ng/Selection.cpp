@@ -5,8 +5,8 @@
 // rectangular selection state machine, select-all, copy) is orig's; what was
 // win32 is gpui here: Gfx -> gpui::PaintCtx, SetCapture / KillTimer ->
 // DocCanvas, the clipboard -> gpui::ClipboardSetText. Copy-as-image is in
-// Screenshot.cpp; the UIA notification and the touch selection handles are
-// not ported.
+// Screenshot.cpp. orig's UIA notification is DocCanvasSelectionChanged; the
+// touch selection handles are not ported: macOS has no touch screen.
 
 #include "gui/GpuiBridge.h"
 #include "base/Pixmap.h"
@@ -529,6 +529,7 @@ void UpdateTextSelection(MainWindow* win, bool select) {
     DeleteOldSelectionInfo(win);
     win->CurrentTab()->selectionOnPage = SelectionOnPage::FromTextSelect(&dm->textSelection->result);
     win->showSelection = win->CurrentTab()->selectionOnPage != nullptr;
+    DocCanvasSelectionChanged(win);
 }
 
 // isTextSelectionOut is set to true if this is text-only selection (as opposed to

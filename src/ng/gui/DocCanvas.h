@@ -65,6 +65,7 @@ void DocCanvasHookWindow(MainWindow* win, gpui::Window* gw);
 void DocCanvasDelete(MainWindow* win);
 void DocCanvasShowJsMenu(MainWindow* win, const StrVec& items);
 void DocCanvasOpenPendingMenu(MainWindow* win, gpui::Ctx* cx);
+void DocCanvasSelectionChanged(MainWindow* win);
 // the shell's tick: repaint while a page is still rendering
 bool DocCanvasWantsRepaint(MainWindow* win);
 // middle-button auto-scroll moves the document a bit on every tick

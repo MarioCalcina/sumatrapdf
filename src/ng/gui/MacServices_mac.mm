@@ -280,3 +280,17 @@ void MacCursorSet(void* cursor) {
 bool MacCursorIsCurrent(void* cursor) {
     return cursor && [NSCursor currentCursor] == (__bridge NSCursor*)cursor;
 }
+
+// a screen reader says `text` now (orig's UIA events)
+void MacAccessibilityAnnounce(Str text) {
+    NSString* s = ToNSStr(text);
+    id element = NSApp.mainWindow ?: NSApp;
+    if (!s || !element) {
+        return;
+    }
+    NSDictionary* info = @{
+        NSAccessibilityAnnouncementKey : s,
+        NSAccessibilityPriorityKey : @(NSAccessibilityPriorityHigh),
+    };
+    NSAccessibilityPostNotificationWithUserInfo(element, NSAccessibilityAnnouncementRequestedNotification, info);
+}

@@ -245,6 +245,7 @@ import { testit as textAnnotationPlacement } from "./text-annotation-placement.t
 import { testit as annotPlacementCursor } from "./annot-placement-cursor.ts";
 import { testit as fieldMenuLanguage } from "./field-menu-language.ts";
 import { testit as dragOut } from "./drag-out.ts";
+import { testit as screenReader } from "./screen-reader.ts";
 import { testit as freeTextAnnotationPlacement } from "./free-text-annotation-placement.ts";
 import { testit as freeTextEditToolbar } from "./free-text-edit-toolbar.ts";
 import { testit as issue6198 } from "./issue-6198.ts";
@@ -505,6 +506,7 @@ export const tests: NamedTest[] = [
   ["annot-placement-cursor", annotPlacementCursor],
   ["field-menu-language", fieldMenuLanguage],
   ["drag-out", dragOut],
+  ["screen-reader", screenReader],
   ["free-text-annotation-placement", freeTextAnnotationPlacement],
   ["free-text-edit-toolbar", freeTextEditToolbar],
   ["create-annot-enters-edit-mode", createAnnotEntersEditMode],
