@@ -61,6 +61,7 @@ export const notInPreReleaseTests: NamedTest[] = [
 ];
 
 export const slowTests: NamedTest[] = [
+  ["issue-2693", issue2693],
   // WebView TOC
   ["issue-5842", issue5842],
   ["issue-4967", issue4967],
@@ -70,7 +71,6 @@ export const slowTests: NamedTest[] = [
   ["issue-5040", issue5040],
   ["reload-debounce", reloadDebounce],
   ["issue-6316", issue6316],
-  ["issue-2693", issue2693],
   ["issue-5865", issue5865],
   ["security-ghsa-crhm-w5qr-wjj4", ghsaCrhmW5qrWjj4],
   // copies the exe next to a restrict ini, like the ghsa test above

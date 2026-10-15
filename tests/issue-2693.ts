@@ -14,16 +14,18 @@
 // mouse messages, and reads the scroll position with a cross-process
 // GetScrollInfo (see project memory env-gui-automation).
 
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpPath, makeBlankPdf } from "./util";
 import { findCanvas, launchControlled, killAndWait } from "./win-automation";
 import {
+  clientToScreen,
   getClientRect,
   getScrollPos,
   moveWindow,
   packCoords,
   postMessage,
+  setCursorPos,
   showWindow,
   sleep,
   SW_RESTORE,
@@ -53,9 +55,7 @@ export async function testit(): Promise<void> {
 
   // kill stale dev-build instances so reuse-instance can't forward our launch
   // to an old window (which would leave our process window-less)
-  const logPath = tmpPath("issue-2693.log");
-  rmSync(logPath, { force: true });
-  const { proc, client, frame } = await launchControlled(["-appdata", appdata, "-log-to-file", logPath, pdf]);
+  const { proc, client, frame } = await launchControlled(["-appdata", appdata, pdf]);
   try {
     await client.waitForRenderIdle();
     showWindow(frame, SW_RESTORE);
@@ -70,15 +70,22 @@ export async function testit(): Promise<void> {
     const rc = getClientRect(canvas);
     const cx = Math.floor((rc.right - rc.left) / 2);
     const cy = Math.floor((rc.bottom - rc.top) / 2);
+    // a real mouse event (the window moved under the pointer) sets the speed
+    // from where the pointer is: keep it where the posted ones say
+    const at = (y: number) => {
+      const s = clientToScreen(canvas, cx, y);
+      setCursorPos(s.x, s.y);
+      return packCoords(cx, y);
+    };
 
     // enter auto-scroll mode, move well past the drag threshold (offset 50 -> speed 5)
-    postMessage(canvas, WM_MBUTTONDOWN, MK_MBUTTON, packCoords(cx, cy));
+    postMessage(canvas, WM_MBUTTONDOWN, MK_MBUTTON, at(cy));
     await sleep(50);
-    postMessage(canvas, WM_MOUSEMOVE, 0, packCoords(cx, cy + 50));
+    postMessage(canvas, WM_MOUSEMOVE, 0, at(cy + 50));
     await sleep(400);
 
     // settle at offset 9: old code -> speed 0 (no move), new code -> speed 0.9
-    postMessage(canvas, WM_MOUSEMOVE, 0, packCoords(cx, cy + 9));
+    postMessage(canvas, WM_MOUSEMOVE, 0, at(cy + 9));
     await sleep(200);
     const start = getScrollPos(canvas);
     await sleep(600);
@@ -93,10 +100,9 @@ export async function testit(): Promise<void> {
     // new float code scrolls ~0.9px/20ms (~45px/s nominal) -> several px over 0.6s;
     // old integer code truncates the speed to 0 and the document stays put.
     if (moved < 5) {
-      const log = existsSync(logPath) ? readFileSync(logPath, "utf8") : "";
       throw new Error(
         `middle-click auto-scroll did not move at fractional speed (moved ${moved}px); ` +
-          `with integer speed (the un-fixed behavior) it would be ~0\n${log.split("\n").slice(-20).join("\n")}`,
+          `with integer speed (the un-fixed behavior) it would be ~0`,
       );
     }
     console.log(`  fractional-speed auto-scroll works (moved ${moved}px) ✓`);
