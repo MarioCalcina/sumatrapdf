@@ -3065,15 +3065,6 @@ void CopyTextToClipboard(MainWindow* win, Str s) {
     gp::ClipboardSetText(win->gpuiWin, ToGpui(s));
 }
 
-// takes ownership of bmp, as orig's PixmapFromRenderedBitmap does
-void CopyRenderedBitmapToClipboard(MainWindow*, RenderedBitmap* bmp) {
-    if (!bmp) {
-        return;
-    }
-    // ng: nothing creates a RenderedBitmap off Windows (it is a win32 HBITMAP
-    // wrapper and is not even a complete type there), so bmp is always null
-}
-
 // orig's WindowTab.cpp SaveDataToFile: a save prompt, then the bytes.
 // ng: the prompt is the port's own dialog, so this returns before the write
 void SaveDataToFile(MainWindow* win, Str fileName, Str data) {

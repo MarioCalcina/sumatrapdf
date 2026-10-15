@@ -9,6 +9,7 @@
 
 #include "base/Base.h"
 #include "base/File.h"
+#include "base/Pixmap.h"
 
 #include "gui/UIModels.h"
 
@@ -44,6 +45,9 @@
 #include "GoogleLens.h"
 #include "gui/DocCanvas.h"
 #include "gui/Sidebar.h"
+#include "gui/MacServices.h"
+#include "ImageReader.h"
+#include "PngOptimizer.h"
 #include "Menu.h"
 #include "MenuCommon.h"
 #include "MenuDefs.h"
@@ -1179,11 +1183,19 @@ void WindowContextMenuCommand(MainWindow* win, int cmdId) {
             return;
         }
         case CmdCopyImage: {
-            if (pageEl) {
-                RenderedBitmap* bmp = engine->GetImageForPageElement(pageEl);
-                if (bmp) {
-                    CopyRenderedBitmapToClipboard(win, bmp);
-                }
+            // ng: there is no RenderedBitmap on macOS. mupdf hands the image's
+            // pixels; an image document is its file
+            Pixmap* px = pageEl ? EngineMupdfPageImagePixmap(engine, pageEl) : nullptr;
+            if (!px && engine->kind == kindEngineImage && len(engine->FilePath()) > 0) {
+                Str data = file::ReadFile(engine->FilePath());
+                px = PixmapFromData(data);
+                str::Free(data);
+            }
+            if (px) {
+                Str png = EncodePngFromPixmap(px);
+                MacPasteboardSetPng(png);
+                str::Free(png);
+                FreePixmap(px);
             }
             return;
         }

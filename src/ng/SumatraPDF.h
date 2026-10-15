@@ -56,8 +56,6 @@ double AppElapsedMs();
 void ExecuteCmdAtPoint(MainWindow* win, int cmdId, Point pt);
 struct RenderedBitmap;
 void CopyTextToClipboard(MainWindow* win, Str s);
-// takes ownership of bmp
-void CopyRenderedBitmapToClipboard(MainWindow* win, RenderedBitmap* bmp);
 // orig's SaveDataToFile: asks where, then writes (the prompt does not block)
 void SaveDataToFile(MainWindow* win, Str fileName, Str data);
 void DeleteFileFromDiskAndHistory(Str path);

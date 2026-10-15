@@ -68,7 +68,12 @@ function logLines(logPath: string, re: RegExp): string {
 }
 
 async function dragOut(pdf: string, logPath: string, select: boolean, want: (pb: string) => boolean): Promise<string> {
-  const { proc, client, frame } = await launchControlled(["-log-to-file", logPath, "-zoom", "fit page", pdf]);
+  // the selection's floating toolbar would sit over the text the press is on
+  const appdata = `${logPath}-appdata`;
+  mkdirSync(appdata, { recursive: true });
+  writeFileSync(join(appdata, "SumatraPDF-settings.txt"), "SelectionToolbar = false\nCheckForUpdates = false\n");
+  const args = ["-appdata", appdata, "-log-to-file", logPath, "-zoom", "fit page", pdf];
+  const { proc, client, frame } = await launchControlled(args);
   try {
     await client.waitForRenderIdle();
     await client.setNotificationsEnabled(false);
@@ -76,11 +81,17 @@ async function dragOut(pdf: string, logPath: string, select: boolean, want: (pb:
       sendCommandSync(frame, cmdId("CmdSelectAll"));
       await client.waitForRenderIdle();
     }
+    const state = (s: string) => /selection=\d+ .*mouseAction=\d+/.exec(s)?.[0] ?? s;
+    const before = state(await uiState(client));
     await dragFromCenter(client);
     await pollUntil(
       () => logLines(logPath, /DragOut:/),
       (s) => /started=1/.test(s),
-      { error: (s) => `drag-out: ${pdf}: no drag started:\n${s}` },
+      {
+        error: (s) =>
+          `drag-out: ${pdf}: no drag started:\n${s}\nbefore the press: ${before}\n` +
+          logLines(logPath, /SelectAll|MouseLeft|mouseAction|Selection/),
+      },
     );
     const pb = await pollUntil(
       async () => String((await client.request(ControlCommand.TestPasteboard, []))[1] ?? ""),
