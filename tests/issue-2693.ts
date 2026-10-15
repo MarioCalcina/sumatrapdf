@@ -7,8 +7,8 @@
 // Auto-scroll speed is (cursorOffsetY / 10) pixels per 20ms. The test parks the
 // cursor at offset 9: the OLD integer code computed 9/10 = 0, so the document
 // would not move at all; the NEW float code computes 0.9 and accumulates it, so
-// the document keeps scrolling. We measure how far it scrolls in a fixed window
-// and require a clearly non-zero amount -- which fails if the fix is reverted.
+// the document keeps scrolling. We wait for it to scroll a few pixels, which
+// fails if the fix is reverted.
 //
 // Drives the app from Bun via FFI (tests/winapi.ts): finds the window, posts the
 // mouse messages, and reads the scroll position with a cross-process
@@ -88,17 +88,22 @@ export async function testit(): Promise<void> {
     postMessage(canvas, WM_MOUSEMOVE, 0, at(cy + 9));
     await sleep(200);
     const start = getScrollPos(canvas);
-    await sleep(600);
-    const end = getScrollPos(canvas);
+    // new float code scrolls ~0.9px/20ms (~45px/s nominal); old integer code
+    // truncates the speed to 0 and the document stays put. The shell's tick
+    // can stall on a busy runner, so wait for the move instead of timing it.
+    const t0 = Date.now();
+    let end = start;
+    while (end - start < 5 && Date.now() - t0 < 3000) {
+      await sleep(100);
+      end = getScrollPos(canvas);
+    }
 
     // stop auto-scroll (second middle-click toggles it off)
     postMessage(canvas, WM_MBUTTONDOWN, MK_MBUTTON, packCoords(cx, cy + 9));
 
     const moved = end - start;
-    console.log(`  at cursor offset 9: scrolled ${moved}px in 0.6s (pos ${start} -> ${end})`);
+    console.log(`  at cursor offset 9: scrolled ${moved}px in ${Date.now() - t0}ms (pos ${start} -> ${end})`);
 
-    // new float code scrolls ~0.9px/20ms (~45px/s nominal) -> several px over 0.6s;
-    // old integer code truncates the speed to 0 and the document stays put.
     if (moved < 5) {
       throw new Error(
         `middle-click auto-scroll did not move at fractional speed (moved ${moved}px); ` +
