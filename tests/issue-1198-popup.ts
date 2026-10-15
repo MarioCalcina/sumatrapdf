@@ -5,9 +5,8 @@
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlClient, ControlCommand } from "./control.ts";
-import { macCanvasRect } from "./mac-control.ts";
 import { assemblePdf, cmdId, pollUntil, runStandalone, tmpPath } from "./util.ts";
-import { clickAt, killAndWait, launchControlled, sendCommandSync } from "./win-automation.ts";
+import { killAndWait, launchControlled, sendCommandSync } from "./win-automation.ts";
 
 const kPick = "Datasheet: ftp://example.com/ds";
 
@@ -22,6 +21,18 @@ function makePdf(): string {
   ]);
 }
 
+async function uiState(client: ControlClient): Promise<string> {
+  return String((await client.request(ControlCommand.TestUiState, []))[1] ?? "");
+}
+
+// a left click at a point in window dips
+async function click(client: ControlClient, pt: { x: number; y: number }): Promise<void> {
+  const res = await client.request(ControlCommand.TestInput, ["click", pt.x, pt.y, 0, 0]);
+  if (res[0] !== 0 || !String(res[1] ?? "").startsWith("OK")) {
+    throw new Error(`issue-1198-popup: click at ${pt.x},${pt.y}: ${res[1]}`);
+  }
+}
+
 // the popup's row for `label`, from what the frame drew last
 async function menuRow(client: ControlClient, label: string): Promise<{ x: number; y: number }> {
   const want = `'${label}'`;
@@ -33,6 +44,14 @@ async function menuRow(client: ControlClient, label: string): Promise<{ x: numbe
   const line = layout.split("\n").find((l) => l.includes(want) && /rect=/.test(l))!;
   const [x, y, dx, dy] = /rect=(-?\d+),(-?\d+),(\d+),(\d+)/.exec(line)!.slice(1).map(Number);
   return { x: x! + Math.floor(dx! / 2), y: y! + Math.floor(dy! / 2) };
+}
+
+// the log lines about following the link and the pick
+function relevant(log: string): string {
+  return log
+    .split("\n")
+    .filter((l) => /FollowLink|GotoLink|JsMenu|ContextMenu|LaunchBrowser/.test(l))
+    .join("\n");
 }
 
 export async function testit(): Promise<void> {
@@ -51,13 +70,21 @@ export async function testit(): Promise<void> {
     sendCommandSync(frame, cmdId("CmdZoomFitPage"));
     await client.waitForRenderIdle();
 
-    const c = macCanvasRect();
-    await clickAt(frame, Math.floor(c.x + c.dx / 2), Math.floor(c.y + c.dy / 2));
+    const m = /canvas=(-?\d+),(-?\d+),(\d+),(\d+)/.exec(await uiState(client));
+    if (!m) {
+      throw new Error("issue-1198-popup: no canvas rect");
+    }
+    await click(client, { x: +m[1]! + Math.floor(+m[3]! / 2), y: +m[2]! + Math.floor(+m[4]! / 2) });
+    await pollUntil(
+      () => uiState(client),
+      (s) => / popup=1/.test(s),
+      { error: (s) => `issue-1198-popup: the link didn't open a popup: ${s}\n${relevant(log())}` },
+    );
     const row = await menuRow(client, kPick);
-    await clickAt(frame, row.x, row.y);
+    await click(client, row);
 
     await pollUntil(log, (s) => s.includes("protocol 'ftp' is not allowed"), {
-      error: (s) => `issue-1198-popup: picking '${kPick}' didn't launch its url:\n${s.split("\n").slice(-20).join("\n")}`,
+      error: (s) => `issue-1198-popup: picking '${kPick}' at ${row.x},${row.y} didn't launch its url:\n${relevant(s)}`,
     });
     console.log("issue-1198-popup: OK");
   } finally {
