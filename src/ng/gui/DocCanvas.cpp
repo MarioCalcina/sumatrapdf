@@ -3295,6 +3295,7 @@ struct DocCanvasView {
     static void OnHover(DocCanvasView* self, gp::Ctx* cx, const gp::HoverEvent* ev);
     static void OnMove(DocCanvasView* self, gp::Ctx* cx, const gp::MouseMoveEvent* ev);
     static void OnMenuAction(DocCanvasView* self, gp::Ctx* cx, const gp::ActionEvent* ev);
+    static void OnJsMenuPick(DocCanvasView* self, gp::Ctx* cx, const gp::ClickEvent* ev, int64_t cmdId);
 };
 
 // window coordinates (dips) -> document coordinates (pixels), or false when
@@ -3950,7 +3951,16 @@ void DocCanvasView::OnMenuAction(DocCanvasView* self, gp::Ctx* cx, const gp::Act
     gp::Notify(cx);
 }
 
-static gpc::PopupMenu* CanvasPopupFromModel(gp::Ctx* cx, MenuModel* model, Str id) {
+// a JavaScript link's menu opens after a left click gave the frame the focus.
+// A row's action is sent from there, outside the canvas, which never hears it,
+// so its rows call the canvas directly
+void DocCanvasView::OnJsMenuPick(DocCanvasView* self, gp::Ctx* cx, const gp::ClickEvent*, int64_t cmdId) {
+    auto* c = new CanvasMenuCmd{self->win, (int)cmdId};
+    uitask::Post(MkFunc0<CanvasMenuCmd>(RunCanvasMenuCmd, c), "CanvasMenuCmd");
+    gp::Notify(cx);
+}
+
+static gpc::PopupMenu* CanvasPopupFromModel(gp::Ctx* cx, MenuModel* model, Str id, gp::Entity<DocCanvasView> view) {
     gpc::PopupMenu* menu = gpc::PopupMenu::New(cx, GpuiDup(cx->a, id))->MinW(220);
     if (!model) {
         return menu;
@@ -3965,8 +3975,12 @@ static gpc::PopupMenu* CanvasPopupFromModel(gp::Ctx* cx, MenuModel* model, Str i
         gp::Str label = GpuiDup(cx->a, ParseMenuAccelTextTemp(it.title).display);
         if (it.submenu) {
             TempStr subId = fmt("%s-%d", id, i);
-            menu->Submenu(label, CanvasPopupFromModel(cx, it.submenu, subId));
+            menu->Submenu(label, CanvasPopupFromModel(cx, it.submenu, subId, view));
             menu->Disabled(it.disabled);
+            continue;
+        }
+        if (it.cmdId >= kCmdJsMenuFirst && it.cmdId <= kCmdJsMenuLast) {
+            menu->Menu(label)->OnClick(gp::ListenTo(view, &DocCanvasView::OnJsMenuPick, (int64_t)it.cmdId));
             continue;
         }
         menu->MenuWithAction(label, ActCanvasMenu(), (intptr_t)it.cmdId);
@@ -4004,7 +4018,8 @@ gp::El* DocCanvasBuild(MainWindow* win, gp::Ctx* cx) {
     // click path on it, so the canvas goes inside a wrapper instead of being
     // the child itself (its click path is what the scroll paths hang off)
     gp::El* canvasWrap = gp::Div(cx->a)->SizeFull()->Child(canvas);
-    gpc::PopupMenu* ctxPopup = TrackPopup(cx, CanvasPopupFromModel(cx, Ui(win)->ctxMenu, StrL("canvas-ctx-menu")));
+    gpc::PopupMenu* ctxPopup =
+        TrackPopup(cx, CanvasPopupFromModel(cx, Ui(win)->ctxMenu, StrL("canvas-ctx-menu"), Ui(win)->view));
     Ui(win)->ctxPopup = ctxPopup->state;
     gp::El* canvasBox = gpc::ContextMenu::New(cx, GStrL("canvas-ctx"))->Child(canvasWrap)->Menu(ctxPopup)->IntoEl();
     canvasBox->OnAction(ActCanvasMenu(), gp::ListenTo(Ui(win)->view, &DocCanvasView::OnMenuAction));
