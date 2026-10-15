@@ -5,8 +5,8 @@
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlClient, ControlCommand } from "./control.ts";
-import { assemblePdf, cmdId, pollUntil, runStandalone, tmpPath } from "./util.ts";
-import { killAndWait, launchControlled, sendCommandSync } from "./win-automation.ts";
+import { assemblePdf, pollUntil, runStandalone, tmpPath } from "./util.ts";
+import { killAndWait, launchControlled } from "./win-automation.ts";
 
 const kText = "Drag me out please";
 
@@ -46,14 +46,27 @@ async function input(client: ControlClient, kind: string, x: number, y: number, 
   }
 }
 
-// a press at the canvas' center, then a move well past the drag threshold
-async function dragFromCenter(client: ControlClient): Promise<void> {
+async function canvasCenter(client: ControlClient): Promise<{ x: number; y: number }> {
   const m = /canvas=(-?\d+),(-?\d+),(\d+),(\d+)/.exec(await uiState(client));
   if (!m) {
     throw new Error("drag-out: no canvas rect");
   }
-  const x = +m[1]! + Math.floor(+m[3]! / 2);
-  const y = +m[2]! + Math.floor(+m[4]! / 2);
+  return { x: +m[1]! + Math.floor(+m[3]! / 2), y: +m[2]! + Math.floor(+m[4]! / 2) };
+}
+
+// a text selection, made the way a user makes one: dragging over the line in
+// the middle of the page. Select All makes a rectangle, which a press moves
+async function selectText(client: ControlClient): Promise<void> {
+  const { x, y } = await canvasCenter(client);
+  await input(client, "down", x - 100, y, 0);
+  await input(client, "move", x, y, 1);
+  await input(client, "move", x + 100, y, 1);
+  await input(client, "up", x + 100, y, 0);
+}
+
+// a press at the canvas' center, then a move well past the drag threshold
+async function dragFromCenter(client: ControlClient): Promise<void> {
+  const { x, y } = await canvasCenter(client);
   await input(client, "down", x, y, 0);
   await input(client, "move", x + 15, y, 1);
   await input(client, "move", x + 40, y + 5, 1);
@@ -73,12 +86,12 @@ async function dragOut(pdf: string, logPath: string, select: boolean, want: (pb:
   mkdirSync(appdata, { recursive: true });
   writeFileSync(join(appdata, "SumatraPDF-settings.txt"), "SelectionToolbar = false\nCheckForUpdates = false\n");
   const args = ["-appdata", appdata, "-log-to-file", logPath, "-zoom", "fit page", pdf];
-  const { proc, client, frame } = await launchControlled(args);
+  const { proc, client } = await launchControlled(args);
   try {
     await client.waitForRenderIdle();
     await client.setNotificationsEnabled(false);
     if (select) {
-      sendCommandSync(frame, cmdId("CmdSelectAll"));
+      await selectText(client);
       await client.waitForRenderIdle();
     }
     const state = (s: string) => /selection=\d+ .*mouseAction=\d+/.exec(s)?.[0] ?? s;
@@ -114,7 +127,9 @@ export async function testit(): Promise<void> {
   const image = join(dir, "image.pdf");
   writeFileSync(image, imagePdf(), "latin1");
 
-  const pbText = await dragOut(text, join(dir, "text.log"), true, (pb) => pb.includes(kText));
+  // the part of the line the drag selected
+  const selected = (pb: string) => [...kText.split(" ")].some((w) => w.length > 2 && pb.includes(w));
+  const pbText = await dragOut(text, join(dir, "text.log"), true, (pb) => /text='/.test(pb) && selected(pb));
   console.log(`drag-out: text: ${pbText}`);
   const pbImage = await dragOut(image, join(dir, "image.log"), false, (pb) => /public\.png/.test(pb));
   for (const t of ["public.tiff", "public.file-url"]) {

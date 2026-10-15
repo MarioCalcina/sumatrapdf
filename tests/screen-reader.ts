@@ -10,8 +10,9 @@ import { killAndWait, launchControlled, sendCommandSync } from "./win-automation
 
 const kText = "Hello screen reader";
 
+// the line across the page's center
 function makePdf(): string {
-  const content = `BT /F1 24 Tf 72 700 Td (${kText}) Tj ET`;
+  const content = `BT /F1 40 Tf 130 382 Td (${kText}) Tj ET`;
   return assemblePdf([
     "<< /Type /Catalog /Pages 2 0 R >>",
     "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
@@ -23,6 +24,29 @@ function makePdf(): string {
 
 async function frameLayout(client: ControlClient): Promise<string> {
   return String((await client.request(ControlCommand.TestToolWindow, ["layout", "frame"]))[1] ?? "");
+}
+
+async function input(client: ControlClient, kind: string, x: number, y: number, button: number): Promise<void> {
+  const res = await client.request(ControlCommand.TestInput, [kind, x, y, button, 0]);
+  if (res[0] !== 0 || !String(res[1] ?? "").startsWith("OK")) {
+    throw new Error(`screen-reader: ${kind} at ${x},${y}: ${res[1]}`);
+  }
+}
+
+// a text selection made by dragging over the line (Select All makes a
+// rectangle, which orig doesn't report either)
+async function selectText(client: ControlClient): Promise<void> {
+  const ui = String((await client.request(ControlCommand.TestUiState, []))[1] ?? "");
+  const m = /canvas=(-?\d+),(-?\d+),(\d+),(\d+)/.exec(ui);
+  if (!m) {
+    throw new Error("screen-reader: no canvas rect");
+  }
+  const x = +m[1]! + Math.floor(+m[3]! / 2);
+  const y = +m[2]! + Math.floor(+m[4]! / 2);
+  await input(client, "down", x - 100, y, 0);
+  await input(client, "move", x, y, 1);
+  await input(client, "move", x + 100, y, 1);
+  await input(client, "up", x + 100, y, 0);
 }
 
 export async function testit(): Promise<void> {
@@ -50,11 +74,15 @@ export async function testit(): Promise<void> {
       (s) => s.includes("label='reader.pdf'") && /label='Page 1' value='[^']*Hello screen reader/.test(s),
       {
         intervalMs: 200,
-        error: (s) => `screen-reader: no document and page nodes:\n${s.split("\n").filter((l) => l.startsWith("node")).join("\n")}`,
+        error: (s) =>
+          `screen-reader: no document and page nodes:\n${s
+            .split("\n")
+            .filter((l) => l.startsWith("node"))
+            .join("\n")}`,
       },
     );
 
-    sendCommandSync(frame, cmdId("CmdSelectAll"));
+    await selectText(client);
     await pollUntil(log, (s) => s.includes("Accessibility: read out the selection"), {
       error: () => "screen-reader: the selection wasn't read out",
     });
