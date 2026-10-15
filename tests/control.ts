@@ -120,6 +120,8 @@ export enum ControlCommand {
   TestContextMenuAt = 127,
   // Rename File (F2) to a path, without its dialog
   TestRenameFile = 131,
+  // ng only: the rows of the focused text field's context menu
+  TestInputMenu = 134,
 }
 
 export type ControlArg = number | string | Uint8Array | ControlArg[];

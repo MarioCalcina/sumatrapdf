@@ -528,6 +528,15 @@ static int CountTocItems(TocItem* item) {
     return n;
 }
 
+// TestInputMenu: the context menu of the frame's focused text field
+TempStr AppShellFieldMenuTemp(MainWindow* win) {
+    gp::Window* gw = IsMainWindowValid(win) ? win->gpuiWin : nullptr;
+    if (!gw || !gw->input || !gw->input->focused) {
+        return str::DupTemp(StrL("NOTREADY no-focused-field"));
+    }
+    return InputMenuRowsTemp(gw->input);
+}
+
 TempStr AppShellUiStateTemp(MainWindow* win) {
     gp::Window* gw = win ? win->gpuiWin : nullptr;
     if (!gw || !win->shell) {

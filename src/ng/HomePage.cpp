@@ -1845,7 +1845,7 @@ gp::El* HomePageBuild(MainWindow* win, gp::Ctx* cx) {
                        ->Shrink0()
                        ->H((float)borderDy)
                        ->BoundsOut(&h->searchBounds)
-                       ->Child(gpc::Input::New(cx, GStrL("home-search"), h->search)
+                       ->Child(NewInput(cx, GStrL("home-search"), h->search)
                                    ->WithSize(gp::UiSize::Small)
                                    ->W(gp::kFill)
                                    ->IntoEl()

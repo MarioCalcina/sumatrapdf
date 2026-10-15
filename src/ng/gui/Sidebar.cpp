@@ -2050,7 +2050,7 @@ static gp::El* BuildTocPane(MainWindow* win, gp::Ctx* cx, bool top) {
     filter->onChange = gp::ListenTo(Ui(win)->view, &SidebarView::OnTocFilter);
     pane->CaptureKeyDown(gp::ListenTo(Ui(win)->view, &SidebarView::OnFilterKey));
     pane->Child(gp::Div(cx->a)->W(gp::kFill)->Shrink0()->PadX(6)->PadB(4)->Child(
-        gpc::Input::New(cx, GStrL("toc-filter"), filter)
+        NewInput(cx, GStrL("toc-filter"), filter)
             ->WithSize(gp::UiSize::Small)
             ->W(gp::kFill)
             ->IntoEl()
@@ -2199,7 +2199,7 @@ static gp::El* BuildFavPane(MainWindow* win, gp::Ctx* cx, bool top, bool selecto
     filter->onChange = gp::ListenTo(Ui(win)->view, &SidebarView::OnFavFilter);
     pane->CaptureKeyDown(gp::ListenTo(Ui(win)->view, &SidebarView::OnFilterKey));
     pane->Child(gp::Div(cx->a)->W(gp::kFill)->Shrink0()->PadX(6)->PadB(4)->Child(
-        gpc::Input::New(cx, GStrL("fav-filter"), filter)->WithSize(gp::UiSize::Small)->W(gp::kFill)->IntoEl()));
+        NewInput(cx, GStrL("fav-filter"), filter)->WithSize(gp::UiSize::Small)->W(gp::kFill)->IntoEl()));
 
     float viewH = ui->favView.h > 0 ? ui->favView.h : 200;
     int first = std::max(0, (int)(ui->favScrollY / kRowDy) - 2);

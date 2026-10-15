@@ -53,6 +53,7 @@
 #include "Favorites.h"
 #include "TableOfContents.h"
 #include "gui/AppShell.h"
+#include "gui/DialogWidgets.h"
 #include "gui/ToolWindow.h"
 #include "gui/DocCanvas.h"
 #include "gui/Sidebar.h"
@@ -2365,7 +2366,7 @@ static gp::El* PaletteCard(CommandPaletteWnd* wnd, gp::Ctx* cx, RectF bounds) {
                        ->Pad(8)
                        ->Bg(th.tokens.popover)
                        ->Border(1, th.border);
-    card->Child(gpc::Input::New(cx, GStrL("palette-query"), wnd->editQuery)
+    card->Child(NewInput(cx, GStrL("palette-query"), wnd->editQuery)
                     ->WithSize(gp::UiSize::Small)
                     ->W(gp::kFill)
                     ->IntoEl());

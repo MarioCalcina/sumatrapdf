@@ -966,7 +966,7 @@ gp::El* ChangeColorDialogBuild(MainWindow* win, gp::Ctx* cx) {
     gp::El* rgbRow = gp::Div(cx->a)->FlexRow()->W(gp::kFill)->ItemsCenter()->Gap(8);
     rgbRow->Child(gp::TextEl(cx->a, ToGpui(Tr("RGB:")))->Font(13)->Fg(th.foreground)->Shrink0());
     rgbRow->Child(gp::Div(cx->a)->Flex1()->MinW(0)->Child(
-        gpc::Input::New(cx, GStrL("color-rgb"), gColor.editRgb)->WithSize(gp::UiSize::Small)->W(gp::kFill)->IntoEl()));
+        NewInput(cx, GStrL("color-rgb"), gColor.editRgb)->WithSize(gp::UiSize::Small)->W(gp::kFill)->IntoEl()));
     rgbRow->Child(SwatchEl(cx, StrL("color-preview"), kIdPreview, gColor.currentColor, gColor.isCheckered, false,
                            gColor.previewSelected, 42, 22));
     body->Child(rgbRow);

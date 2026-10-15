@@ -3,6 +3,7 @@
 
 #include "gui/GpuiBridge.h"
 
+#include "Translations.h"
 #include "Menu.h"
 #include "gui/DialogWidgets.h"
 
@@ -509,7 +510,7 @@ gp::El* DialogSelect::BuildCombo(gp::Ctx* cx, Str id, gp::InputState* edit, floa
 
     // one box: the field and the arrow share the edge, as a combo box's do
     gp::El* box = gp::Div(cx->a)->FlexRow()->W(gp::kFill)->ItemsCenter()->BoundsOut(&comboBounds);
-    gp::El* field = gpc::Input::New(cx, GpuiDup(cx->a, id), edit)
+    gp::El* field = NewInput(cx, GpuiDup(cx->a, id), edit)
                         ->WithSize(gp::UiSize::Small)
                         ->Disabled(disabled)
                         ->W(gp::kFill)
@@ -828,4 +829,76 @@ bool DlgAccelOnKey(gp::Ctx* cx, int vk, bool alt, bool ctrl, bool editFocused) {
         return true;
     }
     return false;
+}
+
+// --- text fields --------------------------------------------------------------
+
+// gpui's menu for a text field has its own strings, English for every language
+// we have: the same rows, translated. One menu is up at a time, so one view
+// remembers which field it is for.
+struct InputMenuView {
+    gp::InputState* state = nullptr;
+
+    static void OnPick(InputMenuView* self, gp::Ctx* cx, const gp::ClickEvent*, int64_t id);
+};
+
+static gp::Entity<InputMenuView> gInputMenuView;
+
+void InputMenuView::OnPick(InputMenuView* self, gp::Ctx* cx, const gp::ClickEvent*, int64_t id) {
+    if (!self->state) {
+        return;
+    }
+    gp::NativeMenu rows;
+    gp::InputDefaultNativeMenu(self->state, &rows);
+    if (id < 1 || id > rows.items.len) {
+        return;
+    }
+    gp::InputPerformNativeMenuItem(self->state, cx->app, cx->win, rows.items[(int)id - 1]);
+    gp::Notify(cx);
+}
+
+static Str InputMenuLabel(const gp::NativeMenuItem& row) {
+    return Tr(Str{(char*)row.label.s, (int)row.label.len});
+}
+
+// for tests: the rows of a field's menu as it shows them, "-" for a separator
+TempStr InputMenuRowsTemp(gp::InputState* state) {
+    gp::NativeMenu rows;
+    gp::InputDefaultNativeMenu(state, &rows);
+    str::Builder out;
+    for (int i = 0; i < rows.items.len; i++) {
+        const gp::NativeMenuItem& row = rows.items[i];
+        bool sep = row.kind == gp::NativeMenuItemKind::Separator;
+        out.Append(fmt(i == 0 ? "%s" : "|%s", sep ? StrL("-") : InputMenuLabel(row)));
+    }
+    return ToStrTemp(out);
+}
+
+static gpc::NativeMenu* InputMenuBuild(gp::Ctx* cx, gpc::NativeMenu* menu, void* data) {
+    if (!gp::EntityGet(cx->app, gInputMenuView.id)) {
+        gInputMenuView = gp::EntityNewState<InputMenuView>(cx->app);
+    }
+    auto* view = (InputMenuView*)gp::EntityGet(cx->app, gInputMenuView.id);
+    view->state = (gp::InputState*)data;
+    gp::NativeMenu rows;
+    gp::InputDefaultNativeMenu(view->state, &rows);
+    for (int i = 0; i < rows.items.len; i++) {
+        const gp::NativeMenuItem& row = rows.items[i];
+        if (row.kind == gp::NativeMenuItemKind::Separator) {
+            menu->Separator();
+            continue;
+        }
+        menu->MenuWithDisabled(ToGpui(InputMenuLabel(row)), row.disabled, i + 1);
+    }
+    menu->OnSelect(gp::ListenTo(gInputMenuView, &InputMenuView::OnPick));
+    return menu;
+}
+
+// gpc::Input::New with the translated context menu
+gpc::Input* NewInput(gp::Ctx* cx, gp::Str id, gp::InputState* state) {
+    return gpc::Input::New(cx, id, state)->ContextMenu(InputMenuBuild, state);
+}
+
+gpc::Textarea* NewTextarea(gp::Ctx* cx, gp::Str id, gp::InputState* state) {
+    return gpc::Textarea::New(cx, id, state)->ContextMenu(InputMenuBuild, state);
 }

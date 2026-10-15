@@ -430,7 +430,7 @@ static gp::El* EbookSettingsWinBuild(gp::Ctx* cx) {
             ->Child(gp::TextEl(cx->a, ToGpui(s))->Font(font)->Fg(th.foreground));
     };
     auto edit = [&](gp::Str id, gp::InputState* state, bool disabled) {
-        return gpc::Input::New(cx, id, state)
+        return NewInput(cx, id, state)
             ->WithSize(gp::UiSize::Small)
             ->Disabled(disabled)
             ->W(kEbookWinEditDx)
@@ -475,7 +475,7 @@ static gp::El* EbookSettingsWinBuild(gp::Ctx* cx) {
                    ->W(gp::kFill)
                    ->PadT(kEbookWinPadY)
                    ->Shrink0()
-                   ->Child(gpc::Textarea::New(cx, GStrL("ebook-css"), gEbook.editCss)
+                   ->Child(NewTextarea(cx, GStrL("ebook-css"), gEbook.editCss)
                                ->H(kEbookWinCssDy)
                                ->Readonly(!gEbook.customCss)
                                ->IntoEl()));
@@ -556,15 +556,15 @@ gp::El* EbookSettingsDialogBuild(MainWindow* win, gp::Ctx* cx) {
     gp::El* numRow = gp::Div(cx->a)->FlexRow()->W(gp::kFill)->ItemsCenter()->Gap(6);
     numRow->Child(gp::TextEl(cx->a, ToGpui(Tr("Size:")))->Font(13)->Fg(th.foreground)->Shrink0());
     numRow->Child(
-        gpc::Input::New(cx, GStrL("ebook-size"), gEbook.editSize)->WithSize(gp::UiSize::Small)->W(70)->IntoEl());
+        NewInput(cx, GStrL("ebook-size"), gEbook.editSize)->WithSize(gp::UiSize::Small)->W(70)->IntoEl());
     numRow->Child(gp::TextEl(cx->a, ToGpui(Tr("Margin:")))->Font(13)->Fg(th.foreground)->Shrink0());
-    numRow->Child(gpc::Input::New(cx, GStrL("ebook-margin"), gEbook.editMargin)
+    numRow->Child(NewInput(cx, GStrL("ebook-margin"), gEbook.editMargin)
                       ->WithSize(gp::UiSize::Small)
                       ->Disabled(gEbook.customCss)
                       ->W(90)
                       ->IntoEl());
     numRow->Child(gp::TextEl(cx->a, ToGpui(Tr("Line spacing:")))->Font(13)->Fg(th.foreground)->Shrink0());
-    numRow->Child(gpc::Input::New(cx, GStrL("ebook-spacing"), gEbook.editSpacing)
+    numRow->Child(NewInput(cx, GStrL("ebook-spacing"), gEbook.editSpacing)
                       ->WithSize(gp::UiSize::Small)
                       ->Disabled(gEbook.customCss)
                       ->W(70)
@@ -576,7 +576,7 @@ gp::El* EbookSettingsDialogBuild(MainWindow* win, gp::Ctx* cx) {
                            gp::ListenTo(gEbookView, &EbookSettingsView::OnToggle, (intptr_t)0)));
     body->Child(DlgAccelEl(cx, gpc::Checkbox::New(cx, GStrL("ebook-customcss"))->Checked(gEbook.customCss),
                            Tr("&Custom CSS"), gp::ListenTo(gEbookView, &EbookSettingsView::OnToggle, (intptr_t)1)));
-    body->Child(gpc::Textarea::New(cx, GStrL("ebook-css"), gEbook.editCss)->Rows(6)->IntoEl());
+    body->Child(NewTextarea(cx, GStrL("ebook-css"), gEbook.editCss)->Rows(6)->IntoEl());
 
     gp::El* radios = gp::Div(cx->a)->FlexRow()->W(gp::kFill)->ItemsCenter()->Gap(16);
     radios->Child(DlgAccelEl(cx,

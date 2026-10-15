@@ -190,7 +190,7 @@ gp::El* AddFavoriteDialogBuild(MainWindow* win, gp::Ctx* cx) {
 
     gp::El* body = gp::Div(cx->a)->FlexCol()->Gap(8);
     body->Child(gp::TextEl(cx->a, GpuiDup(cx->a, FavoritePromptTemp(gAddFav.pageLabel)))->Font(13)->Fg(th.foreground));
-    body->Child(gpc::Input::New(cx, GStrL("addfav-name"), gAddFav.editName)
+    body->Child(NewInput(cx, GStrL("addfav-name"), gAddFav.editName)
                     ->WithSize(gp::UiSize::Small)
                     ->W(gp::kFill)
                     ->IntoEl());

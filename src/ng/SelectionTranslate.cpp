@@ -562,7 +562,7 @@ static gp::El* TranslateToolBuild(MainWindow*, gp::Ctx* cx) {
     }
 
     gp::El* col = gp::Div(cx->a)->FlexCol()->W(gp::kFill)->Flex1()->MinH(0)->Pad(kTrPad);
-    col->Child(gpc::Textarea::New(cx, GStrL("translate-src"), gTranslate.editSrcText)
+    col->Child(NewTextarea(cx, GStrL("translate-src"), gTranslate.editSrcText)
                    ->H(srcDy)
                    ->Disabled(busy)
                    ->IntoEl()
@@ -579,7 +579,7 @@ static gp::El* TranslateToolBuild(MainWindow*, gp::Ctx* cx) {
         col->Child(gp::Div(cx->a)
                        ->PadT(kTrResultGap)
                        ->Shrink0()
-                       ->Child(gpc::Textarea::New(cx, GStrL("translate-result"), gTranslate.editResult)
+                       ->Child(NewTextarea(cx, GStrL("translate-result"), gTranslate.editResult)
                                    ->H(resultDy)
                                    ->Readonly()
                                    ->IntoEl()));
@@ -726,11 +726,11 @@ gp::El* SelectionTranslateDialogBuild(MainWindow* win, gp::Ctx* cx) {
 
     // the two text fields come first and the controls that act on them
     // (engine, languages, buttons) follow, so the dialog reads top to bottom
-    body->Child(gpc::Textarea::New(cx, GStrL("translate-src"), gTranslate.editSrcText)->Rows(7)->IntoEl());
+    body->Child(NewTextarea(cx, GStrL("translate-src"), gTranslate.editSrcText)->Rows(7)->IntoEl());
     if (gTranslate.resultVisible) {
         Str label = gTranslate.resultIsError ? Str(Tr("Error:")) : Str(Tr("Translation:"));
         body->Child(gp::TextEl(cx->a, GpuiDup(cx->a, label))->Font(13)->Fg(th.foreground));
-        body->Child(gpc::Textarea::New(cx, GStrL("translate-result"), gTranslate.editResult)->Rows(6)->IntoEl());
+        body->Child(NewTextarea(cx, GStrL("translate-result"), gTranslate.editResult)->Rows(6)->IntoEl());
     }
 
     gp::El* engineRow = gp::Div(cx->a)->FlexRow()->W(gp::kFill)->ItemsCenter()->Gap(6);
@@ -743,7 +743,7 @@ gp::El* SelectionTranslateDialogBuild(MainWindow* win, gp::Ctx* cx) {
     langRow->Child(gp::TextEl(cx->a, ToGpui(Tr("From:")))->Font(13)->Fg(th.foreground));
     gp::El* srcCombo = gp::Div(cx->a)->FlexRow()->Flex1()->MinW(0)->Gap(4);
     srcCombo->Child(
-        gp::Div(cx->a)->Flex1()->MinW(0)->Child(gpc::Input::New(cx, GStrL("translate-from"), gTranslate.editSrcLang)
+        gp::Div(cx->a)->Flex1()->MinW(0)->Child(NewInput(cx, GStrL("translate-from"), gTranslate.editSrcLang)
                                                     ->WithSize(gp::UiSize::Small)
                                                     ->W(gp::kFill)
                                                     ->IntoEl()));
@@ -752,7 +752,7 @@ gp::El* SelectionTranslateDialogBuild(MainWindow* win, gp::Ctx* cx) {
     langRow->Child(gp::TextEl(cx->a, ToGpui(Tr("To:")))->Font(13)->Fg(th.foreground));
     gp::El* dstCombo = gp::Div(cx->a)->FlexRow()->Flex1()->MinW(0)->Gap(4);
     dstCombo->Child(
-        gp::Div(cx->a)->Flex1()->MinW(0)->Child(gpc::Input::New(cx, GStrL("translate-to"), gTranslate.editDstLang)
+        gp::Div(cx->a)->Flex1()->MinW(0)->Child(NewInput(cx, GStrL("translate-to"), gTranslate.editDstLang)
                                                     ->WithSize(gp::UiSize::Small)
                                                     ->W(gp::kFill)
                                                     ->IntoEl()));

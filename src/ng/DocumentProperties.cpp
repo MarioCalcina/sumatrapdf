@@ -662,7 +662,7 @@ gp::El* PropertiesDialogBuild(MainWindow* win, gp::Ctx* cx) {
     dy = std::min(dy, (ws.dipH * 0.8f) - kPropsDialogChromeDy);
     dy = std::max(dy, lineDy * (float)kPropsExtraLines);
 
-    gpc::Textarea* area = gpc::Textarea::New(cx, GStrL("properties-text"), gProps.textEdit);
+    gpc::Textarea* area = NewTextarea(cx, GStrL("properties-text"), gProps.textEdit);
     gp::El* edit = area->H(dy)->SoftWrap(false)->Readonly()->IntoEl()->Mono();
     // the size gpui's inputs draw their text in, whatever the element says
     float fontSize = gp::UiInputFontPx(gp::UiSize::Medium);

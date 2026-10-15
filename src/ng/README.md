@@ -109,6 +109,8 @@ AppKit code lives in `*_mac.mm` files, mostly `gui/NativeWindow_mac.mm`:
 - Fullscreen.PreventSleep holds an IOKit assertion against display sleep
 - dragging the page shows macOS's closed hand; the note and ink tools show
   their icon as the cursor (`gui/NativeCursors.cpp`)
+- a text field's context menu is gpui's rows in the UI language (`NewInput`
+  in `gui/DialogWidgets.cpp`): gpui's own strings are English
 - the window opens where it was closed, on the display it was on
   (`AppShellKeepOnScreen`)
 - a tab dragged out of its strip and dropped on another window joins that
@@ -141,7 +143,5 @@ AppKit code lives in `*_mac.mm` files, mostly `gui/NativeWindow_mac.mm`:
 gpui gaps, not fixable from this repo (the framework is vendored from
 gpui-kit-cpp):
 
-- a text field's context menu (Cut, Copy, Paste, Select All) is gpui's and
-  stays English
 - a text selection can't be dragged out of the window: gpui has no drag
   source

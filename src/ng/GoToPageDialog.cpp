@@ -200,7 +200,7 @@ static gp::El* GoToPageToolRow(gp::Ctx* cx, Str label, gp::InputState* edit, Str
                    ->W(gGoToPage.toolLabelDx)
                    ->Shrink0()
                    ->Child(DlgAccelText(cx, DlgAccelInput(cx, label, edit))->Font(font)->Fg(th.foreground)));
-    row->Child(gp::Div(cx->a)->PadX(kGoToGap)->Shrink0()->Child(gpc::Input::New(cx, GpuiDup(cx->a, id), edit)
+    row->Child(gp::Div(cx->a)->PadX(kGoToGap)->Shrink0()->Child(NewInput(cx, GpuiDup(cx->a, id), edit)
                                                                     ->WithSize(gp::UiSize::Small)
                                                                     ->Align(gp::component::InputAlign::Right)
                                                                     ->W(kGoToEditDx)
@@ -301,7 +301,7 @@ static gp::El* FieldRow(gp::Ctx* cx, Str label, gp::InputState* edit, Str id, in
     edit->onChange = gp::ListenTo(gGoToPageView, &GoToPageView::OnInput);
     gp::El* row = gp::Div(cx->a)->FlexRow()->ItemsCenter()->Gap(8);
     row->Child(DlgAccelText(cx, DlgAccelInput(cx, label, edit))->Font(13)->Fg(th.foreground));
-    row->Child(gpc::Input::New(cx, GpuiDup(cx->a, id), edit)
+    row->Child(NewInput(cx, GpuiDup(cx->a, id), edit)
                    ->WithSize(gp::UiSize::Small)
                    ->Align(gp::component::InputAlign::Right)
                    ->W(80)

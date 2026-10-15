@@ -40,6 +40,7 @@
 #include "WindowTab.h"
 #include "Toolbar.h"
 #include "gui/AppShell.h"
+#include "gui/DialogWidgets.h"
 #include "gui/ToolWindow.h"
 #include "AnnotEditToolbar.h"
 #include "AnnotFilterToolbar.h"
@@ -1221,7 +1222,7 @@ static gp::El* AnnotFilterContentEl(MainWindow* win, gp::Ctx* cx, bool ownWindow
         card->Child(caption);
     }
     gp::El* editEl =
-        gpc::Input::New(cx, GStrL("annot-filter"), f->edit)->WithSize(gp::UiSize::Small)->W(gp::kFill)->IntoEl();
+        NewInput(cx, GStrL("annot-filter"), f->edit)->WithSize(gp::UiSize::Small)->W(gp::kFill)->IntoEl();
     if (ownWindow) {
         editEl->H(kEditDy);
     }

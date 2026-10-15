@@ -1640,7 +1640,7 @@ static gp::El* BuildContentsEditor(AnnotEditToolbar* tb, gp::Ctx* cx, int annotD
                       ->Gap((float)DpiScale(kBtnGap))
                       ->W((float)wantDx)
                       ->CaptureKeyDown(gp::ListenTo(gAnnotEditView, &AnnotEditView::OnContentsKey));
-    col->Child(gpc::Textarea::New(cx, GStrL("annot-contents"), tb->contentsEdit)->Rows(kContentsLines)->IntoEl());
+    col->Child(NewTextarea(cx, GStrL("annot-contents"), tb->contentsEdit)->Rows(kContentsLines)->IntoEl());
     gp::El* row = gp::Div(cx->a)->FlexRow()->Gap((float)DpiScale(kBtnGap))->JustifyStart()->W(gp::kFill);
     row->Child(ContentsButton(cx, StrL("annot-contents-ok"), Tr("Accept"), StrL("Ctrl + Enter"), true,
                               gp::ListenTo(gAnnotEditView, &AnnotEditView::OnContentsOk)));

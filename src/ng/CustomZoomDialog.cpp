@@ -310,7 +310,7 @@ static gp::El* CustomZoomWinBuild(gp::Ctx* cx) {
                    ->W(gp::kFill)
                    ->H(kDlgWinEditDy)
                    ->Shrink0()
-                   ->Child(gpc::Input::New(cx, GStrL("customzoom-edit"), gCustomZoom.editZoom)
+                   ->Child(NewInput(cx, GStrL("customzoom-edit"), gCustomZoom.editZoom)
                                ->WithSize(gp::UiSize::Small)
                                ->W(gp::kFill)
                                ->IntoEl()
@@ -384,7 +384,7 @@ gp::El* CustomZoomDialogBuild(MainWindow* win, gp::Ctx* cx) {
     gp::El* body = gp::Div(cx->a)->FlexCol()->Gap(6);
     body->Child(
         DlgAccelText(cx, DlgAccelInput(cx, Tr("&Magnification:"), gCustomZoom.editZoom))->Font(13)->Fg(th.foreground));
-    body->Child(gpc::Input::New(cx, GStrL("customzoom-edit"), gCustomZoom.editZoom)
+    body->Child(NewInput(cx, GStrL("customzoom-edit"), gCustomZoom.editZoom)
                     ->WithSize(gp::UiSize::Small)
                     ->W(gp::kFill)
                     ->IntoEl());

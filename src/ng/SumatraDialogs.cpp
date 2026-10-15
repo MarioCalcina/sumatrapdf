@@ -569,7 +569,7 @@ gp::El* DlgWinEdit(gp::Ctx* cx, gp::Str id, gp::InputState* edit) {
         ->W(gp::kFill)
         ->H(kDlgWinEditDy)
         ->Shrink0()
-        ->Child(gpc::Input::New(cx, id, edit)->WithSize(gp::UiSize::Small)->W(gp::kFill)->IntoEl()->H(kDlgWinEditDy));
+        ->Child(NewInput(cx, id, edit)->WithSize(gp::UiSize::Small)->W(gp::kFill)->IntoEl()->H(kDlgWinEditDy));
 }
 
 gp::El* DlgWinCheck(gp::Ctx* cx, gp::El* box, float padT) {

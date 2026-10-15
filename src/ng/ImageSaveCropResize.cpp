@@ -1594,7 +1594,7 @@ static gp::El* ImageEditToolBuild(MainWindow*, gp::Ctx* cx) {
                        ->Gap(kImgCtrlGap)
                        ->Shrink0();
     row2->Child(gp::Div(cx->a)->Flex1()->MinW(0)->Child(
-        gpc::Input::New(cx, GStrL("imgedit-dest"), w.destEdit)->WithSize(gp::UiSize::Small)->W(gp::kFill)->IntoEl()));
+        NewInput(cx, GStrL("imgedit-dest"), w.destEdit)->WithSize(gp::UiSize::Small)->W(gp::kFill)->IntoEl()));
     row2->Child(
         button(GStrL("imgedit-browse"), StrL("..."), gp::ListenTo(gImgEditView, &ImageEditView::OnBrowse), false));
     row2->Child(button(GStrL("imgedit-save"), saveLabel, onSave, false));
@@ -1719,7 +1719,7 @@ gp::El* ImageEditWindowBuild(MainWindow* win, gp::Ctx* cx) {
     body->Child(gp::TextEl(cx->a, GpuiDup(cx->a, InfoTextTemp()))->Font(12)->Fg(th.mutedFg));
 
     gp::El* destRow = gp::Div(cx->a)->FlexRow()->W(gp::kFill)->ItemsCenter()->Gap(8);
-    destRow->Child(gp::Div(cx->a)->Flex1()->Child(gpc::Input::New(cx, GStrL("imgedit-dest"), gImgEdit.destEdit)
+    destRow->Child(gp::Div(cx->a)->Flex1()->Child(NewInput(cx, GStrL("imgedit-dest"), gImgEdit.destEdit)
                                                       ->WithSize(gp::UiSize::Small)
                                                       ->W(gp::kFill)
                                                       ->IntoEl()));

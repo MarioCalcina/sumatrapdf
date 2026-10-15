@@ -294,7 +294,7 @@ gp::El* ChangeLanguageDialogBuild(MainWindow* win, gp::Ctx* cx) {
     }
 
     gp::El* body = gp::Div(cx->a)->FlexCol()->Gap(8);
-    body->Child(gpc::Input::New(cx, GStrL("language-search"), gChangeLanguage.editSearch)
+    body->Child(NewInput(cx, GStrL("language-search"), gChangeLanguage.editSearch)
                     ->WithSize(gp::UiSize::Small)
                     ->W(gp::kFill)
                     ->IntoEl());

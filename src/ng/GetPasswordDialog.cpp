@@ -196,7 +196,7 @@ static gp::El* GetPasswordWinBuild(gp::Ctx* cx, Str prompt) {
                    ->Child(DlgAccelText(cx, DlgAccelInput(cx, Tr("&Password:"), gGetPassword.editPwd))
                                ->Font(font)
                                ->Fg(th.foreground)));
-    row->Child(gp::Div(cx->a)->Flex1()->MinW(0)->Child(gpc::Input::New(cx, GStrL("password-edit"), gGetPassword.editPwd)
+    row->Child(gp::Div(cx->a)->Flex1()->MinW(0)->Child(NewInput(cx, GStrL("password-edit"), gGetPassword.editPwd)
                                                            ->WithSize(gp::UiSize::Small)
                                                            ->Masked(!gShowPassword)
                                                            ->W(gp::kFill)
@@ -267,7 +267,7 @@ gp::El* GetPasswordDialogBuild(MainWindow* win, gp::Ctx* cx) {
                    ->Font(13)
                    ->Fg(th.foreground)
                    ->Shrink0());
-    row->Child(gpc::Input::New(cx, GStrL("password-edit"), gGetPassword.editPwd)
+    row->Child(NewInput(cx, GStrL("password-edit"), gGetPassword.editPwd)
                    ->WithSize(gp::UiSize::Small)
                    ->Masked(!gShowPassword)
                    ->W(gp::kFill)

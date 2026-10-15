@@ -636,7 +636,7 @@ static gp::El* PageGridWinBuild(gp::Ctx* cx) {
         return r;
     };
     auto edit = [&](gp::Str id, gp::InputState* st) {
-        return gpc::Input::New(cx, id, st)
+        return NewInput(cx, id, st)
             ->WithSize(gp::UiSize::Small)
             ->W(kGridWinEditDx)
             ->IntoEl()
@@ -756,7 +756,7 @@ gp::El* PageGridDialogBuild(MainWindow* win, gp::Ctx* cx) {
     }
 
     auto numInput = [&](Str id, gp::InputState* st) {
-        return gpc::Input::New(cx, GpuiDup(cx->a, id), st)->WithSize(gp::UiSize::Small)->W(100)->IntoEl();
+        return NewInput(cx, GpuiDup(cx->a, id), st)->WithSize(gp::UiSize::Small)->W(100)->IntoEl();
     };
 
     gp::El* body = gp::Div(cx->a)->FlexCol()->Gap(6);
@@ -781,7 +781,7 @@ gp::El* PageGridDialogBuild(MainWindow* win, gp::Ctx* cx) {
                         ->PathClick(GStrL("grid-swatch"))
                         ->OnClick(gp::ListenTo(gPageGridView, &PageGridView::OnPickColor)));
     colorRow->Child(
-        gp::Div(cx->a)->Flex1()->MinW(0)->Child(gpc::Input::New(cx, GStrL("grid-color"), gPageGrid.editColor)
+        gp::Div(cx->a)->Flex1()->MinW(0)->Child(NewInput(cx, GStrL("grid-color"), gPageGrid.editColor)
                                                     ->WithSize(gp::UiSize::Small)
                                                     ->W(gp::kFill)
                                                     ->IntoEl()));

@@ -400,7 +400,7 @@ static gp::El* TabGroupsToolBuild(MainWindow*, gp::Ctx* cx) {
                        ->H(kTgEditDy + kTgPad)
                        ->PadB(kTgPad)
                        ->Shrink0()
-                       ->Child(gpc::Input::New(cx, GStrL("tabgroup-name"), gTg->editName)
+                       ->Child(NewInput(cx, GStrL("tabgroup-name"), gTg->editName)
                                    ->WithSize(gp::UiSize::Small)
                                    ->W(gp::kFill)
                                    ->IntoEl()));
@@ -594,7 +594,7 @@ gp::El* TabGroupsDialogBuild(MainWindow* win, gp::Ctx* cx) {
     gp::El* body = gp::Div(cx->a)->FlexCol()->Gap(8);
     if (isSave && gTg->editName) {
         gTg->editName->onChange = gp::ListenTo(gTabGroupsView, &TabGroupsView::OnInput);
-        body->Child(gpc::Input::New(cx, GStrL("tabgroup-name"), gTg->editName)
+        body->Child(NewInput(cx, GStrL("tabgroup-name"), gTg->editName)
                         ->WithSize(gp::UiSize::Small)
                         ->W(gp::kFill)
                         ->IntoEl());

@@ -33,6 +33,7 @@
 #include "WindowTab.h"
 #include "Toolbar.h"
 #include "gui/AppShell.h"
+#include "gui/DialogWidgets.h"
 #include "gui/DocCanvas.h"
 #include "SumatraDialogs.h"
 #include "FormFields.h"
@@ -332,7 +333,7 @@ gp::El* FormFieldEditBuild(MainWindow* win, gp::Ctx* cx) {
     if (!gEdit.isChoice) {
         gEdit.edit->onChange = gp::ListenTo(gFormFieldView, &FormFieldView::OnInput);
         gp::El* box = gp::Div(cx->a)->Absolute()->Left(x)->Top(y)->W(w)->H(h);
-        box->Child(gpc::Input::New(cx, GStrL("form-field"), gEdit.edit)
+        box->Child(NewInput(cx, GStrL("form-field"), gEdit.edit)
                        ->WithSize(gp::UiSize::Small)
                        ->Masked(gEdit.masked)
                        ->W(gp::kFill)

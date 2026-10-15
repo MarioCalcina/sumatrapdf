@@ -1588,7 +1588,7 @@ static gp::El* NavContentEl(gp::Ctx* cx, bool ownWindow) {
     if (gNav.editingPath) {
         gNav.dirEdit->onChange = gp::ListenTo(gNav.view, &NavFilesView::OnDirEdit);
         top->Child(
-            gp::Div(cx->a)->Flex1()->MinW(0)->PadX(4)->Child(gpc::Input::New(cx, GStrL("nav-dir-edit"), gNav.dirEdit)
+            gp::Div(cx->a)->Flex1()->MinW(0)->PadX(4)->Child(NewInput(cx, GStrL("nav-dir-edit"), gNav.dirEdit)
                                                                  ->WithSize(gp::UiSize::Small)
                                                                  ->W(gp::kFill)
                                                                  ->IntoEl()
@@ -1623,7 +1623,7 @@ static gp::El* NavContentEl(gp::Ctx* cx, bool ownWindow) {
     // second row: filters the list below as you type
     gp::InputSetPlaceholder(gNav.filterEdit, ToGpui(Tr("Search")));
     gNav.filterEdit->onChange = gp::ListenTo(gNav.view, &NavFilesView::OnFilter);
-    col->Child(gp::Div(cx->a)->W(gp::kFill)->Shrink0()->Child(gpc::Input::New(cx, GStrL("nav-filter"), gNav.filterEdit)
+    col->Child(gp::Div(cx->a)->W(gp::kFill)->Shrink0()->Child(NewInput(cx, GStrL("nav-filter"), gNav.filterEdit)
                                                                   ->WithSize(gp::UiSize::Small)
                                                                   ->W(gp::kFill)
                                                                   ->IntoEl()

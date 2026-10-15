@@ -856,6 +856,8 @@ enum class ControlCmd : u16 {
     TestOpenFiles = 132,
     // ng: install a dmg over this app as a downloaded update would be
     TestInstallUpdate = 133,
+    // ng: the rows of the focused text field's context menu
+    TestInputMenu = 134,
 };
 
 bool ParseArg(PacketReader& r, ControlArg** argOut) {
@@ -2833,6 +2835,12 @@ static void ExecuteControlRequest(ControlRequest* req) {
             int exitCode = 0;
             Str res = CommandPaletteStateTemp(&exitCode);
             AppendTestResult(req, exitCode, res);
+            break;
+        }
+
+        case ControlCmd::TestInputMenu: {
+            Str res = AppShellFieldMenuTemp(FirstWindow());
+            AppendTestResult(req, str::StartsWith(res, StrL("NOTREADY")) ? 2 : 0, res);
             break;
         }
 

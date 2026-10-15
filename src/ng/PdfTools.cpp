@@ -3163,7 +3163,7 @@ static gp::El* MergeAskDialogBuild(gp::Ctx* cx) {
     body->Child(MergeAskRadioEl(cx, StrL("merge-ask-start"), Tr("At the &beginning"), MergeInsertAt::Beginning));
     gp::El* row = gp::Div(cx->a)->FlexRow()->ItemsCenter()->Gap(8);
     row->Child(MergeAskRadioEl(cx, StrL("merge-ask-after"), Tr("&After page"), MergeInsertAt::AfterPage));
-    row->Child(gp::Div(cx->a)->W(64)->Child(gpc::Input::New(cx, GStrL("merge-ask-page"), gTool.mergeAskEdit)
+    row->Child(gp::Div(cx->a)->W(64)->Child(NewInput(cx, GStrL("merge-ask-page"), gTool.mergeAskEdit)
                                                 ->WithSize(gp::UiSize::Small)
                                                 ->W(gp::kFill)
                                                 ->IntoEl()));
@@ -3433,7 +3433,7 @@ static gp::El* ToolWinText(gp::Ctx* cx, Str s, float font) {
 }
 
 static gp::El* ToolWinEdit(gp::Ctx* cx, gp::Str id, gp::InputState* edit, bool masked = false, bool disabled = false) {
-    gpc::Input* in = gpc::Input::New(cx, id, edit)->WithSize(gp::UiSize::Small)->Disabled(disabled)->W(gp::kFill);
+    gpc::Input* in = NewInput(cx, id, edit)->WithSize(gp::UiSize::Small)->Disabled(disabled)->W(gp::kFill);
     if (masked) {
         in->Masked(true);
     }
@@ -3606,7 +3606,7 @@ static gp::El* PdfToolBuildCurrent(MainWindow* win, gp::Ctx* cx) {
     body->Child(gp::TextEl(cx->a, GpuiDup(cx->a, gTool.srcPath))->Font(12)->Fg(th.mutedFg)->Truncate());
 
     gp::El* destRow = gp::Div(cx->a)->FlexRow()->W(gp::kFill)->ItemsCenter()->Gap(8);
-    destRow->Child(gp::Div(cx->a)->Flex1()->MinW(0)->Child(gpc::Input::New(cx, GStrL("pdftool-dest"), gTool.destEdit)
+    destRow->Child(gp::Div(cx->a)->Flex1()->MinW(0)->Child(NewInput(cx, GStrL("pdftool-dest"), gTool.destEdit)
                                                                ->WithSize(gp::UiSize::Small)
                                                                ->W(gp::kFill)
                                                                ->IntoEl()));
@@ -3639,7 +3639,7 @@ static gp::El* PdfToolBuildCurrent(MainWindow* win, gp::Ctx* cx) {
         gTool.pagesEdit->onChange = gp::ListenTo(gToolView, &PdfToolView::OnInput);
         gp::El* row = gp::Div(cx->a)->FlexRow()->W(gp::kFill)->ItemsCenter()->Gap(8);
         row->Child(LabelEl(cx, Tr("Pages:"), false));
-        row->Child(gp::Div(cx->a)->Flex1()->Child(gpc::Input::New(cx, GStrL("pdftool-pages"), gTool.pagesEdit)
+        row->Child(gp::Div(cx->a)->Flex1()->Child(NewInput(cx, GStrL("pdftool-pages"), gTool.pagesEdit)
                                                       ->WithSize(gp::UiSize::Small)
                                                       ->W(gp::kFill)
                                                       ->IntoEl()));
@@ -3649,7 +3649,7 @@ static gp::El* PdfToolBuildCurrent(MainWindow* win, gp::Ctx* cx) {
         gTool.pagesEdit->onChange = gp::ListenTo(gToolView, &PdfToolView::OnInput);
         gp::El* row = gp::Div(cx->a)->FlexRow()->W(gp::kFill)->ItemsCenter()->Gap(8);
         row->Child(LabelEl(cx, isExtract ? Tr("Pages To Extract:") : Tr("Pages To Delete:"), false));
-        row->Child(gp::Div(cx->a)->Flex1()->Child(gpc::Input::New(cx, GStrL("pdftool-pages"), gTool.pagesEdit)
+        row->Child(gp::Div(cx->a)->Flex1()->Child(NewInput(cx, GStrL("pdftool-pages"), gTool.pagesEdit)
                                                       ->WithSize(gp::UiSize::Small)
                                                       ->W(gp::kFill)
                                                       ->IntoEl()));
@@ -3667,7 +3667,7 @@ static gp::El* PdfToolBuildCurrent(MainWindow* win, gp::Ctx* cx) {
         gTool.passwordEdit->onChange = gp::ListenTo(gToolView, &PdfToolView::OnInput);
         gp::El* row = gp::Div(cx->a)->FlexRow()->W(gp::kFill)->ItemsCenter()->Gap(8);
         row->Child(LabelEl(cx, Tr("Password:"), false));
-        row->Child(gp::Div(cx->a)->Flex1()->Child(gpc::Input::New(cx, GStrL("pdftool-pwd"), gTool.passwordEdit)
+        row->Child(gp::Div(cx->a)->Flex1()->Child(NewInput(cx, GStrL("pdftool-pwd"), gTool.passwordEdit)
                                                       ->WithSize(gp::UiSize::Small)
                                                       ->Masked(true)
                                                       ->W(gp::kFill)
@@ -3680,7 +3680,7 @@ static gp::El* PdfToolBuildCurrent(MainWindow* win, gp::Ctx* cx) {
         row->Child(RadioEl(cx, StrL("pdftool-cur"), Tr("Current"), PagesMode::Current));
         row->Child(RadioEl(cx, StrL("pdftool-all"), Tr("All"), PagesMode::All));
         row->Child(RadioEl(cx, StrL("pdftool-custom"), Tr("Custom"), PagesMode::Custom));
-        row->Child(gp::Div(cx->a)->Flex1()->Child(gpc::Input::New(cx, GStrL("pdftool-pages"), gTool.pagesEdit)
+        row->Child(gp::Div(cx->a)->Flex1()->Child(NewInput(cx, GStrL("pdftool-pages"), gTool.pagesEdit)
                                                       ->WithSize(gp::UiSize::Small)
                                                       ->Disabled(gTool.pagesMode != PagesMode::Custom)
                                                       ->W(gp::kFill)

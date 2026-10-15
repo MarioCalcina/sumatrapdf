@@ -253,3 +253,7 @@ gpui::El* DialogFooter(gpui::Ctx* cx, gpui::El* extra, gpui::Entity<V> ent, Str 
                           okText, gpui::ListenTo(ent, onOk)));
     return row;
 }
+
+gpui::component::Input* NewInput(gpui::Ctx* cx, gpui::Str id, gpui::InputState* state);
+gpui::component::Textarea* NewTextarea(gpui::Ctx* cx, gpui::Str id, gpui::InputState* state);
+TempStr InputMenuRowsTemp(gpui::InputState* state);

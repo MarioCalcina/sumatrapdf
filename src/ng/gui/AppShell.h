@@ -41,6 +41,7 @@ TempStr AppShellTestInput(MainWindow* win, Str kind, int a, int b, int c, int d)
 // the same into any gpui window (a tool window's)
 TempStr AppShellTestInputGpui(gpui::Window* gw, Str kind, int a, int b, int c, int d);
 TempStr AppShellUiStateTemp(MainWindow* win);
+TempStr AppShellFieldMenuTemp(MainWindow* win);
 // orig's gSupressNextAltMenuTrigger: the Alt that is down was used for
 // something (Alt + wheel), so its release must not enter the menu bar
 void AppShellSuppressAltMenu(MainWindow* win);

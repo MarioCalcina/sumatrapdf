@@ -9,6 +9,7 @@
 
 #include "MainWindow.h"
 #include "gui/AppShell.h"
+#include "gui/DialogWidgets.h"
 #include "TextViewWnd.h"
 
 #include "SumatraLog.h"
@@ -75,7 +76,7 @@ gp::El* TextViewView::Render(TextViewView* self, gp::Ctx* cx) {
     cx->win->input = &self->text;
     gp::WinSize size = gp::WindowSize(cx->win);
     const gp::Theme& theme = gp::ThemeNow(cx->app);
-    gp::El* editor = gpc::Textarea::New(cx, GStrL("text-view"), &self->text)
+    gp::El* editor = NewTextarea(cx, GStrL("text-view"), &self->text)
                          ->H(size.dipH)
                          ->SoftWrap(false)
                          ->Readonly()
