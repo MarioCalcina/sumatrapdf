@@ -221,6 +221,11 @@ export async function testit(): Promise<void> {
     // after page 4: at the end; its first page removed
     await merge(client, "askpos", other);
     await waitFor("Add PDF didn't ask where to insert", async () => /asking=1/.test((await merge(client)).raw));
+    // a key sent before the question is drawn misses its edit
+    await waitFor("Add PDF's question wasn't drawn", async () => {
+      const res = await client.request(ControlCommand.TestToolWindow, ["layout", "mergepdf"]);
+      return String(res[1] ?? "").includes("Insert 'other.pdf'");
+    });
     await merge(client, "asktext", "4");
     await key(client, hwnd, VK_RETURN);
     await wantItems(client, "0:4,0:1,0:2r,0:3,1:1s,1:2s", "Add PDF after page 4");

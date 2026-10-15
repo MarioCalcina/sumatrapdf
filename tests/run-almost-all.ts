@@ -371,6 +371,8 @@ export const tests: NamedTest[] = [
   // first: it drives the home page, whose thumbnail selection follows the
   // mouse, so it is the one test that cares what the machine was doing before
   ["issue-5978", issue5978],
+  ["issue-6270", issue6270],
+  ["issue-6070", issue6070],
   ["issue-6230", issue6230],
   ["issue-6080", issue6080],
   ["issue-5997", issue5997],
@@ -600,7 +602,6 @@ export const tests: NamedTest[] = [
   ["issue-6265", issue6265],
   ["issue-6266", issue6266],
   ["issue-6280", issue6280],
-  ["issue-6270", issue6270],
   ["issue-6137-contents", issue6137Contents],
   ["issue-6093", issue6093],
   ["epub-theme-restyle", epubThemeRestyle],
@@ -649,7 +650,6 @@ export const tests: NamedTest[] = [
   ["command-palette-alt-names", commandPaletteAltNames],
   ["command-palette-thumbnails", commandPaletteThumbnails],
   ["sidebar-thumbnails-close", sidebarThumbnailsClose],
-  ["issue-6070", issue6070],
   ["wheel-while-closing", wheelWhileClosing],
   ["fullscreen-session-restore", fullscreenSessionRestore],
   ["stamp-edit-toolbar-name", stampEditToolbarName],

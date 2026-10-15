@@ -27,6 +27,8 @@ jobs:
           (cd tests && bun install)
           .github/scripts/run.sh bun cmd/ng-build.ts -dbg -asan SumatraPDF test_util
       - name: Tests
+        # bash runs with pipefail: a failed test fails the step despite tee
+        shell: bash
         env:
           TESTS: ${{ inputs.tests }}
         run: bun tests/run-github-ci.ts $TESTS 2>&1 | tee tests.log

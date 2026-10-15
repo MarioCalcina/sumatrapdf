@@ -72,9 +72,26 @@ function click(s: Sidebar, page: number) {
   sendMessage(s.hwnd, WM_LBUTTONUP, 0, packed);
 }
 
+// The list scrolls the current page's row into view a paint after the
+// highlight moves: click once the thumbnails stopped moving.
+async function settledSidebar(client: ControlClient): Promise<Sidebar> {
+  const rects = (s: Sidebar) => s.raw.slice(s.raw.indexOf(" rects="));
+  let prev = "";
+  let same = 0;
+  return pollUntil(
+    () => sidebar(client),
+    (s) => {
+      same = rects(s) === prev ? same + 1 : 0;
+      prev = rects(s);
+      return same >= 2;
+    },
+    { intervalMs: 100, error: (s) => `issue-6270: thumbnails kept moving: ${s.raw}` },
+  );
+}
+
 // The clicked thumbnail stays highlighted. Book view reports the row's first page.
 async function clickHighlights(client: ControlClient, page: number) {
-  const before = await sidebar(client);
+  const before = await settledSidebar(client);
   click(before, page);
   const after = await pollUntil(
     () => sidebar(client),
