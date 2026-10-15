@@ -7045,11 +7045,6 @@ bool EngineMupdf::HandleLink(IPageDestination* dest, ILinkHandler* linkHandler) 
     return true;
 }
 
-RenderedBitmap* EngineMupdf::GetImageForPageElement(IPageElement* ipel) {
-    (void)ipel;
-    return nullptr;
-}
-
 // PDF-embedded CMYK JPEG uses PDF polarity (0 = no ink). A standalone JPEG
 // uses the Adobe/Photoshop convention (0 = full ink). Dumping the DCT stream
 // as a .jpg therefore looks inverted. Re-encode from the decoded pixmap with
@@ -7314,16 +7309,16 @@ static fz_pixmap* FzLoadOrientedImage(EngineMupdf* engine, int pageNo, RectF rec
     return oriented ? oriented : pixmap;
 }
 
-// Same pixels Copy Image returns on Windows, without a GDI bitmap.
-Pixmap* EngineMupdfPageImagePixmap(EngineBase* engineBase, IPageElement* ipel) {
-    EngineMupdf* engine = AsEngineMupdf(engineBase);
-    if (!engine || !ipel || ipel->GetKind() != kindPageElementImage) {
+// Same pixels Copy Image returns on Windows, without a GDI bitmap: the image
+// as drawn, rotated or flipped the way the page shows it
+Pixmap* EngineMupdf::GetImagePixmapForPageElement(IPageElement* ipel) {
+    if (!ipel || ipel->GetKind() != kindPageElementImage) {
         return nullptr;
     }
     auto* pel = (PageElementImage*)ipel;
-    int pageNo = pel->loc.IsValid() ? engine->PageNoFromLocation(pel->loc) : pel->pageNo;
-    auto* ctx = engine->Ctx();
-    fz_pixmap* pix = FzLoadOrientedImage(engine, pageNo, pel->rect, pel->imageID);
+    int pageNo = pel->loc.IsValid() ? PageNoFromLocation(pel->loc) : pel->pageNo;
+    auto* ctx = Ctx();
+    fz_pixmap* pix = FzLoadOrientedImage(this, pageNo, pel->rect, pel->imageID);
     if (!pix) {
         return nullptr;
     }

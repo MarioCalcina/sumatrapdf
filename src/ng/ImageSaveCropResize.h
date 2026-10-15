@@ -6,7 +6,6 @@ struct Ctx;
 struct El;
 } // namespace gpui
 
-struct RenderedBitmap;
 struct Pixmap;
 struct MainWindow;
 
@@ -49,12 +48,13 @@ Str ImageSaveExtFromData(Str data);
 bool TrySaveOriginalAsCmykTiff(Str originalData, Str destPath);
 
 // win is the window the editor is shown in and centred on. Either filePath
-// names an image to load or rbmp holds one already rendered; with neither
-// there is nothing to edit and the call does nothing.
+// names an image to load or image holds one already decoded, which the
+// editor takes over; with neither there is nothing to edit and the call does
+// nothing.
 // originalData, when set, is the encoded source (JPEG stream, CBZ page, …);
 // Save writes those bytes if the image is not cropped/resized and the dest
 // extension still matches the original format. Caller keeps ownership.
-void ShowImageEditWindow(MainWindow* win, ImageEditMode mode, Str filePath = {}, RenderedBitmap* rbmp = nullptr,
+void ShowImageEditWindow(MainWindow* win, ImageEditMode mode, Str filePath = {}, Pixmap* image = nullptr,
                          bool selectPdf = false, Str originalData = {}, bool closeOnEsc = false);
 // ng: the editor is a gpui dialog inside the window, not a window of its own
 void CloseImageEditWindow();

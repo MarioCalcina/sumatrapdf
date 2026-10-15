@@ -136,7 +136,6 @@ class EngineEbook : public EngineBase {
     }
 
     IPageDestination* GetNamedDest(Str name) override;
-    RenderedBitmap* GetImageForPageElement(IPageElement* el) override;
     Str GetImageDataForPageElement(IPageElement* el) override;
 
     bool BenchLoadPage(int pageNo) override;
@@ -554,11 +553,6 @@ Vec<IPageElement*> EngineEbook::GetElements(int pageNo) {
     }
 
     return els;
-}
-
-RenderedBitmap* EngineEbook::GetImageForPageElement(IPageElement* iel) {
-    (void)iel;
-    return nullptr;
 }
 
 Str EngineEbook::GetImageDataForPageElement(IPageElement* iel) {

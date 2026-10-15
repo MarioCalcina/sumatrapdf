@@ -855,22 +855,20 @@ TempStr ImageEditStateTemp() {
                gImgEdit.newW, gImgEdit.newH, DestPathTemp());
 }
 
-void ShowImageEditWindow(MainWindow* win, ImageEditMode mode, Str filePath, RenderedBitmap* rbmp, bool selectPdf,
+void ShowImageEditWindow(MainWindow* win, ImageEditMode mode, Str filePath, Pixmap* image, bool selectPdf,
                          Str originalData, bool closeOnEsc) {
     if (!IsMainWindowValidAndNotClosing(win)) {
+        FreePixmap(image);
         return;
     }
     InitImageEditHost();
     CloseImageEditWindow();
 
-    Pixmap* px = nullptr;
-    bool fromRendered = false;
-    if (rbmp) {
-        // ng: orig keeps the bitmap and the caller deletes it; here the
-        // Pixmap takes its pixels over, so the editor owns it from now on
-        // ng: a RenderedBitmap is win32-only, so rbmp is always null here
-        fromRendered = true;
-    } else if (len(filePath) > 0 && gImageEditHost.LoadImageFile) {
+    // ng: orig takes a RenderedBitmap, a win32 HBITMAP; here a page's image
+    // comes decoded, and the editor owns it from now on
+    Pixmap* px = image;
+    bool fromRendered = image != nullptr;
+    if (!px && len(filePath) > 0 && gImageEditHost.LoadImageFile) {
         px = gImageEditHost.LoadImageFile(filePath);
     }
     if (!px) {

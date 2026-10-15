@@ -1369,7 +1369,7 @@ TempStr ImageOrientationResultTemp(Str pdfPath, int pageNo, int* exitCodeOut) {
         return fail(StrL("ERROR no-image-element"));
     }
     Pixmap* px = nullptr;
-    px = EngineMupdfPageImagePixmap(engine, imgEl);
+    px = engine->GetImagePixmapForPageElement(imgEl);
     SafeEngineRelease(&engine);
     if (!px) {
         return fail(StrL("ERROR no-image"));

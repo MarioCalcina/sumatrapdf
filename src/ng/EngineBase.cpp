@@ -9,6 +9,7 @@
 
 #include "DocProperties.h"
 #include "EngineBase.h"
+#include "ImageReader.h"
 
 Kind kindPageElementDest = "dest";
 Kind kindPageElementImage = "image";
@@ -1116,9 +1117,13 @@ Str EngineBase::FilePath() const {
     return fileNameBase;
 }
 
-RenderedBitmap* EngineBase::GetImageForPageElement(IPageElement* /*ipel*/) {
-    CrashMe();
-    return nullptr;
+// the pixels of an image on a page, decoded from its bytes; mupdf decodes
+// images it can't hand out as a file itself
+Pixmap* EngineBase::GetImagePixmapForPageElement(IPageElement* ipel) {
+    Str data = GetImageDataForPageElement(ipel);
+    Pixmap* px = len(data) > 0 ? PixmapFromData(data) : nullptr;
+    str::Free(data);
+    return px;
 }
 
 // Encoded file bytes of a page-element image, when the engine still has them
@@ -1234,8 +1239,8 @@ Vec<IPageElement*> EnginePdfProxy::GetElements(int pageNo) {
     return pdfEngine->GetElements(pageNo);
 }
 
-RenderedBitmap* EnginePdfProxy::GetImageForPageElement(IPageElement* ipel) {
-    return pdfEngine->GetImageForPageElement(ipel);
+Pixmap* EnginePdfProxy::GetImagePixmapForPageElement(IPageElement* ipel) {
+    return pdfEngine->GetImagePixmapForPageElement(ipel);
 }
 
 Str EnginePdfProxy::GetImageDataForPageElement(IPageElement* ipel) {

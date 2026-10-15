@@ -107,15 +107,6 @@ enum class GoogleLensSrc {
     Image
 };
 
-static Pixmap* PixmapForImageElement(EngineBase* engine, IPageElement* imageElement) {
-    RenderedBitmap* bmp = engine->GetImageForPageElement(imageElement);
-    if (!bmp) {
-        return nullptr;
-    }
-    // ng: a RenderedBitmap is win32-only, so bmp is always null here
-    return nullptr;
-}
-
 static void SearchGoogleLensSrc(WindowTab* tab, GoogleLensSrc src, IPageElement* imageElement, int pageNo) {
     if (!tab || !tab->win || !HasPermission(Perm::InternetAccess) || !HasPermission(Perm::CopySelection)) {
         return;
@@ -130,7 +121,7 @@ static void SearchGoogleLensSrc(WindowTab* tab, GoogleLensSrc src, IPageElement*
     bool isImage = imageElement && imageElement->Is(kindPageElementImage);
     if (src == GoogleLensSrc::Image || (src == GoogleLensSrc::Auto && isImage)) {
         if (isImage) {
-            bitmap = PixmapForImageElement(dm->GetEngine(), imageElement);
+            bitmap = dm->GetEngine()->GetImagePixmapForPageElement(imageElement);
         } else if (src == GoogleLensSrc::Image && dm->GetEngine()->kind != kindEngineImage) {
             GoogleLensNotify(tab, Tr("No image under the cursor."));
             return;

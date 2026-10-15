@@ -1064,8 +1064,9 @@ static void ContextMenuEditImage(MainWindow* win, IPageElement* pageEl, int page
         ShowImageEditWindow(win, m, imgEngine->FilePath(), nullptr, selectPdf);
         return;
     }
-    RenderedBitmap* bmp = imgEngine->GetImageForPageElement(pageEl);
-    if (!bmp) {
+    // ng: orig's RenderedBitmap is a win32 HBITMAP; here the image's pixels
+    Pixmap* px = imgEngine->GetImagePixmapForPageElement(pageEl);
+    if (!px) {
         return;
     }
     Str filePath = win->ctrl ? win->ctrl->GetFilePath() : Str{};
@@ -1078,8 +1079,8 @@ static void ContextMenuEditImage(MainWindow* win, IPageElement* pageEl, int page
         ext = StrL(".png");
     }
     TempStr destPath = path::JoinTemp(dir, fmt("%s_page_%d%s", noExt, pageNo, ext));
-    // ShowImageEditWindow takes ownership of the bitmap
-    ShowImageEditWindow(win, m, destPath, bmp, selectPdf, origData);
+    // ShowImageEditWindow takes ownership of the pixels
+    ShowImageEditWindow(win, m, destPath, px, selectPdf, origData);
     str::Free(origData);
 }
 
@@ -1183,9 +1184,9 @@ void WindowContextMenuCommand(MainWindow* win, int cmdId) {
             return;
         }
         case CmdCopyImage: {
-            // ng: there is no RenderedBitmap on macOS. mupdf hands the image's
-            // pixels; an image document is its file
-            Pixmap* px = pageEl ? EngineMupdfPageImagePixmap(engine, pageEl) : nullptr;
+            // ng: the image's pixels, not orig's HBITMAP; an image document
+            // without an element under the click is its file
+            Pixmap* px = pageEl ? engine->GetImagePixmapForPageElement(pageEl) : nullptr;
             if (!px && engine->kind == kindEngineImage && len(engine->FilePath()) > 0) {
                 Str data = file::ReadFile(engine->FilePath());
                 px = PixmapFromData(data);

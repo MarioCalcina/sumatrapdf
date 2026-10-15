@@ -117,7 +117,6 @@ class EngineImages : public EngineBase {
     Vec<IPageElement*> GetElements(int pageNo) override;
     IPageElement* GetElementAtPos(int pageNo, PointF pt) override;
 
-    RenderedBitmap* GetImageForPageElement(IPageElement* ipel) override;
     Str GetImageDataForPageElement(IPageElement* ipel) override;
 
     bool BenchLoadPage(int pageNo) override {
@@ -915,11 +914,6 @@ IPageElement* EngineImages::GetElementAtPos(int pageNo, PointF pt) {
         return nullptr;
     }
     return els[0];
-}
-
-RenderedBitmap* EngineImages::GetImageForPageElement(IPageElement* pel) {
-    (void)pel;
-    return nullptr;
 }
 
 Str EngineImages::GetImageDataForPageElement(IPageElement* pel) {

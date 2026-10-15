@@ -1847,7 +1847,7 @@ static void StartImageDragOut(MainWindow* win) {
     int pageNo = win->imageDragPageNo;
     win->imageDragElement = nullptr;
     win->imageDragPageNo = -1;
-    Pixmap* px = dm && el ? EngineMupdfPageImagePixmap(dm->GetEngine(), el) : nullptr;
+    Pixmap* px = dm && el ? dm->GetEngine()->GetImagePixmapForPageElement(el) : nullptr;
     Str png = px ? EncodePngFromPixmap(px) : Str{};
     FreePixmap(px);
     TempStr base = path::GetPathNoExtTemp(path::GetBaseNameTemp(win->ctrl->GetFilePath()));

@@ -4,7 +4,6 @@
 struct fz_outline;
 struct fz_link;
 struct Pixmap;
-struct RenderedBitmap;
 struct IPageDestination;
 struct TocItem;
 struct PropValue;
@@ -595,7 +594,7 @@ class EngineBase {
 
     Str FilePath() const;
 
-    virtual RenderedBitmap* GetImageForPageElement(IPageElement*);
+    virtual Pixmap* GetImagePixmapForPageElement(IPageElement*);
     virtual Str GetImageDataForPageElement(IPageElement*);
 
     virtual bool HandleLink(IPageDestination*, ILinkHandler*);
@@ -650,7 +649,7 @@ class EnginePdfProxy : public EngineBase {
     TempStr GetPropertyTemp(DocProp prop) override;
     bool BenchLoadPage(int pageNo) override;
     Vec<IPageElement*> GetElements(int pageNo) override;
-    RenderedBitmap* GetImageForPageElement(IPageElement* ipel) override;
+    Pixmap* GetImagePixmapForPageElement(IPageElement* ipel) override;
     Str GetImageDataForPageElement(IPageElement* ipel) override;
     bool TryGetElements(int pageNo, Vec<IPageElement*>* out) override;
     bool TryExtractPageText(int pageNo, PageText* out) override;

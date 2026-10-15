@@ -208,7 +208,6 @@ TempStr EngineMupdfGetPdfInfo(Str path);
 TempStr EngineMupdfGetPdfOutline(Str path);
 struct Pixmap;
 struct IPageElement;
-Pixmap* EngineMupdfPageImagePixmap(EngineBase*, IPageElement*);
 
 bool IsEnginePsAvailable();
 bool IsEnginePsSupportedFileType(FileType);
