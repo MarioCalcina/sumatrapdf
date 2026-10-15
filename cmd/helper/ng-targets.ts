@@ -84,6 +84,7 @@ export const coreHookSources = [
   "src/ng/tools/AppStubs.cpp",
   "src/ng/gui/BrowserViewNoOp.cpp",
   "src/ng/CrashHandlerNoOp.cpp",
+  "src/ng/base/LogNoOp.cpp",
 ];
 
 export type ArchExtra = {

@@ -5,7 +5,8 @@
 //                          /MacOS/SumatraPDF
 //                          /Resources/SumatraPDF.icns
 //                          /Resources/<lang>.lproj/InfoPlist.strings
-//                          /Frameworks/SumatraQL
+//                          /Frameworks/SumatraCore           engines, model, embedded archive
+//                          /Frameworks/SumatraQL             Quick Look providers
 //                          /PlugIns/SumatraThumbnails.appex  Finder's thumbnails
 //                          /PlugIns/SumatraPreview.appex     Quick Look's previews
 

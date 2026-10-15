@@ -125,8 +125,10 @@ AppKit code lives in `*_mac.mm` files, mostly `gui/NativeWindow_mac.mm`:
   editor's forward search lands in the open window
 - Finder's thumbnails and Quick Look's previews of comics, DjVu, XPS, MOBI
   and FB2 (`QuickLook_mac.mm`): two app extensions in `Contents/PlugIns` load
-  the engines from `Contents/Frameworks/SumatraQL`, and the app declares those
-  types (`ng-mac-bundle.ts`). A preview is the first 20 pages; it needs macOS 12
+  `Contents/Frameworks/SumatraQL`, and the app declares those types
+  (`ng-mac-bundle.ts`). The engines, the model and the embedded archive are in
+  `Contents/Frameworks/SumatraCore`, which the app links too; the shell
+  functions they call come from the app, or from SumatraQL's stubs. A preview is the first 20 pages; it needs macOS 12
 - Check for Updates downloads the release's dmg, checks its SHA-256 and
   installs it over the app, which restarts. A copy it can't replace (run from
   the dmg, translocated by Gatekeeper, a folder it can't write) gets the

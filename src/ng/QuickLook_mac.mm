@@ -41,13 +41,6 @@
 #include "Annotation.h"
 #include "EngineAll.h"
 
-// the engines log; an extension has no log file
-void log(Str s) {
-    if (len(s) > 0) {
-        fwrite(s.s, 1, (size_t)len(s), stderr);
-    }
-}
-
 // a preview is the first pages, each this many pixels on its longer side,
 // shown at half that in points (sharp on a Retina display)
 constexpr int kPreviewMaxPages = 20;
