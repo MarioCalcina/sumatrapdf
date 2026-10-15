@@ -60,6 +60,8 @@
 #include "Menu.h"
 #include "gui/DialogWidgets.h"
 #include "gui/DocCanvas.h"
+#include "gui/MacServices.h"
+#include "gui/NativeCursors.h"
 #include "CanvasCommon.h"
 #include "MainWindowCommon.h"
 
@@ -459,10 +461,23 @@ void CanvasSetCursor(MainWindow* win, int cursorKind) {
     logf("CanvasSetCursor: %s\n", SeqStrByIndex(kCursorNames, cursorKind));
 }
 
+// orig's bitmap cursors. The drag hand is macOS's closed hand and the laser dot
+// is painted (PaintLaserPointer). For an image, gpui keeps the cross it was
+// asked for, since it only sets a cursor when the kind changes, and AppKit
+// shows the image over it on every mouse move.
 bool CanvasSetNativeCursor(MainWindow* win, NativeCursor cursor) {
-    (void)win;
-    (void)cursor;
-    return false;
+    if (cursor == NativeCursor::Drag) {
+        CanvasSetCursor(win, (int)gp::CursorKind::ClosedHand);
+        return true;
+    }
+    void* nsCursor = NativeCursorGet(cursor, AppShellRenderScale(win->gpuiWin));
+    if (!nsCursor) {
+        return false;
+    }
+    CanvasSetCursor(win, (int)gp::CursorKind::Crosshair);
+    win->nativeCursor = cursor;
+    MacCursorSet(nsCursor);
+    return true;
 }
 
 // the thread that paints; nothing else may touch a RenderImage

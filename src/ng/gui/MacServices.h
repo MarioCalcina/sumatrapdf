@@ -12,3 +12,7 @@ void MacMakeDefaultPdfReader();
 bool MacStartInstanceServer(void (*onCmds)(Str));
 bool MacSendToRunningInstance(Str cmds);
 TempStr MacAppBundlePathTemp();
+void* MacCursorNew(const Pixmap* pm, float scale, int hotX, int hotY);
+void MacCursorRelease(void* cursor);
+void MacCursorSet(void* cursor);
+bool MacCursorIsCurrent(void* cursor);

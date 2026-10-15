@@ -41,6 +41,7 @@
 #include "AnnotTextPopup.h"
 #include "AnnotPlacement.h"
 #include "AnnotPlacementCommon.h"
+#include "gui/NativeCursors.h"
 
 #include "SumatraLog.h"
 
@@ -69,8 +70,6 @@ SizeF FreeTextPlacementPageSize(const AnnotCreateArgs& args) {
 
 // orig's SetPlacementCursor: the note and the ink tool have a cursor made from
 // their SVG icon, every other mode a cross
-// ng: the icon cursors exist on Windows only (see "gpui gaps": no cursor from
-// an image); elsewhere all modes use the cross
 void SetPlacementCursor(MainWindow* win) {
     switch (KindOf(win)) {
         case AnnotPlacementKind::Text:
@@ -463,8 +462,8 @@ void PaintAnnotationPlacement(MainWindow* win, gp::PaintCtx* ctx, DisplayModel* 
 }
 
 // orig compares GetCursor() to IDC_CROSS or the SVG cursor. ng records the
-// cursor it asked for: the note and the ink tool are native cursors on
-// Windows, everything else is the cross.
+// cursor it asked for: the note and the ink tool are native cursors,
+// everything else is the cross.
 bool PlacementDumpCursor(MainWindow* win, AnnotPlacementKind kind, bool active) {
     if (!win || !active) {
         return false;
@@ -591,5 +590,6 @@ TempStr AnnotationPlacementStateTemp(MainWindow* win) {
         out.Append(fmt("highlighterPlacement active=%d notification=%d cmd=%d message=%s\n", on ? 1 : 0, notif ? 1 : 0,
                        on ? p.cmdId : 0, message));
     }
+    out.Append(NativeCursorStateTemp(win));
     return ToStrTemp(out);
 }

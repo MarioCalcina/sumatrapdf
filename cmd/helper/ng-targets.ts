@@ -1177,6 +1177,7 @@ export const targets: Target[] = [
       "src/ng/gui/AppShell.cpp",
       "src/ng/gui/GpuiTheme.cpp",
       "src/ng/gui/DocCanvas.cpp",
+      "src/ng/gui/NativeCursors.cpp",
       "src/ng/CanvasCommon.cpp",
       "src/ng/gui/Sidebar.cpp",
       "src/ng/gui/TabsUI.cpp",

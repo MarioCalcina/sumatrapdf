@@ -242,6 +242,7 @@ import { testit as homeTwoWindows } from "./home-two-windows.ts";
 import { testit as annotUndoRedo } from "./annot-undo-redo.ts";
 import { testit as annotUndoOneStep } from "./annot-undo-one-step.ts";
 import { testit as textAnnotationPlacement } from "./text-annotation-placement.ts";
+import { testit as annotPlacementCursor } from "./annot-placement-cursor.ts";
 import { testit as freeTextAnnotationPlacement } from "./free-text-annotation-placement.ts";
 import { testit as freeTextEditToolbar } from "./free-text-edit-toolbar.ts";
 import { testit as issue6198 } from "./issue-6198.ts";
@@ -499,6 +500,7 @@ export const tests: NamedTest[] = [
   ["issue-6054", issue6054],
   ["pdf-edit-toolbar-interaction", pdfEditToolbarInteraction],
   ["text-annotation-placement", textAnnotationPlacement],
+  ["annot-placement-cursor", annotPlacementCursor],
   ["free-text-annotation-placement", freeTextAnnotationPlacement],
   ["free-text-edit-toolbar", freeTextEditToolbar],
   ["create-annot-enters-edit-mode", createAnnotEntersEditMode],

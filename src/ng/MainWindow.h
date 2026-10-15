@@ -99,9 +99,8 @@ struct AnnotEditToolbar;
 struct AnnotFilterToolbar;
 struct AnnotTextPopup;
 
-// ng: orig's cursors that are bitmaps, which gpui's CursorKind cannot name.
-// Windows only: the canvas asks gpui for a stand-in kind and the frame's
-// subclass sets the real cursor (gui/NativeCursors_win.cpp).
+// ng: orig's cursors that are bitmaps, which gpui's CursorKind cannot name
+// (CanvasSetNativeCursor, gui/NativeCursors.cpp).
 enum class NativeCursor {
     None,
     // the hand of a drag-pan (orig's gCursorDrag)

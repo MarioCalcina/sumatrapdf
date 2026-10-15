@@ -3,7 +3,8 @@
 
 // AppKit and IOKit services gpui has no counterpart for: images on the
 // pasteboard (gpui writes text only), Finder's file icons, keeping the display
-// awake, mail, the default PDF reader and the running instance's port.
+// awake, mail, the default PDF reader, the running instance's port and
+// cursors made from pixels.
 
 #include "base/Base.h"
 
@@ -238,4 +239,44 @@ bool MacSendToRunningInstance(Str cmds) {
 // "/Applications/SumatraPDF.app"
 TempStr MacAppBundlePathTemp() {
     return str::DupTemp(Str((char*)NSBundle.mainBundle.bundlePath.fileSystemRepresentation));
+}
+
+// A cursor from premultiplied BGRA pixels at a display's `scale`; the hot spot
+// is in points from the top left. Retained: MacCursorRelease frees it.
+void* MacCursorNew(const Pixmap* pm, float scale, int hotX, int hotY) {
+    if (!pm || pm->format != PixmapFormat::BGRA8 || !(scale > 0)) {
+        return nullptr;
+    }
+    CGColorSpaceRef cs = CGColorSpaceCreateDeviceRGB();
+    CGBitmapInfo info = (CGBitmapInfo)kCGImageAlphaPremultipliedFirst | (CGBitmapInfo)kCGBitmapByteOrder32Little;
+    CGContextRef ctx = CGBitmapContextCreate(pm->data, (size_t)pm->width, (size_t)pm->height, 8, (size_t)pm->stride,
+                                             cs, info);
+    CGColorSpaceRelease(cs);
+    if (!ctx) {
+        return nullptr;
+    }
+    CGImageRef img = CGBitmapContextCreateImage(ctx);
+    CGContextRelease(ctx);
+    if (!img) {
+        return nullptr;
+    }
+    NSSize size = NSMakeSize(pm->width / scale, pm->height / scale);
+    NSImage* image = [[NSImage alloc] initWithCGImage:img size:size];
+    CGImageRelease(img);
+    NSCursor* cursor = [[NSCursor alloc] initWithImage:image hotSpot:NSMakePoint(hotX, hotY)];
+    return (__bridge_retained void*)cursor;
+}
+
+void MacCursorRelease(void* cursor) {
+    if (cursor) {
+        CFRelease(cursor);
+    }
+}
+
+void MacCursorSet(void* cursor) {
+    [(__bridge NSCursor*)cursor set];
+}
+
+bool MacCursorIsCurrent(void* cursor) {
+    return cursor && [NSCursor currentCursor] == (__bridge NSCursor*)cursor;
 }

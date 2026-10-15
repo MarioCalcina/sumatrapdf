@@ -107,6 +107,8 @@ AppKit code lives in `*_mac.mm` files, mostly `gui/NativeWindow_mac.mm`:
   the pasteboard as PNG and TIFF (`gui/MacServices_mac.mm`); gpui writes text
   only
 - Fullscreen.PreventSleep holds an IOKit assertion against display sleep
+- dragging the page shows macOS's closed hand; the note and ink tools show
+  their icon as the cursor (`gui/NativeCursors.cpp`)
 - the window opens where it was closed, on the display it was on
   (`AppShellKeepOnScreen`)
 - a tab dragged out of its strip and dropped on another window joins that
@@ -141,7 +143,5 @@ gpui-kit-cpp):
 
 - a text field's context menu (Cut, Copy, Paste, Select All) is gpui's and
   stays English
-- the note and ink annotation tools show the cross cursor, not orig's icon
-  cursors: gpui sets the cursor itself on every mouse move
 - a text selection can't be dragged out of the window: gpui has no drag
   source
