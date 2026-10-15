@@ -83,7 +83,7 @@ async function dragOut(pdf: string, logPath: string, select: boolean, want: (pb:
       { error: (s) => `drag-out: ${pdf}: no drag started:\n${s}` },
     );
     const pb = await pollUntil(
-      async () => String((await client.request(ControlCommand.TestDragOut, []))[1] ?? ""),
+      async () => String((await client.request(ControlCommand.TestPasteboard, []))[1] ?? ""),
       want,
       { error: (s) => `drag-out: ${pdf}: drag pasteboard: ${s}` },
     );

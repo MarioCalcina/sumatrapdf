@@ -10,4 +10,4 @@ typedef void (*DragOutEndFn)(void* user, bool dropped);
 
 bool MacDragOutText(gpui::Window* gw, Str text, DragOutEndFn onEnd, void* user);
 bool MacDragOutImage(gpui::Window* gw, Str png, Str fileName, DragOutEndFn onEnd, void* user);
-TempStr MacDragPasteboardTemp();
+TempStr MacPasteboardTemp(bool drag);

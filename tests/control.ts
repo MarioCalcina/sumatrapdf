@@ -122,8 +122,8 @@ export enum ControlCommand {
   TestRenameFile = 131,
   // ng only: the rows of the focused text field's context menu
   TestInputMenu = 134,
-  // ng only: what the last drag-out put on the drag pasteboard
-  TestDragOut = 135,
+  // ng only: what is on the drag pasteboard, or with "general" the clipboard
+  TestPasteboard = 135,
 }
 
 export type ControlArg = number | string | Uint8Array | ControlArg[];

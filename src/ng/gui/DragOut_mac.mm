@@ -159,11 +159,13 @@ bool MacDragOutImage(gp::Window* gw, Str png, Str fileName, DragOutEndFn onEnd, 
     return BeginDrag(gw, item, image, onEnd, user);
 }
 
-// for tests: the drag pasteboard's types, and its text when it has some
-TempStr MacDragPasteboardTemp() {
-    NSPasteboard* pb = [NSPasteboard pasteboardWithName:NSPasteboardNameDrag];
+// for tests: the types on the drag pasteboard (or the general one, the
+// clipboard), and its text when it has some
+TempStr MacPasteboardTemp(bool drag) {
+    NSPasteboard* pb = drag ? [NSPasteboard pasteboardWithName:NSPasteboardNameDrag] : NSPasteboard.generalPasteboard;
     str::Builder out;
-    out.Append(StrL("types="));
+    // grows with every write, so a test can tell new contents from old
+    out.Append(fmt("changes=%d types=", (int)pb.changeCount));
     bool first = true;
     for (NSPasteboardType t in pb.types) {
         out.Append(fmt(first ? "%s" : ",%s", Str(t.UTF8String)));

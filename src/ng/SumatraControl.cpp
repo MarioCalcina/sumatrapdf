@@ -859,8 +859,8 @@ enum class ControlCmd : u16 {
     TestInstallUpdate = 133,
     // ng: the rows of the focused text field's context menu
     TestInputMenu = 134,
-    // ng: what the last drag-out put on the drag pasteboard
-    TestDragOut = 135,
+    // ng: what is on the drag pasteboard, or with arg "general" the clipboard
+    TestPasteboard = 135,
 };
 
 bool ParseArg(PacketReader& r, ControlArg** argOut) {
@@ -2841,8 +2841,8 @@ static void ExecuteControlRequest(ControlRequest* req) {
             break;
         }
 
-        case ControlCmd::TestDragOut: {
-            AppendTestResult(req, 0, MacDragPasteboardTemp());
+        case ControlCmd::TestPasteboard: {
+            AppendTestResult(req, 0, MacPasteboardTemp(!str::Eq(StringArg(req, 0), StrL("general"))));
             break;
         }
 
