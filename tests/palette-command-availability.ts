@@ -108,7 +108,6 @@ export async function testit(): Promise<void> {
       "CmdCopyComment",
       "CmdShowAnnotationText",
       "CmdCopyImage",
-      "CmdFixDefaultApp",
       "CmdInstallPrereleaseUpdate",
       "CmdExpandToCurrentPage",
       "CmdSearchGoogleLens",

@@ -362,6 +362,12 @@ function geom(): Geom {
   return { scale, ox: x / scale, oy: y / scale, cx: x, cy: y, cdx: dx, cdy: dy };
 }
 
+// the canvas in frame client dips
+export function macCanvasRect(): { x: number; y: number; dx: number; dy: number } {
+  const g = geom();
+  return { x: g.ox, y: g.oy, dx: g.cdx / g.scale, dy: g.cdy / g.scale };
+}
+
 // Frame-client dips to screen pixels. The origin is the gpui content view.
 export function macClientToScreen(x: number, y: number): { x: number; y: number } {
   const res = macControlRequest(TestLayout, []);

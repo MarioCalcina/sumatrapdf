@@ -5,6 +5,7 @@ import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ControlCommand, type ControlClient } from "./control";
 import { cmdId, runStandalone, SLOW_BUILD_FACTOR, tmpPath } from "./util";
+import { macCanvasRect } from "./mac-control";
 import { sleep } from "./winapi";
 import { killAndWait, launchControlled } from "./win-automation";
 
@@ -54,7 +55,7 @@ function clipboardText(): string {
   return res.stdout.toString().replace(/\r?\n$/, "");
 }
 
-// screen= is the frame point TestContextMenuAt and ctxcmd use.
+// screen= is a frame point; TestContextMenuAt takes a canvas one
 async function freeTextCenter(client: ControlClient): Promise<{ x: number; y: number }> {
   const deadline = Date.now() + 5000 * SLOW_BUILD_FACTOR;
   let raw = "";
@@ -62,7 +63,11 @@ async function freeTextCenter(client: ControlClient): Promise<{ x: number; y: nu
     raw = String((await client.request(ControlCommand.TestMarkupAnnots, []))[1] ?? "");
     const m = /type=FreeText[^\n]*screen=(-?\d+),(-?\d+),(-?\d+),(-?\d+)/.exec(raw);
     if (m && +m[3]! > 0 && +m[4]! > 0) {
-      return { x: +m[1]! + Math.floor(+m[3]! / 2), y: +m[2]! + Math.floor(+m[4]! / 2) };
+      const c = macCanvasRect();
+      return {
+        x: +m[1]! + Math.floor(+m[3]! / 2) - Math.round(c.x),
+        y: +m[2]! + Math.floor(+m[4]! / 2) - Math.round(c.y),
+      };
     }
     await sleep(40);
   }

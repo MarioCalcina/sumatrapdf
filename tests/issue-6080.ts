@@ -82,8 +82,11 @@ export async function testit(): Promise<void> {
     const tocFw = item(openFw, "sidebarTop").rect;
 
     if (Math.abs(canvasFw1.dx - canvasFw0.dx) > 2) {
+      const wa = getWorkArea();
       throw new Error(
-        `issue-6080: fit-width canvas dx should stay ${canvasFw0.dx}, got ${canvasFw1.dx} (frame ${frameFw0.dx} -> ${frameFw1.dx})`,
+        `issue-6080: fit-width canvas dx should stay ${canvasFw0.dx}, got ${canvasFw1.dx} ` +
+          `(frame ${frameFw0.x},${frameFw0.dx} -> ${frameFw1.x},${frameFw1.dx}, toc ${tocFw.dx}, ` +
+          `work ${wa.left}..${wa.right})\n${openFw.raw}`,
       );
     }
     if (frameFw1.dx < frameFw0.dx + tocFw.dx - 8) {

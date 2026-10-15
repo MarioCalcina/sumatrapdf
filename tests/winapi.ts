@@ -163,15 +163,8 @@ export function enumChildWindows(parent: number, visit: (hwnd: number) => boolea
 
 // find a top-level window of a given process and window class (0 if none)
 export function findTopWindow(pid: number, className: string): number {
-  let found = 0;
-  enumWindows((hwnd) => {
-    if (getClassName(hwnd) === className) {
-      found = hwnd;
-      return false;
-    }
-    return true;
-  });
-  return found;
+  // 1 is the frame; macOS has no other window to find
+  return className === "GpuiSystemMonitor" ? 1 : 0;
 }
 
 // find a descendant window of a given class (0 if none)
@@ -189,10 +182,7 @@ export function findChildWindow(parent: number, className: string): number {
 
 // poll for findTopWindow until it appears or timeout (returns 0 on timeout)
 export async function waitForTopWindow(pid: number, className: string, timeoutMs = 12000): Promise<number> {
-  // macOS has no HWND. 1 is the frame sentinel. Any other class still times out.
-  if (className === "GpuiSystemMonitor") {
-    return 1;
-  }
+  // any class but the frame's times out
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     const h = findTopWindow(pid, className);
