@@ -53,6 +53,8 @@ const quickLookTypes: ImportedType[] = [
   { id: `${bundleId}.fb2`, name: "FictionBook", exts: ["fb2", "fb2z"] },
 ];
 
+// the engines and the model, which the app and the Quick Look library link
+const coreLib = "SumatraCore";
 // the library both extensions load, built by the SumatraQL target
 const quickLookLib = "SumatraQL";
 
@@ -217,15 +219,20 @@ function appexPlist(e: Extension, version: string): string {
 
 // the Quick Look library and extensions, when the build made them: built
 // alone, the app has none. Nested code is signed before the app
-function embedQuickLook(outDir: string, app: string, version: string): void {
-  const lib = join(outDir, quickLookLib);
-  if (!existsSync(lib)) return;
+function embedFramework(outDir: string, app: string, name: string): boolean {
+  const lib = join(outDir, name);
+  if (!existsSync(lib)) return false;
   const fwDir = join(app, "Contents", "Frameworks");
   mkdirSync(fwDir, { recursive: true });
-  const bundleLib = join(fwDir, quickLookLib);
+  const bundleLib = join(fwDir, name);
   rmSync(bundleLib, { force: true });
   copyFileSync(lib, bundleLib, constants.COPYFILE_FICLONE);
   run(["codesign", "--force", "--sign", "-", bundleLib]);
+  return true;
+}
+
+function embedQuickLook(outDir: string, app: string, version: string): void {
+  if (!embedFramework(outDir, app, quickLookLib)) return;
 
   const entitlements = join(outDir, "appex.entitlements");
   writeFileSync(entitlements, appexEntitlements);
@@ -303,6 +310,7 @@ export function makeMacBundle(root: string, exe: string, version: string): strin
   const texts = readPlistTexts(root);
   writePlistTexts(resDir, texts);
   writeFileSync(join(app, "Contents", "Info.plist"), infoPlist(exeName, version, texts));
+  embedFramework(outDir, app, coreLib);
   embedQuickLook(outDir, app, version);
   // seals Info.plist, the icon, the texts and the extensions into the signature
   run(["codesign", "--force", "--sign", "-", app]);

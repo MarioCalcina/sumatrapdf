@@ -65,6 +65,10 @@ export function prepareTestEnvironment(): void {
   mkdirSync(TMP_DIR, { recursive: true });
   const testExe = join(TESTS_TMP_DIR, exeName);
   copyFileSync(sourceExe, testExe);
+  const core = join(dirname(sourceExe), "SumatraCore");
+  if (existsSync(core)) {
+    copyFileSync(core, join(TESTS_TMP_DIR, "SumatraCore"));
+  }
   // ng is portable only with a settings file next to it; without one it
   // reads the settings of the user running the tests
   writeFileSync(join(TESTS_TMP_DIR, "SumatraPDF-settings.txt"), "");

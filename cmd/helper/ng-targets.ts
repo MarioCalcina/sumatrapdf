@@ -68,7 +68,23 @@ export type Target = {
   generated?: GeneratedHeader[];
   /** sources, excludes, defines and includes added only for these architectures */
   perArch?: Partial<Record<Arch, ArchExtra>>;
+  /** link every object of the static deps, not only what the target's own code reaches */
+  allLoad?: boolean;
+  /**
+   * the shell functions SumatraCore calls, defined by `coreHookSources` for the
+   * targets without a shell: "leave" leaves them undefined for the image that
+   * loads the dylib, "define" links the executable's own and exports them,
+   * "export" exports the stubs the target compiles
+   */
+  coreHooks?: "leave" | "define" | "export";
 };
+
+// the stubs of the shell functions the engines and the model call
+export const coreHookSources = [
+  "src/ng/tools/AppStubs.cpp",
+  "src/ng/gui/BrowserViewNoOp.cpp",
+  "src/ng/CrashHandlerNoOp.cpp",
+];
 
 export type ArchExtra = {
   sources?: string[];
@@ -1016,20 +1032,28 @@ export const targets: Target[] = [
     exceptions: true,
   },
   {
+    // the engines, the document model and the embedded archive, which the
+    // app and the Quick Look library share instead of linking a copy each
+    name: "SumatraCore",
+    kind: "dylib",
+    sources: [],
+    deps: ["app"],
+    allLoad: true,
+    coreHooks: "leave",
+    strict: true,
+    exceptions: true,
+  },
+  {
     // Finder's thumbnails and Quick Look's previews of the formats macOS
     // can't show, for the two app extensions below (src/ng/QuickLook_mac.mm)
     name: "SumatraQL",
     kind: "dylib",
-    sources: [
-      "src/ng/QuickLook_mac.mm",
-      "src/ng/tools/AppStubs.cpp",
-      "src/ng/gui/BrowserViewNoOp.cpp",
-      "src/ng/CrashHandlerNoOp.cpp",
-    ],
+    sources: ["src/ng/QuickLook_mac.mm", ...coreHookSources],
     includes: ["src/ng", "ext/mupdf/include"],
-    deps: ["app"],
+    dylibs: ["SumatraCore"],
     frameworks: ["QuickLookThumbnailing", "QuickLookUI"],
     exports: ["_OBJC_CLASS_$_SumatraThumbnailProvider", "_OBJC_CLASS_$_SumatraPreviewProvider"],
+    coreHooks: "export",
     strict: true,
     exceptions: true,
   },
@@ -1050,7 +1074,7 @@ export const targets: Target[] = [
   {
     name: "SumatraPDF",
     kind: "app",
-    bundled: ["SumatraQL", "SumatraThumbnails", "SumatraPreview"],
+    bundled: ["SumatraCore", "SumatraQL", "SumatraThumbnails", "SumatraPreview"],
     sources: [
       "src/ng/SumatraPDF.cpp",
       "src/ng/SumatraPDFCommon.cpp",
@@ -1196,8 +1220,10 @@ export const targets: Target[] = [
       "src/ng/base/CrashHandler_mac.cpp",
       "src/ng/base/CrashHandler_posix.cpp",
     ],
-    includes: ["src/ng", "ext/gpui", "ext/mupdf/include", "src"],
-    deps: ["gpui", "app"],
+    includes: ["src/ng", "ext/gpui", "ext/mupdf/include"],
+    deps: ["gpui"],
+    dylibs: ["SumatraCore"],
+    coreHooks: "define",
     strict: true,
     exceptions: true,
   },

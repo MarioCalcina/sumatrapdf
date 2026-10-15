@@ -12,7 +12,7 @@ import { cpus } from "node:os";
 import { dirname, isAbsolute, join, relative } from "node:path";
 import { Glob } from "bun";
 import { hostArch, macMinVersion, type Arch, type Toolchain } from "./ng-toolchain";
-import { findTarget, forArch, type Target } from "./ng-targets";
+import { coreHookSources, findTarget, forArch, type Target } from "./ng-targets";
 import { embedLzsa } from "./embedded";
 import { ngVersion, versionDefines } from "./ng-version";
 
@@ -382,12 +382,38 @@ const macLibs = ["-lcurl", "-liconv"];
 // SumatraPDF.app/Contents/PlugIns/<name>.appex/Contents/MacOS/<name>
 const appexFrameworksRpath = "@executable_path/../../../../Frameworks";
 
-function linkCmd(tc: Toolchain, t: Target, f: BuildFlags, out: string, inputs: string[]): string[] {
+// SumatraCore's shell functions: what the stubs in coreHookSources define.
+// nm on objects compiled like SumatraQL's, which links those stubs.
+async function coreHookSymbols(tc: Toolchain, f: BuildFlags, dir: string, fail: Fail): Promise<string[]> {
+  const ql = findTarget("SumatraQL") ?? fail("no SumatraQL target");
+  const hooks: Target = { ...ql, name: "corehooks", sources: coreHookSources, coreHooks: undefined };
+  const objs = await compileTarget(tc, hooks, f, dir, fail);
+  const r = await spawn(["nm", "-gUm", ...objs]);
+  if (r.code !== 0) fail(`nm failed: ${r.out}`);
+  // "(__TEXT,__text) external _Name"; weak ones are inlines from headers
+  const syms = r.out
+    .split("\n")
+    .filter((l) => / external _/.test(l) && !/weak|private external/.test(l))
+    .map((l) => l.trim().split(/\s+/).pop()!);
+  return [...new Set(syms)].sort();
+}
+
+function linkCmd(tc: Toolchain, t: Target, f: BuildFlags, out: string, inputs: string[], hooks: string[]): string[] {
   const ld = [...archFlags(f.arch)];
-  if (t.kind === "dylib") ld.push("-dynamiclib", "-install_name", `@rpath/${t.name}`);
+  if (t.kind === "dylib") ld.push("-dynamiclib", "-install_name", `@rpath/${t.name}`, "-rpath", "@loader_path");
+  if (t.allLoad) ld.push("-Wl,-all_load");
   if (t.exports) {
     ld.push("-Wl,-dead_strip");
     for (const sym of t.exports) ld.push(`-Wl,-exported_symbol,${sym}`);
+  }
+  // resolved at load time, from the image that loads SumatraCore
+  const hookFlag = { leave: "-Wl,-U,", define: "-Wl,-u,", export: "-Wl,-exported_symbol," };
+  for (const sym of t.coreHooks ? hooks : []) ld.push(hookFlag[t.coreHooks!] + sym);
+  if (t.kind === "app" && t.dylibs) {
+    // the bundle's Frameworks, the build dir, and for a debug build the build
+    // dir again by absolute path: tests run a copy of the exe from elsewhere
+    ld.push("-rpath", "@executable_path/../Frameworks", "-rpath", "@executable_path");
+    if (f.debug) ld.push("-rpath", outDir(f));
   }
   if (t.kind === "appex") {
     // Foundation's NSExtensionMain runs the extension; its code is in a dylib
@@ -415,7 +441,8 @@ async function link(
 ): Promise<string> {
   const out = join(dir, t.name);
   const inputs = [...objs, ...libs];
-  const cmd = linkCmd(tc, t, f, out, inputs);
+  const hooks = t.coreHooks ? await coreHookSymbols(tc, f, dir, fail) : [];
+  const cmd = linkCmd(tc, t, f, out, inputs, hooks);
   const key = cmd.join("\n");
   // the command line itself is an input: a changed flag relinks
   const cmdStamp = join(dir, `${t.name}-link.txt`);
