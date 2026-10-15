@@ -34,7 +34,10 @@ and `-universal` builds both and joins them with lipo into
 
 The development PC may have no Mac. `.github/workflows/mac-app.yml` (manual
 trigger) builds the universal release app on a GitHub macOS runner, packs
-`SumatraPDF-mac.dmg` and uploads screenshots of the app opened from it.
+`SumatraPDF-mac.dmg` and uploads screenshots of the app opened from it. With
+the secrets `.github/scripts/sign-mac.sh` lists, it signs the app with a
+Developer ID and has Apple notarize it; without them the app stays ad-hoc
+signed.
 `mac-daily.yml` builds debug and the universal release, and runs the unit tests
 natively and, for x86_64, under Rosetta. A failing build step's last lines are
 an error annotation (`.github/scripts/run.sh`), readable through the checks API
