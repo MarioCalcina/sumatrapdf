@@ -3239,6 +3239,8 @@ void DocCanvasAutoScrollTick(MainWindow* win, int elapsedMs) {
     // WM_KILLFOCUS; the tick sees the frame without the focus, or inactive
     bool lostFocus = !AppShellIsFrameFocused(win) || (win->gpuiWin && !win->gpuiWin->active);
     if (lostFocus) {
+        logf("DocCanvasAutoScrollTick: stop, frame focused=%d active=%d\n", (int)AppShellIsFrameFocused(win),
+             (int)(win->gpuiWin && win->gpuiWin->active));
         win->mouseAction = MouseAction::None;
         win->xScrollSpeed = 0;
         win->yScrollSpeed = 0;

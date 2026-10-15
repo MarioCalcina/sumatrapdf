@@ -14,7 +14,7 @@
 // mouse messages, and reads the scroll position with a cross-process
 // GetScrollInfo (see project memory env-gui-automation).
 
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpPath, makeBlankPdf } from "./util";
 import { findCanvas, launchControlled, killAndWait } from "./win-automation";
@@ -53,7 +53,9 @@ export async function testit(): Promise<void> {
 
   // kill stale dev-build instances so reuse-instance can't forward our launch
   // to an old window (which would leave our process window-less)
-  const { proc, client, frame } = await launchControlled(["-appdata", appdata, pdf]);
+  const logPath = tmpPath("issue-2693.log");
+  rmSync(logPath, { force: true });
+  const { proc, client, frame } = await launchControlled(["-appdata", appdata, "-log-to-file", logPath, pdf]);
   try {
     await client.waitForRenderIdle();
     showWindow(frame, SW_RESTORE);
@@ -91,9 +93,10 @@ export async function testit(): Promise<void> {
     // new float code scrolls ~0.9px/20ms (~45px/s nominal) -> several px over 0.6s;
     // old integer code truncates the speed to 0 and the document stays put.
     if (moved < 5) {
+      const log = existsSync(logPath) ? readFileSync(logPath, "utf8") : "";
       throw new Error(
         `middle-click auto-scroll did not move at fractional speed (moved ${moved}px); ` +
-          `with integer speed (the un-fixed behavior) it would be ~0`,
+          `with integer speed (the un-fixed behavior) it would be ~0\n${log.split("\n").slice(-20).join("\n")}`,
       );
     }
     console.log(`  fractional-speed auto-scroll works (moved ${moved}px) ✓`);
