@@ -6,7 +6,7 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { assemblePdf, cmdId, runStandalone, tmpPath } from "./util.ts";
-import { getWorkArea, sendCopyDataW, sleep } from "./winapi.ts";
+import { getWorkArea, moveWindow, sendCopyDataW, sleep } from "./winapi.ts";
 import { killAndWait, launchControlled, sendCommandSync } from "./win-automation.ts";
 
 const kCopyDataDdeW = 0x44646557;
@@ -65,6 +65,13 @@ export async function testit(): Promise<void> {
 
   const { proc, client, frame } = await launchControlled(["-appdata", appdata, pdfA]);
   try {
+    await client.waitForRenderIdle();
+    // a runner's window fills its small screen: leave the frame room to grow
+    const work = getWorkArea();
+    const workDx = work.right - work.left;
+    if (!moveWindow(frame, work.left, work.top, Math.min(800, workDx - 300), Math.min(600, work.bottom - work.top))) {
+      throw new Error("issue-6080: could not size the frame");
+    }
     await client.waitForRenderIdle();
 
     // Fit Width: page uses the full canvas dx, so the frame must grow by ~toc.

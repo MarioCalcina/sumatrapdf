@@ -2408,15 +2408,24 @@ bool ApplyFindPageRange(MainWindow* win) {
     return changed;
 }
 
+// Enter, Find Next or a history pick while typing is still pending: search now.
+// Find-as-you-type stops after its first page; this request wants the first
+// match wherever it is (issue #6230).
 bool FindFlushPendingSearch(MainWindow* win) {
     if (!win->findDebouncePending) {
         return false;
     }
     win->findDebouncePending = false;
     FindDebounceStop(win);
-    if (HasFindText(win)) {
-        StartIncrementalFind(win);
+    if (!HasFindText(win)) {
+        return true;
     }
+    if (DocController* md = BrowserFindCtrl(win)) {
+        BrowserFindStartSearch(win, md);
+        return true;
+    }
+    MarkSearchStart(win);
+    FindTextOnThread(win, TextSearch::Direction::Forward, true);
     return true;
 }
 

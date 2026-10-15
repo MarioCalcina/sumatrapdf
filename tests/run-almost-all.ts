@@ -370,6 +370,12 @@ export const tests: NamedTest[] = [
   // first: it drives the home page, whose thumbnail selection follows the
   // mouse, so it is the one test that cares what the machine was doing before
   ["issue-5978", issue5978],
+  ["issue-6230", issue6230],
+  ["issue-6080", issue6080],
+  ["issue-5997", issue5997],
+  ["attachment-open-external", attachmentOpenExternal],
+  ["palette-command-availability", paletteCommandAvailability],
+  ["issue-6198", issue6198],
   ["sidebar-thumbnails", sidebarThumbnails],
   ["line-annotation-placement", lineAnnotationPlacement],
   ["polyline-annotation-placement", polylineAnnotationPlacement],
@@ -490,7 +496,6 @@ export const tests: NamedTest[] = [
   ["text-annotation-placement", textAnnotationPlacement],
   ["free-text-annotation-placement", freeTextAnnotationPlacement],
   ["free-text-edit-toolbar", freeTextEditToolbar],
-  ["issue-6198", issue6198],
   ["create-annot-enters-edit-mode", createAnnotEntersEditMode],
   ["issue-6166", issue6166],
   ["issue-6169", issue6169],
@@ -619,7 +624,6 @@ export const tests: NamedTest[] = [
   ["issue-3591", issue3591],
   ["issue-4576", issue4576],
   ["issue-6228", issue6228],
-  ["issue-6230", issue6230],
   ["issue-6232", issue6232],
   ["issue-6232-filter", issue6232Filter],
   ["issue-6232-refresh", issue6232Refresh],
@@ -650,7 +654,6 @@ export const tests: NamedTest[] = [
   ["home-tip-double-click", homeTipDoubleClick],
   ["command-palette-annotations", commandPaletteAnnotations],
   ["palette-delete-annotation", paletteDeleteAnnotation],
-  ["palette-command-availability", paletteCommandAvailability],
   ["recent-files-menu", recentFilesMenu],
   ["command-palette-settings", commandPaletteSettings],
   ["settings-restore-default", settingsRestoreDefault],
@@ -667,7 +670,6 @@ export const tests: NamedTest[] = [
   ["issue-6035", issue6035],
   ["issue-5984", issue5984],
   ["issue-5995", issue5995],
-  ["issue-5997", issue5997],
   ["issue-4157", issue4157],
   ["issue-5512", issue5512],
   ["issue-4655", issue4655],
@@ -681,7 +683,6 @@ export const tests: NamedTest[] = [
   ["issue-6023", issue6023],
   ["issue-5946", issue5946],
   ["issue-6012", issue6012],
-  ["issue-6080", issue6080],
   ["issue-6203", issue6203],
   ["issue-6205", issue6205],
   ["adv-settings-fresh-defaults", advSettingsFreshDefaults],
@@ -701,7 +702,6 @@ export const tests: NamedTest[] = [
   ["tool-poster", toolPoster],
   ["tool-merge", toolMerge],
   ["merge-struct-parents", mergeStructParents],
-  ["attachment-open-external", attachmentOpenExternal],
 ];
 
 export async function testit(opts?: SuiteOptions): Promise<void> {
