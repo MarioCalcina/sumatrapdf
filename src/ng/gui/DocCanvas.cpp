@@ -11,6 +11,7 @@
 
 #include "gui/GpuiBridge.h"
 #include "base/Pixmap.h"
+#include "base/File.h"
 #include "base/Timer.h"
 #include "base/UITask.h"
 
@@ -62,6 +63,8 @@
 #include "gui/DocCanvas.h"
 #include "gui/MacServices.h"
 #include "gui/NativeCursors.h"
+#include "gui/DragOut.h"
+#include "PngOptimizer.h"
 #include "CanvasCommon.h"
 #include "MainWindowCommon.h"
 
@@ -1813,6 +1816,47 @@ bool IsDragDistance(int x1, int x2, int y1, int y2) {
     return dx > DpiScale(4) || dy > DpiScale(4);
 }
 
+// --- drag-out (orig's StartTextDragDrop / StartImageDragDrop) ----------------
+
+// the drag took the mouse-up: gpui still has the button down
+static void OnDragOutEnd(void* user, bool dropped) {
+    auto* win = (MainWindow*)user;
+    logf("DragOut: over, dropped=%d\n", dropped ? 1 : 0);
+    if (IsMainWindowValid(win)) {
+        AppShellAfterNativeDrag(win);
+    }
+}
+
+static void StartTextDragOut(MainWindow* win) {
+    bool isTextOnly = false;
+    TempStr text = GetSelectedTextTemp(win->CurrentTab(), StrL("\n"), isTextOnly);
+    bool ok = len(text) > 0 && MacDragOutText(win->gpuiWin, text, OnDragOutEnd, win);
+    logf("DragOut: text, %d bytes, started=%d\n", len(text), ok ? 1 : 0);
+    if (!ok) {
+        AppShellAfterNativeDrag(win);
+    }
+}
+
+// the image as PNG, named as Save Image names it
+static void StartImageDragOut(MainWindow* win) {
+    DisplayModel* dm = win->AsFixed();
+    IPageElement* el = win->imageDragElement;
+    int pageNo = win->imageDragPageNo;
+    win->imageDragElement = nullptr;
+    win->imageDragPageNo = -1;
+    Pixmap* px = dm && el ? EngineMupdfPageImagePixmap(dm->GetEngine(), el) : nullptr;
+    Str png = px ? EncodePngFromPixmap(px) : Str{};
+    FreePixmap(px);
+    TempStr base = path::GetPathNoExtTemp(path::GetBaseNameTemp(win->ctrl->GetFilePath()));
+    TempStr name = fmt("%s_page_%d.png", base, pageNo);
+    bool ok = len(png) > 0 && MacDragOutImage(win->gpuiWin, png, name, OnDragOutEnd, win);
+    logf("DragOut: image, %d bytes, started=%d\n", len(png), ok ? 1 : 0);
+    str::Free(png);
+    if (!ok) {
+        AppShellAfterNativeDrag(win);
+    }
+}
+
 // --- links: cursor, tooltip, follow ------------------------------------------
 
 constexpr int kCurArrow = (int)gp::CursorKind::Arrow;
@@ -2668,14 +2712,26 @@ static void OnMouseLeftButtonDown(MainWindow* win, int x, int y) {
     }
 
     // if clicking on already selected text, prepare for drag-out instead of new selection
-    // ng: the drag-out is OLE's, so Windows only (gpui has no drag out of a
-    // window); elsewhere the press is only remembered and the release clears
-    // the selection, which is what orig does for a click without a drag
     if (canCopy && !isShift && !isCtrl && isOverText && win->showSelection && IsPointInSelection(win, pt)) {
         win->textDragPending = true;
         win->linkOnLastButtonDown = nullptr;
         CanvasSetCapture(win, true);
         return;
+    }
+
+    // if clicking on an image, prepare for image drag-out. skip full-page
+    // images (e.g. scanned pages), where click-and-drag should pan instead.
+    if (canCopy && !isShift && !isCtrl && !isOverText) {
+        int elPageNo = -1;
+        IPageElement* imageEl = dm->GetElementAtPos(pt, &elPageNo);
+        if (imageEl && imageEl->Is(kindPageElementImage) && !IsFullPageImage(dm, imageEl, elPageNo)) {
+            win->imageDragPending = true;
+            win->imageDragElement = imageEl;
+            win->imageDragPageNo = elPageNo;
+            win->linkOnLastButtonDown = nullptr;
+            CanvasSetCapture(win, true);
+            return;
+        }
     }
 
     bool startDrag = !canCopy || ((isShift || !isOverText) && !isCtrl);
@@ -3128,7 +3184,25 @@ static void OnMouseMove(MainWindow* win, int x, int y) {
     }
 
     if (win->textDragPending) {
-        // ng: no drag out of the window off Windows; the release clears the selection
+        if (!IsDragDistance(x, win->dragStart.x, y, win->dragStart.y)) {
+            return;
+        }
+        // threshold met: drag the selected text out
+        win->textDragPending = false;
+        win->dragStartPending = false;
+        CanvasSetCapture(win, false);
+        StartTextDragOut(win);
+        return;
+    }
+
+    if (win->imageDragPending) {
+        if (!IsDragDistance(x, win->dragStart.x, y, win->dragStart.y)) {
+            return;
+        }
+        win->imageDragPending = false;
+        win->dragStartPending = false;
+        CanvasSetCapture(win, false);
+        StartImageDragOut(win);
         return;
     }
 

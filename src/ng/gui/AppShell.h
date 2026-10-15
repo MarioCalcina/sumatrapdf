@@ -50,6 +50,7 @@ void AppShellQuit();
 void AppShellActivateWindow(MainWindow* win);
 bool AppShellIsFrameFocused(MainWindow* win);
 void AppShellFocusFrame(MainWindow* win);
+void AppShellAfterNativeDrag(MainWindow* win);
 // closes the gpui window of `win`; the MainWindow itself is deleted by the
 // caller (CloseWindow)
 void AppShellCloseWindow(MainWindow* win);

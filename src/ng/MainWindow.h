@@ -309,10 +309,10 @@ struct MainWindow {
     // the link the last left button press landed on; the click follows it if
     // the release lands on it too
     IPageElement* linkOnLastButtonDown = nullptr;
-    // a press on already selected text: the drag-out gesture orig starts here
-    // is not ported (no OLE drag and drop in gpui), but the click still clears
+    // a press on already selected text: a drag takes it out of the window
+    // (gui/DragOut_mac.mm), a click clears the selection
     bool textDragPending = false;
-    // true when mouse down on image, waiting for drag (Windows: OLE drag-out)
+    // true when mouse down on image, waiting for drag
     bool imageDragPending = false;
     IPageElement* imageDragElement = nullptr;
     int imageDragPageNo = -1; // page of imageDragElement for screen-rect / hotspot

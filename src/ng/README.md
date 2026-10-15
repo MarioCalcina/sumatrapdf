@@ -139,9 +139,6 @@ AppKit code lives in `*_mac.mm` files, mostly `gui/NativeWindow_mac.mm`:
   download page
 - tabs sit in the title bar beside the traffic lights
 - one universal app for Apple Silicon and Intel, macOS 11 or later
-
-gpui gaps, not fixable from this repo (the framework is vendored from
-gpui-kit-cpp):
-
-- a text selection can't be dragged out of the window: gpui has no drag
-  source
+- selected text and an image on the page drag out of the window through
+  AppKit's dragging session (`gui/DragOut_mac.mm`): gpui has no drag source.
+  An image goes as PNG, TIFF and a PNG file, which Finder copies

@@ -665,6 +665,18 @@ void AppShellFocusFrame(MainWindow* win) {
     AppShellInvalidate(win);
 }
 
+// a drag-out took the mouse-up: gpui still has the button down
+void AppShellAfterNativeDrag(MainWindow* win) {
+    gp::Window* gw = IsMainWindowValid(win) ? win->gpuiWin : nullptr;
+    if (!gw || !gw->mouseDown) {
+        return;
+    }
+    gp::PlatformInput in =
+        gp::InputMouseUp(gp::MouseButton::Left, gw->mouseX, gw->mouseY, {}, gp::WindowCurrentClickCount(gw));
+    gp::WindowDispatchInput(gw, &in);
+    AppShellInvalidate(win);
+}
+
 void AppShellQuit() {
     if (gApp) {
         gp::AppQuitAll(gApp);

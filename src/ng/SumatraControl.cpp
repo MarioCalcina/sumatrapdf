@@ -99,6 +99,7 @@ extern "C" {
 #include "ReadingAutoScroll.h"
 #include "ReadingBar.h"
 #include "UpdateCheck.h"
+#include "gui/DragOut.h"
 #include "SumatraControl.h"
 #include "SumatraControlCommon.h"
 
@@ -858,6 +859,8 @@ enum class ControlCmd : u16 {
     TestInstallUpdate = 133,
     // ng: the rows of the focused text field's context menu
     TestInputMenu = 134,
+    // ng: what the last drag-out put on the drag pasteboard
+    TestDragOut = 135,
 };
 
 bool ParseArg(PacketReader& r, ControlArg** argOut) {
@@ -2835,6 +2838,11 @@ static void ExecuteControlRequest(ControlRequest* req) {
             int exitCode = 0;
             Str res = CommandPaletteStateTemp(&exitCode);
             AppendTestResult(req, exitCode, res);
+            break;
+        }
+
+        case ControlCmd::TestDragOut: {
+            AppendTestResult(req, 0, MacDragPasteboardTemp());
             break;
         }
 
