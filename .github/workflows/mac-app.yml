@@ -44,6 +44,19 @@ jobs:
             sleep 10
           done
           test -f SumatraPDF-mac.dmg
+      # what the dmg is made of, to see what grows it
+      - name: Sizes
+        run: |
+          ls -l SumatraPDF-mac.dmg
+          app=out/mac/rel-universal/SumatraPDF.app/Contents
+          du -sk $app/MacOS/* $app/Frameworks/* $app/PlugIns/* $app/Resources
+          for bin in $app/MacOS/SumatraPDF $app/Frameworks/SumatraQL; do
+            for arch in arm64 x86_64; do
+              echo "$bin $arch"
+              size -m -arch $arch $bin | grep -E "^Segment|section __(text|const|cstring|data|embedded)" | head -20
+            done
+          done
+          ls -l out/mac/rel/embedded.lzsa
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: SumatraPDF-mac
