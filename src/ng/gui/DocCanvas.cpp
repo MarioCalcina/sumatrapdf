@@ -116,7 +116,14 @@ struct DocCanvasUI {
     // OnWindowContextMenu), and the popup that shows it
     MenuModel* ctxMenu = nullptr;
     gp::Entity<gp::PopupMenuState> ctxPopup;
+    // a JavaScript app.popUpMenu link's items while ctxPopup shows them
+    StrVec jsMenuItems;
+    bool jsMenuOpenPending = false;
 };
+
+// the popup of a JavaScript app.popUpMenu link: item i is kCmdJsMenuFirst + i
+constexpr int kCmdJsMenuFirst = 0x7400;
+constexpr int kCmdJsMenuLast = 0x74ff;
 
 static DocCanvasUI* Ui(MainWindow* win) {
     if (!win->docCanvas) {
@@ -3862,8 +3869,63 @@ struct CanvasMenuCmd {
     int cmdId;
 };
 
+// orig's TrackPopupMenu for a JavaScript app.popUpMenu link: its items at the
+// cursor. A link is followed where there may be no gpui context, so the popup
+// opens on the next tick (DocCanvasOpenPendingMenu).
+void DocCanvasShowJsMenu(MainWindow* win, const StrVec& items) {
+    DocCanvasUI* ui = Ui(win);
+    auto* menu = new MenuModel();
+    ui->jsMenuItems.Reset();
+    for (int i = 0; i < len(items) && kCmdJsMenuFirst + i <= kCmdJsMenuLast; i++) {
+        ui->jsMenuItems.Append(items[i]);
+        if (str::Eq(items[i], StrL("-"))) {
+            MenuAppendSeparator(menu);
+            continue;
+        }
+        MenuAppendString(menu, str::ReplaceTemp(items[i], StrL("&"), StrL("&&")), kCmdJsMenuFirst + i);
+    }
+    DeleteMenuModel(ui->ctxMenu);
+    ui->ctxMenu = menu;
+    ui->jsMenuOpenPending = true;
+    AppShellInvalidate(win);
+}
+
+void DocCanvasOpenPendingMenu(MainWindow* win, gp::Ctx* cx) {
+    DocCanvasUI* ui = win->docCanvas;
+    if (!ui || !ui->jsMenuOpenPending || !win->gpuiWin) {
+        return;
+    }
+    ui->jsMenuOpenPending = false;
+    Rect rc = win->canvasRc;
+    OpenPopupMenuAt(cx, ui->ctxPopup, win->gpuiWin->mouseX - (float)rc.x, win->gpuiWin->mouseY - (float)rc.y);
+}
+
+// a pick from a JavaScript menu: "Datasheet: https://..." launches the URL
+// after ": ", a bare URL itself. Other items are data and do nothing.
+static bool JsMenuCommand(MainWindow* win, int cmdId) {
+    if (cmdId < kCmdJsMenuFirst || cmdId > kCmdJsMenuLast) {
+        return false;
+    }
+    DocCanvasUI* ui = Ui(win);
+    int i = cmdId - kCmdJsMenuFirst;
+    if (i >= len(ui->jsMenuItems)) {
+        return true;
+    }
+    Str url = ui->jsMenuItems[i];
+    int colon = str::IndexOf(url, StrL(": "));
+    if (colon >= 0) {
+        url = str::DupTemp(Str(url.s + colon + 2, len(url) - colon - 2));
+        str::TrimWs(url);
+    }
+    logf("JsMenuCommand: '%s'\n", url);
+    if (IsExternalUrl(url) || str::StartsWithI(url, StrL("ftp://"))) {
+        win->linkHandler->LaunchURL(url);
+    }
+    return true;
+}
+
 static void RunCanvasMenuCmd(CanvasMenuCmd* c) {
-    if (IsMainWindowValidAndNotClosing(c->win)) {
+    if (IsMainWindowValidAndNotClosing(c->win) && !JsMenuCommand(c->win, c->cmdId)) {
         WindowContextMenuCommand(c->win, c->cmdId);
     }
     delete c;

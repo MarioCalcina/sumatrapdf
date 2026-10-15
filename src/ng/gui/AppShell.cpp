@@ -2485,6 +2485,7 @@ void ShellView::OnTick(ShellView* self, gp::Ctx* cx, const gp::TickEvent* ev) {
     ToolbarTick(win, ms);
     AutoReloadTick(win, ms);
     DocCanvasAutoScrollTick(win, ms);
+    DocCanvasOpenPendingMenu(win, cx);
     CanvasTickPresentation(win, ms);
     DocCanvasSmoothScrollTick(win, ms);
     ReadingAutoScrollTick(win, ms);

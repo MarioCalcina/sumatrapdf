@@ -165,9 +165,7 @@ DocControllerCallback* CreateControllerCallbackHandler(MainWindow* win) {
 
 // --- LinkHandler ------------------------------------------------------------
 
-// ng: orig's LinkHandler, from this file. What is not ported: the JavaScript
-// menu destination (orig's TrackPopupMenu at the cursor; the port has no popup
-// it can open from code and wait on). It is marked below.
+// ng: orig's LinkHandler, from this file
 static void LaunchEmbeddedDestination(MainWindow* win, PageDestination* pd) {
     if (pd->embedObjNum <= 0) {
         return;
@@ -231,7 +229,13 @@ void LinkHandler::GotoLink(IPageDestination* dest) {
         // embedded files
         return;
     }
-    // ng: kindDestinationJsMenu needs a popup menu at the cursor.
+    if (kindDestinationJsMenu == kind) {
+        auto* menuDest = (PageDestinationJsMenu*)dest;
+        if (len(menuDest->items) > 0) {
+            DocCanvasShowJsMenu(win, menuDest->items);
+        }
+        return;
+    }
     logf("LinkHandler::GotoLink: unhandled kind %s\n", Str(kind));
 }
 
