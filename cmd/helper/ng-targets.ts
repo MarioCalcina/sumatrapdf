@@ -300,13 +300,6 @@ function dav1dConfig(aarch64: boolean): string {
 `;
 }
 
-// dav1d's cpu-feature detection is one file per architecture and neither
-// compiles on the other (x86/cpu.c is cpuid, arm/cpu.c is sysctlbyname on
-// mac). With HAVE_ASM=0 nothing calls it, but it still has to compile.
-const dav1dArmCpu: ArchExtra = {
-  sources: ["ext/dav1d/src/arm/cpu.c"],
-  exclude: ["ext/dav1d/src/x86/cpu.c"],
-};
 
 // orig premake5.files.lua engines_files() plus the ebook / document-model
 // sources it needs. Listed one by one because src/ will hold the UI too.
@@ -834,7 +827,6 @@ export const targets: Target[] = [
       "ext/dav1d/src/sumatra_bitdepth_8_2.c",
       "ext/dav1d/src/sumatra_bitdepth_16.c",
       "ext/dav1d/src/sumatra_bitdepth_16_2.c",
-      "ext/dav1d/src/x86/cpu.c",
     ],
     includes: ["ext/dav1d", "ext/dav1d/include"],
     strict: false,
@@ -843,7 +835,6 @@ export const targets: Target[] = [
       { name: "config.h", content: dav1dConfig(true), arch: ["arm64"] },
       { name: "config.h", content: dav1dConfig(false), arch: ["x86_64"] },
     ],
-    perArch: { arm64: dav1dArmCpu },
   },
   {
     // HEIC/HEIF/AVIF decoder amalgamation (replaces libheif): HEVC in C,
