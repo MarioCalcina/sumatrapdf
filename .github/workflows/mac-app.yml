@@ -14,6 +14,10 @@ jobs:
   build:
     # macos-latest is Apple Silicon; the app is universal (arm64 + x86_64)
     runs-on: macos-latest
+    env:
+      # a Developer ID certificate in the secrets: the app is signed and
+      # notarized (.github/scripts/sign-mac.sh lists the secrets)
+      SIGNED: ${{ secrets.MACOS_CERT_P12 != '' }}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
@@ -32,7 +36,20 @@ jobs:
           if [ "$n" -gt 0 ] && [ "$n" -le 9 ]; then rev="-rev $n"; fi
           .github/scripts/run.sh bun cmd/ng-build.ts -rel -universal $rev SumatraPDF
           lipo -archs out/mac/rel-universal/SumatraPDF
-      # drag-to-Applications disk image; ditto keeps the ad-hoc signature.
+      # without the secrets the app keeps its ad-hoc signature, and macOS
+      # wants "Open Anyway" the first time
+      - name: Sign and notarize
+        if: env.SIGNED == 'true'
+        env:
+          MACOS_CERT_P12: ${{ secrets.MACOS_CERT_P12 }}
+          MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        run: |
+          .github/scripts/sign-mac.sh out/mac/rel-universal/SumatraPDF.app sign
+          .github/scripts/sign-mac.sh out/mac/rel-universal/SumatraPDF.app notarize
+      # drag-to-Applications disk image; ditto keeps the signature.
       # hdiutil on hosted runners sometimes fails with "Resource busy", so retry
       - name: Package dmg
         run: |
@@ -44,6 +61,9 @@ jobs:
             sleep 10
           done
           test -f SumatraPDF-mac.dmg
+      - name: Sign dmg
+        if: env.SIGNED == 'true'
+        run: .github/scripts/sign-mac.sh out/mac/rel-universal/SumatraPDF.app sign-dmg SumatraPDF-mac.dmg
       # what the dmg is made of, to see what grows it
       - name: Sizes
         run: |
@@ -78,12 +98,19 @@ jobs:
           printf '[SumatraPDF]\nLatest: %s\nBuiltOn: %s\nDownloadPage: %s\nDmg: %s\nSha256: %s\n' \
             "$ver" "$(date +%Y-%m-%d)" "$url" "$dmg" "$sha" > update-check-mac.txt
           cat update-check-mac.txt
+          if [ "$SIGNED" = true ]; then
+            open_en="Apple has notarized the app."
+            open_es="Apple ha notarizado la app."
+          else
+            open_en="Apple has not notarized the app, so the first time macOS won't open it: try to open it once, then in System Settings > Privacy & Security click **Open Anyway**."
+            open_es="Apple no ha notarizado la app, así que la primera vez macOS no la abre: intenta abrirla una vez y luego, en Ajustes del Sistema > Privacidad y seguridad, pulsa **Abrir igualmente**."
+          fi
           cat > notes.md <<EOF
           SumatraPDF for macOS 11 or later, Apple Silicon and Intel. Built from ${GITHUB_SHA::7}.
 
-          **Install:** open SumatraPDF-mac.dmg and drag SumatraPDF to Applications. Apple has not notarized the app, so the first time macOS won't open it: try to open it once, then in System Settings > Privacy & Security click **Open Anyway**. Later versions install themselves from Check for Updates.
+          **Install:** open SumatraPDF-mac.dmg and drag SumatraPDF to Applications. $open_en Later versions install themselves from Check for Updates.
 
-          **Instalar:** abre SumatraPDF-mac.dmg y arrastra SumatraPDF a Aplicaciones. Apple no ha notarizado la app, así que la primera vez macOS no la abre: intenta abrirla una vez y luego, en Ajustes del Sistema > Privacidad y seguridad, pulsa **Abrir igualmente**. Las versiones siguientes se instalan solas desde Buscar actualizaciones.
+          **Instalar:** abre SumatraPDF-mac.dmg y arrastra SumatraPDF a Aplicaciones. $open_es Las versiones siguientes se instalan solas desde Buscar actualizaciones.
           EOF
           gh release create "v$ver" SumatraPDF-mac.dmg update-check-mac.txt -R "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" --title "SumatraPDF $ver" --latest --notes-file notes.md
