@@ -75,12 +75,6 @@ export async function testit(): Promise<void> {
 
 if (import.meta.main) {
   writeFileSync(PDF, makePageGridPdf());
-  const bugs = "C:\\Users\\kjk\\OneDrive\\!sumatra\\bugs\\bug-4398.pdf";
-  try {
-    writeFileSync(bugs, makePageGridPdf());
-    console.log(`wrote ${PDF} and ${bugs}`);
-  } catch {
-    console.log(`wrote ${PDF}`);
-  }
+  console.log(`wrote ${PDF}`);
   await runStandalone(testit);
 }

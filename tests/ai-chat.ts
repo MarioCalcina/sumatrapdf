@@ -6,7 +6,7 @@
 //
 // Requires the chosen backend's CLI installed and authenticated, and network
 // access, so it isn't part of the default CI suite - run it directly:
-//   bun tests/ai-chat.ts --no-build grok "C:\\path\\doc.pdf" "summarize page 1"
+//   bun tests/ai-chat.ts --no-build grok ~/doc.pdf "summarize page 1"
 import { ControlCommand, withControlledSumatra } from "./control";
 import { EXE, runStandalone } from "./util";
 
@@ -16,7 +16,12 @@ const BACKENDS: Record<string, number> = { claude: 0, grok: 1, codex: 2, antigra
 function parseArgs(): { backend: number; backendName: string; file: string; message: string } {
   const args = process.argv.slice(2).filter((a) => a !== "--no-build");
   const backendName = (args[0] ?? "grok").toLowerCase();
-  const file = args[1] ?? "C:\\Users\\kjk\\Downloads\\a_players_guide_to_talislanta.1.pdf";
+  const file = args[1];
+  if (!file) {
+    throw new Error(
+      `ai-chat: pass a document: bun tests/ai-chat.ts --no-build ${backendName} ~/doc.pdf "summarize page 1"`,
+    );
+  }
   const message = args[2] ?? "summarize page 1";
   const backend = BACKENDS[backendName];
   if (backend === undefined) {

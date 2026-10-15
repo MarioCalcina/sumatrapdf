@@ -5,27 +5,10 @@
 
 import { existsSync } from "node:fs";
 import { join } from "node:path";
+import { findLatexEngine } from "./issue-5633.ts";
 import { EXE, ROOT } from "./util.ts";
 
-const WSL_DISTRO = "Ubuntu";
-
-const MIKTEX_INSTALL = [
-  "winget install MiKTeX.MiKTeX",
-  "pdflatex.exe / lualatex.exe are also searched in %PATH% and:",
-  "  %LOCALAPPDATA%\\Programs\\MiKTeX\\miktex\\bin\\x64\\",
-  "  C:\\Program Files\\MiKTeX\\miktex\\bin\\x64\\",
-].join("\n    ");
-
-const TECTONIC_WIN_INSTALL = [
-  "In PowerShell:",
-  "  [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072",
-  "  iex ((New-Object System.Net.WebClient).DownloadString('https://drop-ps1.fullyjustified.net'))",
-].join("\n    ");
-
-const TECTONIC_WSL_INSTALL = [
-  `wsl --install -d ${WSL_DISTRO}`,
-  `wsl -d ${WSL_DISTRO} -- bash -lc "curl --proto '=https' --tlsv1.2 -fsSL https://drop-sh.fullyjustified.net |sh"`,
-].join("\n    ");
+const MACTEX_INSTALL = "brew install --cask mactex-no-gui   (or BasicTeX: brew install --cask basictex)";
 
 type Dep = {
   name: string;
@@ -33,19 +16,6 @@ type Dep = {
   detail?: string;
   install?: string;
 };
-
-function runCmd(cmd: string[]): { ok: boolean; stdout: string; stderr: string } {
-  try {
-    const p = Bun.spawnSync({ cmd, stdout: "pipe", stderr: "pipe" });
-    return {
-      ok: p.exitCode === 0,
-      stdout: p.stdout.toString().trim(),
-      stderr: p.stderr.toString().trim(),
-    };
-  } catch (e) {
-    return { ok: false, stdout: "", stderr: String(e) };
-  }
-}
 
 function firstLine(text: string): string {
   return (
@@ -56,34 +26,6 @@ function firstLine(text: string): string {
   );
 }
 
-function findOnPath(exe: string): string | null {
-  return Bun.which(exe) ?? null;
-}
-
-function findLatexEngine(engine: "pdflatex" | "lualatex"): string | null {
-  const exe = `${engine}.exe`;
-  const localAppData = process.env.LOCALAPPDATA ?? "";
-  const candidates = [
-    exe,
-    join(localAppData, "Programs", "MiKTeX", "miktex", "bin", "x64", exe),
-    join("C:/Program Files/MiKTeX/miktex/bin/x64", exe),
-    join("C:/Program Files (x86)/MiKTeX/miktex/bin/x64", exe),
-  ];
-  for (const c of candidates) {
-    if (c === exe) {
-      const inPath = Bun.which(c);
-      if (inPath) {
-        return inPath;
-      }
-      continue;
-    }
-    if (c && existsSync(c)) {
-      return c;
-    }
-  }
-  return null;
-}
-
 function depFromPath(name: string, path: string | null, install?: string): Dep {
   if (path) {
     return { name, ok: true, detail: path };
@@ -92,101 +34,55 @@ function depFromPath(name: string, path: string | null, install?: string): Dep {
 }
 
 function depFromCmd(name: string, cmd: string[], install?: string): Dep {
-  const r = runCmd(cmd);
-  if (r.ok) {
-    const detail = firstLine(r.stdout) || firstLine(r.stderr);
-    return { name, ok: true, detail: detail || cmd.join(" ") };
+  try {
+    const p = Bun.spawnSync({ cmd, stdout: "pipe", stderr: "pipe" });
+    if (p.exitCode === 0) {
+      const detail = firstLine(p.stdout.toString()) || firstLine(p.stderr.toString());
+      return { name, ok: true, detail: detail || cmd.join(" ") };
+    }
+  } catch {
+    // not installed
   }
   return { name, ok: false, install };
 }
 
-function depFromExePaths(name: string, paths: string[], install?: string): Dep {
-  for (const p of paths) {
-    if (p && existsSync(p)) {
-      return { name, ok: true, detail: p };
+// a CLI on PATH, or in ~/.local/bin (where several installers put it, outside
+// the PATH of a GUI-launched shell)
+function findCli(names: string[]): string | null {
+  const home = process.env.HOME ?? "";
+  for (const n of names) {
+    const inPath = Bun.which(n);
+    if (inPath) {
+      return inPath;
+    }
+    const local = join(home, ".local", "bin", n);
+    if (existsSync(local)) {
+      return local;
     }
   }
-  return { name, ok: false, install };
+  return null;
 }
 
 function checkCore(): Dep[] {
-  const deps: Dep[] = [];
-  deps.push(
+  return [
     existsSync(EXE)
-      ? { name: "SumatraPDF.exe (dbg64)", ok: true, detail: EXE }
-      : {
-          name: "SumatraPDF.exe (dbg64)",
-          ok: false,
-          install: "bun cmd/build.ts -dbg",
-        },
-  );
-
-  const git = findOnPath("git");
-  deps.push(
-    git ? depFromCmd("git", [git, "--version"]) : { name: "git", ok: false, install: "winget install Git.Git" },
-  );
-
-  const cl = findOnPath("cl");
-  deps.push(
-    cl
-      ? { name: "cl.exe (MSVC)", ok: true, detail: cl }
-      : {
-          name: "cl.exe (MSVC)",
-          ok: false,
-          install: "Install Visual Studio Build Tools (Desktop development with C++)",
-        },
-  );
-
-  return deps;
+      ? { name: "SumatraPDF (dbg-asan)", ok: true, detail: EXE }
+      : { name: "SumatraPDF (dbg-asan)", ok: false, install: "bun cmd/ng-build.ts -dbg -asan" },
+    depFromCmd("git", ["git", "--version"], "xcode-select --install"),
+    depFromCmd("clang (Xcode command line tools)", ["clang", "--version"], "xcode-select --install"),
+  ];
 }
 
 function checkLatex(): Dep[] {
-  const deps: Dep[] = [];
-
-  const pdflatex = findLatexEngine("pdflatex");
-  deps.push(depFromPath("pdflatex (MiKTeX)", pdflatex, MIKTEX_INSTALL));
-
-  const lualatex = findLatexEngine("lualatex");
-  deps.push(depFromPath("lualatex (MiKTeX)", lualatex, MIKTEX_INSTALL));
-
-  deps.push(depFromCmd("tectonic (Windows)", ["tectonic", "--version"], TECTONIC_WIN_INSTALL));
-
-  const wsl = depFromCmd("wsl.exe", ["wsl.exe", "--version"], "wsl --install");
-  deps.push(wsl);
-
-  const wslDistro = depFromCmd(
-    `WSL distro: ${WSL_DISTRO}`,
-    ["wsl.exe", "-d", WSL_DISTRO, "--", "echo", "ok"],
-    `wsl --install -d ${WSL_DISTRO}`,
-  );
-  deps.push(wslDistro);
-
-  const tectonicWsl = depFromCmd(
-    `tectonic in WSL (${WSL_DISTRO})`,
-    ["wsl.exe", "-d", WSL_DISTRO, "--", "tectonic", "--version"],
-    TECTONIC_WSL_INSTALL,
-  );
-  deps.push(tectonicWsl);
-
-  return deps;
+  return [
+    depFromPath("pdflatex", findLatexEngine("pdflatex"), MACTEX_INSTALL),
+    depFromPath("lualatex", findLatexEngine("lualatex"), MACTEX_INSTALL),
+  ];
 }
 
 function checkAdHocOptional(): Dep[] {
-  const asanExe = join(ROOT, "out", "dbg64_asan", "SumatraPDF-static.exe");
-  const deps: Dep[] = [];
-
-  deps.push(
-    existsSync(asanExe)
-      ? { name: "SumatraPDF-static.exe (ASan, issue-chm-lzx)", ok: true, detail: asanExe }
-      : {
-          name: "SumatraPDF-static.exe (ASan, issue-chm-lzx)",
-          ok: false,
-          install: "bun cmd/build.ts -asan",
-        },
-  );
-
   const exifPy = join(ROOT, "..", "exif-py");
-  deps.push(
+  return [
     existsSync(join(exifPy, ".git"))
       ? { name: "exif-py clone (ad-hoc-exif)", ok: true, detail: exifPy }
       : {
@@ -194,56 +90,27 @@ function checkAdHocOptional(): Dep[] {
           ok: false,
           install: `git clone https://github.com/ianare/exif-py.git ${exifPy}`,
         },
-  );
-
-  const userProfile = process.env.USERPROFILE ?? "";
-  const localAppData = process.env.LOCALAPPDATA ?? "";
-
-  deps.push(
-    depFromExePaths(
+    depFromPath(
       "Grok Build CLI (ad-hoc-selection-translate)",
-      [join(userProfile, ".grok", "bin", "grok.exe"), join(userProfile, ".local", "bin", "grok.exe")],
+      findCli(["grok"]),
       "Install Grok CLI from https://x.ai/",
     ),
-  );
-
-  deps.push(
-    depFromExePaths(
+    depFromPath(
       "Claude Code CLI (ad-hoc-selection-translate)",
-      [
-        join(userProfile, ".local", "bin", "claude.exe"),
-        join(userProfile, "AppData", "Local", "Programs", "claude-code", "claude.exe"),
-      ],
+      findCli(["claude"]),
       "Install Claude Code from https://claude.ai/",
     ),
-  );
-
-  deps.push(
-    depFromExePaths(
+    depFromPath(
       "OpenAI Codex CLI (ad-hoc-selection-translate)",
-      [
-        join(userProfile, ".codex", "bin", "codex.exe"),
-        join(userProfile, ".local", "bin", "codex.exe"),
-        join(localAppData, "Microsoft", "WinGet", "Links", "codex.exe"),
-      ],
+      findCli(["codex"]),
       "Install Codex CLI from https://openai.com/codex",
     ),
-  );
-
-  deps.push(
-    depFromExePaths(
+    depFromPath(
       "Antigravity CLI (ad-hoc-selection-translate)",
-      [
-        join(userProfile, "AppData", "Local", "agy", "bin", "agy.exe"),
-        join(userProfile, "AppData", "Local", "agy", "bin", "antigravity.exe"),
-        join(userProfile, ".local", "bin", "antigravity.exe"),
-        join(userProfile, ".local", "bin", "agy.exe"),
-      ],
+      findCli(["agy", "antigravity"]),
       "Install the Antigravity CLI (agy / antigravity)",
     ),
-  );
-
-  return deps;
+  ];
 }
 
 function printDep(dep: Dep): void {
@@ -251,9 +118,7 @@ function printDep(dep: Dep): void {
   const detail = dep.detail ? `  ${dep.detail}` : "";
   console.log(`${tag}  ${dep.name}${detail}`);
   if (!dep.ok && dep.install) {
-    for (const line of dep.install.split("\n")) {
-      console.log(`      ${line}`);
-    }
+    console.log(`      ${dep.install}`);
   }
 }
 
@@ -265,52 +130,20 @@ function printSection(title: string, deps: Dep[]): number {
   return deps.filter((d) => !d.ok).length;
 }
 
-function printLatexSummary(latex: Dep[]): void {
-  const haveMiktex = latex.slice(0, 2).some((d) => d.ok);
-  const haveTectonicWin = latex[2]?.ok;
-  const haveTectonicWsl = latex[5]?.ok;
-
-  console.log("\n=== LaTeX test coverage (tests/latex.ts) ===");
-  if (haveMiktex) {
-    console.log("OK   issue-5633, ad-hoc-synctex-chinese (MiKTeX pdflatex/lualatex)");
-  } else {
-    console.log("MISS issue-5633, ad-hoc-synctex-chinese need MiKTeX");
-  }
-  if (haveTectonicWin || haveTectonicWsl) {
-    const parts = [];
-    if (haveTectonicWin) {
-      parts.push("Windows tectonic");
-    }
-    if (haveTectonicWsl) {
-      parts.push(`WSL ${WSL_DISTRO} tectonic`);
-    }
-    console.log(`OK   ad-hoc-synctex-wsl (${parts.join(" + ")})`);
-  } else {
-    console.log("MISS ad-hoc-synctex-wsl needs tectonic on Windows and/or inside WSL");
-  }
-}
-
 function main(): void {
-  console.log("SumatraPDF test dependencies\n");
-
-  const core = checkCore();
-  const latex = checkLatex();
-  const adHoc = checkAdHocOptional();
+  console.log("SumatraPDF test dependencies");
 
   let missing = 0;
-  missing += printSection("Core (tests/run-almost-all.ts)", core);
+  missing += printSection("Core (tests/run-almost-all.ts)", checkCore());
+  const latex = checkLatex();
   missing += printSection("LaTeX / SyncTeX (tests/latex.ts)", latex);
-  missing += printSection("Ad-hoc / pre-release (optional)", adHoc);
+  missing += printSection("Ad-hoc (optional)", checkAdHocOptional());
 
-  printLatexSummary(latex);
-
-  const latexMissing = latex.filter((d) => !d.ok).length;
   console.log("");
-  if (missing === 0) {
-    console.log("All checked dependencies are installed.");
-  } else {
-    console.log(`${missing} dependency check(s) missing (${latexMissing} in LaTeX section).`);
+  if (!latex.some((d) => d.ok)) {
+    console.log("issue-5633 and ad-hoc-synctex-chinese skip without pdflatex / lualatex.");
   }
+  console.log(missing === 0 ? "All checked dependencies are installed." : `${missing} dependency check(s) missing.`);
 }
 
 main();

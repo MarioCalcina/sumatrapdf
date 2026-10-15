@@ -4,8 +4,9 @@
 //
 // Run: bun tests/issue-4315-make.ts
 
-import { writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { makePng, tmpPath } from "./util.ts";
 
 function be16(n: number): Buffer {
   const b = Buffer.alloc(2);
@@ -18,27 +19,16 @@ function be32(n: number): Buffer {
   return b;
 }
 
+// a 400x600 solid-color JPEG (GuessFileTypeFromData must recognize it)
 function jpegSolid(r: number, g: number, b: number): Buffer {
-  // 8x8 baseline JPEG, 1 MCU, Y-only-ish via 1:1:1. Built as a tiny JFIF so
-  // GuessFileTypeFromData recognizes it. Quality is irrelevant; we just need
-  // two distinct decodable images of similar size.
-  const ps = [
-    "Add-Type -AssemblyName System.Drawing",
-    `$bmp=New-Object System.Drawing.Bitmap 400,600`,
-    `$gr=[System.Drawing.Graphics]::FromImage($bmp)`,
-    `$gr.Clear([System.Drawing.Color]::FromArgb(${r},${g},${b}))`,
-    `$gr.Dispose()`,
-    `$ms=New-Object System.IO.MemoryStream`,
-    `$bmp.Save($ms,[System.Drawing.Imaging.ImageFormat]::Jpeg)`,
-    `$bmp.Dispose()`,
-    `[Convert]::ToBase64String($ms.ToArray())`,
-  ].join("; ");
-  const out = Bun.spawnSync(["powershell", "-NoProfile", "-Command", ps]);
-  const b64 = out.stdout.toString().trim();
-  if (!b64) {
+  const png = tmpPath(`issue-4315-${r}-${g}-${b}.png`);
+  const jpg = png.replace(/\.png$/, ".jpg");
+  writeFileSync(png, makePng(400, 600, [r, g, b]));
+  const out = Bun.spawnSync(["sips", "-s", "format", "jpeg", png, "--out", jpg], { stderr: "pipe" });
+  if (out.exitCode !== 0) {
     throw new Error(`jpegSolid failed: ${out.stderr.toString()}`);
   }
-  return Buffer.from(b64, "base64");
+  return readFileSync(jpg);
 }
 
 export function makeAzw3(): Buffer {

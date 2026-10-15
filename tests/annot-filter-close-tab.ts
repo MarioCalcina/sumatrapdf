@@ -4,7 +4,7 @@
 //
 // Run: bun tests/annot-filter-close-tab.ts [--no-build]
 // Run against the ASan build to have the read actually reported:
-//   SUMATRA_TEST_EXE=out/dbg64_asan/SumatraPDF-static.exe bun tests/annot-filter-close-tab.ts --no-build
+//   SUMATRA_TEST_EXE=out/mac/dbg-asan/SumatraPDF bun tests/annot-filter-close-tab.ts --no-build
 
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";

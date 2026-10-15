@@ -6,7 +6,7 @@
 //   2. gzip    .synctex.gz        (gzip with the .gz extension)
 //   3. gzip-in-.synctex           (gzip bytes stored in a plain-named .synctex)
 //
-// It builds the app (same as cmd/build.ts), uses MiKTeX's pdflatex to produce a
+// It builds the app (same as cmd/build.ts), uses pdflatex (MacTeX) to produce a
 // real PDF + .synctex pair, derives the three layouts from it, and runs the
 // control pipe test command, which performs a SourceToDoc() forward-search query.
 //
@@ -31,23 +31,11 @@ const TEX_FILE = "test.tex";
 const TARGET_LINE = 4;
 
 export function findLatexEngine(engine: "pdflatex" | "lualatex"): string | null {
-  const exe = `${engine}.exe`;
-  const localAppData = process.env.LOCALAPPDATA ?? "";
-  const candidates = [
-    exe,
-    join(localAppData, "Programs", "MiKTeX", "miktex", "bin", "x64", exe),
-    join("C:/Program Files/MiKTeX/miktex/bin/x64", exe),
-    join("C:/Program Files (x86)/MiKTeX/miktex/bin/x64", exe),
-  ];
-  for (const c of candidates) {
-    if (c === exe) {
-      const inPath = Bun.which(c);
-      if (inPath) return inPath;
-      continue;
-    }
-    if (c && existsSync(c)) return c;
-  }
-  return null;
+  const inPath = Bun.which(engine);
+  if (inPath) return inPath;
+  // MacTeX's bin dir, which a GUI-launched shell doesn't have on its PATH
+  const macTex = join("/Library/TeX/texbin", engine);
+  return existsSync(macTex) ? macTex : null;
 }
 
 function fail(msg: string): never {
@@ -159,7 +147,7 @@ export async function testit(): Promise<void> {
   }
 
   // only run the engines that are actually installed; a missing engine (i.e.
-  // MiKTeX not installed) is not a failure - we print a message and skip it
+  // LaTeX not installed) is not a failure - we print a message and skip it
   const cases: EngineCase[] = [];
   const pdflatex = findLatexEngine("pdflatex");
   if (pdflatex) {
@@ -188,12 +176,8 @@ export async function testit(): Promise<void> {
 
   if (cases.length === 0) {
     console.log(
-      "\nSKIP issue-5633: MiKTeX not installed, skipping synctex test.\n" +
-        "To run it, install MiKTeX with:\n" +
-        "    winget install MiKTeX.MiKTeX\n" +
-        "pdflatex.exe / lualatex.exe are searched for in %PATH% and in:\n" +
-        "    %LOCALAPPDATA%\\Programs\\MiKTeX\\miktex\\bin\\x64\\\n" +
-        "    C:\\Program Files\\MiKTeX\\miktex\\bin\\x64\\",
+      "\nSKIP issue-5633: no pdflatex / lualatex, skipping synctex test.\n" +
+        "To run it, install MacTeX with:\n    brew install --cask mactex-no-gui",
     );
     return;
   }

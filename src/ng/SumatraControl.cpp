@@ -79,6 +79,7 @@
 #include "DocumentProperties.h"
 #include "NavFilesInFolder.h"
 #include "EngineAll.h"
+#include "ChmDump.h"
 #include "PdfCad.h"
 #include <mupdf/pdf.h>
 #include "base/ByteReaderWriter.h"
@@ -194,6 +195,96 @@ TempStr TocNavigateResultTemp(int destNo, int* exitCodeOut) {
         *exitCodeOut = ok ? 0 : 1;
     }
     return ToStrTemp(out);
+}
+
+// orig's SynctexResultTemp: a SyncTeX forward search (issue #5633) without a window
+static TempStr SynctexResultTemp(Str pdfPath, Str srcPath, int line) {
+    EngineBase* engine = CreateEngineFromFile(pdfPath, nullptr, false);
+    if (!engine) {
+        return fmt("ERROR engine-create-failed pdf=%s\n", pdfPath);
+    }
+    str::Builder out;
+    Synchronizer* sync = nullptr;
+    int err = Synchronizer::Create(pdfPath, engine, &sync);
+    if (err != PDFSYNCERR_SUCCESS || !sync) {
+        out.Append(fmt("ERROR sync-create-failed err=%d\n", err));
+    } else {
+        int page = 0;
+        Vec<Rect> rects;
+        int ret = sync->SourceToDoc(srcPath, line, 0, &page, rects);
+        out.Append(fmt("ret=%d page=%d nrects=%d src=%s line=%d", ret, page, len(rects), srcPath, line));
+        if (len(rects) > 0) {
+            Rect r = rects[0];
+            out.Append(fmt(" rect_x=%d rect_y=%d rect_dx=%d rect_dy=%d", r.x, r.y, r.dx, r.dy));
+        }
+        out.AppendChar('\n');
+        delete sync;
+    }
+    SafeEngineRelease(&engine);
+    return ToStrTemp(out);
+}
+
+// orig's ChmResultTemp: chmdec's LZX checks, then the CHM engine (issue-chm-lzx)
+static TempStr ChmResultTemp(Str chmPath, int* exitCodeOut) {
+    str::Builder out;
+    bool ok = ChmLzxCheck(chmPath, out);
+    EngineBase* engine = CreateEngineChmFromFile(chmPath);
+    if (engine) {
+        out.Append(fmt("engine=OK pages=%d\n", engine->PageCount()));
+        SafeEngineRelease(&engine);
+    } else {
+        out.Append(StrL("engine=FAILED\n"));
+    }
+    out.Append(ok ? StrL("result=OK\n") : StrL("result=FAILED\n"));
+    *exitCodeOut = ok ? 0 : 1;
+    return ToStrTemp(out);
+}
+
+static IPageDestination* FirstLinkDestOnPage(EngineBase* engine, int pageNo) {
+    Vec<IPageElement*> els = engine->GetElements(pageNo);
+    for (IPageElement* el : els) {
+        if (!el || !el->Is(kindPageElementDest)) {
+            continue;
+        }
+        IPageDestination* dest = el->AsLink();
+        if (dest) {
+            return dest;
+        }
+    }
+    return nullptr;
+}
+
+// orig's ScrollToLinkResultTemp: with the view at the left edge, following the
+// first link on page 1 must scroll right by at least minDelta (issue #5064)
+static TempStr ScrollToLinkResultTemp(int minDelta, int* exitCodeOut) {
+    *exitCodeOut = 1;
+    MainWindow* win = len(gWindows) > 0 ? gWindows[0] : nullptr;
+    DisplayModel* dm = win ? win->AsFixed() : nullptr;
+    if (!dm) {
+        *exitCodeOut = 2;
+        return fmt("NOTREADY %s\n", win ? StrL("no-doc") : StrL("no-window"));
+    }
+
+    constexpr float kZoom = 200.f;
+    dm->SetZoomVirtual(kZoom, nullptr);
+    dm->Relayout(kZoom, dm->rotation);
+    dm->viewPort.x = 0;
+    dm->RecalcVisibleParts();
+    dm->RenderVisibleParts();
+
+    int before = dm->viewPort.x;
+    IPageDestination* dest = FirstLinkDestOnPage(dm->GetEngine(), 1);
+    if (!dest) {
+        return StrL("ERROR no-link\n");
+    }
+    win->ctrl->HandleLink(dest, win->linkHandler);
+
+    int after = dm->viewPort.x;
+    int delta = after - before;
+    bool ok = delta >= minDelta;
+    *exitCodeOut = ok ? 0 : 1;
+    return fmt("%s viewport_before=%d viewport_after=%d delta=%d min=%d\n", ok ? StrL("OK") : StrL("FAIL"), before,
+               after, delta, minDelta);
 }
 
 // Select the text of one page so a test can turn it into a highlight.
@@ -645,7 +736,6 @@ enum class ControlCmd : u16 {
     TestFindResultPageColumnClip = 24,
     TestFileKind = 25,
     TestScrollToLink = 26,
-    TestI18nErrorString = 27,
     TestPageInfoOverlay = 28,
     TestGetToc = 29,
     TestPageLinks = 30,
@@ -1595,6 +1685,42 @@ static void ExecuteControlRequest(ControlRequest* req) {
                 break;
             }
             AppendTestResult(req, 0, InverseSearchResultTemp(pdf, page, x, y));
+            break;
+        }
+
+        case ControlCmd::TestSynctex: {
+            i32 line = 0;
+            Str pdf = StringArg(req, 0);
+            Str src = StringArg(req, 1);
+            if (len(pdf) == 0 || len(src) == 0 || !IntArg(req, 2, line)) {
+                AppendError(req, StrL("TestSynctex expects string pdf, string src, int line"));
+                break;
+            }
+            AppendTestResult(req, 0, SynctexResultTemp(pdf, src, line));
+            break;
+        }
+
+        case ControlCmd::TestChm: {
+            Str chm = StringArg(req, 0);
+            if (len(chm) == 0) {
+                AppendError(req, StrL("TestChm expects string chm"));
+                break;
+            }
+            int exitCode = 0;
+            Str res = ChmResultTemp(chm, &exitCode);
+            AppendTestResult(req, exitCode, res);
+            break;
+        }
+
+        case ControlCmd::TestScrollToLink: {
+            i32 minDelta = 0;
+            if (!IntArg(req, 0, minDelta)) {
+                AppendError(req, StrL("TestScrollToLink expects int minDelta"));
+                break;
+            }
+            int exitCode = 0;
+            Str res = ScrollToLinkResultTemp(minDelta, &exitCode);
+            AppendTestResult(req, exitCode, res);
             break;
         }
 

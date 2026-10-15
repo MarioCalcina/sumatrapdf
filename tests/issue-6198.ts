@@ -69,8 +69,8 @@ async function clickChip(pid: number, line: string, name: string): Promise<void>
 }
 
 export async function testit(): Promise<void> {
-  if (!existsSync("C:\\Windows\\Fonts\\georgiaz.ttf")) {
-    console.log("issue-6198: skipped, needs the Georgia fonts that come with Windows");
+  if (!existsSync("/System/Library/Fonts/Supplemental/Georgia Bold Italic.ttf")) {
+    console.log("issue-6198: skipped, needs the Georgia fonts in /System/Library/Fonts/Supplemental");
     return;
   }
   const dir = tmpPath("issue-6198");

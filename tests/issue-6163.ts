@@ -1,6 +1,6 @@
 // Test for discussion #6163: CmdCopyLocationToClipboard copies the current
 // view as the cmd-line args that re-open it, e.g.
-//   -page 3 -zoom "400%" -scroll 0,0 "C:\dir\file.pdf"
+//   -page 3 -zoom "400%" -scroll 0,0 "/dir/file.pdf"
 //
 // Run:  bun tests/issue-6163.ts [--no-build]
 
@@ -33,7 +33,7 @@ function splitArgs(s: string): string[] {
 
 // launch with `args`, scroll down `nScrolls` times, return what the command copies
 async function copyLocation(args: string[], nScrolls: number): Promise<string> {
-  await killProcessesNamed("SumatraPDF.exe");
+  await killProcessesNamed("SumatraPDF");
   const { proc, client, frame } = await launchControlled(args);
   try {
     await client.setNotificationsEnabled(false);

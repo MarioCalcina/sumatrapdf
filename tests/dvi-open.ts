@@ -11,7 +11,6 @@ import { dirname, join } from "node:path";
 import { findGhostscript, runStandalone, tmpPath } from "./util.ts";
 import { killAndWait, launchControlled } from "./win-automation.ts";
 
-const kExe = "";
 
 function whereExe(name: string): string {
   let r: ReturnType<typeof Bun.spawnSync>;
@@ -40,25 +39,25 @@ function exeBeside(bin: string, name: string): string {
 // Same tools EngineDvi looks for: dvipdfmx / xdvipdfmx on PATH or beside a
 // TeX engine, otherwise dvips plus Ghostscript.
 function dviConverterAvailable(): boolean {
-  if (whereExe(`dvipdfmx${kExe}`) || whereExe(`xdvipdfmx${kExe}`)) {
+  if (whereExe(`dvipdfmx`) || whereExe(`xdvipdfmx`)) {
     return true;
   }
-  const bins = [`pdflatex${kExe}`, `xelatex${kExe}`, `lualatex${kExe}`, `latex${kExe}`];
+  const bins = [`pdflatex`, `xelatex`, `lualatex`, `latex`];
   for (const binName of bins) {
     const bin = whereExe(binName);
     if (!bin) {
       continue;
     }
-    if (exeBeside(bin, `dvipdfmx${kExe}`) || exeBeside(bin, `xdvipdfmx${kExe}`)) {
+    if (exeBeside(bin, `dvipdfmx`) || exeBeside(bin, `xdvipdfmx`)) {
       return true;
     }
   }
-  const dvips = whereExe(`dvips${kExe}`);
-  const gs = whereExe(`gswin64c${kExe}`) || whereExe(`gswin32c${kExe}`) || whereExe("gs") || findGhostscript();
+  const dvips = whereExe(`dvips`);
+  const gs = findGhostscript();
   if (!dvips) {
     for (const binName of bins) {
       const bin = whereExe(binName);
-      if (bin && exeBeside(bin, `dvips${kExe}`) && gs) {
+      if (bin && exeBeside(bin, `dvips`) && gs) {
         return true;
       }
     }

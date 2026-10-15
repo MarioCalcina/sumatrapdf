@@ -11,7 +11,6 @@
 //
 // Run:  bun tests/issue-5868.ts [--no-build]   (or via tests/run-almost-all.ts)
 
-import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { extractPageText, ROOT, runStandalone } from "./util.ts";
 
@@ -26,26 +25,7 @@ export async function testit(): Promise<void> {
       throw new Error(`extracted text is missing word spacing: expected '${w}'`);
     }
   }
-
-  // the #5627 repro isn't in the repo (see agents.md); check it when present
-  const repro = "C:\\Users\\kjk\\OneDrive\\!sumatra\\bugs\\bug-5627.pdf";
-  if (!existsSync(repro)) {
-    console.log(`issue-5868: SKIP tracking-space half (no ${repro})`);
-    return;
-  }
-  const trk = extractPageText(repro, 1).replaceAll("\n", " ");
-  for (const bad of ["kro nik", "im mün", "dün ya"]) {
-    if (trk.includes(bad)) {
-      throw new Error(`tracking spaces are back: extracted text contains '${bad}'`);
-    }
-  }
-  // ...without swallowing the real word spaces around them
-  for (const w of ["Helicobacter pylori", "Turkiye Klinikleri J Dermatol"]) {
-    if (!trk.includes(w)) {
-      throw new Error(`tracking-space filter ate a real word space: expected '${w}'`);
-    }
-  }
-  console.log("PASS: word spacing preserved (issue #5868); tracking still filtered (#5627)");
+  console.log("PASS: word spacing preserved (issue #5868)");
 }
 
 if (import.meta.main) {

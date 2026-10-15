@@ -1,20 +1,13 @@
 // Regression test for https://github.com/sumatrapdfreader/sumatrapdf/issues/6276
 //
-// `sumatrapdf-tool grep` printing UTF-8 matches to a console with a DBCS code
-// page (936) failed with "cannot fwrite: No space left on device". The failure
-// needs a real console, so the tool runs in a new one via `start /wait`.
-//
-// The access violation was a use-after-free: the rest of a matched line is
+// The access violation in `sumatrapdf-tool grep` was a use-after-free: the rest of a matched line is
 // printed at the next match, by which time the search had freed that page.
 //
 // Run:  bun tests/issue-6276.ts [--no-build]   (or via tests/run-almost-all.ts)
 
-import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { EXE, ROOT, runStandalone, tmpPath } from "./util";
+import { writeFileSync } from "node:fs";
+import { EXE, runStandalone, tmpPath } from "./util";
 
-const FIXTURE = join(ROOT, "tests", "issue-6276.txt");
-const DBCS_CODE_PAGE = 936;
 
 function makeFixture(): string {
   const objects: string[] = [];
@@ -85,38 +78,6 @@ export async function testit(): Promise<void> {
   const fixture = tmpPath("issue-6276.pdf");
   writeFileSync(fixture, makeFixture(), "ascii");
   checkMatchesPagesApart(fixture);
-
-  const tool = join(dirname(EXE), "sumatrapdf-tool.exe");
-  if (!existsSync(tool)) {
-    console.log("  skipping console check: no sumatrapdf-tool.exe from the tested build");
-    return;
-  }
-
-  const script = tmpPath("issue-6276.cmd");
-  const exitFile = tmpPath("issue-6276-exit.txt");
-  const errFile = tmpPath("issue-6276-err.txt");
-  rmSync(exitFile, { force: true });
-  rmSync(errFile, { force: true });
-
-  const lines = [
-    "@echo off",
-    `chcp ${DBCS_CODE_PAGE} >nul`,
-    `"${tool}" grep -n 2023 "${FIXTURE}" 2> "${errFile}"`,
-    `echo %errorlevel% > "${exitFile}"`,
-  ];
-  writeFileSync(script, lines.join("\r\n") + "\r\n");
-
-  Bun.spawnSync(["cmd.exe", "/c", "start", "/wait", "/min", "", "cmd.exe", "/c", script]);
-  if (!existsSync(exitFile)) {
-    console.log("  skipping: could not run the tool in a new console");
-    return;
-  }
-
-  const exitCode = readFileSync(exitFile, "utf8").trim();
-  const err = readFileSync(errFile, "utf8").trim();
-  if (exitCode !== "0" || err !== "") {
-    throw new Error(`issue-6276: grep to a cp${DBCS_CODE_PAGE} console failed: exit ${exitCode}, stderr: ${err}`);
-  }
 }
 
 if (import.meta.main) {

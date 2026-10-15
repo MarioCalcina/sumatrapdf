@@ -4,7 +4,7 @@
 //
 // Run: bun tests/annot-filter-close-window.ts [--no-build]
 // The UAF is silent in a normal debug build; ASan reports it:
-//   bun tests/annot-filter-close-window.ts --no-build -exe out/dbg64_asan/SumatraPDF-static.exe
+//   bun tests/annot-filter-close-window.ts --no-build -exe out/mac/dbg-asan/SumatraPDF
 
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";

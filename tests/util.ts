@@ -10,7 +10,6 @@ import {
   copyFileSync,
   existsSync,
   mkdirSync,
-  readdirSync,
   readFileSync,
   rmSync,
   statSync,
@@ -509,22 +508,9 @@ export function makePng(w: number, h: number, rgb: [number, number, number]): Bu
   ]);
 }
 
-// path of an installed Ghostscript console exe, "" when none
+// path of an installed Ghostscript (brew install ghostscript), "" when none
 export function findGhostscript(): string {
-  for (const base of ["C:\\Program Files\\gs", "C:\\Program Files (x86)\\gs"]) {
-    if (!existsSync(base)) {
-      continue;
-    }
-    for (const ver of readdirSync(base)) {
-      for (const exe of ["gswin64c.exe", "gswin32c.exe"]) {
-        const path = join(base, ver, "bin", exe);
-        if (existsSync(path)) {
-          return path;
-        }
-      }
-    }
-  }
-  return "";
+  return Bun.which("gs") ?? "";
 }
 
 // convert a PDF to PostScript with Ghostscript

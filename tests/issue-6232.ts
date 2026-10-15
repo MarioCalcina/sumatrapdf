@@ -51,9 +51,9 @@ function sameDir(a: string, b: string): boolean {
   return a.replace(/[\\/]+$/, "").toLowerCase() === b.replace(/[\\/]+$/, "").toLowerCase();
 }
 
-// Windows home lists "C:\". macOS lists "/" and the user directory.
+// Home lists "/" and the user directory.
 function isVolumeRoot(s: string): boolean {
-  return s === "/" || /^[A-Z]:\\$/.test(s);
+  return s === "/";
 }
 
 export async function testit(): Promise<void> {
@@ -81,7 +81,7 @@ export async function testit(): Promise<void> {
     await navState(client, "forward");
     await waitNav(client, "forward", (s) => sameDir(s.dir, root) && s.back === 1 && s.fwd === 0);
 
-    // Home: no directory, drives listed first (a drive root like "C:\")
+    // Home: no directory, volumes listed first ("/")
     await navState(client, "home");
     await waitNav(client, "home", (s) => s.dir === "" && s.items >= 1 && isVolumeRoot(s.name) && s.back === 1);
 

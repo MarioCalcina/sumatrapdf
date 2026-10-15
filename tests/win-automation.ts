@@ -1,16 +1,10 @@
-// High-level GUI automation actions for driving SumatraPDF in ad-hoc tests,
-// built on the raw winapi.ts wrappers. winapi.ts is the FFI / raw-message layer;
-// this file is the "do a thing" layer (launch the app, find its windows, click a
-// spot, type into the form-field editor, open a context menu, screenshot).
+// High-level GUI automation actions for driving SumatraPDF in tests, built on
+// winapi.ts. winapi.ts is the raw-message layer; this file is the "do a thing"
+// layer (launch the app, find its windows, click a spot, open a context menu).
+// Input goes over the -dbg-control socket, so it works with the window in the
+// background and without real mouse or keyboard events.
 //
-// Why message-posting instead of real input: on the test machine injected
-// SendInput mouse/keyboard events are dropped, but posting window messages
-// cross-process works (see the project memory env-gui-automation). Capturing via
-// PrintWindow (captureWindowToPng) also works for occluded/background windows,
-// which a screen grab does not.
-//
-// These are for *ad-hoc* tests (not checked in). Put reusable helpers here, not
-// in the individual ad-hoc scripts.
+// Put reusable helpers here, not in the individual test scripts.
 
 import { macClick } from "./mac-control.ts";
 import { cmdId, drainProcStderr, EXE, setFailureContext } from "./util.ts";
@@ -112,27 +106,6 @@ export let FRAME_CLASS = "GpuiSystemMonitor";
 export function windowPosArgs(): string[] {
   const p = testWindowPos();
   return ["-window-pos", `${p.dx}x${p.dy}@${p.x}x${p.y}`];
-}
-
-// Launch SumatraPDF.exe with -for-testing: a fresh instance that won't
-// interfere with a running SumatraPDF, doesn't restore the previous session
-// (only opens files passed on the cmd-line) and doesn't save settings. Use
-// proc.pid with waitForFrame() to get the window.
-//
-// The window opens on the right half of the screen, which is a good deal
-// faster to render and to capture than a full-screen one. Pass { defaultWindowPos: true } in a test that is
-// about the window's own size or state - fullscreen, maximized, minimized,
-// restoring a remembered position - so the app picks the position itself.
-export function launchSumatra(args: string[], opts?: { defaultWindowPos?: boolean }): Bun.Subprocess {
-  const posArgs = opts?.defaultWindowPos || args.includes("-window-pos") ? [] : windowPosArgs();
-  const proc = Bun.spawn([EXE, "-for-testing", ...posArgs, ...args], {
-    stdout: "ignore",
-    // ASan writes its report to stderr. "ignore" closes that pipe and the
-    // next write kills the process.
-    stderr: "pipe",
-  });
-  drainStderr(proc);
-  return proc;
 }
 
 // Launch with -dbg-control so the test can wait for render-idle (and other

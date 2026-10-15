@@ -6,7 +6,7 @@
 // Only an asan build can see it, so this is ad-hoc rather than part of the
 // suite. Run:
 //   bun cmd/build.ts -asan
-//   $env:SUMATRA_TEST_EXE = "$PWD\out\dbg64_asan\SumatraPDF-static.exe"
+//   SUMATRA_TEST_EXE=out/mac/dbg-asan/SumatraPDF
 //   bun tests/ad-hoc-annot-edit-race.ts --no-build
 
 import { mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
@@ -114,7 +114,7 @@ export async function testit(): Promise<void> {
     console.log(
       "ad-hoc-annot-edit-race: needs an asan build to see anything. Run:\n" +
         "  bun cmd/build.ts -asan\n" +
-        '  $env:SUMATRA_TEST_EXE = "$PWD\\out\\dbg64_asan\\SumatraPDF-static.exe"\n' +
+        '  SUMATRA_TEST_EXE=out/mac/dbg-asan/SumatraPDF\n' +
         "  bun tests/ad-hoc-annot-edit-race.ts --no-build",
     );
     return;

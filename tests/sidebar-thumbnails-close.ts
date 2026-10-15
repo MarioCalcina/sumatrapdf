@@ -1,6 +1,6 @@
 // Closing the window after a sidebar panel showed the thumbnails and then
 // another view must not touch freed memory: that panel is deleted first.
-// Only an ASan build (SUMATRA_TEST_EXE=out/dbg64_asan/SumatraPDF-static.exe)
+// Only an ASan build (SUMATRA_TEST_EXE=out/mac/dbg-asan/SumatraPDF)
 // sees the use-after-free; it exits non-zero then.
 //
 // Run: bun tests/sidebar-thumbnails-close.ts [--no-build]

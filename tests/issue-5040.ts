@@ -5,7 +5,7 @@
 //
 // Synchronizer::NeedsToRebuildIndex() stat'ed the .synctex path it was created
 // with, but Create() always stores <base>.synctex even when the toolchain only
-// wrote <base>.synctex.gz (what -synctex=1 produces, the MiKTeX/TeX Live
+// wrote <base>.synctex.gz (what -synctex=1 produces, the TeX Live
 // default). That path never exists, so its timestamp was always 0, "has the
 // sync file changed?" was never true, and the index built for the first compile
 // was used for the whole session. Only reloading the PDF escaped it, because
@@ -164,8 +164,8 @@ export async function testit(): Promise<void> {
   const pdflatex = findLatexEngine("pdflatex");
   if (!pdflatex) {
     console.log(
-      "SKIP issue-5040: MiKTeX not installed, skipping the synctex staleness test.\n" +
-        "To run it, install MiKTeX with:\n    winget install MiKTeX.MiKTeX",
+      "SKIP issue-5040: no pdflatex, skipping the synctex staleness test.\n" +
+        "To run it, install MacTeX with:\n    brew install --cask mactex-no-gui",
     );
     return;
   }

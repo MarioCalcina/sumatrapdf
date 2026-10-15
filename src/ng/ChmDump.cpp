@@ -175,3 +175,84 @@ int DumpChm(const Flags& flags) {
     }
     return ok ? 0 : 1;
 }
+
+extern "C" int LZX_test_pretree_make_decode_table(void);
+
+// entries larger than this aren't read by ChmLzxCheck
+constexpr u64 kMaxCheckedEntry = 128ULL * 1024 * 1024;
+
+// Decompresses every entry, so ASan sees an LZX overflow in any of them.
+static void ReadAllChmEntries(chm_ctx* h, str::Builder& out) {
+    chm_entry** entries = nullptr;
+    int nEntries = chm_get_entries(h, &entries);
+    chm_entry* payload = nullptr;
+    int readOk = 0;
+    int readFail = 0;
+    for (int i = 0; i < nEntries; i++) {
+        chm_entry* e = entries[i];
+        if (e->path && str::Eq(Str(e->path), StrL("/payload"))) {
+            payload = e;
+        }
+        if (e->length == 0 || e->length > kMaxCheckedEntry) {
+            continue;
+        }
+        AutoFree<uint8_t> buf((uint8_t*)malloc((size_t)e->length));
+        if (buf && chm_read_entry(h, e, buf) == (int64_t)e->length) {
+            readOk++;
+        } else {
+            readFail++;
+        }
+    }
+
+    if (!payload) {
+        out.Append(StrL("payload_retrieve=NOTFOUND\n"));
+    } else if (payload->length == 0 || payload->length > kMaxCheckedEntry) {
+        out.Append(StrL("payload_retrieve=FAILED\n"));
+    } else {
+        // chm_read_entry fills the whole entry: the buffer must hold length bytes
+        AutoFree<uint8_t> buf((uint8_t*)malloc((size_t)payload->length));
+        int64_t got = buf ? chm_read_entry(h, payload, buf) : 0;
+        out.Append(got > 0 ? StrL("payload_retrieve=ATTEMPTED\n") : StrL("payload_retrieve=FAILED\n"));
+    }
+    out.Append(fmt("paths=%d retrieve_ok=%d retrieve_fail=%d\n", nEntries, readOk, readFail));
+}
+
+// What tests/issue-chm-lzx.ts checks: chmdec's PRETREE make_decode_table on its
+// own (a heap buffer, so ASan catches the lzx overflow), then every entry of the
+// file and ChmFile. One line per step; false when a step failed.
+bool ChmLzxCheck(Str chmPath, str::Builder& out) {
+    bool ok = true;
+    int pretree = LZX_test_pretree_make_decode_table();
+    if (pretree == 1) {
+        out.Append(StrL("pretree_isolated=REJECTED\n"));
+    } else {
+        out.Append(fmt("pretree_isolated=UNEXPECTED_%d\n", pretree));
+        ok = false;
+    }
+
+    Str data = file::ReadFile(chmPath);
+    AutoFree<char> freeData(data.s);
+    chm_ctx* h = len(data) > 0 ? chm_ctx_new(nullptr, nullptr, nullptr, nullptr) : nullptr;
+    if (!h || !chm_open(h, (const uint8_t*)data.s, (size_t)data.len)) {
+        out.Append(fmt("chm_open=FAILED path=%s\n", chmPath));
+        ok = false;
+    } else {
+        out.Append(StrL("chm_open=OK\n"));
+        ReadAllChmEntries(h, out);
+    }
+    chm_ctx_free(h);
+
+    ChmFile* doc = ChmFile::CreateFromFile(chmPath);
+    if (!doc) {
+        out.Append(StrL("chmfile=FAILED\n"));
+        return ok;
+    }
+    StrVec allPaths;
+    doc->GetAllPaths(&allPaths);
+    out.Append(fmt("chmfile=OK\nchmfile_paths=%d\n", len(allPaths)));
+    if (len(doc->tocPath) > 0) {
+        out.Append(StrL("chmfile_toc=YES\n"));
+    }
+    delete doc;
+    return ok;
+}

@@ -4,3 +4,4 @@
 struct Flags;
 
 int DumpChm(const Flags& flags);
+bool ChmLzxCheck(Str chmPath, str::Builder& out);

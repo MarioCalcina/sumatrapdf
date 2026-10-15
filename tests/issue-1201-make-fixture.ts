@@ -3,7 +3,7 @@
 //
 // Run: bun tests/issue-1201-make-fixture.ts
 
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ROOT } from "./util.ts";
 
@@ -22,15 +22,10 @@ for (let i = 1; i <= 5; i++) {
 }
 
 rmSync(OUT, { force: true });
-const proc = Bun.spawnSync(
-  [
-    "powershell",
-    "-NoProfile",
-    "-Command",
-    `Compress-Archive -Path '${DATA.replace(/'/g, "''")}\\*' -DestinationPath '${OUT.replace(/'/g, "''")}' -Force`,
-  ],
-  { stdout: "pipe", stderr: "pipe" },
-);
+const files = readdirSync(DATA)
+  .sort()
+  .map((f) => join(DATA, f));
+const proc = Bun.spawnSync(["zip", "-j", "-q", "-X", OUT, ...files], { stdout: "pipe", stderr: "pipe" });
 if (proc.exitCode !== 0) {
   const err = new TextDecoder().decode(proc.stderr);
   throw new Error(`failed to create ${OUT}: ${err}`);

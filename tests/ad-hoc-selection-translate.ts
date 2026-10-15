@@ -19,42 +19,18 @@ type Backend = {
   exePaths: string[];
 };
 
+const HOME = process.env.HOME ?? "";
+
+// on PATH, or in ~/.local/bin (outside the PATH of a GUI-launched shell)
+function cliPaths(...names: string[]): string[] {
+  return names.flatMap((n) => [Bun.which(n) ?? "", join(HOME, ".local", "bin", n)]);
+}
+
 const BACKENDS: Backend[] = [
-  {
-    id: 1,
-    name: "Grok Build",
-    exePaths: [
-      join(process.env.USERPROFILE ?? "", ".grok", "bin", "grok.exe"),
-      join(process.env.USERPROFILE ?? "", ".local", "bin", "grok.exe"),
-    ],
-  },
-  {
-    id: 0,
-    name: "Claude Code",
-    exePaths: [
-      join(process.env.USERPROFILE ?? "", ".local", "bin", "claude.exe"),
-      join(process.env.USERPROFILE ?? "", "AppData", "Local", "Programs", "claude-code", "claude.exe"),
-    ],
-  },
-  {
-    id: 2,
-    name: "OpenAI Codex",
-    exePaths: [
-      join(process.env.USERPROFILE ?? "", ".codex", "bin", "codex.exe"),
-      join(process.env.USERPROFILE ?? "", ".local", "bin", "codex.exe"),
-      join(process.env.LOCALAPPDATA ?? "", "Microsoft", "WinGet", "Links", "codex.exe"),
-    ],
-  },
-  {
-    id: 3,
-    name: "Antigravity",
-    exePaths: [
-      join(process.env.USERPROFILE ?? "", "AppData", "Local", "agy", "bin", "agy.exe"),
-      join(process.env.USERPROFILE ?? "", "AppData", "Local", "agy", "bin", "antigravity.exe"),
-      join(process.env.USERPROFILE ?? "", ".local", "bin", "antigravity.exe"),
-      join(process.env.USERPROFILE ?? "", ".local", "bin", "agy.exe"),
-    ],
-  },
+  { id: 1, name: "Grok Build", exePaths: [...cliPaths("grok"), join(HOME, ".grok", "bin", "grok")] },
+  { id: 0, name: "Claude Code", exePaths: cliPaths("claude") },
+  { id: 2, name: "OpenAI Codex", exePaths: [...cliPaths("codex"), join(HOME, ".codex", "bin", "codex")] },
+  { id: 3, name: "Antigravity", exePaths: cliPaths("agy", "antigravity") },
 ];
 
 function fail(msg: string): never {

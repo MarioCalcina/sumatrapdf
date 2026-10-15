@@ -74,7 +74,7 @@ async function runCase(name: string, ini: string, wantAiRows: number, wantAiBit:
   const appDir = tmpPath(`issue-6314-${name}`);
   rmSync(appDir, { recursive: true, force: true });
   mkdirSync(appDir, { recursive: true });
-  const testExe = join(appDir, "SumatraPDF.exe");
+  const testExe = join(appDir, "SumatraPDF");
   copyFileSync(EXE, testExe);
   for (const dll of SIDE_BY_SIDE_DLLS) {
     if (existsSync(dll)) {

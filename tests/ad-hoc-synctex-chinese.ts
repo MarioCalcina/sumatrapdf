@@ -19,6 +19,7 @@
 import { gzipSync } from "node:zlib";
 import { existsSync, mkdirSync, rmSync, readFileSync, writeFileSync, copyFileSync } from "node:fs";
 import { join } from "node:path";
+import { findLatexEngine } from "./issue-5633.ts";
 import { EXE, runStandalone, tmpPath } from "./util.ts";
 import { ControlCommand, runControlCommand } from "./control.ts";
 
@@ -28,26 +29,6 @@ const TARGET_LINE = 4; // line 4 of test.tex is a body paragraph synctex maps
 
 // directory name with Chinese characters (UTF-8 on disk)
 const CHINESE_DIR = "中文路径测试"; // "Chinese path test"
-
-function findLatexEngine(engine: "pdflatex" | "lualatex"): string | null {
-  const exe = `${engine}.exe`;
-  const localAppData = process.env.LOCALAPPDATA ?? "";
-  const candidates = [
-    exe,
-    join(localAppData, "Programs", "MiKTeX", "miktex", "bin", "x64", exe),
-    join("C:/Program Files/MiKTeX/miktex/bin/x64", exe),
-    join("C:/Program Files (x86)/MiKTeX/miktex/bin/x64", exe),
-  ];
-  for (const c of candidates) {
-    if (c === exe) {
-      const inPath = Bun.which(c);
-      if (inPath) return inPath;
-      continue;
-    }
-    if (c && existsSync(c)) return c;
-  }
-  return null;
-}
 
 function run(cmd: string[], cwd: string) {
   const p = Bun.spawnSync({ cmd, cwd, stdout: "pipe", stderr: "pipe" });
@@ -131,8 +112,8 @@ export async function testit(): Promise<void> {
 
   if (found.length === 0) {
     console.log(
-      "\nSKIP: MiKTeX not installed, can't verify forward-search with Chinese paths.\n" +
-        "Install with:  winget install MiKTeX.MiKTeX",
+      "\nSKIP: no pdflatex / lualatex, can't verify forward-search with Chinese paths.\n" +
+        "Install MacTeX with:  brew install --cask mactex-no-gui",
     );
     return;
   }

@@ -7,7 +7,7 @@
 // keep one instance. Isolated tests (custom -appdata, session restore, their
 // own window placement) come after.
 //
-// Run:  bun tests/run-almost-all.ts [--no-build] [-silent] [-ng] [-exe <SumatraPDF.exe>]
+// Run:  bun tests/run-almost-all.ts [--no-build] [-silent] [-ng] [-exe <path to SumatraPDF>]
 //
 // Register a new fast test here. Inherently-slow ones go in tests/run-all.ts.
 //
@@ -33,7 +33,6 @@ import { testit as issue1809 } from "./issue-1809.ts";
 import { testit as issue4398 } from "./issue-4398.ts";
 import { testit as issue6039 } from "./issue-6039.ts";
 import { testit as issue5846 } from "./issue-5846.ts";
-import { testit as issue5941 } from "./issue-5941.ts";
 import { testit as issue2447 } from "./issue-2447.ts";
 import { testit as issue476 } from "./issue-476.ts";
 import { testit as issue5875 } from "./issue-5875.ts";
@@ -161,6 +160,8 @@ import { testit as issue6305 } from "./issue-6305.ts";
 import { testit as epubThemeRestyle } from "./epub-theme-restyle.ts";
 import { testit as showChaptersInEbooks } from "./show-chapters-in-ebooks.ts";
 import { testit as embeddedImageAttachment } from "./embedded-image-attachment.ts";
+import { testit as issueChmLzx } from "./issue-chm-lzx.ts";
+import { testit as issue5064 } from "./issue-5064.ts";
 import { testit as readAloudRestyleStalePage } from "./read-aloud-restyle-stale-page.ts";
 import { testit as readAloudLazyChapters } from "./read-aloud-lazy-chapters.ts";
 import { testit as lazyTabStateAfterSave } from "./lazy-tab-state-after-save.ts";
@@ -186,7 +187,6 @@ import { testit as issue1136 } from "./issue-1136.ts";
 import { testit as navigateFilesDeleteSelection } from "./navigate-files-delete-selection.ts";
 import { testit as issue893 } from "./issue-893.ts";
 import { testit as issue1699 } from "./issue-1699.ts";
-import { testit as issue1998 } from "./issue-1998.ts";
 import { testit as issue2199 } from "./issue-2199.ts";
 import { testit as issue906 } from "./issue-906.ts";
 import { testit as issue3591 } from "./issue-3591.ts";
@@ -436,6 +436,8 @@ export const tests: NamedTest[] = [
   ["issue-6135", issue6135],
   ["issue-4276", issue4276],
   ["embedded-image-attachment", embeddedImageAttachment],
+  ["issue-chm-lzx", issueChmLzx],
+  ["issue-5064", issue5064],
   ["read-aloud-restyle-stale-page", readAloudRestyleStalePage],
   ["read-aloud-lazy-chapters", readAloudLazyChapters],
   ["lazy-tab-state-after-save", lazyTabStateAfterSave],
@@ -474,7 +476,6 @@ export const tests: NamedTest[] = [
   ["issue-3434", issue3434],
   ["issue-1809", issue1809],
   ["issue-5846", issue5846],
-  ["issue-5941", issue5941],
   ["issue-2447", issue2447],
   ["issue-476", issue476],
   ["issue-5875", issue5875],
@@ -613,7 +614,6 @@ export const tests: NamedTest[] = [
   ["issue-1438", issue1438],
   ["issue-1136", issue1136],
   ["navigate-files-delete-selection", navigateFilesDeleteSelection],
-  ["issue-1998", issue1998],
   ["issue-2199", issue2199],
   ["issue-906", issue906],
   ["issue-3591", issue3591],

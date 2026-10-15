@@ -14,21 +14,8 @@ import { spawn } from "node:child_process";
 import { windowPosArgs } from "./win-automation.ts";
 import { killAndWait } from "./winapi.ts";
 
-const mutoolCandidates = [
-  join(process.env.USERPROFILE || "", "OneDrive", "bin", "mupdf-1.27.0", "mutool.exe"),
-  "mutool",
-];
-
 async function whichMutool(): Promise<string | null> {
-  for (const c of mutoolCandidates) {
-    if (c === "mutool") {
-      continue;
-    }
-    if (existsSync(c)) {
-      return c;
-    }
-  }
-  return null;
+  return Bun.which("mutool");
 }
 
 function run(cmd: string, args: string[]): Promise<void> {

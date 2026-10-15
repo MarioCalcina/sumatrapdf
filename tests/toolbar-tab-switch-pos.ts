@@ -3,7 +3,6 @@
 //
 // Run: bun tests/toolbar-tab-switch-pos.ts [--no-build]
 
-import { existsSync } from "node:fs";
 import { ControlCommand, withControlledSumatra } from "./control.ts";
 import { cmdId, EXE, runStandalone } from "./util.ts";
 import { sleep } from "./winapi.ts";
@@ -52,8 +51,7 @@ async function waitHiddenTabGoToPage(client: { hiddenTabGoToPage: () => Promise<
 }
 
 export async function testit(): Promise<void> {
-  const mobi = "C:\\Users\\kjk\\OneDrive\\!sumatra\\1000.mobi";
-  const docPath = existsSync(mobi) ? mobi : "tests/issue-5846.epub";
+  const docPath = "tests/issue-5846.epub";
   const cmdOpen = cmdId("CmdOpenFile");
   const cmdPrint = cmdId("CmdPrint");
   await withControlledSumatra(

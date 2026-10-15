@@ -113,9 +113,10 @@ async function wheelScroll(canvas: number, notches: number): Promise<{ before: n
 
 // CPU seconds burned while idle: the paint storm that caused #5865 pegs a core
 function cpuTime(pid: number): number {
-  const args = ["-NoProfile", "-Command", `(Get-Process -Id ${pid}).CPU`];
-  const out = spawnSync("powershell", args, { encoding: "utf8" });
-  return parseFloat((out.stdout || "0").trim()) || 0;
+  // [[dd-]hh:]mm:ss.ss
+  const out = spawnSync("ps", ["-o", "time=", "-p", String(pid)], { encoding: "utf8" });
+  const parts = (out.stdout || "0").trim().replace("-", ":").split(":").map(Number);
+  return parts.reduce((secs, v) => secs * 60 + (v || 0), 0);
 }
 
 async function runOnce(

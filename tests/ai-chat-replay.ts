@@ -3,13 +3,11 @@
 // -dbg-control TestAIChatReplay command, which takes the same WebView* path a
 // real turn does (addUser + appendText + flushBlock). Lets you iterate on the
 // webview render fast; watch the app window to see it render. Needs a PDF path.
-//   bun tests/ai-chat-replay.ts --no-build "C:\\path\\doc.pdf"
+//   bun tests/ai-chat-replay.ts --no-build ~/doc.pdf
 import { ControlCommand, withControlledSumatra } from "./control";
 import { EXE, runStandalone } from "./util";
 
-const PDF =
-  process.argv.slice(2).filter((a) => a !== "--no-build")[0] ??
-  "C:\\Users\\kjk\\Downloads\\a_players_guide_to_talislanta.1.pdf";
+const PDF = process.argv.slice(2).filter((a) => a !== "--no-build")[0] ?? "";
 
 const USER = "summarize page 1";
 const RESPONSE = [
@@ -30,6 +28,9 @@ function sleep(ms: number): Promise<void> {
 }
 
 export async function testit(): Promise<void> {
+  if (!PDF) {
+    throw new Error("ai-chat-replay: pass a PDF: bun tests/ai-chat-replay.ts --no-build ~/doc.pdf");
+  }
   await withControlledSumatra(
     EXE,
     async (client) => {

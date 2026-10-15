@@ -1,66 +1,25 @@
 // Test for chmdec LZX make_decode_table PRETREE overflow (CC-0010 class advisory).
 //
-// Builds SumatraPDF-static.exe with ASan (cmd/build.ts -asan), generates a minimal
-// malicious CHM (issue-chm-lzx-make.ts), and runs the control pipe CHM test command.
-// With the fix, the isolated pretree check rejects malformed input and the
-// process exits 0. Without the fix, ASan aborts on the isolated heap buffer test.
+// The control command TestChm runs chmdec's PRETREE check on its own, then reads
+// every entry of a minimal malicious CHM (issue-chm-lzx-make.ts). With the fix
+// the check rejects the malformed lengths; without it ASan aborts the app.
 //
 // Run:  bun tests/issue-chm-lzx.ts [--no-build]
 
-import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { ROOT, runStandalone } from "./util.ts";
 import { ControlCommand, withControlledSumatra } from "./control.ts";
+import { EXE, runStandalone } from "./util.ts";
 
-const ASAN_EXE = join(ROOT, "out", "dbg64_asan", "SumatraPDF-static.exe");
 const CHM = join(import.meta.dir, "issue-chm-lzx.chm");
-const MAKE = join(import.meta.dir, "issue-chm-lzx-make.ts");
-
-function buildAsanApp(): void {
-  console.log("• building SumatraPDF-static.exe with ASan (cmd/build.ts -asan) ...");
-  const p = Bun.spawnSync({
-    cmd: ["bun", join(ROOT, "cmd", "build.ts"), "-asan"],
-    cwd: ROOT,
-    stdout: "inherit",
-    stderr: "inherit",
-  });
-  if (p.exitCode !== 0) {
-    throw new Error("ASan build failed");
-  }
-}
 
 async function runTestChm(chmPath: string): Promise<{ code: number; out: string }> {
-  return await withControlledSumatra(
-    ASAN_EXE,
-    async (client) => {
-      const [code, out] = await client.request(ControlCommand.TestChm, [chmPath]);
-      return { code: Number(code), out: String(out) };
-    },
-    [],
-    {
-      cwd: ROOT,
-      env: { ...process.env, ASAN_OPTIONS: "abort_on_error=1:halt_on_error=1:detect_leaks=0" },
-      connectTimeoutMs: 30000,
-    },
-  );
+  return await withControlledSumatra(EXE, async (client) => {
+    const [code, out] = await client.request(ControlCommand.TestChm, [chmPath]);
+    return { code: Number(code), out: String(out) };
+  });
 }
 
 export async function testit(): Promise<void> {
-  if (!existsSync(ASAN_EXE)) {
-    buildAsanApp();
-  }
-  if (!existsSync(ASAN_EXE)) {
-    throw new Error(`ASan exe not found: ${ASAN_EXE}`);
-  }
-
-  const p = Bun.spawnSync({ cmd: ["bun", MAKE], cwd: ROOT, stdout: "inherit", stderr: "inherit" });
-  if (p.exitCode !== 0) {
-    throw new Error("failed to generate issue-chm-lzx.chm");
-  }
-  if (!existsSync(CHM)) {
-    throw new Error(`missing fixture: ${CHM}`);
-  }
-
   const res = await runTestChm(CHM);
   console.log(res.out.trim());
 
@@ -81,10 +40,5 @@ export async function testit(): Promise<void> {
 }
 
 if (import.meta.main) {
-  await runStandalone(async () => {
-    if (!process.argv.includes("--no-build")) {
-      buildAsanApp();
-    }
-    await testit();
-  });
+  await runStandalone(testit);
 }
