@@ -4,8 +4,8 @@
 // ng: orig's FindBar.cpp is a WS_POPUP window owned by the frame, with a
 // DropDown, a VirtText status slot and six VirtIconButtons. Here the bar is an
 // absolutely positioned gpui card at the top right of the canvas, built every
-// frame from this state. The floating find window (orig FindWindow.cpp, the
-// SearchUIFloating variant with the results list) is not ported.
+// frame from this state. The floating find window with the results list
+// (SearchUIFloating) is FindWindow.cpp.
 
 namespace gpui {
 struct Ctx;

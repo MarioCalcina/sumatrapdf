@@ -4,9 +4,9 @@
 // ng: orig's Selection.cpp. The model (SelectionOnPage, the text and
 // rectangular selection state machine, select-all, copy) is orig's; what was
 // win32 is gpui here: Gfx -> gpui::PaintCtx, SetCapture / KillTimer ->
-// DocCanvas, the clipboard -> gpui::ClipboardSetText. Copy-as-image, the UIA
-// notification and the touch selection handles are not ported; see
-// docs/port-progress.md.
+// DocCanvas, the clipboard -> gpui::ClipboardSetText. Copy-as-image is in
+// Screenshot.cpp; the UIA notification and the touch selection handles are
+// not ported.
 
 #include "gui/GpuiBridge.h"
 #include "base/Pixmap.h"
