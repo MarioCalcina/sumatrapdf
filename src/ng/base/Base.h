@@ -244,12 +244,12 @@ extern void _writeDebugReport(Str, Str, bool);
 #define STRINGIZE(x) STRINGIZE_(x)
 #define FILE_LINE __FILE__ ":" STRINGIZE(__LINE__)
 
-#define ReportIfCond(cond, condStr, fileLine, isCrash)                  \
-    __analysis_assume(!(cond));                                         \
-    do {                                                                \
-        if (cond) {                                                     \
+#define ReportIfCond(cond, condStr, fileLine, isCrash)                 \
+    __analysis_assume(!(cond));                                        \
+    do {                                                               \
+        if (cond) {                                                    \
             _writeDebugReport(StrL(condStr), StrL(fileLine), isCrash); \
-        }                                                               \
+        }                                                              \
     } while (0)
 
 #define ReportIf(cond) ReportIfCond(cond, #cond, FILE_LINE, false)
@@ -843,7 +843,10 @@ struct StrVec;
 void GetUserLanguages(StrVec& out);
 TempStr LocaleThousandSepTemp();
 TempStr LocaleDecimalSepTemp();
-enum class DateStyle { Date, DateTime };
+enum class DateStyle {
+    Date,
+    DateTime
+};
 TempStr FormatLocaleDateTemp(int year, int month, int day, int hour, int minute, int second, DateStyle style);
 
 // physical memory still free and how loaded memory is, 0..100. False when the

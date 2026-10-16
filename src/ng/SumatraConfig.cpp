@@ -54,4 +54,3 @@ bool gDisableDocumentRestrictions = false;
 // or agents. Always starts a new instance, doesn't restore a session and
 // doesn't save settings
 bool gForTesting = false;
-

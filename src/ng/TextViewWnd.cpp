@@ -76,12 +76,8 @@ gp::El* TextViewView::Render(TextViewView* self, gp::Ctx* cx) {
     cx->win->input = &self->text;
     gp::WinSize size = gp::WindowSize(cx->win);
     const gp::Theme& theme = gp::ThemeNow(cx->app);
-    gp::El* editor = NewTextarea(cx, GStrL("text-view"), &self->text)
-                         ->H(size.dipH)
-                         ->SoftWrap(false)
-                         ->Readonly()
-                         ->IntoEl()
-                         ->Mono();
+    gp::El* editor =
+        NewTextarea(cx, GStrL("text-view"), &self->text)->H(size.dipH)->SoftWrap(false)->Readonly()->IntoEl()->Mono();
     return gp::Div(cx->a)->SizeFull()->Bg(theme.tokens.background)->Child(editor);
 }
 
@@ -121,4 +117,3 @@ void ShowTextInWindow(MainWindow* win, Str title, Str text) {
     gp::WindowOnKey(gTextViewWin, gp::ListenTo(gTextViewView, &TextViewView::OnKey));
     logf("ShowTextInWindow: '%s', %d bytes\n", title, len(text));
 }
-

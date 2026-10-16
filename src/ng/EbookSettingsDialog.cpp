@@ -555,8 +555,7 @@ gp::El* EbookSettingsDialogBuild(MainWindow* win, gp::Ctx* cx) {
 
     gp::El* numRow = gp::Div(cx->a)->FlexRow()->W(gp::kFill)->ItemsCenter()->Gap(6);
     numRow->Child(gp::TextEl(cx->a, ToGpui(Tr("Size:")))->Font(13)->Fg(th.foreground)->Shrink0());
-    numRow->Child(
-        NewInput(cx, GStrL("ebook-size"), gEbook.editSize)->WithSize(gp::UiSize::Small)->W(70)->IntoEl());
+    numRow->Child(NewInput(cx, GStrL("ebook-size"), gEbook.editSize)->WithSize(gp::UiSize::Small)->W(70)->IntoEl());
     numRow->Child(gp::TextEl(cx->a, ToGpui(Tr("Margin:")))->Font(13)->Fg(th.foreground)->Shrink0());
     numRow->Child(NewInput(cx, GStrL("ebook-margin"), gEbook.editMargin)
                       ->WithSize(gp::UiSize::Small)

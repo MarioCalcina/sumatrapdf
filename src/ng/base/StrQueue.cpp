@@ -83,4 +83,3 @@ bool StrQueue::Access(const Func1<StrQueue*>& fn) {
     Unlock();
     return true;
 }
-

@@ -375,8 +375,7 @@ gp::El* SavePathDialogBuild(MainWindow* win, gp::Ctx* cx) {
                          ->IntoEl());
         body->Child(pager);
     }
-    body->Child(
-        NewInput(cx, GStrL("save-name"), gSave.nameEdit)->WithSize(gp::UiSize::Small)->W(gp::kFill)->IntoEl());
+    body->Child(NewInput(cx, GStrL("save-name"), gSave.nameEdit)->WithSize(gp::UiSize::Small)->W(gp::kFill)->IntoEl());
     if (gSave.confirmingOverwrite) {
         TempStr msg = fmt(Tr("File %s already exists. Overwrite?").s, path::GetBaseNameTemp(gSave.pendingPath));
         body->Child(gp::TextEl(cx->a, GpuiDup(cx->a, msg))->Font(13)->Fg(th.danger)->Wrap());

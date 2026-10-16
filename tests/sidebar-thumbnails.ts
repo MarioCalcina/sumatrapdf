@@ -221,7 +221,7 @@ export async function testit(): Promise<void> {
     s = await sidebar(client);
     const hwndPanel = s.hwnd;
     const ringOn = async () => /ring=1/.test((await sidebar(client)).raw);
-    const panelFocused = async () => (await ringOn());
+    const panelFocused = async () => await ringOn();
     await waitFor("showing Thumbnails didn't focus them", panelFocused);
     const currentIs = (n: number) => async () => (await sidebar(client)).current === n;
     await waitFor("the document isn't on page 1", currentIs(1));
@@ -236,10 +236,7 @@ export async function testit(): Promise<void> {
       throw new Error("sidebar-thumbnails: a key for the canvas took the focus from the panel");
     }
     postMessage(hwndPanel, WM_KEYDOWN, VK_TAB, 0);
-    await waitFor(
-      "Tab didn't move to the canvas",
-      async () => !(await ringOn()),
-    );
+    await waitFor("Tab didn't move to the canvas", async () => !(await ringOn()));
     await waitFor("Tab didn't come back to the panel", async () => {
       if (await panelFocused()) {
         return true;

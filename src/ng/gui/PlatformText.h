@@ -45,4 +45,3 @@ PlatformTextRender* CreatePlatformTextRender();
 
 struct CGContext;
 PlatformTextRender* CreateCoreTextRender(struct CGContext* context);
-

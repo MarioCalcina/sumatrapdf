@@ -87,8 +87,7 @@ async function testZoomSteps(): Promise<void> {
   );
 }
 
-async function testSharpTiles(): Promise<void> {
-}
+async function testSharpTiles(): Promise<void> {}
 
 export async function testit(): Promise<void> {
   await testSharpTiles();

@@ -1587,12 +1587,11 @@ static gp::El* NavContentEl(gp::Ctx* cx, bool ownWindow) {
     }
     if (gNav.editingPath) {
         gNav.dirEdit->onChange = gp::ListenTo(gNav.view, &NavFilesView::OnDirEdit);
-        top->Child(
-            gp::Div(cx->a)->Flex1()->MinW(0)->PadX(4)->Child(NewInput(cx, GStrL("nav-dir-edit"), gNav.dirEdit)
-                                                                 ->WithSize(gp::UiSize::Small)
-                                                                 ->W(gp::kFill)
-                                                                 ->IntoEl()
-                                                                 ->H(kNavEditDy)));
+        top->Child(gp::Div(cx->a)->Flex1()->MinW(0)->PadX(4)->Child(NewInput(cx, GStrL("nav-dir-edit"), gNav.dirEdit)
+                                                                        ->WithSize(gp::UiSize::Small)
+                                                                        ->W(gp::kFill)
+                                                                        ->IntoEl()
+                                                                        ->H(kNavEditDy)));
         if (gNav.focusPathPending) {
             gp::InputFocus(gNav.dirEdit, cx);
             gp::InputSelectAll(gNav.dirEdit, cx);

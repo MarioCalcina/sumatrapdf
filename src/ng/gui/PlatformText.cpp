@@ -172,4 +172,3 @@ PlatformTextRender* CreateNativeTextRender() {
 PlatformTextRender* CreateCoreTextRender(CGContextRef context) {
     return new CoreTextRender(context);
 }
-

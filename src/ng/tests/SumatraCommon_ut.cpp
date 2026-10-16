@@ -211,4 +211,3 @@ void DocPropertiesTest() {
     utassert(PropFromName(StrL("modDate")) == DocProp::ModificationDate);
     utassert(PropFromName(StrL("bogusPropName")) == DocProp::None);
 }
-

@@ -187,8 +187,7 @@ static TempStr FormatDateTemp(const PropDate& date, int timeZone) {
     // don't add 00:00:00 for dates without time
     bool noTime = date.hour == 0 && date.minute == 0 && date.second == 0;
     DateStyle style = noTime ? DateStyle::Date : DateStyle::DateTime;
-    TempStr res =
-        FormatLocaleDateTemp(date.year, date.month, date.day, date.hour, date.minute, date.second, style);
+    TempStr res = FormatLocaleDateTemp(date.year, date.month, date.day, date.hour, date.minute, date.second, style);
     return len(res) > 0 ? AddTimeZone(res, timeZone) : res;
 }
 

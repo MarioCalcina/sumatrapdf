@@ -2049,12 +2049,12 @@ static gp::El* BuildTocPane(MainWindow* win, gp::Ctx* cx, bool top) {
     gp::InputState* filter = EnsureInput(win, &ui->tocFilter, Tr("Search Bookmarks"));
     filter->onChange = gp::ListenTo(Ui(win)->view, &SidebarView::OnTocFilter);
     pane->CaptureKeyDown(gp::ListenTo(Ui(win)->view, &SidebarView::OnFilterKey));
-    pane->Child(gp::Div(cx->a)->W(gp::kFill)->Shrink0()->PadX(6)->PadB(4)->Child(
-        NewInput(cx, GStrL("toc-filter"), filter)
-            ->WithSize(gp::UiSize::Small)
-            ->W(gp::kFill)
-            ->IntoEl()
-            ->Font((float)ui->filterFontPx)));
+    pane->Child(
+        gp::Div(cx->a)->W(gp::kFill)->Shrink0()->PadX(6)->PadB(4)->Child(NewInput(cx, GStrL("toc-filter"), filter)
+                                                                             ->WithSize(gp::UiSize::Small)
+                                                                             ->W(gp::kFill)
+                                                                             ->IntoEl()
+                                                                             ->Font((float)ui->filterFontPx)));
 
     // the rows that fit the pane, plus spacers for the ones above and below
     float viewH = ui->tocView.h > 0 ? ui->tocView.h : 400;

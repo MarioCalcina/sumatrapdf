@@ -834,16 +834,12 @@ gp::El* SignDocumentDialogBuild(MainWindow* win, gp::Ctx* cx) {
                     ->IntoEl());
 
     body->Child(LabelEl(cx, DlgAccelInput(cx, Tr("&Reason (optional):"), gSign.editReason)));
-    body->Child(NewInput(cx, GStrL("sign-reason"), gSign.editReason)
-                    ->WithSize(gp::UiSize::Small)
-                    ->W(gp::kFill)
-                    ->IntoEl());
+    body->Child(
+        NewInput(cx, GStrL("sign-reason"), gSign.editReason)->WithSize(gp::UiSize::Small)->W(gp::kFill)->IntoEl());
 
     body->Child(LabelEl(cx, DlgAccelInput(cx, Tr("&Location (optional):"), gSign.editLocation)));
-    body->Child(NewInput(cx, GStrL("sign-location"), gSign.editLocation)
-                    ->WithSize(gp::UiSize::Small)
-                    ->W(gp::kFill)
-                    ->IntoEl());
+    body->Child(
+        NewInput(cx, GStrL("sign-location"), gSign.editLocation)->WithSize(gp::UiSize::Small)->W(gp::kFill)->IntoEl());
 
     body->Child(LabelEl(cx, DlgAccelSelect(cx, Tr("&Where to sign:"), &gSign.ddPlacement)));
     body->Child(gSign.ddPlacement.Build(cx, StrL("sign-placement"), gp::kFill));
@@ -861,10 +857,8 @@ gp::El* SignDocumentDialogBuild(MainWindow* win, gp::Ctx* cx) {
 
     body->Child(LabelEl(cx, DlgAccelInput(cx, Tr("&Image (optional):"), gSign.editImage)));
     gp::El* imgRow = gp::Div(cx->a)->FlexRow()->W(gp::kFill)->ItemsCenter()->Gap(8);
-    imgRow->Child(gp::Div(cx->a)->Flex1()->Child(NewInput(cx, GStrL("sign-image"), gSign.editImage)
-                                                     ->WithSize(gp::UiSize::Small)
-                                                     ->W(gp::kFill)
-                                                     ->IntoEl()));
+    imgRow->Child(gp::Div(cx->a)->Flex1()->Child(
+        NewInput(cx, GStrL("sign-image"), gSign.editImage)->WithSize(gp::UiSize::Small)->W(gp::kFill)->IntoEl()));
     imgRow->Child(DlgAccelEl(cx, gpc::Button::New(cx, GStrL("sign-browseimg"))->WithSize(gp::UiSize::Small),
                              Tr("C&hoose..."), gp::ListenTo(gSignView, &SignDocumentView::OnBrowseImage)));
     body->Child(imgRow);

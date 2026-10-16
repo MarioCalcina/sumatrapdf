@@ -123,4 +123,3 @@ void InstallCrashHandler(const CrashHandlerConfig& cfg) {
 
     SetSignalHandlers();
 }
-

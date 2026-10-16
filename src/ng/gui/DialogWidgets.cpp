@@ -510,11 +510,8 @@ gp::El* DialogSelect::BuildCombo(gp::Ctx* cx, Str id, gp::InputState* edit, floa
 
     // one box: the field and the arrow share the edge, as a combo box's do
     gp::El* box = gp::Div(cx->a)->FlexRow()->W(gp::kFill)->ItemsCenter()->BoundsOut(&comboBounds);
-    gp::El* field = NewInput(cx, GpuiDup(cx->a, id), edit)
-                        ->WithSize(gp::UiSize::Small)
-                        ->Disabled(disabled)
-                        ->W(gp::kFill)
-                        ->IntoEl();
+    gp::El* field =
+        NewInput(cx, GpuiDup(cx->a, id), edit)->WithSize(gp::UiSize::Small)->Disabled(disabled)->W(gp::kFill)->IntoEl();
     if (dy > 0) {
         field->H(dy);
     }

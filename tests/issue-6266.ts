@@ -131,14 +131,10 @@ export async function testit(): Promise<void> {
         const page = await renderPageColors(client, epubPath, pageNo);
         console.log(`issue-6266 page ${pageNo}: red=${page.red} blue=${page.blue} ${page.w}x${page.h}`);
         if (page.red < 200) {
-          throw new Error(
-            `issue-6266: page ${pageNo} did not paint the red half (red=${page.red} blue=${page.blue})`,
-          );
+          throw new Error(`issue-6266: page ${pageNo} did not paint the red half (red=${page.red} blue=${page.blue})`);
         }
         if (page.blue < 200) {
-          throw new Error(
-            `issue-6266: page ${pageNo} did not paint the blue half (red=${page.red} blue=${page.blue})`,
-          );
+          throw new Error(`issue-6266: page ${pageNo} did not paint the blue half (red=${page.red} blue=${page.blue})`);
         }
       }
     },

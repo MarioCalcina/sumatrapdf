@@ -836,7 +836,6 @@ static Color ThemePageRenderColorsNoInvert(Color& bg) {
         return text;
     }
 
-
     // Defaults: page colors follow the window theme (light theme → dark text on
     // light paper; dark theme → light text on dark paper).
     text = ThemeWindowTextColor();

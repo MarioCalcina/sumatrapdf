@@ -70,7 +70,7 @@ export async function testit(): Promise<void> {
     requireMatch(await adv(client, "changed"), /changed=0\b.*banner=0/, "fresh dialog should have no edits");
     requireMatch(await adv(client, "esc"), /closed=1/, "Esc should close when nothing is unsaved");
     const goneDeadline = Date.now() + 5000;
-    const dialogGone = async () => (!(await macDialogOpen(client)));
+    const dialogGone = async () => !(await macDialogOpen(client));
     while (!(await dialogGone()) && Date.now() < goneDeadline) {
       await sleep(30);
     }

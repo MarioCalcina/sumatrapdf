@@ -594,10 +594,8 @@ gp::El* TabGroupsDialogBuild(MainWindow* win, gp::Ctx* cx) {
     gp::El* body = gp::Div(cx->a)->FlexCol()->Gap(8);
     if (isSave && gTg->editName) {
         gTg->editName->onChange = gp::ListenTo(gTabGroupsView, &TabGroupsView::OnInput);
-        body->Child(NewInput(cx, GStrL("tabgroup-name"), gTg->editName)
-                        ->WithSize(gp::UiSize::Small)
-                        ->W(gp::kFill)
-                        ->IntoEl());
+        body->Child(
+            NewInput(cx, GStrL("tabgroup-name"), gTg->editName)->WithSize(gp::UiSize::Small)->W(gp::kFill)->IntoEl());
     }
 
     Vec<TabGroup*>* groups = Groups();

@@ -810,4 +810,3 @@ Vec<Pixmap*> PixmapsFromData(Str bmpData) {
     }
     return res;
 }
-

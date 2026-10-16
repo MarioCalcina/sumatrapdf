@@ -53,7 +53,6 @@ export async function isGitClean(dir: string): Promise<boolean> {
   return out.length === 0;
 }
 
-
 function normalizeNewlines(data: string): string {
   return data.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
 }

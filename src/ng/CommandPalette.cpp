@@ -2366,10 +2366,8 @@ static gp::El* PaletteCard(CommandPaletteWnd* wnd, gp::Ctx* cx, RectF bounds) {
                        ->Pad(8)
                        ->Bg(th.tokens.popover)
                        ->Border(1, th.border);
-    card->Child(NewInput(cx, GStrL("palette-query"), wnd->editQuery)
-                    ->WithSize(gp::UiSize::Small)
-                    ->W(gp::kFill)
-                    ->IntoEl());
+    card->Child(
+        NewInput(cx, GStrL("palette-query"), wnd->editQuery)->WithSize(gp::UiSize::Small)->W(gp::kFill)->IntoEl());
     if (!wnd->smartTabMode) {
         card->Child(BuildSwitchRow(wnd, cx));
     }

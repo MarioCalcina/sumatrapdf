@@ -129,4 +129,3 @@ PlatformFont* GetUserGuiFontEx(Str fontName, int size, bool bold, bool italic) {
     }
     return GetPlatformFont(fontName, (float)size * 72.0f / 96.0f, FontStyle(bold, italic));
 }
-

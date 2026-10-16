@@ -95,7 +95,7 @@ export async function testit(): Promise<void> {
     sendCommand(frame, cmdId("CmdToggleEditPDF"));
     await sleep(300);
     sendCommand(frame, cmdId("CmdFindAnnotation"));
-    const pid = (proc.pid ?? 0);
+    const pid = proc.pid ?? 0;
     const { dump, hwnd } = await waitFloat(client, pid);
     if (/saveEnabled=1/.test(dump)) {
       throw new Error(`issue-6123: save buttons should be disabled with no edits\n${dump}`);

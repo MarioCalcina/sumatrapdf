@@ -381,4 +381,3 @@ bool CreateForFile(Str path, int* errOut) {
 }
 
 } // namespace dir
-

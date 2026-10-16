@@ -11,7 +11,6 @@ import { pdfMediaBox, runPrintToPdf, tempPrintOutput } from "./print-util.ts";
 const INPUT = join(ROOT, "tests", "issue-5597.pdf");
 
 export async function testit(): Promise<void> {
-
   const portraitOut = tempPrintOutput("5353-portrait");
   const portraitRes = runPrintToPdf(INPUT, portraitOut, "portrait,disable-auto-rotation,noscale");
   if (!portraitRes.ok) {

@@ -24,7 +24,6 @@ function pdfHasImage(path: string): boolean {
 }
 
 export async function testit(): Promise<void> {
-
   const dir = tmpPath("issue-6150");
   rmSync(dir, { recursive: true, force: true });
   mkdirSync(dir, { recursive: true });

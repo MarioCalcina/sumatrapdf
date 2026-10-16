@@ -55,4 +55,3 @@ extern const char* gIconArrowUp;
 extern const char* gIconHome;
 
 struct Pixmap;
-

@@ -44,7 +44,6 @@ export async function testit(): Promise<void> {
   const tiny = extractPageText(pdf, 1);
   assertNeedles(tiny, "2.5pt Helvetica");
   console.log("  2.5pt Helvetica keeps IO224 and RGMII_BMC_RMM4_TXD0 ✓");
-
 }
 
 if (import.meta.main) {

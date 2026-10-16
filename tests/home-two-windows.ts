@@ -40,7 +40,7 @@ async function searchRect(client: ControlClient, winIdx = 0, timeoutMs = 8000): 
     raw = h.raw;
     // ng has no search Edit. The box width is the per-window layout, so wait
     // until that width is real before treating the page as laid out.
-    if (h.ready && (h.search[2] > 0)) {
+    if (h.ready && h.search[2] > 0) {
       return h.search;
     }
     if (Date.now() > deadline) {

@@ -38,7 +38,7 @@ export async function testit(): Promise<void> {
 
   const logPath = join(dir, "reload.log");
   const proc = Bun.spawn(
-    [EXE, "-for-testing", ...windowPosArgs(), "-appdata", dir, ...(["-log-to-file", logPath]), doc],
+    [EXE, "-for-testing", ...windowPosArgs(), "-appdata", dir, ...["-log-to-file", logPath], doc],
     {
       stdout: "pipe",
       // ASan writes its report to stderr. "ignore" closes that pipe and the

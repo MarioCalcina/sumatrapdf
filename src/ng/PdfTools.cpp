@@ -3606,10 +3606,8 @@ static gp::El* PdfToolBuildCurrent(MainWindow* win, gp::Ctx* cx) {
     body->Child(gp::TextEl(cx->a, GpuiDup(cx->a, gTool.srcPath))->Font(12)->Fg(th.mutedFg)->Truncate());
 
     gp::El* destRow = gp::Div(cx->a)->FlexRow()->W(gp::kFill)->ItemsCenter()->Gap(8);
-    destRow->Child(gp::Div(cx->a)->Flex1()->MinW(0)->Child(NewInput(cx, GStrL("pdftool-dest"), gTool.destEdit)
-                                                               ->WithSize(gp::UiSize::Small)
-                                                               ->W(gp::kFill)
-                                                               ->IntoEl()));
+    destRow->Child(gp::Div(cx->a)->Flex1()->MinW(0)->Child(
+        NewInput(cx, GStrL("pdftool-dest"), gTool.destEdit)->WithSize(gp::UiSize::Small)->W(gp::kFill)->IntoEl()));
     if (HasFormatDropDown()) {
         destRow->Child(gTool.ddFormat.Build(cx, StrL("pdftool-format"), 84));
     }

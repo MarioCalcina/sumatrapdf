@@ -11,7 +11,6 @@ import { dirname, join } from "node:path";
 import { findGhostscript, runStandalone, tmpPath } from "./util.ts";
 import { killAndWait, launchControlled } from "./win-automation.ts";
 
-
 function whereExe(name: string): string {
   let r: ReturnType<typeof Bun.spawnSync>;
   try {

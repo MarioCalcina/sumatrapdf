@@ -124,7 +124,7 @@ export async function testit(): Promise<void> {
 
     postMessage(handles.palette, WM_KEYDOWN, VK_RETURN, 0);
     const navigateDeadline = Date.now() + 3_000;
-    const paletteVisible = async () => (await paletteOpen(client));
+    const paletteVisible = async () => await paletteOpen(client);
     while (Date.now() < navigateDeadline && ((await paletteVisible()) || (await currentPage(client)) !== 2)) {
       await sleep(40);
     }

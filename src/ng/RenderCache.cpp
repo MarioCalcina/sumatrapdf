@@ -1276,10 +1276,8 @@ static void RenderCacheThread(RenderThreadData* td) {
 
 // TODO: conceptually, RenderCache is not the right place for code that paints
 //       (this is the only place that knows about Tiles, though)
-int RenderCache::PaintTile(
-    gpui::PaintCtx* ctx,
-    Rect bounds, DisplayModel* dm, int pageNo, TilePosition tile, Rect tileOnScreen, bool renderMissing,
-    bool* renderOutOfDateCue, bool* renderedReplacement) {
+int RenderCache::PaintTile(gpui::PaintCtx* ctx, Rect bounds, DisplayModel* dm, int pageNo, TilePosition tile,
+                           Rect tileOnScreen, bool renderMissing, bool* renderOutOfDateCue, bool* renderedReplacement) {
     float zoom = dm->GetRenderZoom(pageNo);
     BitmapCacheEntry* entry = Find(dm, pageNo, dm->PageRotation(pageNo), zoom, &tile);
     int renderDelay = 0;
@@ -1362,9 +1360,8 @@ static int cmpTilePosition(const TilePosition* a, const TilePosition* b) {
 // returns how much time in ms has past since the most recent rendering
 // request for the visible part of the page if nothing at all could be
 // painted, 0 if something has been painted and kRenderDelayFailed on failure
-int RenderCache::Paint(
-    gpui::PaintCtx* ctx,
-    Rect bounds, DisplayModel* dm, int pageNo, PageInfo* pi, bool* renderOutOfDateCue) {
+int RenderCache::Paint(gpui::PaintCtx* ctx, Rect bounds, DisplayModel* dm, int pageNo, PageInfo* pi,
+                       bool* renderOutOfDateCue) {
     ReportIf(!pi->isShown || 0.0 == pi->visibleRatio);
 
     if (!dm->ShouldCacheRendering(pageNo)) {
@@ -1611,4 +1608,3 @@ void UpdateCacheInfo() {
     SerializeCachedObjects(s);
     uitask::Post(MkFunc0<Str>(SetDebugTextOnUI, new Str(str::Dup(ToStr(s)))), "CacheInfo");
 }
-

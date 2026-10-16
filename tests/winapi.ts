@@ -155,11 +155,9 @@ export function getFocusedHwnd(hwndInSameThread: number): number {
 }
 
 // visit returns false to stop enumeration early
-export function enumWindows(visit: (hwnd: number) => boolean): void {
-}
+export function enumWindows(visit: (hwnd: number) => boolean): void {}
 
-export function enumChildWindows(parent: number, visit: (hwnd: number) => boolean): void {
-}
+export function enumChildWindows(parent: number, visit: (hwnd: number) => boolean): void {}
 
 // find a top-level window of a given process and window class (0 if none)
 export function findTopWindow(pid: number, className: string): number {
@@ -316,8 +314,7 @@ export function setCursorPos(x: number, y: number): boolean {
   return ok;
 }
 
-export async function ensureModifierKeysUp(): Promise<void> {
-}
+export async function ensureModifierKeysUp(): Promise<void> {}
 
 // CreateFileW with dwShareMode=0: what OneNote does when it tries to rewrite
 // an extracted attachment. ok=false means another process is still holding it.
@@ -472,4 +469,3 @@ export async function killProcessesNamed(exeName: string, timeoutMs = 5000): Pro
 export type MenuItem = { text: string; accel?: string; items?: MenuItem[]; disabled?: boolean };
 
 // --- virtual desktops: the shell's IVirtualDesktopManager over raw COM ---
-

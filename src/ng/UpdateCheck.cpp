@@ -318,8 +318,8 @@ static void StartUpdateInstall(MainWindow* win, UpdateInfo* info, Str dmgPath) {
     d->win = win;
     d->app = str::Dup(MacAppBundlePathTemp());
     d->staged = str::Dup(path::JoinTemp(path::GetDirTemp(d->app), StrL(".SumatraPDF.app.update")));
-    d->updatePage = str::Dup(info && IsTrustedUpdateDlUrl(info->downloadPage) ? info->downloadPage
-                                                                               : StrL(kWebisteDownloadPageURL));
+    d->updatePage =
+        str::Dup(info && IsTrustedUpdateDlUrl(info->downloadPage) ? info->downloadPage : StrL(kWebisteDownloadPageURL));
     if (len(dmgPath) > 0) {
         d->dmgPath = str::Dup(dmgPath);
     } else {

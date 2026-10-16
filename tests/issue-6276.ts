@@ -8,7 +8,6 @@
 import { writeFileSync } from "node:fs";
 import { EXE, runStandalone, tmpPath } from "./util";
 
-
 function makeFixture(): string {
   const objects: string[] = [];
   const add = (body: string): number => {

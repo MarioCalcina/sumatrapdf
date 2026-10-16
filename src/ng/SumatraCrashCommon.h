@@ -10,4 +10,3 @@ void OnCrashBegin();
 // --- shared by SumatraCrashCommon.cpp and each app's SumatraPDF.cpp ---
 
 void AppendUncaughtMupdfError(Arena* a, str::Builder& b);
-

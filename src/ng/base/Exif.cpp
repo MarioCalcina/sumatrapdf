@@ -1053,4 +1053,3 @@ TempStr ExifParser::GetFormattedPropTemp(ExifProp prop) const {
     }
     return FormatValuesTemp(*this, (IfdGroup)entry->group, entry->tag, entry->type, entry->count, entry->dataOff);
 }
-

@@ -113,7 +113,17 @@ export async function packEmbedded(
 export async function embedLzsa(tc: Toolchain, archive: string, dir: string, archFlags: string[]): Promise<string> {
   const source = join(root, "src/ng/EmbeddedLzsa.S");
   const obj = join(dir, "embedded.o");
-  const args = [tc.cc, ...archFlags, "-x", "assembler-with-cpp", `-DEMBEDDED_LZSA="${archive}"`, "-c", source, "-o", obj];
+  const args = [
+    tc.cc,
+    ...archFlags,
+    "-x",
+    "assembler-with-cpp",
+    `-DEMBEDDED_LZSA="${archive}"`,
+    "-c",
+    source,
+    "-o",
+    obj,
+  ];
   const key = args.join("\n");
   const keyPath = `${obj}.cmd`;
   const deps = [archive, source];

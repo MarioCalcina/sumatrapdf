@@ -114,7 +114,7 @@ export async function testit(): Promise<void> {
     console.log(
       "ad-hoc-annot-edit-race: needs an asan build to see anything. Run:\n" +
         "  bun cmd/build.ts -asan\n" +
-        '  SUMATRA_TEST_EXE=out/mac/dbg-asan/SumatraPDF\n' +
+        "  SUMATRA_TEST_EXE=out/mac/dbg-asan/SumatraPDF\n" +
         "  bun tests/ad-hoc-annot-edit-race.ts --no-build",
     );
     return;

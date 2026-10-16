@@ -89,9 +89,7 @@ export async function testit(): Promise<void> {
       await sleep(50);
     }
     if (links !== 1 || shapes !== 1) {
-      throw new Error(
-        `issue-5980: Show Links drew ${shapes} shapes, expected only the link (links=${links})\n${raw}`,
-      );
+      throw new Error(`issue-5980: Show Links drew ${shapes} shapes, expected only the link (links=${links})\n${raw}`);
     }
     console.log(`issue-5980: one link outline (drawn shapes=${shapes}), underline ignored`);
     return;

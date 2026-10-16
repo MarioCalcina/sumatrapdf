@@ -392,4 +392,3 @@ gp::El* FormFieldEditBuild(MainWindow* win, gp::Ctx* cx) {
     }
     return list;
 }
-

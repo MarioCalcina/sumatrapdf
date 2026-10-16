@@ -42,7 +42,7 @@ struct DirIter {
         ~iterator();
 
         DirIterEntry* operator*();
-        iterator& operator++();   // ++it
+        iterator& operator++(); // ++it
         friend bool operator!=(const iterator& a, const iterator& b);
     };
     iterator begin() const;

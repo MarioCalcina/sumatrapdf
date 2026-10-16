@@ -150,4 +150,3 @@ bool WriteCurrentLogToFile(Str path) {
 }
 
 // --- parent process chain (startup diagnostics) --------------------------------
-

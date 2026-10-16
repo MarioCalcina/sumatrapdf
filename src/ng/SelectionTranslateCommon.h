@@ -71,4 +71,3 @@ static const Str gPopularLanguages[] = {
     StrL("Hungarian"),
     StrL("Slovak"),
 };
-

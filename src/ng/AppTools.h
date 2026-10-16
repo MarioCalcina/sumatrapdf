@@ -40,4 +40,3 @@ TempStr FormatFileSizeShortTransTemp(i64);
 TempStr FormatFileSizeTransTemp(i64);
 
 bool LaunchFileIfExists(Str path);
-

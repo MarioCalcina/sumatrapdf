@@ -1450,4 +1450,3 @@ void DrawHtmlPage(HtmlDrawContext context, PlatformTextRender* textDraw, Vec<Dra
         }
     }
 }
-

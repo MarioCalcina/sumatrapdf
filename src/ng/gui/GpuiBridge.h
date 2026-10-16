@@ -92,4 +92,3 @@ inline Rect FromGpui(gp::Bounds b) {
 inline bool CtrlOrCmd(const gp::KeyEvent* ev) {
     return ev->ctrl || ev->platform;
 }
-

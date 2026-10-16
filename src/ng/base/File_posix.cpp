@@ -545,4 +545,3 @@ bool HasWriteAccess(Str dir) {
 }
 
 } // namespace dir
-

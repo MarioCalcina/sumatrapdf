@@ -769,10 +769,8 @@ static gp::El* AdvToolBuild(MainWindow*, gp::Ctx* cx) {
         if (editing && gAdv.editIsEnum) {
             row->Child(gAdv.ddValue.Build(cx, StrL("adv-enum"), valDx));
         } else if (editing) {
-            row->Child(NewInput(cx, GStrL("adv-value"), gAdv.editValue)
-                           ->WithSize(gp::UiSize::Small)
-                           ->W(valDx)
-                           ->IntoEl());
+            row->Child(
+                NewInput(cx, GStrL("adv-value"), gAdv.editValue)->WithSize(gp::UiSize::Small)->W(valDx)->IntoEl());
         } else {
             gp::El* val =
                 gp::TextEl(cx->a, GpuiDup(cx->a, FormatSettingValueTemp(item)))->Font(font)->Fg(th.foreground);
@@ -1032,10 +1030,8 @@ static gp::El* AdvContentEl(gp::Ctx* cx) {
     gAdv.editValue->onChange = gp::ListenTo(gAdvView, &AdvancedSettingsView::OnEditInput);
 
     gp::El* body = gp::Div(cx->a)->FlexCol()->Gap(6);
-    body->Child(gp::Div(cx->a)->W(gp::kFill)->Shrink0()->Child(NewInput(cx, GStrL("adv-filter"), gAdv.editFilter)
-                                                                   ->WithSize(gp::UiSize::Small)
-                                                                   ->W(gp::kFill)
-                                                                   ->IntoEl()));
+    body->Child(gp::Div(cx->a)->W(gp::kFill)->Shrink0()->Child(
+        NewInput(cx, GStrL("adv-filter"), gAdv.editFilter)->WithSize(gp::UiSize::Small)->W(gp::kFill)->IntoEl()));
 
     // ng: only the rows in view are built, between two spacers that stand in
     // for the rest
@@ -1072,8 +1068,7 @@ static gp::El* AdvContentEl(gp::Ctx* cx) {
         if (editing && gAdv.editIsEnum) {
             row->Child(gAdv.ddValue.Build(cx, StrL("adv-enum"), 240));
         } else if (editing) {
-            row->Child(
-                NewInput(cx, GStrL("adv-value"), gAdv.editValue)->WithSize(gp::UiSize::Small)->W(240)->IntoEl());
+            row->Child(NewInput(cx, GStrL("adv-value"), gAdv.editValue)->WithSize(gp::UiSize::Small)->W(240)->IntoEl());
         } else {
             gp::El* val = gp::TextEl(cx->a, GpuiDup(cx->a, FormatSettingValueTemp(item)))
                               ->Font(13)

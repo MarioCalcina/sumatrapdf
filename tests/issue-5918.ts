@@ -163,10 +163,9 @@ async function testTocAndNextFile(dir: string): Promise<void> {
       if (n !== wantFull) {
         throw new Error(`issue-5918: TOC dropped to ${n} items after next-file, want it kept at ${wantFull}`);
       }
-      const opened =
-        client
-          ? (await currentFile(client)).endsWith("page-0001.html")
-          : getWindowText(frame).startsWith("page-0001.html");
+      const opened = client
+        ? (await currentFile(client)).endsWith("page-0001.html")
+        : getWindowText(frame).startsWith("page-0001.html");
       if (opened) {
         switched = true;
         break;

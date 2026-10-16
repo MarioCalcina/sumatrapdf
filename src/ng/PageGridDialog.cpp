@@ -780,11 +780,8 @@ gp::El* PageGridDialogBuild(MainWindow* win, gp::Ctx* cx) {
                         ->Cursor(gp::CursorKind::Pointer)
                         ->PathClick(GStrL("grid-swatch"))
                         ->OnClick(gp::ListenTo(gPageGridView, &PageGridView::OnPickColor)));
-    colorRow->Child(
-        gp::Div(cx->a)->Flex1()->MinW(0)->Child(NewInput(cx, GStrL("grid-color"), gPageGrid.editColor)
-                                                    ->WithSize(gp::UiSize::Small)
-                                                    ->W(gp::kFill)
-                                                    ->IntoEl()));
+    colorRow->Child(gp::Div(cx->a)->Flex1()->MinW(0)->Child(
+        NewInput(cx, GStrL("grid-color"), gPageGrid.editColor)->WithSize(gp::UiSize::Small)->W(gp::kFill)->IntoEl()));
     body->Child(GridRow(cx, Tr("Color:"), colorRow));
     body->Child(DlgAccelEl(cx, gpc::Checkbox::New(cx, GStrL("grid-show"))->Checked(gPageGrid.showGrid),
                            Tr("&Show Grid"), gp::ListenTo(gPageGridView, &PageGridView::OnShowGrid)));

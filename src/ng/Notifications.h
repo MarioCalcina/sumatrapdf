@@ -124,4 +124,3 @@ void ShowMaybeDelayedNotifications(MainWindow* win);
 
 // the notifications the shell should draw for this window, in creation order
 const Vec<NotificationWnd*>& GetNotifications();
-

@@ -300,7 +300,6 @@ function dav1dConfig(aarch64: boolean): string {
 `;
 }
 
-
 // orig premake5.files.lua engines_files() plus the ebook / document-model
 // sources it needs. Listed one by one because src/ will hold the UI too.
 const enginesSources = [
@@ -429,12 +428,7 @@ export const targets: Target[] = [
     // js_*: quickjs and mupdf's mujs export the same four allocator names, so
     // linking both is a duplicate-symbol error. Nothing outside this target
     // includes quickjs.h, so renaming them here is contained
-    defines: [
-      "js_malloc=qjs_malloc",
-      "js_free=qjs_free",
-      "js_realloc=qjs_realloc",
-      "js_strdup=qjs_strdup",
-    ],
+    defines: ["js_malloc=qjs_malloc", "js_free=qjs_free", "js_realloc=qjs_realloc", "js_strdup=qjs_strdup"],
     strict: false,
     exceptions: false,
     perSource: [
@@ -962,9 +956,7 @@ export const targets: Target[] = [
     embedded: true,
     sources: appSources,
     defines: ["LIBARCHIVE_STATIC", "CMARK_GFM_STATIC_DEFINE", "DISABLE_DOCUMENT_RESTRICTIONS"],
-    perSource: [
-      { glob: "src/ng/Commands.cpp", flags: ["-DNO_THUMBNAIL_STATE_ARG"] },
-    ],
+    perSource: [{ glob: "src/ng/Commands.cpp", flags: ["-DNO_THUMBNAIL_STATE_ARG"] }],
     // MarkdownToc.cpp renders markdown with cmark-gfm (linked in through mupdf)
     includes: [
       "src/ng",
@@ -1229,4 +1221,3 @@ export function findTarget(name: string): Target | undefined {
 
 /** The default build: the app plus everything it depends on. */
 export const defaultTarget = "SumatraPDF";
-

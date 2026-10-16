@@ -345,7 +345,6 @@ Point PdfPageBoxLabelPos(const Rect& r, PdfPageBoxKind kind) {
     return r.TL();
 }
 
-
 // a full-page image (e.g. a scanned page) shouldn't start an image drag-out:
 // there click-and-drag is expected to pan the page (issue #5754). detect it by
 // comparing the image's area to the page's.
