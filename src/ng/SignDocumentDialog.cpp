@@ -1,12 +1,12 @@
 /* Copyright 2022 the SumatraPDF project authors (see AUTHORS file).
    License: GPLv3 */
 
-// Fills in a signature field with a certificate from a .pfx / .p12 file. ng: orig is a WS_POPUPWINDOW of virtual controls; here it
-// is a gpui dialog with the same rows in the same order (certificate, the
-// file + browse, password, reason, location, where to sign, the appearance
-// check boxes and the optional image), and the same "hide the dialog and let
-// the user click or drag on the page" placement mode.
-// Signing uses the Security framework.
+// Fills in a signature field with a certificate from a .pfx / .p12 file.
+// ng: orig is a WS_POPUPWINDOW of virtual controls; here it is a gpui dialog
+// with the same rows in the same order (certificate, the file + browse,
+// password, reason, location, where to sign, the appearance check boxes and
+// the optional image), and the same "hide the dialog and let the user click
+// or drag on the page" placement mode. Signing uses the Security framework.
 
 #include "gui/GpuiBridge.h"
 #include "base/File.h"

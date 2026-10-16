@@ -24,4 +24,3 @@ bool IsHelpListedCmd(int cmdId) {
     }
     return false;
 }
-
