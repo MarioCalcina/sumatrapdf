@@ -34,12 +34,6 @@
 #include "AnnotEditToolbar.h"
 #include "SelectTextKeyboard.h"
 
-void AppShellEnableFileDrop(MainWindow*) {}
-
-void AppShellFrameChanged(MainWindow*) {}
-
-void AppShellForgetNativeHwnd(MainWindow*) {}
-
 // x, y are window dips from the top left. Hover may omit paths. Leave clears
 // the Merge PDF insertion bar. A drop on the canvas opens the files; while
 // Merge PDF is up the dialog takes a drop anywhere on the frame.

@@ -210,15 +210,6 @@ static void RepaintSelection(MainWindow* win) {
     win->RedrawCanvas();
 }
 
-static void StartSelectionCapture(MainWindow* win) {
-    CanvasSetCapture(win, true);
-    RepaintSelection(win);
-}
-
-static void StopSelectionCapture(MainWindow* win) {
-    CanvasSetCapture(win, false);
-}
-
 // Apply edge/corner/move drag to an original normalized rect (screen coords).
 static Rect ApplySelectionEdgeDrag(Rect orig, SelectionDragEdge edge, int dx, int dy) {
     int x = orig.x;
@@ -363,7 +354,7 @@ bool StartRectangularSelectionEdit(MainWindow* win, int x, int y, SelectionDragE
     win->linkOnLastButtonDown = nullptr;
     win->textDragPending = false;
     win->imageDragPending = false;
-    StartSelectionCapture(win);
+    RepaintSelection(win);
     return true;
 }
 
@@ -845,12 +836,10 @@ void OnSelectionStart(MainWindow* win, int x, int y, bool forceRect) {
         }
     }
 
-    StartSelectionCapture(win);
+    RepaintSelection(win);
 }
 
 void OnSelectionStop(MainWindow* win, int x, int y, bool aborted) {
-    StopSelectionCapture(win);
-
     bool editingRect = win->selectionDragEdge != SelectionDragEdge::None && win->mouseAction == MouseAction::Selecting;
 
     // update the text selection before changing the selectionRect

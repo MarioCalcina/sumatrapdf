@@ -5948,9 +5948,6 @@ double AppElapsedMs() {
     return TimeSinceInMs(gAppStartTime);
 }
 
-// ng applies -window-pos where the frame is placed (CreateAndShowMainWindow)
-void ApplyWindowPosFlag(const Flags&) {}
-
 extern "C" {
 int muconvert_main(int argc, char** argv);
 int mudraw_main(int argc, char** argv);

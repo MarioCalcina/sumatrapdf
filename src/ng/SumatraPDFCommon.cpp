@@ -1993,7 +1993,6 @@ void UndoRedoInTab(WindowTab* tab, bool redo) {
 }
 
 void UpdateSettings(const Flags& i) {
-    ApplyWindowPosFlag(i);
     if (len(i.inverseSearchCmdLine) > 0) {
         str::ReplaceWithCopy(&gSettings->inverseSearchCmdLine, i.inverseSearchCmdLine);
         gSettings->enableTeXEnhancements = true;
@@ -2484,7 +2483,6 @@ SettingsApplyState GetSettingsApplyState() {
     s.disableAntiAlias = p->disableAntiAlias;
     s.chmUseFixedPageUI = p->chmUI.useFixedPageUI;
     s.markdownUseFixedPageUI = p->markdownUI.useFixedPageUI;
-    s.explorerQuickLook = p->explorerQuickLook;
     s.ebookLayout = EbookLayoutSnapshot();
     return s;
 }

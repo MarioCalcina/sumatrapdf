@@ -212,7 +212,6 @@ void ApplyDigitSpeed(MainWindow* win, int digit) {
 }
 
 void ReadingAutoScrollHideBar(MainWindow* win) {
-    KillReadingTimer(win);
     BarHide(win);
 }
 
@@ -238,7 +237,6 @@ void ReadingAutoScrollPause(MainWindow* win) {
     tab->autoScroll.paused = !tab->autoScroll.paused;
     logf("ReadingAutoScroll: paused %d\n", (int)tab->autoScroll.paused);
     if (tab->autoScroll.paused) {
-        KillReadingTimer(win);
         tab->autoScroll.accum = 0;
     } else {
         tab->autoScroll.atEnd = AtScrollLimit(ScrollModel(tab), tab->autoScroll.dir);
@@ -261,7 +259,6 @@ void ReadingAutoScrollReverse(MainWindow* win) {
     tab->autoScroll.atEnd = AtScrollLimit(ScrollModel(tab), tab->autoScroll.dir);
     if (tab->autoScroll.atEnd) {
         tab->autoScroll.paused = true;
-        KillReadingTimer(win);
     } else if (!tab->autoScroll.paused) {
         ArmReadingTimer(win, tab);
     }
@@ -282,7 +279,6 @@ void ReadingAutoScrollStart(MainWindow* win) {
         ArmReadingTimer(win, tab);
     } else {
         tab->autoScroll.paused = true;
-        KillReadingTimer(win);
     }
     BarSetSessionTab(win, tab);
     logf("ReadingAutoScroll: start, speed %d px/s, atEnd %d\n", (int)CurrentSpeed(), (int)tab->autoScroll.atEnd);
@@ -300,8 +296,6 @@ void ReadingAutoScrollSyncToTab(WindowTab* tab) {
     }
     if (!tab->autoScroll.paused && !tab->autoScroll.atEnd) {
         ArmReadingTimer(win, tab);
-    } else {
-        KillReadingTimer(win);
     }
     BarSetSessionTab(win, tab);
     BarUpdate(win, true);
@@ -365,7 +359,6 @@ bool ReadingAutoScrollOnKey(MainWindow* win, int key, bool ctrl, bool shift, boo
 void ReadingAutoScrollTick(MainWindow* win, int elapsedMs) {
     WindowTab* tab = ActiveTab(win);
     if (!tab || tab != SessionTab(win) || tab->autoScroll.paused) {
-        KillReadingTimer(win);
         return;
     }
     DisplayModel* dm = ScrollModel(tab);
@@ -377,7 +370,6 @@ void ReadingAutoScrollTick(MainWindow* win, int elapsedMs) {
     if (AtScrollLimit(dm, dir)) {
         tab->autoScroll.atEnd = true;
         tab->autoScroll.paused = true;
-        KillReadingTimer(win);
         BarUpdate(win, true);
         return;
     }
@@ -401,7 +393,6 @@ void ReadingAutoScrollTick(MainWindow* win, int elapsedMs) {
     if (AtScrollLimit(dm, dir)) {
         tab->autoScroll.atEnd = true;
         tab->autoScroll.paused = true;
-        KillReadingTimer(win);
         BarUpdate(win, true);
     }
 }

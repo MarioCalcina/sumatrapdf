@@ -48,10 +48,6 @@ constexpr float kStampAnnotDefaultDx = 190.f;
 bool AppendInkPoint(MainWindow* win, DisplayModel* dm, Point pt);
 
 // implemented by each app: what placement asks of the window system
-void PlacementFocusFrame(MainWindow* win);
-void PlacementCaptureMouse(MainWindow* win);
-void PlacementReleaseMouse(MainWindow* win);
-void ReleasePlacementCapture(MainWindow* win);
 bool PlacementDumpCursor(MainWindow* win, AnnotPlacementKind kind, bool active);
 void RestoreCanvasCursor(MainWindow* win);
 void PlacementRunCreateCmd(MainWindow* win, int cmdId, Point pt);

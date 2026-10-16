@@ -1631,9 +1631,6 @@ void SetOpacity(Annotation* annot, int newOpacity) {
 static Str GetUserTemp() {
     Str u = Str(getenv("USER"));
     if (len(u) == 0) {
-        u = Str(getenv("USERNAME"));
-    }
-    if (len(u) == 0) {
         return StrL("user");
     }
     return u;

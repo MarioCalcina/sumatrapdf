@@ -235,12 +235,8 @@ void ReadingBarCancelDrag(MainWindow* win) {
     if (!win) {
         return;
     }
-    bool dragging = win->readingBarDrag != ReadingBarDrag::None;
     win->readingBarDrag = ReadingBarDrag::None;
     win->readingBarDragOff = 0;
-    if (dragging) {
-        CanvasSetCapture(win, false);
-    }
 }
 
 void ReadingBarHide(MainWindow* win) {
@@ -361,7 +357,6 @@ bool ReadingBarOnLeftDown(MainWindow* win, int x, int y) {
         win->readingBarDrag = ReadingBarDrag::Move;
         win->readingBarDragOff = y - band.y;
     }
-    CanvasSetCapture(win, true);
     return true;
 }
 

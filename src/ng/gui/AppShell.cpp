@@ -218,7 +218,6 @@ void SetTabsInTitlebar(MainWindow* win, bool inTitleBar) {
     win->tabsInTitlebar = inTitleBar;
     if (!win->isFullScreen && !win->presentation) {
         AppShellSetClientTitleBar(win, inTitleBar);
-        AppShellFrameChanged(win);
     }
     AppShellInvalidate(win);
 }
@@ -838,7 +837,6 @@ void AppShellCloseWindow(MainWindow* win) {
 }
 
 void AppShellDeleteWindow(MainWindow* win) {
-    AppShellForgetNativeHwnd(win);
     if (!win->shell) {
         return;
     }
@@ -2819,7 +2817,6 @@ MainWindow* AppShellCreateWindow(gp::App* app, int dipW, int dipH) {
     // ng: orig runs auto-scroll on a 10 ms timer and repaints a rendering page
     // on a 500 ms one; one interval drives both here
     gp::WindowSetInterval(gw, 16, gp::ListenTo(ui->view, &ShellView::OnTick));
-    AppShellEnableFileDrop(win);
     logf("AppShellCreateWindow: window 0x%p, %d windows open\n", win, len(gWindows));
     return win;
 }

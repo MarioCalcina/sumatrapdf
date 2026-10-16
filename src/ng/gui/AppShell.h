@@ -64,10 +64,6 @@ TempStr AppShellPromptForPathTemp(MainWindow* win, Str title, Str filter, Str in
 // File / Open style prompt taking several files where the platform can
 bool AppShellPromptForFiles(MainWindow* win, Str filter, StrVec* pathsOut);
 void AppShellSetTitle(MainWindow* win, Str title);
-// claims the native handle for hotkeys and the other win32 services. OS file
-// drops are gpui ExternalPaths drops on the shell root. No-op off Windows; on
-// Windows it also registers the WM_DROPFILES fallback.
-void AppShellEnableFileDrop(MainWindow* win);
 enum class FileDropPhase {
     Hover,
     Drop,
@@ -85,9 +81,6 @@ int AppShellFrameBorder(MainWindow* win);
 // gpui's client-side title bar for the frame, without touching the flag
 // (fullscreen has no caption of either kind)
 void AppShellSetClientTitleBar(MainWindow* win, bool on);
-// the frame's style changed: have Windows recompute the non-client area
-void AppShellFrameChanged(MainWindow* win);
-void AppShellForgetNativeHwnd(MainWindow* win);
 // ng: gpui has no fullscreen window state (see "gpui gaps"). On Windows this
 // is orig's EnterFullScreen / ExitFullScreen on the native frame
 // (src/gui/NativeWindow.cpp); elsewhere WindowSetFullScreen.

@@ -2335,8 +2335,6 @@ void FindTextOnThread(MainWindow* win, TextSearch::Direction direction, bool sho
 }
 
 bool HandleExecuteCmds(Str cmd) {
-    DdeExecuteBegin();
-
     bool didHandle = false;
     while (cmd) {
         logf("HandleExecuteCmds: '%s'\n", cmd);

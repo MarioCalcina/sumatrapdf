@@ -87,22 +87,12 @@ void SetPlacementCursor(MainWindow* win) {
     CanvasSetCursor(win, (int)gp::CursorKind::Crosshair);
 }
 
-// orig posts WM_COMMAND with kAnnotationPlacementCommandCode; here the command
-// path takes the same two flags as arguments
-// what placement asks of the window system; gpui tracks focus and the pressed
-// button itself, so only the command and the cursor do anything here
-void PlacementFocusFrame(MainWindow*) {}
-
-void PlacementCaptureMouse(MainWindow*) {}
-
-void PlacementReleaseMouse(MainWindow*) {}
-
-void ReleasePlacementCapture(MainWindow*) {}
-
 void RestoreCanvasCursor(MainWindow* win) {
     CanvasSetCursor(win, (int)gp::CursorKind::Arrow);
 }
 
+// the create command takes the placement's flags as arguments (orig posts
+// them in a command message)
 void PlacementRunCreateCmd(MainWindow* win, int cmdId, Point pt) {
     ExecuteAnnotCreateCmd(win, cmdId, true, pt);
 }

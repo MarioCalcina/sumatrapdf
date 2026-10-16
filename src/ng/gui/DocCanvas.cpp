@@ -431,12 +431,6 @@ void CanvasSetKeyModifiers(bool shift, bool ctrl, bool platform) {
     gPlatformPressed = platform;
 }
 
-// ng: gpui captures the mouse for the window itself while a button is down
-// (and releases it on the up), so orig's SetCapture / ReleaseCapture in the
-// selection code has nothing to do. Doing it anyway makes win32 send
-// WM_CAPTURECHANGED, which gpui turns into a synthetic mouse-up.
-void CanvasSetCapture(MainWindow*, bool) {}
-
 void CanvasSetClipboardText(MainWindow* win, Str s) {
     if (win && win->gpuiWin) {
         gp::ClipboardSetText(win->gpuiWin, ToGpui(s));
@@ -1319,11 +1313,9 @@ void CanvasOnHScroll(MainWindow* win, ScrollMsg msg, int nTrackPos) {
 
 // --- mouse wheel ------------------------------------------------------------
 
-// win32 reports the wheel in WHEEL_DELTA units per SPI_GETWHEELSCROLLLINES
-// lines; gpui reports pixels for a fixed three lines
+// gpui reports wheel pixels for three lines per notch; the scroll code counts
+// in kWheelDelta units
 static int gDeltaPerLine = kWheelDelta / 3;
-
-void UpdateDeltaPerLine() {}
 
 static int WheelScrollPosOrTarget(MainWindow* win) {
     if (gSettings->smoothScroll && win->scrollAnimActive) {
@@ -2697,7 +2689,6 @@ static void OnMouseLeftButtonDown(MainWindow* win, int x, int y) {
             win->selectionRect = Rect(x, y, 0, 0);
             win->mouseAction = MouseAction::SelectingText;
             win->dragStartPending = false;
-            CanvasSetCapture(win, true);
             AppShellInvalidate(win);
             gWordSelectedByDblClk = false; // so a 4th click doesn't re-trigger
         }
@@ -2718,7 +2709,6 @@ static void OnMouseLeftButtonDown(MainWindow* win, int x, int y) {
     if (canCopy && !isShift && !isCtrl && isOverText && win->showSelection && IsPointInSelection(win, pt)) {
         win->textDragPending = true;
         win->linkOnLastButtonDown = nullptr;
-        CanvasSetCapture(win, true);
         return;
     }
 
@@ -2732,7 +2722,6 @@ static void OnMouseLeftButtonDown(MainWindow* win, int x, int y) {
             win->imageDragElement = imageEl;
             win->imageDragPageNo = elPageNo;
             win->linkOnLastButtonDown = nullptr;
-            CanvasSetCapture(win, true);
             return;
         }
     }
@@ -2828,7 +2817,6 @@ static bool OnMouseLeftButtonDblClk(MainWindow* win, int x, int y) {
             win->selectionRect = Rect(x, y, 0, 0);
             win->mouseAction = MouseAction::SelectingText;
             win->dragStartPending = false;
-            CanvasSetCapture(win, true);
             AppShellInvalidate(win);
         }
         return true;
@@ -2879,7 +2867,6 @@ static void OnMouseLeftButtonUp(MainWindow* win, int x, int y) {
     if (win->textDragPending) {
         win->textDragPending = false;
         win->dragStartPending = false;
-        CanvasSetCapture(win, false);
         DeleteOldSelectionInfo(win, true);
         AppShellInvalidate(win);
         return;
@@ -2891,7 +2878,6 @@ static void OnMouseLeftButtonUp(MainWindow* win, int x, int y) {
         win->imageDragElement = nullptr;
         win->imageDragPageNo = -1;
         win->dragStartPending = false;
-        CanvasSetCapture(win, false);
         return;
     }
 
@@ -2926,7 +2912,6 @@ static void OnMouseLeftButtonUp(MainWindow* win, int x, int y) {
         if (win->annotationBeingDragged) {
             StopDraggingAnnotation(win, x, y, !didDragMouse);
             win->mouseAction = MouseAction::None;
-            CanvasSetCapture(win, false);
             if (didDragMouse) {
                 return;
             }
@@ -3143,7 +3128,6 @@ void CanvasCancelDrag(MainWindow* win) {
     win->dragStartPending = false;
     win->textDragPending = false;
     win->linkOnLastButtonDown = nullptr;
-    CanvasSetCapture(win, false);
     CanvasSetCursor(win, kCurArrow);
 }
 
@@ -3193,7 +3177,6 @@ static void OnMouseMove(MainWindow* win, int x, int y) {
         // threshold met: drag the selected text out
         win->textDragPending = false;
         win->dragStartPending = false;
-        CanvasSetCapture(win, false);
         StartTextDragOut(win);
         return;
     }
@@ -3204,7 +3187,6 @@ static void OnMouseMove(MainWindow* win, int x, int y) {
         }
         win->imageDragPending = false;
         win->dragStartPending = false;
-        CanvasSetCapture(win, false);
         StartImageDragOut(win);
         return;
     }
@@ -3984,7 +3966,6 @@ void DocCanvasHookWindow(MainWindow* win, gp::Window* gw) {
     view->win = win;
     gw->onMouseMove = gp::ListenTo(ui->view, &OnWindowMove);
     gw->onMouseUp = gp::ListenTo(ui->view, &OnWindowUp);
-    UpdateDeltaPerLine();
 }
 
 // orig strips the tooltip's visual style (TooltipApplyColors), which leaves the

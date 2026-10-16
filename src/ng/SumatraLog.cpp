@@ -28,20 +28,10 @@ bool gDestroyedLogging = false;
 // reduces logging but also can be confusing i.e. log lines are not showing up
 static bool gSkipDuplicateLines = false;
 
-// ng: the logview pipe is a win32 named pipe
-bool gLogToPipe = false;
-
 Str gLogFilePath;
 
 // 1 MB - 128 to stay under 1 MB even after appending (an estimate)
 constexpr int kMaxLogBuf = (1024 * 1024) - 128;
-
-static bool IsValidHandle(void*) {
-    return false;
-}
-static void* hLogPipe = nullptr;
-
-static void logToPipe(Str) {}
 
 void log(Str s) {
     if (gDestroyedLogging) {
@@ -53,12 +43,6 @@ void log(Str s) {
         if (gLogToDebugger || gReducedLogging) {
             fwrite(s.s, 1, (size_t)s.len, stderr);
             fflush(stderr);
-        }
-        // if the pipe already connected, do log to it even if disabled
-        // we do want easy logging, just want to reduce doing stuff
-        // that can break crash handling
-        if (gLogToPipe && IsValidHandle(hLogPipe)) {
-            logToPipe(s);
         }
         return;
     }
@@ -93,7 +77,7 @@ void log(Str s) {
     size_t n = (size_t)s.len;
 
     // when skipping, we skip buf (crash reports) and console
-    // but write to file and logview
+    // but write to file
     if (!skipLog) {
         gLogBuf->Append(s);
     }
@@ -111,7 +95,6 @@ void log(Str s) {
             fclose(f);
         }
     }
-    logToPipe(s);
 }
 
 void StartLogToFile(Str path, bool removeIfExists) {

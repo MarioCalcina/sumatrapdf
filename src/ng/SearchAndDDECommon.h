@@ -111,7 +111,6 @@ void FindCountShown(MainWindow* win);
 void FindStatusChanged(MainWindow* win);
 void HideFwdSearchMarkAfter(MainWindow* win, int delayMs);
 MainWindow* LastActiveWindow();
-void DdeExecuteBegin();
 
 struct UpdateFindStatusData {
     MainWindow* win;

@@ -203,7 +203,7 @@ Str PlacementNotification(AnnotPlacementKind kind, bool circle, int cmdId) {
         case AnnotPlacementKind::PolyLine:
             return Tr(
                 "Place polyline annotation. **Double-click**, **right-click**, **Space**, or **Enter** to finish, "
-                "**Ctrl+click** to close it. **Shift** to snap to multiples of 45 degrees. **Esc** to cancel.");
+                "**Cmd+click** to close it. **Shift** to snap to multiples of 45 degrees. **Esc** to cancel.");
         case AnnotPlacementKind::Shape:
             return circle
                        ? Tr("Place circle annotation. Drag or click twice. **Shift** for a circle. **Esc** to cancel.")
@@ -540,7 +540,6 @@ bool CancelAnnotationPlacement(MainWindow* win) {
         return false;
     }
     AnnotPlacement& p = win->annotPlacement;
-    ReleasePlacementCapture(win);
     Kind group = NotifGroupForKind(p.kind);
     p.Reset();
     if (group) {
@@ -631,7 +630,6 @@ static bool HandleShapeDown(MainWindow* win, Point pt, bool isShift) {
     if (!IsPlacingShapeAnnotation(win)) {
         return false;
     }
-    PlacementFocusFrame(win);
     DisplayModel* dm = win->AsFixed();
     AnnotPlacement& p = win->annotPlacement;
     int pageNo = dm ? dm->GetPageNoByPoint(pt) : -1;
@@ -652,7 +650,6 @@ static bool HandleShapeDown(MainWindow* win, Point pt, bool isShift) {
     p.start = dm->CvtFromScreen(pt, pageNo);
     p.mouseDown = true;
     p.didDrag = false;
-    PlacementCaptureMouse(win);
     ScheduleRepaint(win, 0);
     return true;
 }
@@ -661,7 +658,6 @@ static bool HandleShapeUp(MainWindow* win, Point pt, bool isShift) {
     if (!IsPlacingShapeAnnotation(win) || !win->annotPlacement.mouseDown) {
         return false;
     }
-    PlacementReleaseMouse(win);
     AnnotPlacement& p = win->annotPlacement;
     p.mouseDown = false;
     DisplayModel* dm = win->AsFixed();
@@ -686,7 +682,6 @@ static bool HandleInkDown(MainWindow* win, Point pt) {
     if (!IsPlacingInkAnnotation(win)) {
         return false;
     }
-    PlacementFocusFrame(win);
     DisplayModel* dm = win->AsFixed();
     AnnotPlacement& p = win->annotPlacement;
     int pageNo = dm ? dm->GetPageNoByPoint(pt) : -1;
@@ -704,7 +699,6 @@ static bool HandleInkDown(MainWindow* win, Point pt) {
     VecAppend(p.strokeCounts, 0);
     p.mouseDown = true;
     AppendInkPoint(win, dm, pt);
-    PlacementCaptureMouse(win);
     return true;
 }
 
@@ -713,7 +707,6 @@ static bool HandleInkUp(MainWindow* win, Point pt) {
         return false;
     }
     AppendInkPoint(win, win->AsFixed(), pt);
-    PlacementReleaseMouse(win);
     win->annotPlacement.mouseDown = false;
     int cmdId = win->annotPlacement.cmdId;
     FinishInkAnnotationPlacement(win);
@@ -730,11 +723,9 @@ bool AnnotationPlacementOnLeftDown(MainWindow* win, Point pt, bool isShift, bool
             HandleShapeDown(win, pt, isShift);
             return true;
         case AnnotPlacementKind::Line:
-            PlacementFocusFrame(win);
             HandleLineClick(win, pt, isShift);
             return true;
         case AnnotPlacementKind::PolyLine:
-            PlacementFocusFrame(win);
             HandlePolyLineClick(win, pt, isShift, isCtrl);
             return true;
         case AnnotPlacementKind::Text:
@@ -742,7 +733,6 @@ bool AnnotationPlacementOnLeftDown(MainWindow* win, Point pt, bool isShift, bool
         case AnnotPlacementKind::Stamp:
         case AnnotPlacementKind::Caret:
         case AnnotPlacementKind::FileAttachment:
-            PlacementFocusFrame(win);
             PlacePointAnnotationAt(win, pt);
             return true;
         default:
@@ -763,7 +753,6 @@ bool AnnotationPlacementOnLeftDblClk(MainWindow* win, Point pt) {
         return true;
     }
     if (IsPlacingPolyLineAnnotation(win)) {
-        PlacementFocusFrame(win);
         FinishPolyLineAnnotationPlacement(win);
         return true;
     }
@@ -774,7 +763,6 @@ bool AnnotationPlacementOnRightDown(MainWindow* win) {
     if (!IsPlacingPolyLineAnnotation(win)) {
         return false;
     }
-    PlacementFocusFrame(win);
     FinishPolyLineAnnotationPlacement(win);
     return true;
 }
@@ -821,7 +809,6 @@ bool FinishAnnotationPlacement(MainWindow* win) {
             CancelAnnotationPlacement(win);
             return true;
         }
-        ReleasePlacementCapture(win);
         p.mouseDown = false;
         Point pt = dm->CvtToScreen(p.pageNo, VecLast(p.points));
         CommitPlacementCommand(win, pt);

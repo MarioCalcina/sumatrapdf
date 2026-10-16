@@ -306,7 +306,7 @@ const theme: Field[] = [
     "",
     "text color of a highlighted notification tip; if empty, derived from the colors above",
   ).ver("3.7"),
-  field("ColorizeControls", Bool, false, "if true, apply the theme colors to Windows controls and window areas too"),
+  field("ColorizeControls", Bool, false, "if true, apply the theme colors to the toolbar and window areas too"),
 ];
 
 const tabFile: Field[] = [field("Path", Str, "", "path of the document")];
@@ -342,7 +342,7 @@ const keyboardShortcut: Field[] = [
     "",
     "command to run, e.g. CmdOpenFile. See [the list of commands](https://www.sumatrapdfreader.org/docs/Commands)",
   ),
-  field("Key", Str, "", "keyboard shortcut (e.g. Ctrl-Alt-F)"),
+  field("Key", Str, "", "keyboard shortcut (e.g. Cmd-Alt-F)"),
   field("Name", Str, null, "name shown in command palette").ver("3.6"),
   field("ToolbarText", Str, null, "if given, shows in toolbar").ver("3.6"),
   field(
@@ -720,7 +720,7 @@ const fullscreen: Field[] = [
     "DisplayMode",
     Str,
     "",
-    "page layout in presentation (Ctrl+L) and windowed fullscreen (Shift+Ctrl+L / F11). " +
+    "page layout in presentation (Shift+Cmd+F) and windowed fullscreen (Ctrl+Cmd+F). " +
       "empty keeps the current behavior: presentation uses single page, windowed fullscreen " +
       "keeps the existing layout. valid values: automatic, single page, facing, book view, " +
       "continuous, continuous facing, continuous book view",
@@ -958,7 +958,7 @@ const annotations: Field[] = [
     "DefaultAuthor",
     Str,
     "",
-    "author recorded on newly created annotations. If not set, the Windows user name is used; " +
+    "author recorded on newly created annotations. If not set, the macOS account name is used; " +
       "set it to (none) to leave the author out entirely",
   ).ver("3.4"),
   field(
@@ -1234,12 +1234,6 @@ const sessionData: Field[] = [
   field("WindowState", Int, 0, "state of the window. 1 is normal, 2 is maximized, 3 is fullscreen, 4 is minimized"),
   compactStruct("WindowPos", windowPos, "position of the window (can be on any monitor)").structName("Rect"),
   field("SidebarDx", Int, 0, "width of the favorites / bookmarks sidebar in screen pixels (0 if it wasn't shown)"),
-  field(
-    "VirtualDesktopId",
-    Str,
-    null,
-    "GUID of the virtual desktop the window was on; the window is restored there (Windows 10+)",
-  ),
 ];
 
 const globalPrefs: Field[] = [
@@ -1333,23 +1327,11 @@ const globalPrefs: Field[] = [
     "FilePicker",
     Str,
     "",
-    "file open dialog used by Open File: empty or os (standard Windows file picker), " +
+    "file open dialog used by Open File: empty or os (the macOS open panel), " +
       "or sumatrapdf (Navigate Files in Folder). Toggled by Settings / SumatraPDF File Picker",
   )
     .ver("3.7")
     .doc("valid values: (empty), os, sumatrapdf"),
-  field(
-    "PrinterUI",
-    Str,
-    "",
-    "which dialog Print (Ctrl+P) opens: empty or auto (the Windows 11 dialog with print " +
-      "preview where it's available, the classic one everywhere else), modern (the Windows 11 " +
-      "dialog), or classic (the classic dialog, whose Preferences button opens the printer " +
-      "driver's own property sheet). modern falls back to the classic dialog when Windows " +
-      "can't show the modern one",
-  )
-    .ver("3.7")
-    .doc("valid values: (empty), auto, modern, classic"),
   field(
     "ReloadModifiedDocuments",
     Bool,
@@ -1501,15 +1483,6 @@ const globalPrefs: Field[] = [
       "(useful for drawings with many links); if false, clicking a link follows it",
   ).ver("3.7"),
   field(
-    "ExplorerQuickLook",
-    Bool,
-    false,
-    "if true, Space in File Explorer (or on the desktop) previews the selected " +
-      "file in a popup window, like macOS Quick Look. Esc or Space closes it; " +
-      "Left / Right open the previous / next file in the folder. Starts a small " +
-      "background helper at logon so it works even when SumatraPDF is not open",
-  ).ver("3.7"),
-  field(
     "RememberViewOffsetOnPageTurn",
     Bool,
     false,
@@ -1522,7 +1495,7 @@ const globalPrefs: Field[] = [
     false,
     "if true, one mouse-wheel notch goes to the next / previous page instead of scrolling; " +
       "combine with RememberViewOffsetOnPageTurn to read zoomed-in pages without touching the keyboard. " +
-      "Alt + wheel still scrolls, Shift + wheel scrolls horizontally and Ctrl + wheel zooms",
+      "Option + wheel still scrolls, Shift + wheel scrolls horizontally and Cmd + wheel zooms",
   ).ver("3.7"),
   field(
     "ScrollEdgeTurnsPage",
@@ -1543,7 +1516,7 @@ const globalPrefs: Field[] = [
     "ShowAnnotationNotification",
     Bool,
     true,
-    'if true, show a tip when hovering an annotation (e.g. "Highlight annotation. Ctrl+click to edit.")',
+    'if true, show a tip when hovering an annotation (e.g. "Highlight annotation. Cmd+click to edit.")',
   ).ver("3.7"),
   field(
     "ShowFileNavigateHint",
@@ -1580,7 +1553,7 @@ const globalPrefs: Field[] = [
     "Scrollbars",
     Str,
     "windows",
-    "scrollbar mode: windows (standard Windows scrollbar), smart (overlay scrollbar with auto-hide), overlay (always visible overlay scrollbar), hidden (no scrollbars)",
+    "scrollbar mode: windows (classic scrollbar), smart (overlay scrollbar with auto-hide), overlay (always visible overlay scrollbar), hidden (no scrollbars)",
   ).ver("3.7"),
   field("ScrollbarInSinglePage", Bool, false, "if true, show a scrollbar in single page mode as well").ver("3.6"),
   field(
@@ -1649,7 +1622,7 @@ const globalPrefs: Field[] = [
     "ReadingAutoScrollSpeed",
     Float,
     40,
-    "pixels per second for Automatically Scroll (View menu / Ctrl+Shift+H). 8 to 320; also changed from the auto-scroll bar and the arrow keys while scrolling",
+    "pixels per second for Automatically Scroll (View menu / Shift+Cmd+H). 8 to 320; also changed from the auto-scroll bar and the arrow keys while scrolling",
   ).ver("3.7"),
   struct(
     "ReadingBar",
@@ -1674,7 +1647,7 @@ const globalPrefs: Field[] = [
     "Theme",
     Str,
     "Light",
-    "the name of the theme to use. System follows the Windows light/dark app mode " +
+    "the name of the theme to use. System follows the macOS light/dark appearance " +
       "and switches between LastLightTheme and LastDarkTheme. Built-in themes: " +
       "Light, Dark, Light Warm, Dark from 3.5, Charcoal, Solarized Light, " +
       "Solarized Dark, Dracula, Nebula, Greeny, Choco, Purpy, One Dark, Monokai, " +
@@ -1749,7 +1722,7 @@ const globalPrefs: Field[] = [
     "TreeFontName",
     Str,
     "automatic",
-    "font name for bookmarks and favorites tree views. automatic means Windows default",
+    "font name for bookmarks and favorites tree views. automatic means the system font",
   ),
   // font sizes are used as-is at every dpi (see GetAppMenuFontSizeForDpi):
   // a user who picks a size wants that size, not a scaled one
@@ -1757,7 +1730,7 @@ const globalPrefs: Field[] = [
     "TreeFontSize",
     Int,
     0,
-    "font size for bookmarks and favorites tree views, in pixels; 0 means the Windows default. " +
+    "font size for bookmarks and favorites tree views, in pixels; 0 means the system default. " +
       "Not scaled by the display scaling",
   ).ver("3.3"),
   field(
@@ -1765,7 +1738,7 @@ const globalPrefs: Field[] = [
     Int,
     0,
     "overrides the font size used for menus, toolbar and dialogs, in pixels; 0 means the " +
-      "Windows default. Not scaled by the display scaling",
+      "system default. Not scaled by the display scaling",
   ).ver("3.6"),
   field(
     "DisableAntiAlias",
@@ -1790,7 +1763,7 @@ const globalPrefs: Field[] = [
     "UseSysColors",
     Bool,
     false,
-    "if true, use the Windows system colors for the document background and text. Overrides other color settings",
+    "if true, use the macOS system colors for the document background and text. Overrides other color settings",
   ),
   field("UseTabs", Bool, true, "if true, documents are opened in tabs instead of new windows").ver("3.0"),
   field(
@@ -1949,7 +1922,7 @@ const globalPrefs: Field[] = [
     Int,
     0,
     "actual resolution of the main screen in DPI, used to show documents at their physical " +
-      "size; if 0 or negative, the resolution reported by Windows is used",
+      "size; if 0 or negative, the resolution reported by macOS is used",
   ).ver("2.5"),
   emptyLine(),
 
@@ -2063,7 +2036,6 @@ const globalPrefsLayout = [
   "VersionToSkip",
   "ChmUI",
   "MainWindowBackground",
-  "PrinterUI",
   "PrinterDefaults",
   "ForwardSearch",
   "Fullscreen",
@@ -2130,7 +2102,6 @@ const globalPrefsLayout = [
   "HighlightFormFields",
   "ClickEdgeToTurnPage",
   "DisableLinks",
-  "ExplorerQuickLook",
   "RememberViewOffsetOnPageTurn",
   "MouseWheelTurnsPage",
   "ScrollEdgeTurnsPage",
@@ -2731,8 +2702,7 @@ body {
 <p>You can change the look and behavior of
 <a href="https://www.sumatrapdfreader.org/">SumatraPDF</a>
 by editing the file <code>SumatraPDF-settings.txt</code>. The file is stored in
-<code>%LOCALAPPDATA%\\SumatraPDF</code> directory for the installed version or in the
-same directory as <code>SumatraPDF.exe</code> executable for the portable version.</p>
+<code>~/Library/Application Support/SumatraPDF</code> directory.</p>
 
 <p>Use the menu item <code>Settings -> Advanced Settings...</code> to open the settings file
 with your default text editor.</p>

@@ -47,7 +47,6 @@ static TabState* CloneSessionTabState(const TabState* src) {
 
 static SessionData* CloneSessionData(const SessionData* src) {
     SessionData* dst = NewSessionData();
-    str::ReplaceWithCopy(&dst->virtualDesktopId, src->virtualDesktopId);
     dst->tabIndex = src->tabIndex;
     dst->windowState = src->windowState;
     dst->windowPos = src->windowPos;

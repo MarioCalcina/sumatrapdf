@@ -63,9 +63,8 @@ void StopMiddleClickScroll(MainWindow* win) {
     CanvasSetCursor(win, (int)gp::CursorKind::Arrow);
 }
 
-// ng: orig arms / kills a 10 ms WM_TIMER; the shell ticks unconditionally, so
-// "armed" is just the per-tab state the tick reads. What is left of the two is
-// resetting the time base and the sub-pixel accumulator.
+// the shell's tick drives auto-scroll, so arming only resets the time base and
+// the sub-pixel accumulator
 void ArmReadingTimer(MainWindow*, WindowTab* tab) {
     if (!tab) {
         return;
@@ -73,8 +72,6 @@ void ArmReadingTimer(MainWindow*, WindowTab* tab) {
     tab->autoScroll.lastQpc = 0;
     tab->autoScroll.accum = 0;
 }
-
-void KillReadingTimer(MainWindow*) {}
 
 // Seconds since the previous tick of this run, 0 on its first: the shell's
 // tick hands us the elapsed time. lastQpc == 0 marks the first tick.

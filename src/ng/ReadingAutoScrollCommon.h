@@ -28,14 +28,12 @@ void BarUpdate(MainWindow* win, bool forceLayout = false);
 // implemented by each app
 void BarHide(MainWindow* win);
 void ArmReadingTimer(MainWindow* win, WindowTab* tab);
-void KillReadingTimer(MainWindow* win);
 void BarUpdate(MainWindow* win, bool forceLayout);
 void ReadingAutoScrollStart(MainWindow* win);
 
 // implemented by each app
 void BarSetSessionTab(MainWindow* win, WindowTab* tab);
 void ArmReadingTimer(MainWindow* win, WindowTab* tab);
-void KillReadingTimer(MainWindow* win);
 void BarUpdate(MainWindow* win, bool forceLayout);
 void StopMiddleClickScroll(MainWindow* win);
 float ReadingTickSeconds(WindowTab* tab, int elapsedMs);

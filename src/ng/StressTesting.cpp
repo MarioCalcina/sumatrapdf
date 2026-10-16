@@ -804,8 +804,6 @@ Next:
     TickTimer(st);
 }
 
-static void PositionStressWindows(MainWindow**, int) {}
-
 void StartStressTest(Flags* i, MainWindow* win) {
     gIsStressTesting = true;
     // TODO: for now stress testing only supports the non-ebook ui
@@ -832,8 +830,6 @@ void StartStressTest(Flags* i, MainWindow* win) {
             }
         }
 
-        PositionStressWindows(windows, n);
-
         logf("Scanning for files in directory %s\n", i->stressTestPath);
         printf("Scanning for files in directory %s\n", i->stressTestPath.s);
         fflush(stdout);
@@ -855,7 +851,6 @@ void StartStressTest(Flags* i, MainWindow* win) {
 
         free((void*)windows);
     } else {
-        PositionStressWindows(&win, 1);
         // dst will be deleted when the stress ends
         StressTest* st = new StressTest(win, i->exitWhenDone);
         st->maxFiles = i->maxFiles;

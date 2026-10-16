@@ -52,7 +52,7 @@ type PlacementState = {
 
 const notification =
   "Place polyline annotation. **Double-click**, **right-click**, **Space**, or **Enter** to finish, " +
-  "**Ctrl+click** to close it. **Shift** to snap to multiples of 45 degrees. **Esc** to cancel.";
+  "**Cmd+click** to close it. **Shift** to snap to multiples of 45 degrees. **Esc** to cancel.";
 
 async function placementState(client: ControlClient): Promise<PlacementState> {
   const res = await client.request(ControlCommand.TestMarkupAnnots, []);

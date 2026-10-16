@@ -140,7 +140,6 @@ void ReopenLastClosedFile(MainWindow* win);
 
 // implemented by each app
 void UndoRedoUnavailable(MainWindow* win, bool redo);
-void ApplyWindowPosFlag(const Flags& i);
 void ToolbarModeApplied(MainWindow* win);
 void CreateThumbnailFromFileAsync(FileState* ds, EngineBase* engine);
 

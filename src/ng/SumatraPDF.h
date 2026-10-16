@@ -181,7 +181,6 @@ struct SettingsApplyState {
     bool disableAntiAlias = false;
     bool chmUseFixedPageUI = false;
     bool markdownUseFixedPageUI = false;
-    bool explorerQuickLook = false;
     // owned copy of the ebook layout inputs; ApplyChangedSettingsAndRelayout frees it
     Str ebookLayout;
 };

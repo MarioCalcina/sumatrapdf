@@ -616,9 +616,6 @@ Handle all commands as defined in Commands.h
 eg: [CmdClose] or [CmdCreateAnnotHighlight #00ff00 openEdit]
 */
 
-// returns true if did handle a message
-void DdeExecuteBegin() {}
-
 // [Open] / [GotoPageWord] / the rest of the DDE execute grammar.
 bool ExecuteDdeCmds(Str cmd) {
     return HandleExecuteCmds(cmd);
