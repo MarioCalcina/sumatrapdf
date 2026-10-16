@@ -3,7 +3,8 @@
 
 // ng: settings round-trip. The settings file format is part of the port's
 // contract (agents.md), so the golden file in docs/test is orig's default
-// serialization and must survive a load + save unchanged.
+// serialization, less the Windows-only settings, and must survive a load +
+// save unchanged.
 
 #include "base/Base.h"
 #include "base/File.h"
@@ -40,4 +41,13 @@ void AppSettingsTest() {
     utassert(str::Eq(out, golden));
     str::Free(out);
     DeleteSettings(loaded);
+
+    // a key only SumatraPDF for Windows knows is saved back as it was
+    TempStr withWinKey = str::JoinTemp(golden, StrL("PrinterUI = classic\r\n"));
+    Settings* fromWin = NewSettings(withWinKey);
+    utassert(fromWin != nullptr);
+    Str saved = SerializeSettings(fromWin, withWinKey);
+    utassert(str::Contains(saved, StrL("PrinterUI = classic")));
+    str::Free(saved);
+    DeleteSettings(fromWin);
 }
