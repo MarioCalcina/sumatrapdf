@@ -8,8 +8,6 @@ export const maxRev = 9;
 export type NgVersion = {
   /** 26.10.03.1 */
   ver: string;
-  /** 26,10,3,1: FILEVERSION of a Windows version resource */
-  rc: string;
   /** "" outside a git checkout */
   gitSha1: string;
 };
@@ -34,7 +32,6 @@ export function ngVersion(rev = 0): NgVersion {
   const yy = yyyy % 100;
   res = {
     ver: `${pad2(yy)}.${pad2(mm)}.${pad2(dd)}` + (rev > 0 ? `.${rev}` : ""),
-    rc: `${yy},${mm},${dd},${rev}`,
     gitSha1: gitSha1(),
   };
   memo.set(rev, res);
