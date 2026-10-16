@@ -129,7 +129,7 @@ async function findLayout(client: ControlClient): Promise<string> {
   while (Date.now() < deadline) {
     raw = await toolReq(client, ["layout", "find"]);
     // the "n / 999" status reserves its slot; measuring before it shows is wider
-    if (raw.startsWith("OK ") && raw.includes("value='needle'") && raw.includes(` / ${hitCount}'`)) {
+    if (raw.startsWith("OK ") && raw.includes("value='needle'") && raw.includes(` / ${hitCount}' value=`)) {
       return raw;
     }
     await sleep(50);

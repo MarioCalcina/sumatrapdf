@@ -983,9 +983,12 @@ static gp::El* FindWindowContentEl(MainWindow* win, gp::Ctx* cx, bool ownWindow)
     FindWindowApplyDpi(win);
     header->Child(gp::Div(cx->a)->Flex1()->MinW(0)->Child(
         ui->ddHistory.BuildCombo(cx, StrL("find-win-edit"), edit, gp::kFill, false, 0, (float)ui->editFontPx)));
+    // a label node, so screen readers read the match count as orig's static text
     header->Child(gp::Div(cx->a)
                       ->W(FindStatusSlotDx(w->statusTotalHits, w->statusCapped))
                       ->Shrink0()
+                      ->Role(gp::AccessibilityRole::Label)
+                      ->AriaLabel(GpuiDup(cx->a, w->status))
                       ->Child(gp::TextEl(cx->a, GpuiDup(cx->a, w->status))->Font(12)->Fg(th.mutedFg)));
     header->Child(
         WinButton(w, cx, StrL("find-win-prev"), gp::IconName::ChevronUp, {}, Tr("Find Previous"), CmdFindPrev, false)
