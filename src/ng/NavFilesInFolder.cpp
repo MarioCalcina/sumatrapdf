@@ -25,12 +25,12 @@
 #include "SumatraLog.h"
 
 // A modeless directory browser listing sub-directories and files SumatraPDF
-// can open (judged by extension). Enter / double-click replaces the document
-// in the current tab or descends into a directory; Ctrl + Enter / Ctrl +
+// can open (judged by extension). Return / double-click replaces the document
+// in the current tab or descends into a directory; Cmd + Return / Cmd +
 // double-click switches to the tab already showing the file or opens it in a
 // new tab; ".." goes one directory up. Back / Forward walk the folders visited
-// in this session, Up goes to the parent, Home lists the drives and Explorer's
-// Quick access. The window stays open so you can open several files in
+// in this session, Up goes to the parent, Home lists / and the home
+// folder. The window stays open so you can open several files in
 // succession; Esc or the close button dismisses it.
 
 // ng: NavFileEntry moved to NavFilesInFolder.h
@@ -41,7 +41,7 @@ Str NavEntryBaseName(const NavFileEntry& e) {
     if (!e.isDir || name.len < 2) {
         return name;
     }
-    // ng: the "\\" a directory's name ends with is not a separator off Windows
+    // ng: a "\\" at the end of a directory's name is not a separator here
     char last = name.s[name.len - 1];
     if (last == '\\' || path::IsSep(last)) {
         return Str(name.s, name.len - 1);
@@ -49,7 +49,7 @@ Str NavEntryBaseName(const NavFileEntry& e) {
     return name;
 }
 
-// ng: orig's are in base/Win.cpp. Off Windows the "drives" are the root and
+// ng: orig's are in base/Win.cpp. Here the "drives" are the root and
 // the user's home directory, and there is no Quick access.
 void ListDriveRoots(StrVec& out) {
     out.Append(StrL("/"));

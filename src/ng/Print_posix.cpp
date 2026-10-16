@@ -2,9 +2,7 @@
    License: GPLv3 */
 
 // ng: the POSIX half of Print.cpp. Pages are rendered through mupdf and written
-// with PdfCreator. Interactive printing saves that PDF; command-line printing
-// can send it to the platform spooler. What the win32 path does with a DEVMODE
-// has no counterpart yet and is recorded in docs/port-progress.md.
+// with PdfCreator; the print panel or, from the command line, lp prints them.
 
 #include "base/Base.h"
 #include "base/File.h"
@@ -101,7 +99,7 @@ void GetPrintersInfo(str::Builder& out) {
     }
 }
 
-// bounds all selection fragments on a page, as the Windows print path does
+// bounds all selection fragments on a page, as orig's print path does
 static RectF SelectionBounds(const Vec<SelectionOnPage>& selection, int pageNo) {
     RectF bounds;
     for (const SelectionOnPage& sel : selection) {

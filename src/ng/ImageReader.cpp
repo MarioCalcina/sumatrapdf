@@ -83,8 +83,7 @@ struct GifBits {
 };
 
 Str EncodeGifFromPixmap(const Pixmap* px) {
-    if (!px || !px->data || px->width <= 0 || px->height <= 0 || px->width > UINT16_MAX || px->height > UINT16_MAX ||
-        px->format == PixmapFormat::Native) {
+    if (!px || !px->data || px->width <= 0 || px->height <= 0 || px->width > UINT16_MAX || px->height > UINT16_MAX) {
         return {};
     }
     i64 pixelCount = (i64)px->width * px->height;
@@ -241,7 +240,7 @@ Str EncodeTiffFromPixmap(const Pixmap* px) {
     constexpr u16 kShort = 3;
     constexpr u16 kLong = 4;
     constexpr u16 kRational = 5;
-    if (!px || !px->data || px->width <= 0 || px->height <= 0 || px->format == PixmapFormat::Native) {
+    if (!px || !px->data || px->width <= 0 || px->height <= 0) {
         return {};
     }
     i64 pixelBytes = (i64)px->width * px->height * 4;
@@ -546,7 +545,7 @@ static Pixmap* PixmapFromDataFzAny(Str d) {
 
 // ng: the POSIX decoders. mupdf covers png / jpeg / gif / bmp / tiff / pnm;
 // the formats it does not know go to the dedicated decoders, in the order
-// the Windows path uses them.
+// orig uses them.
 Pixmap* PixmapFromData(Str bmpData) {
     if (ImageDecodedPixmapWouldBeHuge(bmpData)) {
         return nullptr;

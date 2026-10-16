@@ -891,7 +891,7 @@ void DisplayModel::StartHeadingToc(HeadingTocStart start) {
 
 // WindowMargin and PageSpacing are screen-space sizes written by the user at
 // 100% scaling, so they have to be scaled to the dpi of the window showing the
-// document. Called again from the WM_DPICHANGED path so moving the window to a
+// document. Called again when the window's scale changes, so moving it to a
 // monitor with different scaling re-scales them (the caller relayouts).
 void DisplayModel::SetUiDpi(int dpi) {
     if (dpi <= 0) {
@@ -1731,7 +1731,7 @@ void DisplayModel::Relayout(float newZoomVirtual, int newRotation) {
     bool needVScroll = false;
     viewPort = Rect(viewPort.TL(), totalViewPortSize);
     // Fit zoom is viewport minus windowMargin. LoadDocument Relayouts before
-    // the canvas is sized (and WM_SIZE during RelayoutFrame can be 0x0). Mark
+    // the canvas is sized (and a resize during RelayoutFrame can be 0x0). Mark
     // pendingRelayout so RelayoutFrame / UpdateCanvasSize finishes once the
     // canvas has settled, instead of leaving zoomReal < 0.01 and no page visible.
     if (!ViewportReadyForRelayout()) {
@@ -2337,7 +2337,7 @@ void DisplayModel::SetViewPortSize(Size newViewPortSize) {
     }
 
     totalViewPortSize = newViewPortSize;
-    // during document swap in ReplaceDocumentInCurrentTab a WM_PAINT can
+    // during document swap in ReplaceDocumentInCurrentTab a paint can
     // arrive before a valid zoom is set; relayout would corrupt the state
     if (!IsValidZoom(zoomVirtual)) {
         cb->UpdateScrollbars(this, canvasSize);

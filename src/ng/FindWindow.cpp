@@ -334,7 +334,7 @@ void DeleteFindWindow(MainWindow* win) {
     win->findPagesEdit = nullptr;
 }
 
-// the gpui window the find window's fields are in: its own (Windows), or the
+// the gpui window the find window's fields are in: its own, or the
 // frame's. Null while its own is being made
 gpui::Window* FindWindowHostGpui(MainWindow* win) {
     FindWindowWnd* w = win ? win->findWindow : nullptr;
@@ -542,7 +542,7 @@ void FindWindowSetStatus(MainWindow* win, Str s, int totalHits) {
     AppShellInvalidate(win);
 }
 
-// --- a window of its own (Windows) ------------------------------------------
+// --- a window of its own ----------------------------------------------------
 
 static gp::El* FindWindowContentEl(MainWindow* win, gp::Ctx* cx, bool ownWindow);
 

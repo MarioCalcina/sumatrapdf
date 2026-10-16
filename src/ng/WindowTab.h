@@ -128,7 +128,7 @@ struct WindowTab {
     SidebarContent sidebarContent = SidebarContent::Bookmarks;
     // whether to auto-reload the document when the tab is selected
     bool reloadOnFocus = false;
-    // opened via CmdOpenFileNoHistory: do not write File History / Windows Recent
+    // opened via CmdOpenFileNoHistory: do not write File History / Dock recents
     bool skipHistory = false;
 
     // TODO: terrible hack

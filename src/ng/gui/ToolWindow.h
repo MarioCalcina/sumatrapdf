@@ -65,7 +65,7 @@ struct ToolWindowDesc {
     ToolWinModal modal = ToolWinModal::No;
     // smallest client size (dips) a resizable one can be dragged to
     Size minClient;
-    // files can be dropped on it: an OLE drop target on its HWND (Windows)
+    // files can be dropped on it
     bool dropFiles = false;
     // the content; fills the window
     gpui::El* (*build)(MainWindow* owner, gpui::Ctx* cx) = nullptr;
@@ -73,7 +73,7 @@ struct ToolWindowDesc {
     bool (*onKey)(MainWindow* owner, gpui::Ctx* cx, const gpui::KeyEvent* ev) = nullptr;
     // a key before the focused element (a text field) sees it; true to take it
     bool (*onCaptureKey)(MainWindow* owner, gpui::Ctx* cx, const gpui::KeyEvent* ev) = nullptr;
-    // a key going up (Windows sends no key-down for PrtSc)
+    // a key going up (orig gets no key-down for PrtSc)
     void (*onKeyUp)(MainWindow* owner, gpui::Ctx* cx, const gpui::KeyEvent* ev) = nullptr;
     // set for a window that outlives its main window, as orig's unowned
     // windows do: when that one closes and another main window is left, the

@@ -132,7 +132,7 @@ static bool MigrateDocumentColorsFollowThemeSetting(Str prefsData) {
 }
 
 // Older ng builds stored Unix nanoseconds here. Convert realistic post-2001
-// values once so Windows can read them too.
+// values once to the FILETIME that SumatraPDF for Windows writes.
 static bool MigrateLegacyFileTime(FILETIME* ft) {
     constexpr u64 kLegacyMin = 1000000000000000000ULL;
     u64 value = FileTimeToU64(*ft);

@@ -102,7 +102,7 @@ bool IsSimpleBrowserWindowVisible() {
     return gBrowser.visible && !gBrowser.tw;
 }
 
-// WM_CLOSE destroys the HWND before the posted onClosed runs. Drop that
+// closing destroys the window before the posted onClosed runs. Drop that
 // record so the next open does not reuse it or toggle it shut.
 static void DropBrowserIfWindowGone() {
     if (!gBrowser.visible || !gBrowser.tw || ToolWindowIsLive(gBrowser.tw)) {
@@ -225,7 +225,7 @@ void SimpleBrowserView::OnClose(SimpleBrowserView*, gp::Ctx* cx, const gp::Click
     gp::Notify(cx);
 }
 
-// --- a window of its own (Windows) ------------------------------------------
+// --- a window of its own ----------------------------------------------------
 
 // orig's nav row: Back | Forward | url, inset by kNavRowPadding
 constexpr float kNavRowPadding = 6;

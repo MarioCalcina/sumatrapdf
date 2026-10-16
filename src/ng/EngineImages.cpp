@@ -157,7 +157,7 @@ class EngineImages : public EngineBase {
     // scaling down. Default impl uses GetImageData + fz_new_image_from_buffer,
     // which works for any single-frame format mupdf understands (JPEG, PNG,
     // BMP, etc.). Subclasses can override to return nullptr (forcing the
-    // GDI+ path) for cases mupdf can't handle -- e.g. multi-frame TIFFs.
+    // pixmap path) for cases mupdf can't handle -- e.g. multi-frame TIFFs.
     virtual fz_image* LoadFzImageForPage(fz_context* ctx, int pageNo);
     virtual RectF LoadMediabox(int pageNo) = 0;
     // Takes over the mediaboxes src has already loaded. On an archive-backed
@@ -827,7 +827,7 @@ Pixmap* EngineImages::RenderPage(RenderPageArgs& args) {
         return nullptr;
     }
 
-    // Fallback: nearest-neighbor (rotation, non-Windows, or GDI+ failure).
+    // Fallback: nearest-neighbor (rotation, or a decode mupdf can't scale).
     Pixmap* result = AllocPixmap(screen.dx, screen.dy, PixmapFormat::BGRA8, true);
     if (!result) {
         DropPage(page, false);
@@ -2660,10 +2660,7 @@ void EngineCbx::GetProperties(Props& propsOut) {
             filesStr.Append(FormatFileSizeUntranslatedTemp(fi->fileSizeUncompressed));
         }
     }
-    // show paths in Windows style (#5543)
-    Str filesStrView = ToStr(filesStr);
-    str::TransCharsInPlace(filesStrView, StrL("/"), StrL("\\"));
-    AddProp(propsOut, DocProp::Files, str::DupTemp(filesStrView));
+    AddProp(propsOut, DocProp::Files, str::DupTemp(ToStr(filesStr)));
 }
 
 Pixmap* EngineCbx::LoadPixmapForPage(int pageNo, bool& deleteAfterUse) {

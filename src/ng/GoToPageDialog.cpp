@@ -172,7 +172,7 @@ void ShowGoToPageDialog(MainWindow* win) {
     AppShellInvalidate(win);
 }
 
-// --- a window of its own (Windows) ------------------------------------------
+// --- a window of its own ----------------------------------------------------
 
 // orig's layout at 96 dpi: a 300 wide client area, 4 / 8 around; each field
 // row is the label, the 54 x 23 edit 8 after it and "(of N)" 8 after that;

@@ -276,9 +276,8 @@ int LangIdxForLocale(Str locale) {
     return -1;
 }
 
-// ng: the win32 half below maps a LANGID to our language code. macOS lists
-// the user's languages (an app started from Finder has no $LANG); elsewhere
-// $LC_ALL / $LANG ("de_DE.UTF-8") name the language.
+// ng: macOS lists the user's languages (an app started from Finder has no
+// $LANG); after them $LC_ALL / $LANG ("de_DE.UTF-8") name the language.
 Str DetectUserLang() {
     StrVec locales;
     GetUserLanguages(locales);

@@ -48,7 +48,7 @@
 
 #include "SumatraLog.h"
 
-// Map the selected UI language when the OS has no Windows LANGID API.
+// the selected UI language's name (orig asks Windows for the LANGID's)
 static const char* gLangCodeToName =
     "en\0English\0zh\0Chinese (Simplified)\0tw\0Chinese (Traditional)\0cn\0Chinese (Simplified)\0de\0German\0"
     "fr\0French\0es\0Spanish\0it\0Italian\0pt\0Portuguese\0ru\0Russian\0ja\0Japanese\0kr\0Korean\0ko\0Korean\0"
@@ -476,7 +476,7 @@ void ShowSelectionTranslateDialog(WindowTab* tab, TranslateEngine engineIn) {
     AppShellInvalidate(win);
 }
 
-// --- a window of its own (Windows) ------------------------------------------
+// --- a window of its own ----------------------------------------------------
 
 // orig's layout at 96 dpi: 12 around; the source edit (7 lines of the app
 // font: 113); "Translation:" 8 under it and the result edit 4 under that (6

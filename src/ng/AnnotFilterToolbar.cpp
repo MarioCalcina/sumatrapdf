@@ -1029,7 +1029,7 @@ gp::El* AnnotFilterListBuild(MainWindow* win, gp::Ctx* cx) {
     return AnnotFilterContentEl(win, cx, false);
 }
 
-// --- a window of its own (Windows) ------------------------------------------
+// --- a window of its own ----------------------------------------------------
 
 static Str AnnotFilterToolTitle() {
     return Tr("Annotations");

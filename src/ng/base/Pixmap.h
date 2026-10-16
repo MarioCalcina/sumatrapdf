@@ -9,15 +9,10 @@
 // PremultipliedFirst|ByteOrder32Little.
 
 enum class PixmapFormat : u8 {
-    // byte order in memory. BGRA8 is the zero-copy layout on all 3 platforms.
-    BGRA8, // 32bpp B,G,R,A -> Gdiplus 32bppARGB/PARGB
-    BGR8,  // 24bpp B,G,R    -> Gdiplus 24bppRGB (rows still padded to a multiple of 4)
-    RGBA8, // 32bpp R,G,B,A  -> needs a swizzle for any platform API; for source data
-    // the pixels are laid out in a way we can't describe (e.g. the 8-bit palette
-    // DIBs the mupdf engine renders to when a page has few enough colors). Only
-    // the platform bitmap (hbmp) knows how to read them: blit it, or copy it into
-    // a Pixmap we can describe with PixmapCopyAs32bppDIB()
-    Native,
+    // byte order in memory. BGRA8 is the zero-copy layout for CoreGraphics.
+    BGRA8, // 32bpp B,G,R,A
+    BGR8,  // 24bpp B,G,R (rows still padded to a multiple of 4)
+    RGBA8, // 32bpp R,G,B,A -> needs a swizzle for any platform API; for source data
 };
 
 struct Pixmap {
@@ -48,11 +43,7 @@ typedef u8* (*DecodeDstAllocFn)(void* user, int dx, int dy, bool hasAlpha, int* 
 // (dark mode). ng: portable, orig declares it in the win32 half
 void RecolorPixmap(Pixmap* px, Color textColor, Color bgColor, Color linkColor = 0, Vec<Rect>* skipRects = nullptr);
 
-// 0 for Native: those pixels can only be read through GDI
 inline int PixmapBytesPerPixel(PixmapFormat fmt) {
-    if (fmt == PixmapFormat::Native) {
-        return 0;
-    }
     return fmt == PixmapFormat::BGR8 ? 3 : 4;
 }
 
@@ -62,8 +53,6 @@ inline i64 PixmapByteSize(const Pixmap* p) {
 }
 
 // allocate a top-down Pixmap; data is uninitialized. returns nullptr on bad args / OOM.
-// Default for decode / generate / cache. On Windows, AllocPixmapDIB only when the
-// pixmap must be SelectObject'd or must adopt a GDI HBITMAP / Native DIB.
 inline Pixmap* AllocPixmap(int w, int h, PixmapFormat fmt = PixmapFormat::BGRA8, bool premultiplied = false) {
     if (w <= 0 || h <= 0) {
         return nullptr;

@@ -436,8 +436,8 @@ bool IsEditingFreeTextInPlace(MainWindow* win) {
     return !win || gInPlace.win == win;
 }
 
-// The tests set the win32 edit with WM_SETTEXT and commit with WM_CHAR LF.
-// ng's box is a gpui textarea on the frame, so those messages land here.
+// The tests set the text and commit with LF, as orig's do with WM_SETTEXT
+// and WM_CHAR. ng's box is a gpui textarea on the frame, so those land here.
 bool FreeTextInPlaceSetText(MainWindow* win, const wchar_t* text) {
     if (!IsEditingFreeTextInPlace(win) || !gInPlace.edit || !text) {
         return false;

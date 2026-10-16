@@ -1545,17 +1545,12 @@ static MainWindow* LoadDocumentFinish(MainWindow* win, Str fullPath, DocControll
         }
     }
 
-    // Add the file also to Windows' recently used documents (this doesn't
-    // happen automatically on drag&drop, reopening from history, etc.)
+    // add the file to the Dock menu's recent documents (this doesn't happen
+    // automatically on drag&drop, reopening from history, etc.)
     if (CanAccessDisk() && !IsStressTesting() && !tab->skipHistory) {
-        // nor the Dock menu's recent documents
         if (!gFlags || !gFlags->forTesting) {
             AppShellNoteRecentDoc(fullPath);
         }
-
-        // Remove Zone.Identifier (Mark of the Web) so that Windows Explorer
-        // will show previews/thumbnails for this file without security warnings
-        file::DeleteZoneIdentifier(fullPath);
     }
     logf("LoadDocument: %.2f ms, %d pages for '%s'\n", (float)TimeSinceInMs(timeStart), ctrl->PageCount(), fullPath);
 
@@ -3166,7 +3161,7 @@ void CopyFilePath(WindowTab* tab) {
     gp::ClipboardSetText(tab->win->gpuiWin, ToGpui(tab->filePath));
 }
 
-// Show in folder: Explorer (and select the file) unless File / Use SumatraPDF
+// Show in folder: Finder (and select the file) unless File / Use SumatraPDF
 // file picker is on, in which case open Navigate Files in Folder on that dir
 void ShowFileInFolder(MainWindow* win, Str path) {
     if (!win || len(path) == 0 || !CanAccessDisk()) {

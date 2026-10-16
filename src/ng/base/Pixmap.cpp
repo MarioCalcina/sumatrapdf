@@ -131,8 +131,7 @@ static Pixmap* CopyHeapPixmapAsBgraDib(const Pixmap* px) {
 }
 
 // Takes p. Returns it when its pixels already read as BGRA8; otherwise a
-// 32bpp DIB copy (the engine renders a page with few colors to an 8-bit
-// palette DIB, image engines decode to 24bpp) and p is freed.
+// 32bpp copy (image engines decode to 24bpp) and p is freed.
 Pixmap* PixmapToBgra(Pixmap* p) {
     if (!p) {
         return nullptr;
@@ -155,7 +154,7 @@ Pixmap* PixmapToBgr(Pixmap* p) {
     if (!p || p->format == PixmapFormat::BGR8) {
         return p;
     }
-    if (p->format == PixmapFormat::Native || !p->data) {
+    if (!p->data) {
         return p;
     }
 

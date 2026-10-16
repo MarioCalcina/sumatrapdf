@@ -2237,7 +2237,7 @@ bool CommandPaletteOnMouseDown(MainWindow* win, float x, float y) {
     return true;
 }
 
-// --- a window of its own (Windows) ------------------------------------------
+// --- a window of its own ----------------------------------------------------
 
 // orig's size: the frame's client width less 256, between 640 and 1024 - wider
 // than a narrow frame -, and its height less 72, at least 480

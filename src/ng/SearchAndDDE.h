@@ -2,8 +2,8 @@
    License: GPLv3 */
 
 // ng: orig's SearchAndDDE.h declares the search driver and the DDE server.
-// The search half is step 8b, DDE is step 17a (Windows only) and the
-// forward-search mark plus inverse search are step 18.
+// The search half is step 8b, DDE is step 17a and the forward-search mark
+// plus inverse search are step 18.
 
 namespace gpui {
 struct PaintCtx;

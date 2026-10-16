@@ -89,19 +89,8 @@ bool SavePixmapAsImageFile(Pixmap* px, Str path) {
     if (!gImageEditHost.SavePixmapAsImage) {
         return false;
     }
-    // an engine can render into a palette DIB nothing but the platform bitmap
-    // can read; copy it into a 32bpp one first, as orig does before GDI+
-    Pixmap* converted = nullptr;
-    Pixmap* use = px;
-    if (px->format == PixmapFormat::Native) {
-        if (!converted) {
-            return false;
-        }
-        use = converted;
-    }
     Str ext = kConvertImageFormats[ConvertImageFormatIdxFromPath(path)].ext;
-    bool ok = gImageEditHost.SavePixmapAsImage(use, path, ext);
-    FreePixmap(converted);
+    bool ok = gImageEditHost.SavePixmapAsImage(px, path, ext);
     if (!ok) {
         file::Delete(path);
     }
@@ -3235,7 +3224,7 @@ static gp::El* MergePagesEl(gp::Ctx* cx, float viewDx, float viewDy) {
     return pagesWithMenu;
 }
 
-// --- Merge PDF in a window of its own (Windows) ------------------------------
+// --- Merge PDF in a window of its own ----------------------------------------
 
 // orig's kDialogPadding, and its themed buttons (the text plus 2 x 12 by
 // 2 x 5, at least 70 wide) in the 12 px app font

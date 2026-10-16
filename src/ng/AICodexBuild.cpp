@@ -2,7 +2,7 @@
    License: GPLv3 */
 
 // OpenAI Codex provider for the AI chat sidebar (see AIChatPanel.cpp)
-// The app-server model query uses Win32 pipes and is disabled elsewhere.
+// The app-server model query is not ported (orig reads it over Win32 pipes).
 
 #include "base/Base.h"
 #include "base/CmdLineArgs.h"
@@ -340,7 +340,7 @@ struct CodexBuildProvider : AIChatProvider {
         Str sandboxes[] = {StrL("read-only"), StrL("workspace-write"), StrL("danger-full-access")};
         Str skipFlag = args.flag ? StrL("--dangerously-bypass-approvals-and-sandbox") : Str{};
         // Codex has no system-prompt flag; fold file context into the prompt,
-        // then quote the whole prompt as one Windows argv element.
+        // then quote the whole prompt as one argv element.
         TempStr prompt = fmt("The user is currently reading the file: %s\n\n%s", args.filePath, args.escapedInput);
         if (args.isNewSession) {
             if (skipFlag) {

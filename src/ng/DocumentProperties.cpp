@@ -77,8 +77,7 @@ struct PropertiesView {
 
 static gp::Entity<PropertiesView> gPropertiesView;
 
-// ng: orig parses dates into a win32 SYSTEMTIME. Only the six fields matter,
-// and they have to exist off Windows too.
+// ng: orig parses dates into a win32 SYSTEMTIME; only its six fields matter.
 struct PropDate {
     int year = 0;
     int month = 0;
@@ -417,7 +416,7 @@ static Str PropsLongestLine(Str text, int* nLinesOut) {
     return longest;
 }
 
-// --- a window of its own (Windows) ------------------------------------------
+// --- a window of its own ----------------------------------------------------
 
 // orig's layout: the edit from the top edge, 8 at the sides and under the
 // button row, whose buttons have 8 above them

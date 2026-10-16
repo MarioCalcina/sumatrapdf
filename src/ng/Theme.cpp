@@ -540,8 +540,8 @@ void CreateThemeCommands() {
 }
 
 // when true, the user picked "System" as the theme: we resolve it to the
-// preferred light/dark theme from the OS setting and re-resolve when Windows
-// switches modes; gSettings->theme stays "System"
+// preferred light/dark theme from the OS setting and re-resolve when macOS
+// switches appearance; gSettings->theme stays "System"
 static bool gThemeFollowsSystem = false;
 
 // remember the last explicitly used light and dark theme so the light/dark
@@ -661,7 +661,7 @@ static bool IsDefaultMainWinColor(ParsedColor* col) {
 
 bool AppShellSystemIsDark(); // ng's gui/NativeWindow_mac.mm
 
-// true if Windows "choose your default app mode" is set to dark
+// true if the macOS appearance is dark
 static bool OsAppsUseDarkMode() {
     return AppShellSystemIsDark();
 }
@@ -736,8 +736,8 @@ void SumatraUpdateTheme() {
     UpdateAfterThemeChange();
 }
 
-// call on WM_SETTINGCHANGE "ImmersiveColorSet": re-resolves the System theme
-// when the user switches Windows between light and dark mode
+// call when the system appearance changes: re-resolves the System theme
+// when the user switches macOS between light and dark
 void UpdateThemeAfterSystemColorChange() {
     if (!gThemeFollowsSystem) {
         return;

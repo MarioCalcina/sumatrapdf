@@ -1,8 +1,8 @@
 /* Copyright 2026 the SumatraPDF project authors (see AUTHORS file).
    License: GPLv3 */
 
-// Win32 virtual key codes keep shortcut numbering consistent on every platform.
-// Windows gets these from <windows.h>, included by base/Base.h.
+// Win32 virtual key codes: the key ids shortcuts are stored with, so the
+// settings read the same as SumatraPDF for Windows'.
 // https://docs.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
 
 // clang-format off

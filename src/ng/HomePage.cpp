@@ -1100,7 +1100,7 @@ static void EnsureHomeView(MainWindow* win, gp::Ctx* cx) {
     }
 }
 
-// --- the About box as a window of its own (Windows) --------------------------
+// --- the About box as a window of its own ------------------------------------
 
 // orig's sizes (HomePage.cpp)
 constexpr int kAboutLineOuterSize = 2;
@@ -1161,7 +1161,7 @@ struct AboutDims {
     RectF box;
 };
 
-// GetUserGuiFont() turns Windows pixels into CoreText points, 3/4 of them,
+// GetUserGuiFont() turns the settings' pixels into CoreText points, 3/4 of them,
 // while gpui draws the About texts in pixels: measure them at their drawn size
 static int AboutFontSize(int px) {
     return MulDiv(px, 96, 72);

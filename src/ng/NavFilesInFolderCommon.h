@@ -13,7 +13,7 @@ void AppendHomeDirEntry(Vec<NavFileEntry>& out, Str path);
 
 void GetQuickAccessCached(StrVec& dirsOut, StrVec& filesOut);
 
-// base/Win.cpp on Windows, a stub in ng elsewhere
+// orig's base/Win.cpp; ng has no Quick access list
 bool ListShellQuickAccess(StrVec& dirsOut, StrVec& filesOut);
 void ListDriveRoots(StrVec& out);
 

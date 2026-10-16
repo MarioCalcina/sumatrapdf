@@ -93,9 +93,6 @@ struct StubTextRender : PlatformTextRender {
     }
 
     void SetTextColor(Color) override {}
-    void SetTextBgColor(Color) override {}
-    void Lock() override {}
-    void Unlock() override {}
     void Draw(Str, RectF, bool) override {}
 };
 
@@ -125,9 +122,6 @@ struct CoreTextRender : PlatformTextRender {
     }
 
     void SetTextColor(Color col) override { textColor = col; }
-    void SetTextBgColor(Color) override {}
-    void Lock() override {}
-    void Unlock() override {}
 
     void Draw(Str s, RectF bb, bool isRtl) override {
         if (!context || !currFont || !currFont->nativeFont || len(s) == 0) {

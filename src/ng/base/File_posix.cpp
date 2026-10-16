@@ -416,10 +416,6 @@ bool SetModificationTime(Str path, FILETIME lastMod) {
     return utimensat(AT_FDCWD, CStrTemp(path), ts, 0) == 0;
 }
 
-bool DeleteZoneIdentifier(Str /*path*/) {
-    return true;
-}
-
 bool Rename(Str newPath, Str oldPath) {
     if (len(newPath) == 0 || len(oldPath) == 0) {
         return false;

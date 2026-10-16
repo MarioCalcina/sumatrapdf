@@ -3368,7 +3368,7 @@ static bool HandleControlRequest(ControlConn h, bool* stop) {
     return true;
 }
 
-// ng: off Windows the channel is a unix domain socket: <name> is its path, or,
+// ng: the channel is a unix domain socket: <name> is its path, or,
 // without a '/', /tmp/<name>.sock (cmd/dbg-control.ts does the same)
 static TempStr ControlSocketPathTemp(Str pipeName) {
     if (str::IndexOfChar(pipeName, '/') >= 0) {

@@ -98,8 +98,6 @@ bool SetModificationTime(Str path, FILETIME lastMod);
 
 bool StartsWith(Str path, Str s);
 
-bool DeleteZoneIdentifier(Str path);
-
 // Progress reported by Copy(). bytesTotal == 0 means "total not known".
 struct CopyProgress {
     i64 bytesCopied;

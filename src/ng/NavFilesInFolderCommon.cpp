@@ -101,7 +101,7 @@ TempStr NavLeafNameTemp(DirIterEntry* de) {
     return leaf;
 }
 
-// Explorer's Quick access, fetched once per process because the shell resolves
+// orig's Explorer Quick access, fetched once per process because the shell resolves
 // every entry. F5 in the home view drops the cache.
 Mutex gQuickAccessMutex;
 
@@ -143,7 +143,7 @@ void GetQuickAccessCached(StrVec& dirsOut, StrVec& filesOut) {
     gQuickAccessMutex.Unlock();
 }
 
-// Home view: drive roots, then Explorer's Quick access folders and files
+// Home view: / and the home folder, then the Quick access folders and files
 void CollectHomeEntries(Vec<NavFileEntry>& out) {
     StrVec drives;
     ListDriveRoots(drives);

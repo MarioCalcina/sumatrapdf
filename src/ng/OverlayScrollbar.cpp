@@ -30,8 +30,7 @@ static Vec<OverlayScrollbar*> gAllScrollbars;
 // auto-repeat
 static OverlayScrollbar* gCapture = nullptr;
 
-// ng: win32's MulDiv (a * b / c, rounded) for a positive c; the other
-// platforms have none
+// ng: win32's MulDiv (a * b / c, rounded) for a positive c
 static int MulDivI(int a, int b, int c) {
     if (c <= 0) {
         return -1;
@@ -492,8 +491,8 @@ static void OnLeftButtonUp(OverlayScrollbar* sb) {
     }
 }
 
-// ng: the "windows" mode's right-click menu is the one win32 gives a window's
-// own scrollbars; an item's arg is the ScrollMsg, kScrollHere the click position
+// ng: the "windows" mode's right-click menu is the one orig's win32 bars have
+// on a window's own scrollbars; an item's arg is the ScrollMsg, kScrollHere the click position
 constexpr int kScrollHere = -1;
 // the bar whose menu is open
 static OverlayScrollbar* gMenuScrollbar = nullptr;
@@ -658,7 +657,7 @@ void OverlayScrollbarHookWindow(gp::Window* gw) {
     gp::WindowOnMouseExit(gw, gp::ListenTo(view, &ScrollbarView::OnWinExit));
 }
 
-// the menu win32 shows for a right click on a window's scrollbar
+// the menu orig's win32 scrollbar shows for a right click
 static gpc::PopupMenu* BuildScrollbarMenu(gp::Ctx* cx, OverlayScrollbar* sb, Str id) {
     gpc::PopupMenu* menu = gpc::PopupMenu::New(cx, GpuiDup(cx->a, fmt("%s-menu", id)))->MinW(160);
     gp::Entity<ScrollbarView> view = View(cx->app);

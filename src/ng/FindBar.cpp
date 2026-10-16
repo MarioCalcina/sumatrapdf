@@ -108,7 +108,7 @@ void FindEditSetText(MainWindow* win, Str s) {
         return;
     }
     gp::InputSetValue(edit, ToGpui(s));
-    // win32's WM_SETTEXT clears the edit's modify flag, and InputSetValue()
+    // orig's WM_SETTEXT clears the edit's modify flag, and InputSetValue()
     // emits no change event, so the notification orig gets is sent here
     FindEditSetModified(win, false);
     OnFindBarTextChanged(win);

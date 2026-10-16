@@ -319,12 +319,12 @@ TempStr AdvSettingsRowsResultTemp(Str action, int arg, int* exitCodeOut) {
         return finish(0);
     }
     if (str::Eq(action, StrL("killfocus"))) {
-        // OSK's WM_KILLFOCUS names no new window. That must not commit.
+        // the focus going to the on-screen keyboard (no new window) must not commit
         out.Append(fmt("editing=%d\n", AdvEditingValue() ? 1 : 0));
         return finish(0);
     }
     if (str::Eq(action, StrL("resize"))) {
-        // the docked keyboard's WM_SIZE re-lays the editor out; it stays open
+        // the docked keyboard resizing the window re-lays the editor out; it stays open
         out.Append(fmt("editing=%d\n", AdvEditingValue() ? 1 : 0));
         return finish(0);
     }
@@ -678,7 +678,7 @@ gp::El* AdvancedSettingsDialogBuild(MainWindow* win, gp::Ctx* cx) {
     return AdvContentEl(cx);
 }
 
-// --- a window of its own (Windows) ------------------------------------------
+// --- a window of its own ----------------------------------------------------
 
 static Str AdvToolTitle() {
     return Tr("Advanced Settings");

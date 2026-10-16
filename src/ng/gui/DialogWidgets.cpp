@@ -626,7 +626,7 @@ struct DlgAccel {
 static Vec<DlgAccel> gDlgAccels;
 static bool gDlgCues = false;
 
-// Windows underlines the access keys always or only once Alt was pressed
+// orig underlines the access keys always or only once Alt was pressed
 // ("Underline access keys when available", off by default)
 static bool DlgCuesAlways() {
     return false;

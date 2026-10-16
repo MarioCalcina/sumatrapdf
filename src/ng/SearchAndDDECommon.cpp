@@ -2101,9 +2101,8 @@ static TempStr BuildOpenFileCmdTemp(Str pattern, Str path, int line, int col) {
 }
 
 // returns true if inverse search was performed
-// ng: orig runs the editor with LaunchProcessInDir(cmdLine, appDir). Off
-// Windows there is no CreateProcess wrapper for a whole command line, so the
-// first token is the program and the rest its arguments.
+// ng: orig runs the editor with LaunchProcessInDir(cmdLine, appDir). Here
+// the first token is the program and the rest its arguments.
 static bool LaunchInverseSearchCmd(Str cmdLine) {
     Str rest = cmdLine;
     TempStr exe;

@@ -173,17 +173,11 @@ float CanvasScale(MainWindow* win) {
 
 static gp::RenderImage* RenderImageFromBgraPixmap(gp::PaintApp* pa, Pixmap* px);
 
-// EngineMupdf hands back an 8-bit palette DIB when a page has few enough
-// colors (TryRenderAsPaletteImage). Only the HBITMAP knows how to read those,
-// so take a 32bpp copy of it; orig blits the DIB with GDI instead.
 gp::RenderImage* RenderImageFromPixmap(gp::PaintApp* pa, Pixmap* px) {
     if (!px) {
         return nullptr;
     }
-    if (px->format != PixmapFormat::Native) {
-        return RenderImageFromBgraPixmap(pa, px);
-    }
-    return nullptr;
+    return RenderImageFromBgraPixmap(pa, px);
 }
 
 static gp::RenderImage* RenderImageFromBgraPixmap(gp::PaintApp* pa, Pixmap* px) {
@@ -1859,8 +1853,7 @@ constexpr int kCurIBeam = (int)gp::CursorKind::IBeam;
 constexpr int kCurHand = (int)gp::CursorKind::Pointer;
 constexpr int kCurCross = (int)gp::CursorKind::Crosshair;
 // orig's IDC_SIZEALL (middle-button auto-scroll, a line end or polygon vertex
-// handle). ng: gpui has no "move" cursor kind; its ClosedHand is IDC_SIZEALL in
-// the Windows backend, a closed hand elsewhere, where the crosshair stays
+// handle). ng: gpui has no "move" cursor kind; the crosshair stands in
 constexpr int kCurSizeAll = (int)gp::CursorKind::Crosshair;
 
 static void SetLinkTooltip(MainWindow* win, Str text, Rect rc) {

@@ -22,7 +22,6 @@ struct KeyboardHelpArgs {
     KeyboardHelpDataSource* dataSource = nullptr;
 };
 
-KeyboardHelpDataSource* GetDefaultKeyboardHelpDataSource();
 void ToggleKeyboardHelp(const KeyboardHelpArgs&);
 void ToggleKeyboardHelp(MainWindow*);
 void CloseKeyboardHelp();

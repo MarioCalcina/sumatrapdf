@@ -621,7 +621,8 @@ static void SendAIChatMessage(MainWindow* win) {
     args.filePath = filePath;
     args.dir = dir;
     // Raw user text; providers quote with QuoteCmdLineArgTemp when building the
-    // command line (naive " -> \" is not enough on Windows).
+    // command line, which the launcher splits back into argv (naive " -> \" is
+    // not enough).
     args.escapedInput = input;
     args.option = optionIdx;
     args.flag = provider->GetFlag();

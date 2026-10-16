@@ -515,7 +515,7 @@ struct UpdateCheckAsyncData {
     ~UpdateCheckAsyncData() { delete rsp; }
 };
 
-// ng: base's Http is winhttp. Off Windows gpui's http client answers instead
+// ng: gpui's http client, where orig uses base's winhttp
 static bool UpdateHttpGet(Str uri, HttpRsp* rsp) {
     gp::HttpRsp gr;
     bool ok = gp::HttpGet(ToGpui(uri), &gr);

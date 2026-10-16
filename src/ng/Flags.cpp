@@ -7,8 +7,7 @@
 
 #include "Settings.h"
 #include "DisplayMode.h"
-// ng: Print.h needs the win32 printing types (step 14); this is all we use
-void GetPrintersInfo(str::Builder& out);
+#include "Print.h"
 #include "Flags.h"
 #include "SumatraLog.h"
 
@@ -353,8 +352,7 @@ static void TrimPrintSettingSpaces(Str& s) {
 }
 
 /* parse argument list. we assume that all unrecognized arguments are file names. */
-// ng: the body is portable; only turning the platform's command line into an
-// argument list differs (ParseFlags on Windows, ParseFlagsArgv off it)
+// ng: ParseFlagsArgv turns main()'s argv into the list this parses
 static void ParseFlagNodes(Arena* a, StrNode* firstArg, Flags& i, Str toolNames) {
     ReportIf(!a);
 
@@ -732,7 +730,7 @@ static void ParseFlagNodes(Arena* a, StrNode* firstArg, Flags& i, Str toolNames)
     }
 }
 
-// ng: off Windows the platform already split the command line for us
+// ng: macOS already split the command line for us
 void ParseFlagsArgv(Arena* a, int argc, char** argv, Flags& i, Str toolNames) {
     StrNode* root = nullptr;
     StrNode* tail = nullptr;

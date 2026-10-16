@@ -4,8 +4,8 @@
 // ng: the search half of orig's SearchAndDDE.cpp - find-as-you-type, the
 // interactive find worker (FindThread), the full-document match counter
 // (CountThread), the all-match highlights, inverse search and the
-// forward-search mark. The DDE command grammar below runs everywhere; the
-// DDE window messages stay Windows only. `Gfx*` is
+// forward-search mark. The DDE command grammar below comes over a
+// CFMessagePort (MacServices_mac.mm). `Gfx*` is
 // `gpui::PaintCtx*` and the debounce / progress timers are the shell's tick.
 
 #include "gui/GpuiBridge.h"

@@ -90,7 +90,7 @@ void ToggleKeyboardHelp(const KeyboardHelpArgs& args) {
         return;
     }
     gKbHelp.win = args.win;
-    gKbHelp.dataSource = args.dataSource ? args.dataSource : GetDefaultKeyboardHelpDataSource();
+    gKbHelp.dataSource = args.dataSource ? args.dataSource : &gSumatraDataSource;
     gKbHelp.visible = true;
     gKbHelp.scrollY = 0;
     gKbHelp.parentFullscreen = args.parentFullscreen;
@@ -269,7 +269,7 @@ static gp::El* KeyCaps(gp::Ctx* cx, Str keys, float fontPx, float capGap, float 
     return row;
 }
 
-// --- a window of its own (Windows) ------------------------------------------
+// --- a window of its own ----------------------------------------------------
 
 // orig's layout: 20 around, the title row, 6, a line, 10, the columns
 constexpr float kKbHelpPad = 20;
@@ -279,7 +279,7 @@ constexpr float kKbHelpSepGapBottom = 10;
 constexpr float kKbHelpCloseDx = 24;
 
 static Str KbHelpToolTitle() {
-    KeyboardHelpDataSource* ds = gKbHelp.dataSource ? gKbHelp.dataSource : GetDefaultKeyboardHelpDataSource();
+    KeyboardHelpDataSource* ds = gKbHelp.dataSource ? gKbHelp.dataSource : &gSumatraDataSource;
     return ds->Translate(StrL("Keyboard Shortcuts"));
 }
 

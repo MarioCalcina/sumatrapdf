@@ -1385,7 +1385,7 @@ static Str DialogTitle() {
     }
 }
 
-// --- a window of its own (Windows) ------------------------------------------
+// --- a window of its own ----------------------------------------------------
 
 // orig's GetControlAreaDy: the strip under the image, less the source path's
 // row when the image did not come from a file

@@ -62,7 +62,7 @@ Pixmap* PixmapFromAvifData(Str d) {
         return nullptr;
     }
 
-    // Match the EXIF density and orientation used by Windows image decoders.
+    // the EXIF density and orientation, as orig's WIC decoders read them
     u8* exif = nullptr;
     size_t n = 0;
     if (heic_doc_exif(doc, &exif, &n) == 0 || !exif || n == 0) {

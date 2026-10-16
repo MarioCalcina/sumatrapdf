@@ -607,8 +607,8 @@ void ChangeColorView::OnAreaDown(ChangeColorView*, gp::Ctx* cx, const gp::MouseD
     gp::AppInvalidate(cx->win);
 }
 
-// orig's OnAreaMouseMove: a drag with the button down keeps picking. ng: the
-// Windows backend does not set MouseMoveEvent::pressed; the window knows
+// orig's OnAreaMouseMove: a drag with the button down keeps picking. ng:
+// not every gpui backend sets MouseMoveEvent::pressed; the window knows
 void ChangeColorView::OnAreaMove(ChangeColorView*, gp::Ctx* cx, const gp::MouseMoveEvent* ev) {
     bool pressed = ev->pressed || (cx->win && cx->win->mouseDown && cx->win->pressedButton == gp::MouseButton::Left);
     if (!pressed) {

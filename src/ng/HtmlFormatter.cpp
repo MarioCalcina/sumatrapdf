@@ -1330,11 +1330,10 @@ Vec<HtmlPage*>* HtmlFormatter::FormatAllPages(bool skipEmptyPages) {
     return pages;
 }
 
-// Draw text in one lock before shapes; GDI's GetHDC/ReleaseHDC is expensive.
+// draws the text runs before the shapes
 static void DrawHtmlText(PlatformTextRender* textDraw, Vec<DrawInstr>* drawInstructions, float offX, float offY,
                          Color textColor, bool* abortCookie) {
     textDraw->SetTextColor(textColor);
-    textDraw->Lock();
     for (DrawInstr& i : *drawInstructions) {
         RectF bbox = i.bbox;
         bbox.Offset(offX, offY);
@@ -1349,7 +1348,6 @@ static void DrawHtmlText(PlatformTextRender* textDraw, Vec<DrawInstr>* drawInstr
             break;
         }
     }
-    textDraw->Unlock();
 }
 
 // TODO: draw link in the appropriate format (blue text, underlined, should show hand cursor when
@@ -1360,7 +1358,7 @@ static void DrawHtmlText(PlatformTextRender* textDraw, Vec<DrawInstr>* drawInstr
 static Pixmap* PixmapForHtml(Str data) {
     Pixmap* src = PixmapFromData(data);
     AutoCall cleanup(FreePixmap, src);
-    if (!src || !src->data || src->format == PixmapFormat::Native) {
+    if (!src || !src->data) {
         return nullptr;
     }
     Pixmap* dst = AllocPixmap(src->width, src->height, PixmapFormat::BGRA8, true);

@@ -1,11 +1,7 @@
 /* Copyright 2026 the SumatraPDF project authors (see AUTHORS file).
    License: GPLv3 */
 
-// ng: the one win32 message path of the shell. gpui does not expose the native
-// handle, and it has no hook for the messages a few services need
-// (WM_HOTKEY for GlobalHotkeys, WM_COPYDATA for Explorer QuickLook,
-// WM_ACTIVATE for the hotkey target window). We claim the gpui window of this
-// thread by its class name and subclass it. OS file drops arrive as gpui
+// ng: what the shell does with OS file drops, which arrive as gpui
 // ExternalPaths drops on the shell root.
 
 #include "base/Base.h"

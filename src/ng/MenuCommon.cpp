@@ -74,7 +74,7 @@ TempStr CleanupURLForClipbardCopyTemp(Str s) {
     return str::DupTemp(slice);
 }
 
-// Remove Win32's '&' accelerator markup and remember the first character that
+// Remove the '&' access key markup and remember the first character that
 // needs an underline. A doubled ampersand is a literal one.
 MenuAccelText ParseMenuAccelTextTemp(Str s) {
     MenuAccelText res;

@@ -19,7 +19,6 @@ void GetPrintersInfo(str::Builder& out);
 
 class EngineBase;
 struct MainWindow;
-struct Print_Advanced_Data;
 
 // result of command-line printing; the numeric values double as the process
 // exit code so an automated caller can tell why printing failed (issue #3478)

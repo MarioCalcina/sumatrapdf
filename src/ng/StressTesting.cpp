@@ -784,7 +784,7 @@ static void OnTimer(StressTest* st) {
 
     // For non-image files, we detect if a page was rendered by checking the cache
     // (but we don't wait more than 3 seconds).
-    // Image files are always fully rendered in WM_PAINT, so we know the page
+    // Image files are always fully rendered when painted, so we know the page
     // has already been rendered.
     dm = st->win->AsFixed();
     didRender = gRenderCache->Exists(dm, st->currPageNo, dm->GetRotation());

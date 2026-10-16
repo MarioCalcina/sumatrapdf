@@ -317,7 +317,7 @@ bool EngineDjvuDec::FinishLoading() {
     // https://github.com/sumatrapdfreader/sumatrapdf/issues/5778
     djvu_ctx_set_cache_per_page(ctx, 1);
     // ask the decoder to emit color output in B,G,R order so it lands in a
-    // Windows DIB without a separate RGB->BGR pass (the swap is folded into the
+    // BGRA pixmap without a separate RGB->BGR pass (the swap is folded into the
     // decoder's final output copy at no cost).
     djvu_ctx_set_bgr(ctx, 1);
     doc = djvu_doc_open(ctx, data, dataLen);
@@ -448,7 +448,7 @@ static inline u8 BilinearByte(float v00, float v10, float v01, float v11, float 
 }
 
 // Map decoded page pixels into the target pixmap with bilinear filtering. The
-// previous Windows path used GDI StretchBlt(HALFTONE); nearest-neighbor here
+// orig used GDI StretchBlt(HALFTONE); nearest-neighbor here
 // visibly degraded text/graphics when decoded and screen sizes differ slightly
 // (common even at 100% zoom due to rounding).
 static Pixmap* ScaleDjvuPixelsToPixmap(const u8* src, int srcDx, int srcDy, int comp, const Rect& screen,

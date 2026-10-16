@@ -446,8 +446,8 @@ TempStr AppShellTestInput(MainWindow* win, Str kind, int a, int b, int c, int d)
     if (str::Eq(kind, StrL("wheel")) && ForwardTestWheelToBrowser(win, c, d)) {
         return StrL("OK");
     }
-    // a posted WM_CHAR never becomes a gpui keydown. Windows eats it in the
-    // subclass proc; a real key still toggles from OnKeyDown.
+    // a test's char never becomes a gpui keydown; a real key still toggles
+    // from OnKeyDown.
     if (str::Eq(kind, StrL("char")) && SelectTextWithKeyboardOnChar(win, a)) {
         return StrL("OK");
     }
@@ -682,7 +682,6 @@ void AppShellQuit() {
     }
 }
 
-// ng: the Windows versions drive the native frame from NativeWindow.cpp.
 void AppShellSetFullScreen(MainWindow* win, bool fullScreen, bool) {
     gp::Window* gw = win ? win->gpuiWin : nullptr;
     if (!gw) {
@@ -1084,7 +1083,7 @@ void AppShellSyncMenu(MainWindow* win) {
     if (!gp::AppHasMenuBar() || !gApp || !WindowOwnsAppMenu(win)) {
         return;
     }
-    // ShowMenubar hides a row of a Windows window. Here the menu is the
+    // ShowMenubar hides a row of orig's window. Here the menu is the
     // process menu bar; hiding it (the default once tabs are on) leaves none.
     // Fullscreen hides the bar on its own.
     if (!gMenuDirty && gMenuOwner == win && gMenuVis) {
@@ -1099,7 +1098,7 @@ void AppShellSyncMenu(MainWindow* win) {
     gMenuVis = true;
 }
 
-// Windows underlines the access keys always or only once Alt was pressed
+// orig underlines the access keys always or only once Alt was pressed
 // ("Underline access keys when available", off by default)
 static bool MenuCuesAlways() {
     return false;
@@ -1766,7 +1765,7 @@ void ShellView::OnNotifLink(ShellView* self, gp::Ctx* cx, const gp::ClickEvent*,
 static bool gCmdSuppressed = false;
 
 // After a Ctrl/Alt+key accelerator, ignore auto-repeat of that key until it is
-// released. A slow CmdFindFirst (ASan) lets Windows queue a repeat KEYDOWN F
+// released. A slow CmdFindFirst (ASan) lets the system queue a repeat key-down F
 // after Ctrl is up; F is CmdToggleFullscreen and steals find/search focus.
 static int gIgnoreRepeatKey = 0;
 // the key of the Ctrl / Alt chord being dispatched; OnCmd makes it the above
@@ -2486,9 +2485,9 @@ void ShellView::OnTick(ShellView* self, gp::Ctx* cx, const gp::TickEvent* ev) {
         return;
     }
     ApplyRenderScale(win);
-    // ng: gpui reports the interval asked for, not the time that passed; a
-    // WM_TIMER comes about every 27 ms for a 16 ms interval and slower still
-    // in a background window, so timeouts are counted in real time
+    // ng: gpui reports the interval asked for, not the time that passed; the
+    // timer comes late, later still in a background window, so timeouts are
+    // counted in real time
     double now = gp::TimeNow();
     double elapsedMs = self->lastTickTime > 0 ? (now - self->lastTickTime) * 1000.0 + self->tickMsRest : ev->ms;
     self->lastTickTime = now;

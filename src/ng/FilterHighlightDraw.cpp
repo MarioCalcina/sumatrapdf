@@ -17,7 +17,7 @@ static bool IsWordByte(u8 b) {
     if (b >= 0x80) {
         return true;
     }
-    // ng: no IsCharAlphaNumericW off Windows (as in EngineMupdf.cpp)
+    // ng: iswalnum for orig's IsCharAlphaNumericW (as in EngineMupdf.cpp)
     return iswalnum((wint_t)b) != 0 || b == '_';
 }
 

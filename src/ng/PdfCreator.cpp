@@ -54,9 +54,8 @@ static fz_image* FzImageFromRgbData(fz_context* ctx, u8* data, int width, int he
 // TODO: the resulting pdf is big, even though we tell it to compress images
 // maybe encode bitmaps to *.png or .jp2 and use AddPageFromImageData
 
-// ng: the portable path into mupdf: read the Pixmap's own pixels instead of
-// asking GDI for the bits of a DIB. A Native pixmap has no readable layout,
-// so only the Windows path above can describe one.
+// ng: read the Pixmap's own pixels into mupdf; orig asks GDI for the bits
+// of a DIB
 static fz_image* fz_image_from_pixmap(fz_context* ctx, const Pixmap* px) {
     int w = px->width;
     int h = px->height;
@@ -149,13 +148,12 @@ bool PdfCreator::AddPageFromFzImage(fz_image* image, float imgDpi) const {
     return ok;
 }
 
-// One page from a rendered Pixmap: the DIB it is backed by on Windows (which
-// is the only way to read a Native one), its pixels everywhere else.
+// one page from a rendered Pixmap
 static bool AddPageFromPixmap(PdfCreator* c, Pixmap* px, float imgDpi) {
     if (!c->ctx || !c->doc || !px) {
         return false;
     }
-    if (px->format == PixmapFormat::Native || !px->data) {
+    if (!px->data) {
         return false;
     }
     bool ok = false;

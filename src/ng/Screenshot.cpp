@@ -73,11 +73,7 @@ static Pixmap* RenderSelectionPixmap(EngineBase* engine, int rotation, int pageN
     }
     px->xres = dpi;
     px->yres = dpi;
-    if (px->format != PixmapFormat::Native) {
-        return px;
-    }
-    FreePixmap(px);
-    return nullptr;
+    return px;
 }
 
 // the rectangular selection, or the whole current page when there is none

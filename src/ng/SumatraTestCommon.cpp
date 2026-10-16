@@ -901,7 +901,7 @@ TempStr ListSigningCertsResultTemp(int* exitCodeOut) {
     return ToStrTemp(out);
 }
 
-// Sign pdfPath with a Windows-store cert (thumbprint) or a .pfx (certPath +
+// Sign pdfPath with a store cert (thumbprint) or a .pfx (certPath +
 // password), write destPath, and report ok=1 on success. The dest file is a
 // copy of the source so the signature can be saved incrementally.
 TempStr SignDocumentResultTemp(Str pdfPath, Str destPath, Str thumbprint, Str certPath, Str certPassword, Str imagePath,

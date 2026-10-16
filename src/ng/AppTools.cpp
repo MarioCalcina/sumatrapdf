@@ -13,9 +13,6 @@
 #include "Version.h"
 #include "AppTools.h"
 
-// Registry, CSIDL, resources and Toolhelp are Windows-only. AppTools_posix.cpp
-// supplies the portable app-data helpers.
-
 // Portable helpers shared with AppTools_posix.cpp.
 
 // Format the file size in a short form that rounds to the largest size unit

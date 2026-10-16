@@ -22,10 +22,8 @@ struct RefHoverRenderJob {
 static void RefHoverStartRenderJob(RefHoverRenderJob* job);
 
 // ng: orig stacks the two crops with GDI BitBlt because EngineBase::RenderPage
-// may hand back a DIB at a bit depth other than 32bpp BGRA8 (an 8bpp palette
-// DIB for text-only content) that only the HBITMAP knows how to read. There is
-// no GDI off Windows, so the odd format is normalized to 32bpp first and the
-// stacking itself is a row copy.
+// may hand back a 24bpp pixmap, so the odd format is normalized to 32bpp
+// first and the stacking itself is a row copy.
 static Pixmap* PixmapAsReadable32(Pixmap* px) {
     if (!px) {
         return nullptr;
@@ -68,7 +66,7 @@ static Pixmap* StackPixmapsVertically(Pixmap* top, Pixmap* bottom) {
     Pixmap* t = topConv ? topConv : top;
     Pixmap* b = bottomConv ? bottomConv : bottom;
     Pixmap* out = nullptr;
-    bool ok = t->format != PixmapFormat::Native && b->format != PixmapFormat::Native && t->data && b->data;
+    bool ok = t->data && b->data;
     if (ok) {
         int w = t->width > b->width ? t->width : b->width;
         int h = t->height + b->height;

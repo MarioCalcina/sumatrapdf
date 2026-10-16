@@ -23,14 +23,6 @@ extern "C" {
 // PNG writer is already linked and portable, so the cache file has the same
 // name and format on every platform.
 static bool SavePixmapAsPng(Pixmap* pixmap, Str path) {
-    Pixmap* owned = nullptr;
-    if (pixmap->format == PixmapFormat::Native) {
-        if (!owned) {
-            logf("SavePixmapAsPng: can't read a native pixmap\n");
-            return false;
-        }
-        pixmap = owned;
-    }
     int w = pixmap->width;
     int h = pixmap->height;
     int bpp = PixmapBytesPerPixel(pixmap->format);
@@ -38,7 +30,6 @@ static bool SavePixmapAsPng(Pixmap* pixmap, Str path) {
 
     fz_context* ctx = fz_new_context(nullptr, nullptr, FZ_STORE_DEFAULT);
     if (!ctx) {
-        FreePixmap(owned);
         return false;
     }
     bool ok = false;
@@ -66,7 +57,6 @@ static bool SavePixmapAsPng(Pixmap* pixmap, Str path) {
         logf("SavePixmapAsPng: %s\n", Str(fz_caught_message(ctx)));
     }
     fz_drop_context(ctx);
-    FreePixmap(owned);
     return ok;
 }
 

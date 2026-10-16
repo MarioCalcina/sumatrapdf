@@ -236,7 +236,7 @@ struct MainWindow {
 
     Rect canvasRc; // size of the canvas (excluding any scroll bars)
     // orig's tabsInTitlebar: the tab strip and the caption buttons are drawn
-    // in a caption of the port's own (Windows; set when UseTabs is on)
+    // in the title bar (set when UseTabs is on)
     bool tabsInTitlebar = false;
     // the width the tab strip has in that caption; 0 = the frame's
     int tabsAvailDx = 0;
@@ -245,7 +245,7 @@ struct MainWindow {
     // gone, and the settings are written after it closes
     Rect frameRc;
     bool isMaximized = false;
-    // last WM_DPICHANGED, rounded to 4. 0: not seen yet (use the monitor)
+    // last scale change, rounded to 4. 0: not seen yet (use the monitor)
     int frameDpi = 0;
 
     // the viewport size the controller was last given, so a frame that didn't
@@ -518,7 +518,6 @@ struct MainWindow {
 
     bool showSelection = false;
     bool isFullScreen = false;
-    // -quicklook: a chrome-less always-on-top preview window (Explorer Space)
     PresentationMode presentation = PM_DISABLED;
     int windowStateBeforePresentation = 0;
     // ng: orig arms kHideCursorTimerID on the canvas; the shell's tick counts

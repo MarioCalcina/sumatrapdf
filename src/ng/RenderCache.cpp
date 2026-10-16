@@ -47,9 +47,6 @@ static Pixmap* GrayscalePagePixmap(Pixmap* bmp) {
     if (!bmp) {
         return nullptr;
     }
-    if (bmp->format == PixmapFormat::Native) {
-        return bmp;
-    }
     if (!bmp->data) {
         return bmp;
     }
@@ -1172,9 +1169,6 @@ static bool RenderCacheRunOne(RenderCache* cache, int threadIdx, PageRenderReque
     if (darkProfile.mode != PageColorMode::Normal) {
         args.darkProfile = &darkProfile;
     }
-    // a previous render might have run a 3rd-party WIC codec that unmasked
-    // fp exceptions on this thread, which would crash mupdf float math
-    // ng: WIC is win32; nothing unmasks them on the other platforms
     auto timeStart = TimeGet();
     Pixmap* bmp = engine->RenderPage(args);
     if (req.abort || req.darkModeEpoch != cache->darkModeEpoch) {

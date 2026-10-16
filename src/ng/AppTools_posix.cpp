@@ -1,8 +1,8 @@
 /* Copyright 2026 the SumatraPDF project authors (see AUTHORS file).
    License: GPLv3 */
 
-// ng: the POSIX half of AppTools.cpp. App data and PATH-based TeX editor
-// detection live here; registry services and window placement remain win32.
+// ng: the POSIX half of AppTools.cpp: app data and PATH-based TeX editor
+// detection.
 
 #include "base/Base.h"
 #include "base/File.h"

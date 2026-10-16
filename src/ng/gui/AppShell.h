@@ -81,9 +81,8 @@ int AppShellFrameBorder(MainWindow* win);
 // gpui's client-side title bar for the frame, without touching the flag
 // (fullscreen has no caption of either kind)
 void AppShellSetClientTitleBar(MainWindow* win, bool on);
-// ng: gpui has no fullscreen window state (see "gpui gaps"). On Windows this
-// is orig's EnterFullScreen / ExitFullScreen on the native frame
-// (src/gui/NativeWindow.cpp); elsewhere WindowSetFullScreen.
+// ng: gpui's WindowSetFullScreen, for orig's EnterFullScreen /
+// ExitFullScreen on the native frame.
 // `restoreMaximized` re-maximizes on the way out (orig: the window was
 // maximized before presentation mode).
 void AppShellSetFullScreen(MainWindow* win, bool fullScreen, bool restoreMaximized);

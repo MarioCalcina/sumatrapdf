@@ -10,7 +10,7 @@ constexpr u16 kInvalidTileRes = (u16)-1;
 
 constexpr int kMaxPageRequests = 8;
 // keep this value reasonably low, else we'll run out of
-// GDI resources/memory when caching many larger bitmaps
+// memory when caching many larger bitmaps
 // TODO: this should be based on amount of memory taken by rendered pages
 // i.e. one big page can use as much memory as lots of small pages
 constexpr int kMaxBitmapsCached = 128;

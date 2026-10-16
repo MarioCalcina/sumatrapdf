@@ -861,7 +861,7 @@ static void NavDeleteFile(NavDeleteCtx* c, bool ok) {
 // Del on a file moves it to the recycle bin (issue #5877), without a
 // confirmation prompt -- the recycle bin is the undo. Directories are left
 // alone: recursively deleting a folder from a file picker is too easy to
-// trigger by accident, and "Show in Folder" + Explorer covers it.
+// trigger by accident, and "Show in Finder" covers it.
 static void DeleteCurrentSelection() {
     if (!CanAccessDisk()) {
         return;

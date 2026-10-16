@@ -358,7 +358,7 @@ TempStr BuildGrokTranslateCmdLineTemp(Str exePath, Str prompt, Str cwd) {
         model = StrL("grok-composer-2.5-fast");
     }
     Str permsFlag = gSettings->grokBuild.alwaysApprove ? StrL("--always-approve") : Str{};
-    // QuoteCmdLineArgTemp: full Windows argv quoting (not just " -> \") so
+    // QuoteCmdLineArgTemp: full argv quoting (not just " -> \") so
     // prompt text ending in \" cannot inject extra CLI flags (CWE-88 / GHSA).
     return fmt("%s -p %s --cwd %s --output-format streaming-json --model %s --effort low %s",
                QuoteCmdLineArgTemp(exePath), QuoteCmdLineArgTemp(prompt), QuoteCmdLineArgTemp(cwd),

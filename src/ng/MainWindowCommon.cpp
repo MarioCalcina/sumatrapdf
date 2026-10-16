@@ -69,16 +69,8 @@ bool PathFromFileUriTemp(Str uri, TempStr* pathOut, Str* fragmentOut) {
     if (!str::TrimPrefixI(rest, StrL("file:"))) {
         return false;
     }
-    // file://host/path or file:///path → drop authority (// or ///)
-    if (str::TrimPrefix(rest, StrL("//"))) {
-        // empty host: next char is / of absolute path
-        if (rest && rest.s[0] == '/') {
-            // Windows drive path: /C:/foo → C:/foo
-            if (rest.len >= 3 && rest.s[1] && rest.s[2] == ':') {
-                rest = Str(rest.s + 1, rest.len - 1);
-            }
-        }
-    }
+    // file:///path → /path (an empty host)
+    str::TrimPrefix(rest, StrL("//"));
     TempStr path = str::DupTemp(rest);
     Str pathStr = path;
     Str frag = str::SliceFromChar(pathStr, '#');

@@ -25,23 +25,3 @@ bool IsHelpListedCmd(int cmdId) {
     return false;
 }
 
-struct DefaultKeyboardHelpDataSource : KeyboardHelpDataSource {
-    Str Translate(Str s) override { return s; }
-
-    TempStr CommandDescriptionTemp(int cmdId) override { return str::DupTemp(GetCommandDescription(cmdId)); }
-
-    TempStr CommandShortcutTemp(int cmdId, int) override {
-        for (const auto& e : kFallbackShortcuts) {
-            if (e.id == cmdId) {
-                return str::DupTemp(Str(e.shortcut));
-            }
-        }
-        return {};
-    }
-};
-
-static DefaultKeyboardHelpDataSource gDefaultDataSource;
-
-KeyboardHelpDataSource* GetDefaultKeyboardHelpDataSource() {
-    return &gDefaultDataSource;
-}

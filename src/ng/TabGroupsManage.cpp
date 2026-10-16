@@ -341,7 +341,7 @@ void TabGroupsView::OnInput(TabGroupsView*, gp::Ctx* cx, const gp::InputEvent* e
     gp::Notify(cx);
 }
 
-// --- a window of its own (Windows) ------------------------------------------
+// --- a window of its own ----------------------------------------------------
 
 // orig's sizes at 96 dpi: a 400 x 350 window; 8 around and between; a 23 high
 // edit, 19 high rows in the 12 px app font, 25 high buttons 7 apart

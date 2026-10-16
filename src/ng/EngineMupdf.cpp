@@ -5443,7 +5443,7 @@ static IPageElement* NewFzComment(Str comment, int pageNo, RectF rect) {
 
 // An old SumatraPDF round-trip bug grew the line separator in annotation
 // contents by one CR on every save: "\r\n" became "\r\r\n", then "\r\r\r\n" and
-// so on. GDI draws each of those as its own break, so a short note renders as a
+// so on. Each of those draws as its own break, so a short note renders as a
 // tall column of blank lines (issue #2873). No producer writes a CR run before a
 // LF, so collapse each such run to a single LF. A run of bare CRs is left alone
 // (one LF each): that is PDF's own line separator, where "\r\r" really is a
@@ -7257,8 +7257,7 @@ static fz_pixmap* FzLoadOrientedImage(EngineMupdf* engine, int pageNo, RectF rec
 
     fz_try(ctx) {
         pixmap = fz_get_pixmap_from_image(ctx, image, nullptr, nullptr, nullptr, nullptr);
-        // Match `extract -r`: normalize embedded images to RGB before creating
-        // a Windows bitmap for copy/save operations.
+        // Match `extract -r`: normalize embedded images to RGB for copy/save.
         if (pixmap && pixmap->colorspace && !fz_colorspace_is_rgb(ctx, pixmap->colorspace)) {
             fz_pixmap* rgb =
                 fz_convert_pixmap(ctx, pixmap, fz_device_rgb(ctx), nullptr, nullptr, fz_default_color_params, 1);
@@ -7309,8 +7308,8 @@ static fz_pixmap* FzLoadOrientedImage(EngineMupdf* engine, int pageNo, RectF rec
     return oriented ? oriented : pixmap;
 }
 
-// Same pixels Copy Image returns on Windows, without a GDI bitmap: the image
-// as drawn, rotated or flipped the way the page shows it
+// the pixels Copy Image copies: the image as drawn, rotated or flipped the
+// way the page shows it
 Pixmap* EngineMupdf::GetImagePixmapForPageElement(IPageElement* ipel) {
     if (!ipel || ipel->GetKind() != kindPageElementImage) {
         return nullptr;

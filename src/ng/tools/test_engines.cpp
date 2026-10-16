@@ -121,16 +121,8 @@ static bool RenderPath(Str path) {
 }
 
 // ng: mupdf's PNG encoder, so the tool can write what it rendered. Pixmaps
-// come out BGRA8 (or a Native DIB on Windows), fz wants RGB rows.
+// come out BGRA8, fz wants RGB rows.
 static bool SavePixmapAsPng(Pixmap* pixmap, Str path) {
-    Pixmap* owned = nullptr;
-    if (pixmap->format == PixmapFormat::Native) {
-        if (!owned) {
-            printf("SavePixmapAsPng: can't read a native pixmap\n");
-            return false;
-        }
-        pixmap = owned;
-    }
     int w = pixmap->width;
     int h = pixmap->height;
     int bpp = PixmapBytesPerPixel(pixmap->format);
@@ -138,7 +130,6 @@ static bool SavePixmapAsPng(Pixmap* pixmap, Str path) {
 
     fz_context* ctx = fz_new_context(nullptr, nullptr, FZ_STORE_DEFAULT);
     if (!ctx) {
-        FreePixmap(owned);
         return false;
     }
     bool ok = false;
@@ -166,7 +157,6 @@ static bool SavePixmapAsPng(Pixmap* pixmap, Str path) {
         printf("SavePixmapAsPng: %s\n", fz_caught_message(ctx));
     }
     fz_drop_context(ctx);
-    FreePixmap(owned);
     return ok;
 }
 
@@ -450,10 +440,6 @@ static bool BenchIsOnNetworkDrive(Str path) {
     printf("%d calls: %.2f ms total, %.4f ms/call\n", nIter, ms, ms / nIter);
     return true;
 }
-
-// Compares path::IsOnNetworkDrive() against PathIsNetworkPathW() (what it used
-// to call) over a spread of path shapes. Windows-only: PathIsNetworkPathW and
-// the drive-letter cases are Win32.
 
 // Times file::ReadN(): reads the first 64 KB of every file in a directory,
 // which is what EngineImageDir::LoadMediabox() does per page.

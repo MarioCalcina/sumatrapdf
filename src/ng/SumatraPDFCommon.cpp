@@ -721,7 +721,7 @@ bool AppendFileFilterForDoc(DocController* ctrl, str::Builder& fileFilter) {
     return true;
 }
 
-// FilePicker: empty/os = Windows dialog; sumatrapdf = Navigate Files in Folder.
+// FilePicker: empty/os = the macOS open panel; sumatrapdf = Navigate Files in Folder.
 bool FilePickerIsSumatraPDF() {
     return gSettings && str::EqI(gSettings->filePicker, StrL("sumatrapdf"));
 }
@@ -1190,14 +1190,9 @@ Str CurrentImageTabPathTemp(MainWindow* win) {
     return tab->filePath;
 }
 
-// Run the print dialog from the message loop rather than from whatever loop
-// delivered the WM_COMMAND. TranslateAcceleratorW sends it from inside a win32k
-// user-mode callback, and menu commands come from the menu's modal loop, so
-// calling PrintCurrentFile() directly nests the modal dialog inside one of
-// those. That matters more than it used to: on Windows 11 PrintDlgExW shows the
-// out-of-process unified print dialog and blocks on it with
-// CoWaitForMultipleHandles, and it has been seen to never return - the dialog
-// vanishes and the app hangs with PrintDlgExW still on the stack.
+// Run the print dialog from the message loop rather than from the key or menu
+// dispatch that delivered the command, so the modal panel doesn't nest in it
+// (orig hung with PrintDlgExW nested in a TranslateAcceleratorW callback).
 void PrintCurrentFileDeferred(MainWindow* win) {
     // the window can be closed between posting this and running it
     if (!IsMainWindowValidAndNotClosing(win)) {
@@ -1778,8 +1773,8 @@ void SwitchToFullScreen(MainWindow* win, bool presentation) {
     EnterFullScreen(win, presentation);
 }
 
-// Windows keeps a file type's perceived type in the registry; elsewhere
-// it comes from a short list of extensions
+// a file type's perceived type, from a short list of extensions (orig reads
+// it from the registry)
 static TempStr PerceivedTypeTemp(Str path) {
     TempStr ext = path::GetExtTemp(path);
     static SeqStrings audioExts = ".mp3\0.wav\0.ogg\0.oga\0.flac\0.m4a\0.aac\0.opus\0.wma\0.mid\0.midi\0";
