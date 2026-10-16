@@ -378,6 +378,7 @@ export const tests: NamedTest[] = [
   // first: it drives the home page, whose thumbnail selection follows the
   // mouse, so it is the one test that cares what the machine was doing before
   ["issue-5978", issue5978],
+  ["find-window-layout", findWindowLayout],
   ["issue-6270", issue6270],
   ["issue-6070", issue6070],
   ["issue-6230", issue6230],
@@ -551,7 +552,6 @@ export const tests: NamedTest[] = [
   ["issue-6197", issue6197],
   ["issue-find-match-select", findMatchSelect],
   ["find-results-sorted", findResultsSorted],
-  ["find-window-layout", findWindowLayout],
   ["find-ui-state", findUiState],
   ["goto-page-word-after-find", gotoPageWordAfterFind],
   ["issue-5874", issue5874],

@@ -85,6 +85,22 @@ async function waitForPage(client: ControlClient, expected: number, timeoutMs = 
   throw new Error(`find-window-layout: page did not reach ${expected}: ${raw}`);
 }
 
+// A changed page range re-runs the search after find-as-you-type's debounce;
+// wait for it to finish so Enter steps the results instead of racing it.
+async function waitFindIdle(client: ControlClient, timeoutMs = 30_000): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  let raw = "";
+  while (Date.now() < deadline) {
+    const response = await client.request(ControlCommand.TestFindUiState, []);
+    raw = String(response[1] ?? "").trim();
+    if (raw.includes("countValid=1") && raw.includes("busy=0")) {
+      return;
+    }
+    await sleep(50);
+  }
+  throw new Error(`find-window-layout: search did not finish: ${raw}`);
+}
+
 async function toolReq(client: ControlClient, args: (string | number)[]): Promise<string> {
   const res = await client.request(ControlCommand.TestToolWindow, args);
   return String(res[1] ?? "");
@@ -112,7 +128,8 @@ async function findLayout(client: ControlClient): Promise<string> {
   let raw = "";
   while (Date.now() < deadline) {
     raw = await toolReq(client, ["layout", "find"]);
-    if (raw.startsWith("OK ") && raw.includes("value='needle'")) {
+    // the "n / 999" status reserves its slot; measuring before it shows is wider
+    if (raw.startsWith("OK ") && raw.includes("value='needle'") && raw.includes(` / ${hitCount}'`)) {
       return raw;
     }
     await sleep(50);
@@ -151,6 +168,7 @@ async function testNg(client: ControlClient): Promise<void> {
   if (!caret || Number(caret[1]) !== 0) {
     throw new Error(`find-window-layout: page-range caret stayed at ${caret?.[1] ?? "none"}, expected 0\n${afterHome}`);
   }
+  await waitFindIdle(client);
   await waitForSelection(client, 0);
 
   const searchHit = hits.find((h) => search && Math.abs(h.w - search.w) <= 8);
@@ -159,8 +177,7 @@ async function testNg(client: ControlClient): Promise<void> {
   }
   await clickHit(client, searchHit);
   await keyFind(client, VK_RETURN);
-  await sleep(50);
-  await waitForSelection(client, 0);
+  await waitForSelection(client, 1);
   await keyFind(client, VK_END);
   await keyFind(client, VK_END);
   await waitForSelection(client, hitCount - 1);
