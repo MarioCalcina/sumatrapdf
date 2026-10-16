@@ -42,6 +42,8 @@ signed.
 natively and, for x86_64, under Rosetta. A failing build step's last lines are
 an error annotation (`.github/scripts/run.sh`), readable through the checks API
 when the job log can't be downloaded.
+Without bun, `mac-format.yml` (manual) runs the generators named in its `gen`
+input and `bun cmd/ng-format.ts`, and uploads the changes as `format.patch`.
 
 Unit tests are the `test_util` target: `bun cmd/ng-build.ts -dbg test_util -run -- -for-ai`.
 
