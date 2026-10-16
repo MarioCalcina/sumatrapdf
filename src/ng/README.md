@@ -15,13 +15,12 @@ saves and restores settings. Pass `-- -for-testing` for a throwaway run.
 
 ## Keyboard shortcuts
 
-`src/ng/Accelerators.cpp` holds the Windows defaults and a per-platform
-layer over them. Shortcut strings in the settings take `Cmd` (also `Command`,
-`Super`, `Meta`) for the Command key.
+`src/ng/Accelerators.cpp` holds the default shortcuts. Shortcut strings in
+the settings take `Cmd` (also `Command`, `Super`, `Meta`) for the Command key.
 
-macOS: `Ctrl` in a default becomes `Cmd`, except for switching tabs
-(`Ctrl + Tab`, `Ctrl + Page Up / Down`). `Alt + Left / Right`, `Ctrl + F4` and
-`Ctrl + Insert` are dropped. These differ or are added:
+Where SumatraPDF for Windows takes `Ctrl`, these take `Cmd`, except for
+switching tabs (`Ctrl + Tab`, `Ctrl + Page Up / Down`). Windows' `Alt + Left /
+Right`, `Ctrl + F4` and `Ctrl + Insert` aren't there. These differ or are added:
 
 | Shortcut              | Command             | Windows default         |
 | --------------------- | ------------------- | ----------------------- |

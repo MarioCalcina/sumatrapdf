@@ -15,182 +15,12 @@ constexpr u8 kCtrl = KeyShortcut::kCtrlKey;
 constexpr u8 kAlt = KeyShortcut::kAltKey;
 constexpr u8 kCmd = KeyShortcut::kCmdKey;
 
-// note: even letter shortcuts like 'k' are marked as FVIRTKEY so that they
-// work even on non-english keyboards (cyrillic, hebrew)
-// VK_A is 'A' etc. which corresponds to 'a' key.
-// To get 'A' need explicitly use FSHIFT.
-// https://learn.microsoft.com/en-us/windows/win32/menurc/using-keyboard-accelerators?referrer=grok.com
-// https://grok.com/share/bGVnYWN5_d83c2956-4ce2-4c74-ba4d-9794d1760ccb?rid=746312cc-7d0f-4479-abec-25c394652cac
+// letter keys are virtual keys (kVirt), so they work on any keyboard layout
+// (cyrillic, hebrew): 'A' is the a key, kShift makes it A. A custom shortcut
+// from the settings wins a key over these; a command's first entry is the
+// shortcut menus show. Switching tabs stays on Control, as in Safari.
 // NOLINTBEGIN(modernize-use-designated-initializers)
 static Accel gBuiltInAccelerators[] = {
-    {{kVirt, 'K'}, CmdScrollUp},
-    {{kVirt, 'J'}, CmdScrollDown},
-    {{kVirt, 'H'}, CmdScrollLeft},
-    {{kVirt, 'L'}, CmdScrollRight},
-    {{kVirt, VK_UP}, CmdScrollUp},
-    {{kVirt, VK_DOWN}, CmdScrollDown},
-    {{kVirt, VK_LEFT}, CmdScrollLeft},
-    {{kVirt, VK_RIGHT}, CmdScrollRight},
-
-    {{kShift | kVirt, VK_UP}, CmdScrollUpHalfPage},
-    {{kShift | kVirt, VK_DOWN}, CmdScrollDownHalfPage},
-
-    {{kShift | kVirt, VK_LEFT}, CmdScrollLeftPage},
-    {{kShift | kVirt, VK_RIGHT}, CmdScrollRightPage},
-
-    {{kVirt, VK_NEXT}, CmdScrollDownPage},
-    {{kVirt, VK_PRIOR}, CmdScrollUpPage},
-
-    {{kVirt, VK_SPACE}, CmdScrollDownPage},
-    {{kVirt, VK_RETURN}, CmdScrollDownPage},
-    {{kCtrl | kVirt, VK_DOWN}, CmdScrollDownPage},
-
-    {{kShift | kVirt, VK_SPACE}, CmdScrollUpPage},
-    {{kShift | kVirt, VK_RETURN}, CmdScrollUpPage},
-    {{kCtrl | kVirt, VK_UP}, CmdScrollUpPage},
-
-    {{kVirt, 'N'}, CmdGoToNextPage},
-    //{{kCtrl | kVirt, VK_NEXT}, CmdGoToNextPage},
-
-    {{kVirt, 'P'}, CmdGoToPrevPage},
-    //{{kCtrl | kVirt, VK_PRIOR}, CmdGoToPrevPage},
-
-    {{kVirt, VK_HOME}, CmdGoToFirstPage},
-    {{kCtrl | kVirt, VK_HOME}, CmdGoToFirstPage},
-    {{kVirt, VK_END}, CmdGoToLastPage},
-    {{kCtrl | kVirt, VK_END}, CmdGoToLastPage},
-
-    {{kVirt, VK_BACK}, CmdNavigateBack},
-    {{kAlt | kVirt, VK_LEFT}, CmdNavigateBack},
-    {{kShift | kVirt, VK_BACK}, CmdNavigateForward},
-    {{kAlt | kVirt, VK_RIGHT}, CmdNavigateForward},
-
-    {{kCtrl | kVirt, 'O'}, CmdOpenFile},
-    {{kShift | kCtrl | kVirt, VK_RIGHT}, CmdOpenNextFileInFolder},
-    {{kShift | kCtrl | kVirt, VK_LEFT}, CmdOpenPrevFileInFolder},
-    {{kShift | kCtrl | kVirt, VK_UP}, CmdNavigateFilesInFolder},
-    {{kVirt, VK_F2}, CmdRenameFile},
-    {{kCtrl | kVirt, 'W'}, CmdClose},
-    {{kCtrl | kVirt, 'N'}, CmdNewWindow},
-    {{kShift | kCtrl | kVirt, 'N'}, CmdDuplicateInNewWindow},
-    {{kCtrl | kVirt, 'S'}, CmdSaveAs},
-    //{{kShift | kCtrl | kVirt, 'S'}, CmdCreateShortcutToFile},
-
-    {{kCtrl | kVirt, 'A'}, CmdSelectAll},
-    {{kCtrl | kVirt, 'B'}, CmdFavoriteAdd},
-    {{kCtrl | kVirt, 'C'}, CmdCopySelection},
-    {{kCtrl | kVirt, VK_INSERT}, CmdCopySelection},
-    {{kCtrl | kVirt, 'V'}, CmdPasteClipboardImage},
-    {{kCtrl | kVirt, 'X'}, CmdCutAnnotation},
-    {{kCtrl | kVirt, 'Z'}, CmdUndo},
-    {{kShift | kCtrl | kVirt, 'Z'}, CmdRedo},
-    {{kCtrl | kVirt, 'D'}, CmdProperties},
-    {{kCtrl | kVirt, 'F'}, CmdFindFirst},
-    {{kCtrl | kVirt, 'G'}, CmdGoToPage},
-    {{kVirt, 'G'}, CmdGoToPage},
-    {{kCtrl | kVirt, 'K'}, CmdCommandPalette},
-    //{{kAlt | kVirt, 'K'}, CmdCommandPaletteOnlyTabs}, // removed in 3.6
-    // the palette's mode prefixes, typed as ASCII accelerators (any layout)
-    {{0, '>'}, CmdCommandPalette},
-    {{0, '@'}, CmdNavigateTabs},
-    {{0, '#'}, CmdNavigateHistory},
-    {{0, '$'}, CmdNavigateFavorites},
-    {{0, '%'}, CmdNavigateTableOfContents},
-    {{0, '&'}, CmdNavigateThumbnail},
-    {{kShift | kCtrl | kVirt, 'S'}, CmdSaveAnnotations},
-    {{kCtrl | kVirt, 'P'}, CmdPrint},
-    {{kCtrl | kVirt, 'Q'}, CmdExit},
-    {{kCtrl | kVirt, 'Y'}, CmdZoomCustom},
-    {{kCtrl | kVirt, '0'}, CmdZoomFitPage},
-    {{kCtrl | kVirt, VK_NUMPAD0}, CmdZoomFitPage},
-    {{kCtrl | kVirt, '1'}, CmdZoomActualSize},
-    {{kCtrl | kVirt, VK_NUMPAD1}, CmdZoomActualSize},
-    {{kCtrl | kVirt, '2'}, CmdZoomFitWidth},
-    {{kCtrl | kVirt, VK_NUMPAD2}, CmdZoomFitWidth},
-    {{kCtrl | kVirt, '3'}, CmdZoomFitContent},
-    {{kCtrl | kVirt, VK_NUMPAD3}, CmdZoomFitContent},
-    {{kCtrl | kVirt, '4'}, CmdZoomToSelection},
-    {{kCtrl | kVirt, VK_NUMPAD4}, CmdZoomToSelection},
-    {{kCtrl | kVirt, VK_ADD}, CmdZoomIn},
-    {{kCtrl | kVirt, VK_SUBTRACT}, CmdZoomOut},
-    {{kCtrl | kVirt, VK_OEM_MINUS}, CmdZoomOut},
-    {{kCtrl | kVirt, '6'}, CmdSinglePageView},
-    {{kCtrl | kVirt, VK_NUMPAD6}, CmdSinglePageView},
-    {{kCtrl | kVirt, '7'}, CmdFacingView},
-    {{kCtrl | kVirt, VK_NUMPAD7}, CmdFacingView},
-    {{kCtrl | kVirt, '8'}, CmdBookView},
-    {{kCtrl | kVirt, VK_NUMPAD8}, CmdBookView},
-    {{kShift | kCtrl | kVirt, VK_ADD}, CmdRotateRight},
-    {{kCtrl | kVirt, VK_OEM_PLUS}, CmdZoomIn},
-    {{kShift | kCtrl | kVirt, VK_OEM_PLUS}, CmdRotateRight},
-    {{kVirt, VK_F3}, CmdFindNext},
-    {{kShift | kVirt, VK_F3}, CmdFindPrev},
-    {{kCtrl | kVirt, VK_F3}, CmdFindNextSel},
-    {{kShift | kCtrl | kVirt, VK_F3}, CmdFindPrevSel},
-    {{kCtrl | kVirt, VK_F4}, CmdClose},
-    {{kVirt, VK_F6}, CmdMoveFrameFocus},
-    {{kVirt, VK_F7}, CmdSelectTextViaKeyboard},
-    {{kVirt, VK_F8}, CmdToggleToolbar},
-    {{kVirt, VK_F9}, CmdToggleMenuBar},
-    {{kCtrl | kVirt, 'L'}, CmdTogglePresentationMode},
-    {{kVirt, VK_F5}, CmdTogglePresentationMode},
-    {{kShift | kVirt, VK_F11}, CmdTogglePresentationMode},
-    {{kShift | kCtrl | kVirt, 'L'}, CmdToggleFullscreen},
-    {{kVirt, VK_F11}, CmdToggleFullscreen},
-    {{kShift | kCtrl | kVirt, 'H'}, CmdToggleAutomaticallyScroll},
-    {{kVirt, VK_F12}, CmdToggleBookmarks},
-    {{kShift | kVirt, VK_F12}, CmdNavigateTableOfContents},
-    {{kShift | kCtrl | kVirt, VK_SUBTRACT}, CmdRotateLeft},
-    {{kShift | kCtrl | kVirt, VK_OEM_MINUS}, CmdRotateLeft},
-    {{kShift | kCtrl | kVirt, 'T'}, CmdReopenLastClosedFile},
-    {{kCtrl | kVirt, VK_NEXT}, CmdNextTab},
-    {{kCtrl | kVirt, VK_PRIOR}, CmdPrevTab},
-    {{kCtrl | kShift | kVirt, VK_NEXT}, CmdMoveTabRight},
-    {{kCtrl | kShift | kVirt, VK_PRIOR}, CmdMoveTabLeft},
-    {{kCtrl | kVirt, VK_TAB}, CmdNextTabSmart},
-    {{kCtrl | kShift | kVirt, VK_TAB}, CmdPrevTabSmart},
-    {{kVirt, VK_F1}, CmdHelpOpenManual},
-    // '?' i.e. Shift + '/'
-    {{kShift | kVirt, VK_OEM_2}, CmdToggleKeyboardHelp},
-
-    {{kVirt, 'A'}, CmdCreateAnnotHighlight},
-    {{kVirt, 'U'}, CmdCreateAnnotUnderline},
-
-    {{kVirt | kShift, 'I'}, CmdInvertColors},
-    {{kVirt, 'I'}, CmdTogglePageInfo},
-
-    {{kCtrl | kVirt, VK_DELETE}, CmdDeleteAnnotation},
-
-    {{kVirt, 'Q'}, CmdCloseCurrentDocument},
-    {{kVirt, 'R'}, CmdReloadDocument},
-    {{kVirt, 'Z'}, CmdToggleZoom},
-    {{kVirt, 'F'}, CmdToggleFullscreen},
-    {{kShift | kVirt, 'F'}, CmdToggleKeyboardLinkFollowing},
-    // '['
-    {{kVirt, VK_OEM_4}, CmdRotateLeft},
-    // ']'
-    {{kVirt, VK_OEM_6}, CmdRotateRight},
-    {{kVirt, 'M'}, CmdToggleCursorPosition},
-    {{kVirt, 'W'}, CmdPresentationWhiteBackground},
-    // for Logitech's wireless presenters which target PowerPoint's shortcuts
-    // fVirt 0 makes this an ASCII accelerator: it matches the typed '.'
-    // on any layout (VK_OEM_PERIOD is only the US-layout virtual key)
-    {{0, '.'}, CmdPresentationBlackBackground},
-    {{kVirt, 'C'}, CmdToggleContinuousView},
-
-    // Shift + CreateAnnot*: cmd patched to "CmdCreateAnnot* openedit" before
-    // the accelerator table is built, so they turn on Edit PDF mode.
-    {{kVirt | kShift, 'A'}, CmdCreateAnnotHighlight},
-    {{kVirt | kShift, 'U'}, CmdCreateAnnotUnderline},
-};
-
-// Per-platform layer over the table above:
-//
-//   gPlatformAccelerators   added first, so they win a key over a built-in
-//                           and are the shortcut menus show for the command
-//   IsDroppedOnPlatform()   built-ins that mean nothing on this platform
-//   ToPlatformShortcut()    a built-in's key as this platform spells it
-static Accel gPlatformAccelerators[] = {
     // Find Next / Previous own Command+G; Go to Page moves where Preview has it
     {{kCmd | kVirt, 'G'}, CmdFindNext},
     {{kShift | kCmd | kVirt, 'G'}, CmdFindPrev},
@@ -229,27 +59,154 @@ static Accel gPlatformAccelerators[] = {
 
     // the key above Return is Backspace; a Mac calls it Delete
     {{kCmd | kVirt, VK_BACK}, CmdDeleteAnnotation},
+
+    {{kVirt, 'K'}, CmdScrollUp},
+    {{kVirt, 'J'}, CmdScrollDown},
+    {{kVirt, 'H'}, CmdScrollLeft},
+    {{kVirt, 'L'}, CmdScrollRight},
+    {{kVirt, VK_UP}, CmdScrollUp},
+    {{kVirt, VK_DOWN}, CmdScrollDown},
+    {{kVirt, VK_LEFT}, CmdScrollLeft},
+    {{kVirt, VK_RIGHT}, CmdScrollRight},
+
+    {{kShift | kVirt, VK_UP}, CmdScrollUpHalfPage},
+    {{kShift | kVirt, VK_DOWN}, CmdScrollDownHalfPage},
+
+    {{kShift | kVirt, VK_LEFT}, CmdScrollLeftPage},
+    {{kShift | kVirt, VK_RIGHT}, CmdScrollRightPage},
+
+    {{kVirt, VK_NEXT}, CmdScrollDownPage},
+    {{kVirt, VK_PRIOR}, CmdScrollUpPage},
+
+    {{kVirt, VK_SPACE}, CmdScrollDownPage},
+    {{kVirt, VK_RETURN}, CmdScrollDownPage},
+
+    {{kShift | kVirt, VK_SPACE}, CmdScrollUpPage},
+    {{kShift | kVirt, VK_RETURN}, CmdScrollUpPage},
+
+    {{kVirt, 'N'}, CmdGoToNextPage},
+
+    {{kVirt, 'P'}, CmdGoToPrevPage},
+
+    {{kVirt, VK_HOME}, CmdGoToFirstPage},
+    {{kCmd | kVirt, VK_HOME}, CmdGoToFirstPage},
+    {{kVirt, VK_END}, CmdGoToLastPage},
+    {{kCmd | kVirt, VK_END}, CmdGoToLastPage},
+
+    {{kVirt, VK_BACK}, CmdNavigateBack},
+    {{kShift | kVirt, VK_BACK}, CmdNavigateForward},
+
+    {{kCmd | kVirt, 'O'}, CmdOpenFile},
+    {{kShift | kCmd | kVirt, VK_RIGHT}, CmdOpenNextFileInFolder},
+    {{kShift | kCmd | kVirt, VK_LEFT}, CmdOpenPrevFileInFolder},
+    {{kShift | kCmd | kVirt, VK_UP}, CmdNavigateFilesInFolder},
+    {{kVirt, VK_F2}, CmdRenameFile},
+    {{kCmd | kVirt, 'W'}, CmdClose},
+    {{kCmd | kVirt, 'N'}, CmdNewWindow},
+    {{kShift | kCmd | kVirt, 'N'}, CmdDuplicateInNewWindow},
+    {{kCmd | kVirt, 'S'}, CmdSaveAs},
+
+    {{kCmd | kVirt, 'A'}, CmdSelectAll},
+    {{kCmd | kVirt, 'B'}, CmdFavoriteAdd},
+    {{kCmd | kVirt, 'C'}, CmdCopySelection},
+    {{kCmd | kVirt, 'V'}, CmdPasteClipboardImage},
+    {{kCmd | kVirt, 'X'}, CmdCutAnnotation},
+    {{kCmd | kVirt, 'Z'}, CmdUndo},
+    {{kShift | kCmd | kVirt, 'Z'}, CmdRedo},
+    {{kCmd | kVirt, 'F'}, CmdFindFirst},
+    {{kVirt, 'G'}, CmdGoToPage},
+    {{kCmd | kVirt, 'K'}, CmdCommandPalette},
+    // the palette's mode prefixes, typed as ASCII accelerators (any layout)
+    {{0, '>'}, CmdCommandPalette},
+    {{0, '@'}, CmdNavigateTabs},
+    {{0, '#'}, CmdNavigateHistory},
+    {{0, '$'}, CmdNavigateFavorites},
+    {{0, '%'}, CmdNavigateTableOfContents},
+    {{0, '&'}, CmdNavigateThumbnail},
+    {{kShift | kCmd | kVirt, 'S'}, CmdSaveAnnotations},
+    {{kCmd | kVirt, 'P'}, CmdPrint},
+    {{kCmd | kVirt, 'Q'}, CmdExit},
+    {{kCmd | kVirt, 'Y'}, CmdZoomCustom},
+    {{kCmd | kVirt, '1'}, CmdZoomActualSize},
+    {{kCmd | kVirt, VK_NUMPAD1}, CmdZoomActualSize},
+    {{kCmd | kVirt, '2'}, CmdZoomFitWidth},
+    {{kCmd | kVirt, VK_NUMPAD2}, CmdZoomFitWidth},
+    {{kCmd | kVirt, '3'}, CmdZoomFitContent},
+    {{kCmd | kVirt, VK_NUMPAD3}, CmdZoomFitContent},
+    {{kCmd | kVirt, '4'}, CmdZoomToSelection},
+    {{kCmd | kVirt, VK_NUMPAD4}, CmdZoomToSelection},
+    {{kCmd | kVirt, VK_ADD}, CmdZoomIn},
+    {{kCmd | kVirt, VK_SUBTRACT}, CmdZoomOut},
+    {{kCmd | kVirt, VK_OEM_MINUS}, CmdZoomOut},
+    {{kCmd | kVirt, '6'}, CmdSinglePageView},
+    {{kCmd | kVirt, VK_NUMPAD6}, CmdSinglePageView},
+    {{kCmd | kVirt, '7'}, CmdFacingView},
+    {{kCmd | kVirt, VK_NUMPAD7}, CmdFacingView},
+    {{kCmd | kVirt, '8'}, CmdBookView},
+    {{kCmd | kVirt, VK_NUMPAD8}, CmdBookView},
+    {{kShift | kCmd | kVirt, VK_ADD}, CmdRotateRight},
+    {{kCmd | kVirt, VK_OEM_PLUS}, CmdZoomIn},
+    {{kShift | kCmd | kVirt, VK_OEM_PLUS}, CmdRotateRight},
+    {{kVirt, VK_F3}, CmdFindNext},
+    {{kShift | kVirt, VK_F3}, CmdFindPrev},
+    {{kCmd | kVirt, VK_F3}, CmdFindNextSel},
+    {{kShift | kCmd | kVirt, VK_F3}, CmdFindPrevSel},
+    {{kVirt, VK_F6}, CmdMoveFrameFocus},
+    {{kVirt, VK_F7}, CmdSelectTextViaKeyboard},
+    {{kVirt, VK_F8}, CmdToggleToolbar},
+    {{kVirt, VK_F9}, CmdToggleMenuBar},
+    {{kCmd | kVirt, 'L'}, CmdTogglePresentationMode},
+    {{kVirt, VK_F5}, CmdTogglePresentationMode},
+    {{kShift | kVirt, VK_F11}, CmdTogglePresentationMode},
+    {{kShift | kCmd | kVirt, 'L'}, CmdToggleFullscreen},
+    {{kVirt, VK_F11}, CmdToggleFullscreen},
+    {{kShift | kCmd | kVirt, 'H'}, CmdToggleAutomaticallyScroll},
+    {{kVirt, VK_F12}, CmdToggleBookmarks},
+    {{kShift | kVirt, VK_F12}, CmdNavigateTableOfContents},
+    {{kShift | kCmd | kVirt, VK_SUBTRACT}, CmdRotateLeft},
+    {{kShift | kCmd | kVirt, VK_OEM_MINUS}, CmdRotateLeft},
+    {{kShift | kCmd | kVirt, 'T'}, CmdReopenLastClosedFile},
+    {{kCtrl | kVirt, VK_NEXT}, CmdNextTab},
+    {{kCtrl | kVirt, VK_PRIOR}, CmdPrevTab},
+    {{kCtrl | kShift | kVirt, VK_NEXT}, CmdMoveTabRight},
+    {{kCtrl | kShift | kVirt, VK_PRIOR}, CmdMoveTabLeft},
+    {{kCtrl | kVirt, VK_TAB}, CmdNextTabSmart},
+    {{kCtrl | kShift | kVirt, VK_TAB}, CmdPrevTabSmart},
+    {{kVirt, VK_F1}, CmdHelpOpenManual},
+    // '?' i.e. Shift + '/'
+    {{kShift | kVirt, VK_OEM_2}, CmdToggleKeyboardHelp},
+
+    {{kVirt, 'A'}, CmdCreateAnnotHighlight},
+    {{kVirt, 'U'}, CmdCreateAnnotUnderline},
+
+    {{kVirt | kShift, 'I'}, CmdInvertColors},
+    {{kVirt, 'I'}, CmdTogglePageInfo},
+
+    {{kCmd | kVirt, VK_DELETE}, CmdDeleteAnnotation},
+
+    {{kVirt, 'Q'}, CmdCloseCurrentDocument},
+    {{kVirt, 'R'}, CmdReloadDocument},
+    {{kVirt, 'Z'}, CmdToggleZoom},
+    {{kVirt, 'F'}, CmdToggleFullscreen},
+    {{kShift | kVirt, 'F'}, CmdToggleKeyboardLinkFollowing},
+    // '['
+    {{kVirt, VK_OEM_4}, CmdRotateLeft},
+    // ']'
+    {{kVirt, VK_OEM_6}, CmdRotateRight},
+    {{kVirt, 'M'}, CmdToggleCursorPosition},
+    {{kVirt, 'W'}, CmdPresentationWhiteBackground},
+    // for Logitech's wireless presenters which target PowerPoint's shortcuts
+    // fVirt 0 makes this an ASCII accelerator: it matches the typed '.'
+    // on any layout (VK_OEM_PERIOD is only the US-layout virtual key)
+    {{0, '.'}, CmdPresentationBlackBackground},
+    {{kVirt, 'C'}, CmdToggleContinuousView},
+
+    // Shift + CreateAnnot*: cmd patched to "CmdCreateAnnot* openedit" before
+    // the accelerator table is built, so they turn on Edit PDF mode.
+    {{kVirt | kShift, 'A'}, CmdCreateAnnotHighlight},
+    {{kVirt | kShift, 'U'}, CmdCreateAnnotUnderline},
 };
 // NOLINTEND(modernize-use-designated-initializers)
-
-static bool IsDroppedOnPlatform(const KeyShortcut& sc) {
-    // Option+arrows move by word in a text field
-    if (sc.alt && !sc.ctrl && (sc.vk == VK_LEFT || sc.vk == VK_RIGHT)) {
-        return true;
-    }
-    // Windows idioms: Ctrl+F4 closes, Ctrl+Insert copies
-    return sc.ctrl && (sc.vk == VK_F4 || sc.vk == VK_INSERT);
-}
-
-static KeyShortcut ToPlatformShortcut(KeyShortcut sc) {
-    // Command is what Ctrl is elsewhere. Switching tabs stays on Control.
-    bool isTabKey = sc.vk == VK_TAB || sc.vk == VK_NEXT || sc.vk == VK_PRIOR;
-    if (sc.ctrl && !isTabKey) {
-        sc.ctrl = false;
-        sc.cmd = true;
-    }
-    return sc;
-}
 
 static Accel* gAccels = nullptr;
 static int gAccelsCount = 0;
@@ -636,7 +593,7 @@ void CreateSumatraAcceleratorTable() {
 
     // an upper bound: Add() appends at most one entry per call, and it's called
     // once per built-in and once per custom shortcut
-    int nMax = dimofi(gBuiltInAccelerators) + dimofi(gPlatformAccelerators) + CountCustomShortcuts();
+    int nMax = dimofi(gBuiltInAccelerators) + CountCustomShortcuts();
 
     AccelTablesBuilder b;
     // accels outlives us in gAccels, so it has to be a real allocation
@@ -644,16 +601,7 @@ void CreateSumatraAcceleratorTable() {
 
     AddCustomShortcuts(b);
     // add built-in but only if the shortcut doesn't conflict with custom shortcut
-    for (Accel accel : gPlatformAccelerators) {
-        if (accel.cmd != 0) {
-            b.Add(accel);
-        }
-    }
     for (Accel accel : gBuiltInAccelerators) {
-        if (IsDroppedOnPlatform(accel.sc)) {
-            continue;
-        }
-        accel.sc = ToPlatformShortcut(accel.sc);
         b.Add(accel);
     }
 
@@ -698,15 +646,13 @@ const AccelStroke* GetAcceleratorStrokes(int& nOut) {
 bool Accelerators_UnitTestFolderNavIsSafe() {
     int n = 0;
     GetAcceleratorTable(n); // builds gAccels if it isn't built yet
-    bool cmd = ToPlatformShortcut(KeyShortcut(kCtrl | kVirt, VK_RIGHT)).cmd;
-    bool ctrl = !cmd;
-    if (SafeAcceleratorCmd(VK_RIGHT, ctrl, true, false, cmd) != CmdOpenNextFileInFolder) {
+    if (SafeAcceleratorCmd(VK_RIGHT, false, true, false, true) != CmdOpenNextFileInFolder) {
         return false;
     }
-    if (SafeAcceleratorCmd(VK_LEFT, ctrl, true, false, cmd) != CmdOpenPrevFileInFolder) {
+    if (SafeAcceleratorCmd(VK_LEFT, false, true, false, true) != CmdOpenPrevFileInFolder) {
         return false;
     }
-    if (SafeAcceleratorCmd(VK_UP, ctrl, true, false, cmd) != CmdNavigateFilesInFolder) {
+    if (SafeAcceleratorCmd(VK_UP, false, true, false, true) != CmdNavigateFilesInFolder) {
         return false;
     }
     // a bare arrow still belongs to the control, so it can scroll / move the selection
