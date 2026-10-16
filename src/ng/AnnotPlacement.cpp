@@ -4,10 +4,9 @@
 // ng: orig's AnnotPlacement.cpp - the modes a CmdCreateAnnot* command enters
 // when it has no point to place the annotation at: the cursor becomes a cross,
 // a hint notification says what to do, and the next click (or drag, or set of
-// strokes) says where. Same kinds, same keys, same previews. What differs is
-// the cursor off Windows (gpui has no cursor from an image, so every mode uses
-// Crosshair where orig draws the annotation's SVG icon into one) and that the
-// preview is painted by the gpui canvas instead of into the canvas HDC.
+// strokes) says where. Same kinds, same keys, same previews and cursors (the
+// icon ones are AppKit cursors, gui/NativeCursors.cpp). What differs is that
+// the preview is painted by the gpui canvas instead of into the canvas HDC.
 
 #include "gui/GpuiBridge.h"
 #include "VirtKeys.h"
